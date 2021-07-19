@@ -1,4 +1,4 @@
-nb_found_empire_of_bulgaria_decision = {
+nb_found_empire_of_bulgaria_decision = { #Found the Bulgarian Empire
 	picture = "gfx/interface/illustrations/decisions/decision_form_e_bulgaria.dds"
 	major = yes
 	ai_goal = yes
@@ -10,8 +10,14 @@ nb_found_empire_of_bulgaria_decision = {
 		is_lowborn = no			
 		is_landed = yes
 		is_independent_ruler = yes
-		highest_held_title_tier >= tier_duchy		
+		highest_held_title_tier >= tier_duchy
 		
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_found_empire_of_bulgaria_decision
+			}
+		}		
 		NOR = {	#Title existence cnditions.
 			has_title = title:e_byzantium		
 			has_title = title:e_hre
@@ -44,17 +50,15 @@ nb_found_empire_of_bulgaria_decision = {
 		show_as_tooltip = {
 			nb_found_empire_of_bulgaria_decision_effect = yes
 		}
-		trigger_event = nb_found_empire_of_bulgaria_decision.0001
-		every_player = {
-			limit = {
-				NOT = { this = root }
-				OR = { exists = capital_province
-				capital_province = { geographical_region = world_europe }
-				capital_province = { geographical_region = world_asia_minor }			
-				}
+		trigger_event = {
+			id = nb_found_empire_of_bulgaria_decision.0001
+		}		
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_found_empire_of_bulgaria_decision
 			}
-			trigger_event = nb_found_empire_of_bulgaria_decision.0002
-		}			
+		}		
 	}
 	
 	ai_potential = {
@@ -66,7 +70,7 @@ nb_found_empire_of_bulgaria_decision = {
 	}
 }
 
-nb_bulgarian_renaissance_decision = { #Bulgarian Renaissance
+nb_bulgarian_renaissance_decision = { #Bulgarians into the Golden Age
 	picture = "gfx/interface/illustrations/decisions/decision_bulgarian_renaissance.dds"
 
 	desc = nb_bulgarian_renaissance_decision_desc
@@ -82,9 +86,6 @@ nb_bulgarian_renaissance_decision = { #Bulgarian Renaissance
 		is_ruler = yes
 		is_landed = yes
 		has_primary_title = title:e_bulgaria			
-		root.culture = {
-			has_cultural_era_or_later = culture_era_early_medieval
-		}
 		NOT = {  #Can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
@@ -100,21 +101,21 @@ nb_bulgarian_renaissance_decision = { #Bulgarian Renaissance
 	}
 	
 	is_valid = {
-		prestige_level >= 4
-		learning >= 10
+		prestige_level >= 3
+		stewardship >= 10
 		NOT = { has_realm_law = crown_authority_0 }
 		#Must control core provinces either in the North or the South:
 		OR = {
 			AND = {
 				completely_controls = title:d_turnovo
 				completely_controls = title:d_philippopolis
+				completely_controls = title:d_bulgaria
 			}
 		}
 		#Must have basic innovations:
 		root.culture = {
 			has_innovation = innovation_royal_prerogative
-			has_innovation = innovation_baliffs
-			has_innovation = innovation_currency_02
+			has_innovation = innovation_cyrillic_script
 		}
 	}
 
@@ -135,13 +136,6 @@ nb_bulgarian_renaissance_decision = { #Bulgarian Renaissance
 		}
 		trigger_event = {
 			id = nb_bulgarian_renaissance_decision.0001
-		}
-		every_player = {
-			limit = {
-				NOT = { this = root }
-				is_within_diplo_range = { CHARACTER = root }
-			}
-			trigger_event = nb_bulgarian_renaissance_decision.0002
 		}		
 		hidden_effect = {
 			add_to_global_variable_list = {
@@ -157,7 +151,7 @@ nb_bulgarian_renaissance_decision = { #Bulgarian Renaissance
 
 	ai_will_do = {
 		base = 1000
-}
+	}
 }
 
 nb_bulgarian_sack_constantinople_decision = { #Bulgarians Sack of Constantonople
@@ -196,8 +190,8 @@ nb_bulgarian_sack_constantinople_decision = { #Bulgarians Sack of Constantonople
 	}
 	
 	is_valid = {
-		prestige_level >= 5
-		martial >= 13
+		prestige_level >= 4
+		martial >= 10
 		#Must control core provinces either in the North or the South:
 		OR = {
 			AND = {
@@ -231,16 +225,6 @@ nb_bulgarian_sack_constantinople_decision = { #Bulgarians Sack of Constantonople
 		}
 		trigger_event = {
 			id = nb_bulgarian_sack_constantinople_decision.0001
-		}
-		every_player = {
-			limit = {
-				NOT = { this = root }
-				OR = { exists = capital_province
-				capital_province = { geographical_region = world_europe }
-				capital_province = { geographical_region = world_asia_minor }			
-				}
-			}
-			trigger_event = nb_bulgarian_sack_constantinople_decision.0002
 		}		
 		hidden_effect = {
 			add_to_global_variable_list = {
@@ -256,5 +240,228 @@ nb_bulgarian_sack_constantinople_decision = { #Bulgarians Sack of Constantonople
 
 	ai_will_do = {
 		base = 1000
+	}
 }
+
+nb_bulgarian_establishment_the_cyrillic_decision = { #Bulgarians Found New Script, will called Cyrillic
+	picture = "gfx/interface/illustrations/decisions/decision_bulgarian_establishment_the_cyrillic.dds"
+
+	desc = nb_bulgarian_establishment_the_cyrillic_decision_desc
+	selection_tooltip = nb_bulgarian_establishment_the_cyrillic_decision_tooltip
+	major = yes
+	ai_goal = yes
+
+	is_shown = {
+		OR = {
+			has_culture = culture:bulgarian	
+		}
+		NOT = { has_culture = culture:greek }
+		is_ruler = yes
+		is_landed = yes
+		is_independent_ruler = yes		
+		has_title = title:k_bulgaria
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_bulgarian_establishment_the_cyrillic_decision
+			}
+		}
+		NOR = {
+			has_government = theocracy_government
+			has_government = clan_government
+			has_government = tribal_government
+		}
+	}
+	
+	is_valid = {
+		religion = religion:christianity_religion	
+		prestige_level >= 3
+		learning >= 10
+		OR = {
+			AND = {
+				completely_controls = title:d_turnovo
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+	}
+
+	cost = {
+		gold = 500
+		prestige = 3000
+	}
+
+	effect = {
+		show_as_tooltip = {
+			nb_bulgarian_establishment_the_cyrillic_decision_effect = yes
+		}
+		trigger_event = {
+			id = nb_bulgarian_establishment_the_cyrillic_decision.0001
+		}		
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_bulgarian_establishment_the_cyrillic_decision
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 200
+	}
+}
+
+nb_bulgarian_build_patriarchal_cathedral_decision = { #Bulgarians Build the New Patriarchal Cathedral
+	picture = "gfx/interface/illustrations/decisions/decision_bulgarian_patriarchal_cathedral.dds"
+
+	desc = nb_bulgarian_build_patriarchal_cathedral_decision_desc
+	selection_tooltip = nb_bulgarian_build_patriarchal_cathedral_decision_tooltip
+	major = yes
+	ai_goal = yes
+
+	is_shown = {
+		NOT = { has_culture = culture:greek }
+		root.culture = {
+			has_innovation = innovation_cyrillic_script
+		}		
+		is_ruler = yes
+		is_landed = yes
+		is_independent_ruler = yes		
+		has_primary_title = title:e_bulgaria
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_bulgarian_build_patriarchal_cathedral_decision
+			}
+		}
+		NOR = {
+			has_government = theocracy_government
+			has_government = clan_government
+			has_government = tribal_government
+		}
+	}
+	
+	is_valid = {
+		faith = faith:orthodox	
+		piety_level >= 2		
+		OR = {
+			AND = {
+				completely_controls = title:d_turnovo
+				completely_controls = title:d_philippopolis
+				completely_controls = title:d_bulgaria				
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+	}
+
+	cost = {
+		gold = 500
+	}
+
+	effect = {
+		show_as_tooltip = {
+			nb_bulgarian_build_patriarchal_cathedral_decision_effect = yes
+		}
+		trigger_event = {
+			id = nb_bulgarian_build_patriarchal_cathedral_decision.0001
+		}		
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_bulgarian_build_patriarchal_cathedral_decision
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 200
+	}
+}
+
+nb_bulgarian_build_asen_krepost_decision = { #Bulgarians Build the Asen Krepost
+	picture = "gfx/interface/illustrations/decisions/decision_bulgarian_asen_krepost.dds"
+
+	desc = nb_bulgarian_build_asen_krepost_decision_desc
+	selection_tooltip = nb_bulgarian_build_asen_krepost_decision_tooltip
+	major = yes
+	ai_goal = yes	
+
+	is_shown = {
+		NOT = { has_culture = culture:greek }		
+		is_ruler = yes
+		is_landed = yes
+		OR = {
+			has_title = title:d_philippopolis
+			has_title = title:k_bulgaria
+			has_title = title:e_bulgaria			
+		}		
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_bulgarian_build_asen_krepost_decision
+			}
+		}
+		NOR = {
+			has_government = theocracy_government
+			has_government = clan_government
+			has_government = tribal_government
+		}
+	}
+	
+	is_valid = {
+		has_title = title:c_philippopolis
+		root.culture = {
+			has_innovation = innovation_battlements
+		}		
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+	}
+
+	cost = {
+		gold = 1000
+	}
+
+	effect = {
+		show_as_tooltip = {
+			nb_bulgarian_build_asen_krepost_decision_effect = yes
+		}
+		trigger_event = {
+			id = nb_bulgarian_build_asen_krepost_decision.0001
+		}		
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:nb_bulgarian_build_asen_krepost_decision
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 200
+	}
 }
