@@ -1,0 +1,124 @@
+﻿T4N_e_map_barony = {
+	every_barony = {
+		county = {
+			prev = { set_color_from_title = prev }
+		}
+	}
+}
+
+T4N_e_tributary_map = {
+	global_var:custom_map_tributary_target = {
+		save_temporary_scope_as = target_character
+	}
+	every_county = {
+		if = {
+			# Me
+			limit = {
+				holder = {
+					OR = {
+						# is me
+						this = scope:target_character
+
+						# liege is me
+						any_liege_or_above = { this = scope:target_character }
+					}
+				}
+			}
+			every_county_province = { barony = { set_color_from_title = title:d_tributary_map_target } }
+		}
+		else_if = {
+			# My tributary
+
+			limit = {
+				holder = {
+					exists = var:my_suzerain
+					OR = {
+						# has a suzerain and suzerain is me
+						var:my_suzerain = scope:target_character
+
+						# liege has a suzerain and suzerain is me
+						any_liege_or_above = {
+							var:my_suzerain = scope:target_character
+						}
+					}
+				}
+			}
+			every_county_province = { barony = { set_color_from_title = title:d_tributary_map_target_tributary } }
+		}
+		else_if = {
+			# My suzerain
+
+			limit = {
+				holder = {
+					OR = {
+						is_suzerain = yes
+						any_liege_or_above = { is_suzerain = yes }
+						has_tributaries = yes
+						any_liege_or_above = { has_tributaries = yes }
+					}
+					OR = {
+						AND = {
+							has_variable_list = permanent_tributaries
+							is_target_in_variable_list = { name = permanent_tributaries target = scope:target_character }
+						}
+						AND = {
+							has_variable_list = non_permanent_tributaries
+							is_target_in_variable_list = { name = non_permanent_tributaries target = scope:target_character }
+						}
+					}
+				}
+			}
+			every_county_province = { barony = { set_color_from_title = title:d_tributary_map_target_suzerain } }
+		}
+		else_if = {
+			# Is both a tributary and a suzerain
+
+			limit = {
+				holder = {
+					OR = {
+						is_suzerain = yes
+						any_liege_or_above = { is_suzerain = yes }
+						has_tributaries = yes
+						any_liege_or_above = { has_tributaries = yes }
+					}
+					OR = {
+						is_tributary = yes
+						any_liege_or_above = { is_tributary = yes }
+					}
+				}
+			}
+			every_county_province = { barony = { set_color_from_title = title:d_tributary_map_tributary_suzerain } }
+		}
+		else_if = {
+			# Is a tributary but not a suzerain
+
+			limit = {
+				holder = {
+					OR = {
+						is_tributary = yes
+						any_liege_or_above = { is_tributary = yes }
+					}
+				}
+			}
+			every_county_province = { barony = { set_color_from_title = title:d_tributary_map_tributary } }
+		}
+		else_if = {
+			# Is a suzerain but not a tributary
+
+			limit = {
+				holder = {
+					OR = {
+						is_suzerain = yes
+						any_liege_or_above = { is_suzerain = yes }
+						has_tributaries = yes
+						any_liege_or_above = { has_tributaries = yes }
+					}
+				}
+			}
+			every_county_province = { barony = { set_color_from_title = title:d_tributary_map_suzerain } }
+		}
+		else {
+			every_county_province = { barony = { set_color_from_title = title:d_tributary_map_base } }
+		}
+	}
+}
