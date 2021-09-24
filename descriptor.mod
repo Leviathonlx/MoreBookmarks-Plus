@@ -1,6 +1,9 @@
-version="1.2"
+version="1.3"
 tags={
+	"Historical"
 	"Gameplay"
+	"Culture"
+	"Map"
 	"Bookmarks"
 }
 name="More Bookmarks+"
