@@ -1,0 +1,76 @@
+﻿namespace = game_rule
+
+game_rule.1000 = {
+	type = empty
+	hidden = yes
+
+	trigger = {
+		OR = {
+			has_game_rule = on_generate_families
+			has_game_rule = on_generate_families_ai_only
+		}
+	}
+
+	immediate = {
+		every_independent_ruler = {
+			if = {
+				limit = { only_ai_if_ai_only_trigger = yes }
+				trigger_event = game_rule.1001
+				trigger_event = game_rule.1002
+			}
+			every_vassal_or_below = {
+				limit = { only_ai_if_ai_only_trigger = yes }
+				trigger_event = game_rule.1001
+				trigger_event = game_rule.1002
+			}
+		}
+	}
+}
+
+game_rule.1002 = {
+	type = character_event
+	hidden = yes
+	
+	trigger = {
+		is_from_ruler_designer = no # Do not modify the family of somoene from the ruler designer
+		#Is in need of spouse
+		AND = {
+			is_married = no
+			any_spouse = {
+				even_if_dead = yes
+				count = 0
+			}
+			any_child = {
+				count > 0
+				NOR = {
+					has_trait = bastard
+					has_trait = legitimized_bastard
+					has_trait = child_of_concubine
+					has_trait = wild_oat
+				}
+			}
+		}
+		NOR = {
+			has_trait = celibate
+			has_trait = eunuch
+		}
+		age >= 17 #Because you need ~1 year of pregnancy
+		is_landed = yes
+		primary_title = {
+			is_mercenary_company = no
+			is_holy_order = no
+		}
+		NOR = {
+			has_government = republic_government
+			has_government = theocracy_government
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = { faith = { has_doctrine_parameter = marriage_event } }
+			add_character_flag = ignore_marriage_event
+		}
+		game_rule_create_spouse = { CHARACTER = root }
+	}
+}
