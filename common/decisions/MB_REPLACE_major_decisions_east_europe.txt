@@ -1,0 +1,183 @@
+﻿#MODIFIED VANILLA EVENTS
+
+unite_the_southern_slavs_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+	ai_check_interval = 120
+	desc = unite_the_southern_slavs_decision_desc
+
+	is_shown = {
+		has_culture_group = culture_group:south_slavic_group
+		NOT = {
+			has_culture = culture:vlach # Not technically Slavic despite being in the South Slavic group.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:unite_the_southern_slavs_decision
+			}
+		}
+	}
+
+	is_valid = {
+		has_culture_group = culture_group:south_slavic_group
+		completely_controls_region = custom_south_slavia #Has de jure Lands
+		OR = {
+			has_primary_title = title:k_croatia
+			has_primary_title = title:k_serbia
+			has_primary_title = title:k_bulgaria
+			has_primary_title = title:k_dacia
+			has_primary_title = title:k_moldavia
+			has_primary_title = title:k_bosnia
+			has_primary_title = title:k_carinthia							
+		}
+	}
+
+	effect = {
+		save_scope_as = southern_slav_uniter
+
+		show_as_tooltip = { unite_the_southern_slavs_decision_effects = yes } #Actually applied in east_europe.0006 - prestige, laws, title, innovation effects
+
+		#Events
+		trigger_event = east_europe.0005
+		every_player = {
+			limit = {
+				NOT = { this = scope:southern_slav_uniter }
+				is_within_diplo_range = { CHARACTER = scope:southern_slav_uniter }
+			}
+			trigger_event = east_europe.0006
+		}
+
+		#Can only be done once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:unite_the_southern_slavs_decision
+		}
+		set_global_variable = {
+			name = unite_the_southern_slavs_decision
+			value = scope:southern_slav_uniter
+		}
+	}
+	
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+#################################
+# Found the Kingdom of Bosnia	#
+# by Ewan Cowhig Croft			#
+#################################
+found_kingdom_of_bosnia_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_destiny_goal.dds"
+	major = yes
+
+	ai_check_interval = 120
+
+	desc = found_kingdom_of_bosnia_decision_desc
+	selection_tooltip = found_kingdom_of_bosnia_decision_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		is_landed = yes
+		exists = dynasty
+		OR = {
+			#Must be a Serb or Croat within the Bosnian highlands.
+			AND = {
+				OR = {
+					culture = culture:serbian
+					culture = culture:croatian
+				}
+				capital_county = {
+					OR = {
+						this = title:c_vodica
+						this = title:c_pset
+						this = title:c_vrbas
+						this = title:c_donjikraji
+						this = title:c_usora
+						this = title:c_rama
+						this = title:c_soli
+						this = title:c_vhrbosna
+						this = title:c_zavrsje
+					}
+				}
+			}
+			#Or just be Bosnian.
+			culture = culture:bosnian
+		}
+		NOT = {	#You can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_bosnia
+			}
+		}
+		OR = {
+			has_government = feudal_government
+			has_government = clan_government
+		}
+		highest_held_title_tier <= tier_duchy
+	}
+
+	is_valid = {
+		#You must have sufficient clout.
+		is_independent_ruler = yes
+
+		#You must control the kingdom's heartlands.
+		has_title = title:d_bosna
+		has_title = title:d_usora
+		completely_controls = title:d_bosna
+		completely_controls = title:d_usora
+
+		#You must be sufficiently advanced to conceive of having a separate kingdom, rather than being Croatian or Serbian.
+		culture = { has_cultural_era_or_later = culture_era_early_medieval }
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	effect = {
+		save_scope_as = founder
+		show_as_tooltip = { found_kingdom_of_bosnia_decision_scripted_effect = yes }
+		trigger_event = { id = east_europe.0101 }
+		#Notify other players.
+		every_player = {
+			limit = {
+				NOT = { this = scope:founder }
+				top_liege = {
+					OR = {
+						this = scope:founder
+						any_neighboring_and_across_water_top_liege_realm_owner = { this = scope:founder }
+					}
+				}
+			}
+			trigger_event = east_europe.0102
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_bosnia
+			}
+			set_global_variable = {
+				name = flag_founded_kingdom_of_bosnia
+				value = scope:founder
+			}
+		}
+	}
+
+	cost = {
+		gold = 300
+		prestige = 200
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
