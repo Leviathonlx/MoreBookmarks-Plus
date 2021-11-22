@@ -1,0 +1,352 @@
+﻿#Modified MGR file
+##Matri Marriage#
+#
+#matri_marriage_allowed = {
+#	custom_description = {
+#		text = GAME_RULE_MATRI_MARRIAGE_ALLOWED
+#		OR = {
+#			has_game_rule = default_matri
+#			has_game_rule = limited_matri
+#			AND = {
+#				has_game_rule = restricted_matri
+#				faith = {
+#					OR = {
+#						has_doctrine = doctrine_gender_equal
+#						has_doctrine = doctrine_gender_female_dominated
+#					}
+#				}
+#			}
+#			AND = {
+#				has_game_rule = more_restricted_matri
+#				faith = { has_doctrine = doctrine_gender_female_dominated }
+#			}
+#		}
+#	}
+#}
+#
+#When root is top liege
+is_de_jure_vassal_of_ROOT_top_liege_trigger = {
+	any_held_title = {
+		#limit = { tier = prev.highest_held_title_tier }
+		OR = {	
+			de_jure_liege = {
+				exists = holder
+				holder = root
+			}
+			trigger_if = {
+				limit = {
+					tier = tier_duchy
+				}
+				de_jure_liege = { #king
+					de_jure_liege = { #emperor
+						exists = holder
+						holder = root
+					}
+				}
+			}
+			trigger_if = {
+				limit = {
+					tier = tier_county
+				}
+				de_jure_liege = { #duke
+					de_jure_liege = { #king
+						OR = {
+							AND = {
+								exists = holder
+								holder = root
+							}
+							de_jure_liege = { #emperor
+								exists = holder
+								holder = root
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+is_protected_hre_vassal = {
+	save_temporary_scope_as = checked
+	OR = {
+		title:e_france = {
+			any_in_de_jure_hierarchy = { #any_de_jure_vassal_or_below
+				this = scope:checked.primary_title
+			}
+		}
+
+		title:e_italy = {
+			any_in_de_jure_hierarchy = { #any_de_jure_vassal_or_below
+				this = scope:checked.primary_title
+			}
+		}
+	}
+}
+
+mgr_is_historical_empire = {
+	OR = {
+		this = title:e_hre
+		this = title:e_byzantium
+		this = title:e_roman_empire
+		this = title:e_persia
+		this = title:e_arabia
+		this = title:e_tibet
+		this = title:e_mali
+		this = title:e_rajastan
+		this = title:e_kanem_bornu
+		this = title:e_bengal
+		this = title:e_deccan
+		this = title:e_abyssinia
+		#NB#
+		this = title:e_latin_empire
+		this = title:e_kirghiz_khanate
+		this = title:e_uyghur_khanate
+		this = title:e_north_sea
+		this = title:e_maghreb
+		this = title:e_chagatai
+		this = title:e_mongol_empire
+		this = title:e_golden_horde
+		this = title:e_blue_horde
+		this = title:e_bulgaria
+		this = title:e_serbia
+		this = title:e_ilkhanate
+		this = title:e_ottoman
+		this = title:e_kara_khitai
+		this = title:e_yuan
+		this = title:e_france
+		this = title:e_germany
+	}
+}
+
+mgr_can_seduce = {
+	OR = {
+		is_ai = no #Player always has agency
+		has_game_rule = default_seduction
+		AND = {
+			has_game_rule = restricted_seduction
+			OR = {
+				has_trait = lustful
+				has_trait = seducer
+				has_trait = rakish
+			}
+			OR = {
+				#Men have to be somewhat important to be eligible for this.
+				is_lowborn = no
+				is_female = yes
+			}
+			OR = { #Men actually have to be 'potent' to seduce.
+				is_female = yes
+				fertility = 0.1
+			}
+			#Women must either be young or important
+			OR = {
+				is_female = no
+				age < 45
+				AND = {
+					is_landed = yes
+					primary_title.tier > tier_county
+				}
+			}
+		}
+		#'Realistic'
+		AND = { 
+			has_game_rule = less_seduction
+			OR = {
+				#Men have to be somewhat important to be eligible for this.
+				is_lowborn = no
+				is_female = yes
+			}
+			OR = { #Men actually have to be 'potent' to seduce.
+				is_female = yes
+				fertility = 0.1
+			}
+			#Women must either be young or important. If old, they must have a seductive-type trait
+			OR = {
+				is_female = no
+				age < 45
+				AND = {
+					is_landed = yes
+					primary_title.tier > tier_county
+					OR = {
+						has_trait = lustful
+						has_trait = seducer
+						has_trait = rakish
+					}
+				}
+			}
+			NOR = {
+				has_trait = celibate
+				has_trait = chaste
+				has_trait = devoted
+				has_trait = eunuch
+				has_trait = incapable
+				#Not seriously ill or wounded
+				has_trait = pneumonic
+				has_trait = leper
+				has_trait = wounded_3
+				has_trait = maimed
+				has_trait = infirm
+				has_trait = bubonic_plague
+				has_trait = consumption
+				has_trait = typhus
+				has_trait = smallpox
+				has_trait = inbred
+			}
+			OR = {
+				has_trait = lustful
+				has_trait = seducer
+				has_trait = rakish
+				#Seduction for characters without lustful traits
+				AND = { 
+					#Marriage conditions
+					OR = {
+						is_married = no
+						faith = { has_doctrine = tenet_polyamory }
+						opinion = {
+							target = primary_spouse
+							value <= medium_negative_opinion
+						}
+					}
+					OR = {
+						is_concubine = no #usually more restricted in movement than a spouse
+						is_male = yes
+					}
+					#Trait requirements
+					OR = { 
+						#Personality traits
+						has_trait = deceitful
+						has_trait = impatient
+						has_trait = gluttonous
+						has_trait = arbitrary
+						has_trait = fickle
+
+						#Non-personality traits
+						has_trait = schemer
+						has_trait = adulterer
+						has_trait = fornicator
+						has_trait = lunatic
+						has_trait = deviant
+						has_trait = lifestyle_reveler
+						has_trait = drunkard
+						#has_trait = opium_addled #Not sure why MGR had this but it doesn't exist and pisses the error log off
+						AND = {
+							has_trait = zealous
+							faith = { 
+								OR = {
+									has_doctrine = tenet_carnal_exaltation 
+									has_doctrine = tenet_polyamory
+								}
+							}
+						}
+
+						#If married, any of these traits work
+						AND = {
+							is_married = yes
+							OR = {
+								has_trait = sadistic
+								has_trait = callous
+								has_trait = vengeful
+							}
+						}
+
+						#Alternatively not having any of these is good enough too (ambitious gregarious compassionate can cheat for example)
+						NOR = { 
+							#Personality
+							has_trait = shy
+							has_trait = craven
+							has_trait = patient
+							has_trait = content
+							has_trait = paranoid
+							has_trait = temperate
+
+							#Non-personality
+							has_trait = reclusive
+							has_trait = depressed
+							has_trait = disfigured
+							has_trait = beauty_bad_2
+							has_trait = beauty_bad_3
+
+							#These only apply if married. Otherwise they don't count.
+							AND = {
+								is_married = yes
+								OR = {
+									has_trait = honest
+									has_trait = just
+									has_trait = forgiving
+								}
+							}
+						}
+					}
+					#Only one lover unless we have a lustful-type trait or a tenet that encourages multiple lovers
+					OR = {
+						AND = {
+							num_of_relation_lover < 1
+							num_of_relation_soulmate < 1
+						}
+						faith = { 
+							OR = {
+								has_doctrine = tenet_carnal_exaltation 
+								has_doctrine = tenet_polyamory
+							}
+						}
+					}
+					#Zealous restrictions: Don't seduce unless accepted in faith
+					OR = {
+						NOT = { has_trait = zealous }
+						AND = {
+							is_female = yes
+							faith = { has_doctrine = doctrine_adultery_women_accepted }
+						}
+						AND = {
+							is_male = yes
+							faith = { has_doctrine = doctrine_adultery_men_accepted }
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+mgr_can_murder = {
+	OR = {
+		is_ai = no
+		has_game_rule = default_intrigue
+		AND = {
+			OR = {
+				has_game_rule = less_intrigue
+				has_game_rule = restricted_intrigue
+			}
+			#Must have one of these traits
+			OR = {
+				AND = {
+					has_education_intrigue_trigger = yes
+					has_game_rule = less_intrigue
+				}
+				AND = {
+					OR = {
+						has_game_rule = less_intrigue
+						has_trait = schemer
+						has_trait = torturer
+						has_trait = lunatic
+					}
+					OR = {	
+						has_trait = greedy
+						has_trait = paranoid
+					}
+				}
+				has_trait = deceitful
+				has_trait = sadistic
+				has_trait = vengeful
+				has_trait = callous
+			}
+			#Cannot have one of these traits
+			NOR = {
+				has_trait = craven
+				has_trait = compassionate
+				has_trait = forgiving
+			}
+		}
+	}
+}
