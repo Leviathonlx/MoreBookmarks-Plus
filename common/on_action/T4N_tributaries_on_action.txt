@@ -178,9 +178,26 @@ T4N_tributaries_on_death = {
     effect = {
         if = {
             limit = {
-                exists = var:suzerain
+                root = {
+                    exists = var:suzerain
+                }
             }
-            trigger_event = { id = tributaries.1 }
+			#Copy old Ruler tributaries list to his primary heir (on_death)
+			#Root is old ruler
+            every_in_list = {
+				variable = permanent_tributaries
+				root.primary_heir = {
+					add_to_variable_list = { name = permanent_tributaries target = prev }
+					add_to_variable_list = { name = all_tributaries target = prev }
+					set_variable = { name = suzerain value = this }
+				}
+				set_variable = { name = my_suzerain value = prev.primary_heir }
+			}		
+			every_in_list = {
+				variable = non_permanent_tributaries
+				remove_variable = my_suzerain
+			}	
+			remove_variable = suzerain
         }
         if = {
             limit = {
@@ -188,7 +205,45 @@ T4N_tributaries_on_death = {
                     exists = var:my_suzerain
                 }
             }
-            trigger_event = { id = tributaries.2 }
+			#give the heir var:my_suzerain
+			#Root is old tributary
+            if = {
+				limit = {
+					exists = var:my_suzerain
+					var:my_suzerain = {
+						is_target_in_variable_list = { name = permanent_tributaries target = prev }
+					}
+				}
+				var:my_suzerain = {
+					root.primary_heir = { 
+						set_variable = { name = my_suzerain value = prev }
+						#prev = {
+						#	add_to_variable_list = { name = all_tributaries target = prev} #WORK YOU FUCK
+						#}
+					}
+					remove_list_variable = { name = all_tributaries target = prev }
+					remove_list_variable = { name = permanent_tributaries target = prev }
+				}
+				#move trib type + character income to the heir
+				pass_tributary_type_to_heir = {
+					SCOPE = root
+					TYPE = var:tributary_type
+					NEW_RULER = root.primary_heir
+				}
+			}
+			if = {
+				limit = {
+					exists = var:my_suzerain
+					var:my_suzerain = {
+						is_target_in_variable_list = { name = non_permanent_tributaries target = prev }
+					}
+				}
+				var:my_suzerain = {
+					remove_list_variable = { name = non_permanent_tributaries target = prev }
+					remove_list_variable = { name = all_tributaries target = prev}
+				}	
+	
+			}
         }
     }
 }
