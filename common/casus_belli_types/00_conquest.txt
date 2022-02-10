@@ -1,6 +1,4 @@
-﻿#MGR
-#MODIFIED VANILLA FILE
-county_conquest_cb = {
+﻿county_conquest_cb = {
 	group = conquest
 
 	combine_into_one = yes
@@ -10,38 +8,18 @@ county_conquest_cb = {
 	allowed_for_character = {
 		can_use_conquest_cbs_trigger = yes
 	}
-	
-	allowed_for_character_display_regardless = {
-		trigger_if = {
-			limit = { NOT = { has_game_rule = conquest_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_conquest_war }
-		}
-	}
 
 	allowed_against_character = {
-		#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
+	
 		scope:attacker = {
 			ALL_FALSE = {
 				top_liege = scope:defender.top_liege
 				liege = scope:defender
 			}
 		}
+	}
+	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
 	}
 	target_titles = all
 	target_title_tier = county
@@ -156,6 +134,21 @@ county_conquest_cb = {
 				multiply = {
 					value = warfare_legacy_2_discount
 					desc = CB_ATTACKER_DYNASTY_WARFARE
+				}
+			}
+
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
 				}
 			}
 
@@ -293,6 +286,21 @@ county_conquest_cb = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -322,7 +330,6 @@ county_conquest_cb = {
 
 	on_declaration = {
 		on_declared_war = yes
-		scope:attacker = { conquest_war_cb_cooldown_effect = yes }
 	}
 
 	on_victory_desc = {
@@ -427,7 +434,6 @@ county_conquest_cb = {
 
 		scope:defender = {
 			stress_impact = {
- 				ambitious = medium_stress_impact_gain
  				arrogant = medium_stress_impact_gain
  			}
 		}
@@ -459,10 +465,8 @@ county_conquest_cb = {
 
 		# Prestige loss for the attacker
 		scope:attacker = {
-			pay_short_term_gold = {
-				gold = 2
-				target = scope:defender
-				yearly_income = yes
+			pay_short_term_gold_reparations_effect = {
+				GOLD_VALUE = 2
 			}
 			add_prestige = {
 				value = medium_prestige_value
@@ -472,7 +476,9 @@ county_conquest_cb = {
 
 		# Prestige for Defender
 		scope:defender = {
-			add_prestige = medium_prestige_value
+			add_prestige_war_defender_effect = {
+				PRESTIGE_VALUE = medium_prestige_value
+			}
 		}
 
 		# Prestige for the attacker's war allies
@@ -530,31 +536,21 @@ duchy_conquest_cb = {
 	}
 
 	allowed_for_character_display_regardless = {
-		prestige_level >= 3
+	casus_belli_block = yes
 		trigger_if = {
-			limit = { NOT = { has_game_rule = conquest_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_conquest_war }
+			limit = {
+				culture = {
+					has_cultural_parameter = cb_lower_prestige_level_requirement
+				}
+			}
+			prestige_level >= 2
+		}
+		trigger_else = {
+			prestige_level >= 3
 		}
 	}
 
 	allowed_against_character = {
-		#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-           # NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
 		scope:attacker = {
 			ALL_FALSE = {
 				top_liege = scope:defender.top_liege
@@ -715,6 +711,21 @@ duchy_conquest_cb = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -849,6 +860,21 @@ duchy_conquest_cb = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -878,7 +904,6 @@ duchy_conquest_cb = {
 
 	on_declaration = {
 		on_declared_war = yes
-		scope:attacker = { conquest_war_cb_cooldown_effect = yes }
 	}
 
 	on_victory_desc = {
@@ -957,6 +982,54 @@ duchy_conquest_cb = {
 
 		# FP1: note the victory for future memorialisation via stele (if applicable).
 		scope:attacker = { fp1_remember_recent_conquest_victory_effect = yes }
+
+		if = { # Warning that only counties are changing hands
+			limit = {
+				any_in_list = {
+					list = target_titles
+					tier = tier_duchy
+				}
+			}
+			random_in_list = {
+				list = target_titles
+				limit = { tier = tier_duchy }
+				save_scope_as = de_jure_target
+			}
+		}
+		if = {
+			limit = {
+				any_in_list = {
+					list = target_titles
+					tier = tier_duchy
+					holder = scope:defender
+				}
+			}
+			if = {
+				limit = {
+					scope:defender = {
+						any_held_title = {
+							tier = tier_county
+							NOT = { target_is_de_jure_liege_or_above = scope:de_jure_target }
+						}
+					}
+				}
+				custom_tooltip = conquest_title_not_transferred_tt
+			}
+			else = { custom_tooltip = conquest_title_destroyed_tt }
+		}
+		else = {
+			if = {
+				limit = {
+					any_in_list = {
+						list = target_titles
+						tier = tier_duchy
+						is_title_created = yes
+					}
+				}
+				custom_tooltip = conquest_title_usurp_tt
+			}
+			else = { custom_tooltip = conquest_title_create_tt }
+		}
 	}
 
 	on_white_peace_desc = {
@@ -1022,10 +1095,8 @@ duchy_conquest_cb = {
 
 		# Prestige loss for the attacker
 		scope:attacker = {
-			pay_short_term_gold = {
-				gold = 3
-				target = scope:defender
-				yearly_income = yes
+			pay_short_term_gold_reparations_effect = {
+				GOLD_VALUE = 3
 			}
 			add_prestige = {
 				value = major_prestige_value
@@ -1035,7 +1106,9 @@ duchy_conquest_cb = {
 
 		# Prestige for Defender
 		scope:defender = {
-			add_prestige = major_prestige_value
+			add_prestige_war_defender_effect = {
+				PRESTIGE_VALUE = major_prestige_value
+			}
 		}
 
 		# Prestige for the attacker's war allies
@@ -1092,38 +1165,17 @@ ducal_conquest_cb = {
 		has_perk = ducal_conquest_perk
 		can_use_conquest_cbs_trigger = no
 	}
-	
-	allowed_for_character_display_regardless = {
-		trigger_if = {
-			limit = { NOT = { has_game_rule = conquest_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_conquest_war }
-		}
-	}
 
 	allowed_against_character = {
-		#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
 		#scope:attacker = {
 		#	ALL_FALSE = {
 		#		top_liege = scope:defender.top_liege
 		#		liege = scope:defender
 		#	}
 		#}
+	}
+	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
 	}
 	target_titles = neighbor_land
 	target_title_tier = all
@@ -1314,6 +1366,21 @@ ducal_conquest_cb = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -1343,8 +1410,6 @@ ducal_conquest_cb = {
 
 	on_declaration = {
 		on_declared_war = yes
-		scope:attacker = { conquest_war_cb_cooldown_effect = yes }
-
 	}
 
 	on_victory_desc = {
@@ -1542,10 +1607,8 @@ ducal_conquest_cb = {
 
 		# Prestige loss for the attacker
 		scope:attacker = {
-			pay_short_term_gold = {
-				gold = 2
-				target = scope:defender
-				yearly_income = yes
+			pay_short_term_gold_reparations_effect = {
+				GOLD_VALUE = 2
 			}
 			add_prestige = {
 				value = medium_prestige_value
@@ -1555,7 +1618,9 @@ ducal_conquest_cb = {
 
 		# Prestige for Defender
 		scope:defender = {
-			add_prestige = medium_prestige_value
+			add_prestige_war_defender_effect = {
+				PRESTIGE_VALUE = medium_prestige_value
+			}
 		}
 
 		# Prestige for the attacker's war allies
@@ -1617,13 +1682,6 @@ ireland_laudabiliter_conquest_cb = {
 		}
 	}
 
-	allowed_for_character_display_regardless = {
-		trigger_if = {
-			limit = { NOT = { has_game_rule = conquest_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_conquest_war }
-		}
-	}
-
 	allowed_against_character = {
 		scope:attacker = {
 			ALL_FALSE = {
@@ -1631,6 +1689,9 @@ ireland_laudabiliter_conquest_cb = {
 				liege = scope:defender
 			}
 		}
+	}
+	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
 	}
 	target_titles = all
 	target_title_tier = all
@@ -1770,6 +1831,21 @@ ireland_laudabiliter_conquest_cb = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -1901,6 +1977,21 @@ ireland_laudabiliter_conquest_cb = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -1930,7 +2021,6 @@ ireland_laudabiliter_conquest_cb = {
 
 	on_declaration = {
 		on_declared_war = yes
-		scope:attacker = { conquest_war_cb_cooldown_effect = yes }
 	}
 
 	on_victory_desc = {
@@ -2130,10 +2220,8 @@ ireland_laudabiliter_conquest_cb = {
 		scope:attacker = { show_pow_release_message_effect = yes }
 		# Prestige loss for the attacker
 		scope:attacker = {
-			pay_short_term_gold = {
-				gold = 2
-				target = scope:defender
-				yearly_income = yes
+			pay_short_term_gold_reparations_effect = {
+				GOLD_VALUE = 2
 			}
 			add_prestige = {
 				value = medium_prestige_value
@@ -2143,7 +2231,9 @@ ireland_laudabiliter_conquest_cb = {
 
 		# Prestige for Defender
 		scope:defender = {
-			add_prestige = medium_prestige_value
+			add_prestige_war_defender_effect = {
+				PRESTIGE_VALUE = medium_prestige_value
+			}
 		}
 
 		# Prestige for the attacker's war allies

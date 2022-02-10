@@ -1,0 +1,246 @@
+﻿
+# Params
+# $SUZERAIN$
+# 	Character
+#	The character to receive tribute
+# $TRIBUTARY$
+# 	Character
+# 	The character to be paying tribute
+# $TYPE$
+#	TributaryType (name of scripted effect)
+#	The type of tributary being created
+make_tributary = {
+	$TYPE$ = {
+		TRIBUTARY = $TRIBUTARY$
+		SUZERAIN = $SUZERAIN$
+	}
+}
+
+# THIS is the tributary
+free_tributary = {
+	var:my_suzerain = {
+		if = {
+			limit = {
+				is_target_in_variable_list = { name = non_permanent_tributaries target = prev }
+			}
+			remove_list_variable = { name = non_permanent_tributaries target = prev }				
+		}
+		else = {
+			remove_list_variable = { name = permanent_tributaries target = prev }
+		}
+		remove_list_variable = { name = all_tributaries target = prev }
+		trigger_event = { id = tributaries.4 }
+	}
+	remove_variable = my_suzerain
+}
+
+# Params
+# $SUZERAIN$
+# 	Character
+#	The character to receive tribute
+# $TRIBUTARY_BASE_TYPE$
+#   Value
+#   Base type of tributary ( permanent non_permanent )
+# $TRIBUTARY$
+# 	Character
+# 	The character to be paying tribute
+# $TRIBUTE_GOLD_PERCENT$
+# 	Value
+# 	The percent of income to be paid by the tributary
+# 	Ideally between 0 and 1 but can be any number really
+# $MONTHLY_PRESTIGE_SUZERAIN$
+# 	Value
+# 	How much prestige does the suzerain earn every month
+# 	Can be positive or negative
+# $MONTHLY_PRESTIGE_TRIBUTARY$
+# 	Value
+# 	How much prestige does the tributary earn every month
+# 	Can be positive or negative
+# $MONTHLY_PIETY_SUZERAIN$
+# 	Value
+# 	How much piety does the suzerain earn every month
+# 	Can be positive or negative
+# $MONTHLY_PIETY_TRIBUTARY$
+# 	Value
+# 	How much piety does the tributary earn every month
+# 	Can be positive or negative
+
+make_custom_tributary = {
+	# Setup suzerain variables
+	$SUZERAIN$ = {
+		if = {
+			limit = {
+				NOT = { has_variable = suzerain }
+			}
+			set_variable = suzerain
+		}
+
+		switch = {
+			trigger = $TRIBUTARY_BASE_TYPE$
+
+			flag:permanent = { 
+				add_to_variable_list = {
+					name = permanent_tributaries
+					target = $TRIBUTARY$
+				}
+			}
+			flag:non_permanent = { 
+				add_to_variable_list = {
+					name = non_permanent_tributaries
+					target = $TRIBUTARY$
+				}
+			}
+		}
+		add_to_variable_list = {
+			name = all_tributaries
+			target = $TRIBUTARY$
+		}
+	}
+
+	$TRIBUTARY$ = {
+		# Store suzerain scope
+		set_variable = { name = my_suzerain value = $SUZERAIN$ }
+
+		# Store tributary type
+		# Useful for localisation and similar customisation
+		set_variable = {
+			name = tributary_type
+			value = $TYPE$
+		}
+
+		# Tribute values
+		set_variable = {
+			name = tribute_gold_percent
+			value = $TRIBUTE_GOLD_PERCENT$
+		}
+		set_variable = {
+			name = monthly_prestige_suzerain
+			value = $MONTHLY_PRESTIGE_SUZERAIN$
+		}
+		set_variable = {
+			name = monthly_prestige_tributary
+			value = $MONTHLY_PRESTIGE_TRIBUTARY$
+		}
+		set_variable = {
+			name = monthly_piety_suzerain
+			value = $MONTHLY_PIETY_SUZERAIN$
+		}
+		set_variable = {
+			name = monthly_piety_tributary
+			value = $MONTHLY_PIETY_TRIBUTARY$
+		}
+		set_variable = {
+			name = man_at_arm_cap_per_ten_subjects
+			value = $MAN_AT_ARM_CAP_PER_TEN_SUBJECTS$
+		}	
+		set_variable = {
+			name = monthly_levy_reinforcement_rate_per_subject
+			value = $MONTHLY_LEVY_REINFORCEMENT_RATE_PER_SUBJECT$
+		}	
+		set_variable = {
+			name = monthly_levy_reinforcement_rate_tributary
+			value = $MONTHLY_LEVY_REINFORCEMENT_RATE_TRIBUTARY$
+		}
+		#can declare war on tributary
+		#can call to war Suzerain
+		#can call to war Tributary flags
+
+		set_variable = {
+			name = can_declare_war_on_trib
+			value = $CAN_DECLARE_WAR_ON_TRIB_FLAG$
+		}
+		set_variable = {
+			name = can_call_to_war_suzerain
+			value = $CAN_CALL_TO_WAR_SUZERAIN_FLAG$
+		}		
+		set_variable = {
+			name = can_call_to_war_tributary
+			value = $CAN_CALL_TO_WAR_TRIBUTARY_FLAG$
+		}		
+	}
+}
+
+pass_tributary_type_to_heir = {
+	$SCOPE$ = {
+		switch = {
+			trigger = $TYPE$
+
+			flag:karling_tributary = {
+				make_tributary = {
+					TYPE = tributary_karling
+					TRIBUTARY = $NEW_RULER$
+					SUZERAIN = var:my_suzerain
+				}				
+			}
+			flag:china_tributary = {
+				make_tributary = {
+					TYPE = tributary_china
+					TRIBUTARY = $NEW_RULER$
+					SUZERAIN = var:my_suzerain
+				}	
+			}
+			flag:permanent_tributary = {
+				make_tributary = {
+					TYPE = tributary_permanent
+					TRIBUTARY = $NEW_RULER$
+					SUZERAIN = var:my_suzerain
+				}	
+			}
+		}
+		var:my_suzerain = {
+			remove_list_variable = { name = all_tributaries target = $SCOPE$ }
+			remove_variable = my_suzerain
+		}
+	}
+}
+
+
+ruler_offer_tribute_to_recipient_effect = {
+	scope:actor = {
+		if = {
+			limit = {
+				scope:permanent_trib = yes
+			}
+			make_tributary = {
+				TYPE = tributary_non_permanent
+				TRIBUTARY = scope:recipient
+				SUZERAIN = scope:actor
+			}				
+		}	
+		if = {
+			limit = {
+				scope:non_permanent_trib = yes
+			}	
+			make_tributary = {
+				TYPE = tributary_permanent
+				TRIBUTARY = scope:recipient
+				SUZERAIN = scope:actor
+			}					
+		}
+	}
+}
+
+offer_tribute_effect = {
+	scope:recipient = {
+		if = {
+			limit = {
+				scope:permanent_trib = yes
+			}
+			make_tributary = {
+				TYPE = tributary_non_permanent
+				TRIBUTARY = scope:recipient
+				SUZERAIN = scope:actor
+			}				
+		}	
+		if = {
+			limit = {
+				scope:non_permanent_trib = yes
+			}	
+			make_tributary = {
+				TYPE = tributary_permanent
+				TRIBUTARY = scope:recipient
+				SUZERAIN = scope:actor
+			}					
+		}
+	}
+}

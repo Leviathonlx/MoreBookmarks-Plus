@@ -6,23 +6,6 @@
 	mutually_exclusive_titles = { always = yes }
 
 	allowed_for_character = {
-		#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
 		OR = {
 			has_government = tribal_government
 			faith = {
@@ -35,7 +18,18 @@
 	}
 
 	allowed_for_character_display_regardless = {
-		prestige_level >= 4
+		casus_belli_block = yes
+		trigger_if = {
+			limit = {
+				culture = {
+					has_cultural_parameter = cb_lower_prestige_level_requirement
+				}
+			}
+			prestige_level >= 3
+		}
+		trigger_else = {
+			prestige_level >= 4
+		}
 	}
 	
 	allowed_against_character = {
@@ -85,7 +79,12 @@
 	
 	on_invalidated = {
 		scope:attacker = {
-			remove_character_flag = used_lifetime_invasion # If the war is invalidated, you should be permitted to try again
+			if = {
+				limit = {
+					is_alive = yes
+				}
+				remove_character_flag = used_lifetime_invasion # If the war is invalidated, you should be permitted to try again
+			}
 		}
 	}
 
@@ -219,6 +218,21 @@
 				multiply = {
 					value = warfare_legacy_2_discount
 					desc = CB_ATTACKER_DYNASTY_WARFARE
+				}
+			}
+
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
 				}
 			}
 
@@ -368,10 +382,8 @@
 
 		# Prestige loss for the attacker
 		scope:attacker = {
-			pay_short_term_gold = {
-				gold = 5
-				target = scope:defender
-				yearly_income = yes
+			pay_short_term_gold_reparations_effect = {
+				GOLD_VALUE = 5
 			}
 			add_prestige = {
 				value = massive_prestige_value
@@ -393,7 +405,7 @@
 			LOSER = scope:attacker
 			FAME_BASE = scope:cb_prestige_factor # Set by 'setup_claim_cb'
 			IS_RELIGIOUS_WAR = no
-			WINNER_FAME_SCALE = 10
+			WINNER_FAME_SCALE = scale_10_war_defender_win
 			LOSER_FAME_SCALE = -10
 			WINNER_ALLY_FAME_SCALE = 10
 			LOSER_ALLY_FAME_SCALE = 10
@@ -434,23 +446,6 @@ clan_invasion_war = {
 	mutually_exclusive_titles = { always = yes }
 
 	allowed_for_character = {
-		#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
 		has_government = clan_government
 		NOR = {
 			has_character_flag = used_lifetime_invasion
@@ -459,7 +454,18 @@ clan_invasion_war = {
 	}
 
 	allowed_for_character_display_regardless = {
-		prestige_level >= 4
+		casus_belli_block = yes
+		trigger_if = {
+			limit = {
+				culture = {
+					has_cultural_parameter = cb_lower_prestige_level_requirement
+				}
+			}
+			prestige_level >= 3
+		}
+		trigger_else = {
+			prestige_level >= 4
+		}
 	}
 	
 	allowed_against_character = {
@@ -640,6 +646,21 @@ clan_invasion_war = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -725,13 +746,11 @@ clan_invasion_war = {
 				NOT = { scope:defender.primary_title.tier = tier_empire }
 				scope:defender.primary_title.tier = scope:attacker.primary_title.tier
 			}
-			scope:defender = {
-				every_held_title = {
-					limit = { tier = scope:defender.primary_title.tier}
-					change_title_holder = {
-						holder = scope:attacker
-						change = scope:change
-					}
+			every_in_list = {
+				list = target_titles
+				change_title_holder = {
+					holder = scope:attacker
+					change = scope:change
 				}
 			}
 		}
@@ -843,10 +862,8 @@ clan_invasion_war = {
 
 		# Prestige loss for the attacker
 		scope:attacker = {
-			pay_short_term_gold = {
-				gold = 5
-				target = scope:defender
-				yearly_income = yes
+			pay_short_term_gold_reparations_effect = {
+				GOLD_VALUE = 5
 			}
 			add_prestige = {
 				value = massive_prestige_value
@@ -868,7 +885,7 @@ clan_invasion_war = {
 			LOSER = scope:attacker
 			FAME_BASE = scope:cb_prestige_factor # Set by 'setup_claim_cb'
 			IS_RELIGIOUS_WAR = no
-			WINNER_FAME_SCALE = 10
+			WINNER_FAME_SCALE = scale_10_war_defender_win
 			LOSER_FAME_SCALE = -10
 			WINNER_ALLY_FAME_SCALE = 10
 			LOSER_ALLY_FAME_SCALE = 10
@@ -1046,6 +1063,21 @@ mongol_invasion_war = {
 				multiply = {
 					value = warfare_legacy_2_discount
 					desc = CB_ATTACKER_DYNASTY_WARFARE
+				}
+			}
+
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
 				}
 			}
 
@@ -1250,10 +1282,10 @@ mongol_invasion_war = {
 
 		scope:attacker = {
 			add_prestige = mongol_invasion_cb_prestige_white_peace
-			#stress_impact = {
-			#	ambitious = medium_stress_impact_gain
-			#	arrogant = medium_stress_impact_gain
-			#}
+			stress_impact = {
+				ambitious = medium_stress_impact_gain
+				arrogant = medium_stress_impact_gain
+			}
 		}
 
 		scope:defender = {
@@ -1365,28 +1397,14 @@ mongol_realm_invasion_war = {
 	mutually_exclusive_titles = { always = yes }
 
 	allowed_for_character = {
-		#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
 		this = title:e_mongol_empire.holder
 		is_ai = yes # To keep it clean and simple for players
 		prestige_level >= 1
 	}
 	
+	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
+	}
 	allowed_against_character = {
 		NOT = { scope:defender.top_liege = scope:attacker }
 		scope:attacker = {
@@ -1502,6 +1520,21 @@ mongol_realm_invasion_war = {
 				multiply = {
 					value = warfare_legacy_2_discount
 					desc = CB_ATTACKER_DYNASTY_WARFARE
+				}
+			}
+
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
 				}
 			}
 

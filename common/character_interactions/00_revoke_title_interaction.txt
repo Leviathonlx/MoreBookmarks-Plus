@@ -1,4 +1,5 @@
-﻿#Modified vanilla file - Has #RESREPUBLICA# in it
+﻿#MODIFIED VANILLA FILE
+#HAS RESREPUBLICA			  
 revoke_title_interaction = {
 
 	category = interaction_category_vassal
@@ -43,7 +44,7 @@ revoke_title_interaction = {
 				scope:recipient.primary_title.tier >= tier_county
 			}
 		}
-		#RESREPUBLICA#
+		#RESREPUBLICA
 		scope:actor = {
 			OR = {
 				NOT = {
@@ -100,7 +101,7 @@ revoke_title_interaction = {
 				}
 			}
 		}
-		##
+	####
 	}
 	
 	is_valid_showing_failures_only = {
@@ -241,8 +242,8 @@ revoke_title_interaction = {
 		
 		scope:actor = {
 			trigger_event = char_interaction.0199
-		#RESREPUBLICA#
-			if = {
+		#RESREPUBLICA
+		 if = {
 				limit = { holds_valid_merchant_republic = yes }
 				primary_title = {
 					remove_list_variable = {
@@ -251,7 +252,7 @@ revoke_title_interaction = {
 					}
 				}
 			}
-		##
+		####
 		}
 
 		if = {
@@ -259,6 +260,24 @@ revoke_title_interaction = {
 				scope:actor = { has_character_flag = flag_hostile_actions_disabled_delay }
 			}
 			scope:actor = { remove_character_flag = flag_hostile_actions_disabled_delay }
+		}
+
+		# For revoking titles of character's imprisoned abroard who have lost a revocation war
+		hidden_effect = {
+			scope:actor = {
+				if = {
+					limit = {
+						has_opinion_modifier = {
+							target = scope:recipient
+							modifier = foreign_prison_revocation_opinion
+						}
+					}
+					remove_opinion = {
+						target = scope:recipient
+						modifier = foreign_prison_revocation_opinion
+					}
+				}
+			}
 		}
 	}
 
@@ -299,19 +318,39 @@ revoke_title_interaction = {
 	}
 
 	auto_accept = {
-		OR = {
-			scope:recipient = {
-				highest_held_title_tier = tier_barony
-			}
-			scope:recipient = {
-				is_imprisoned_by = scope:actor
-			}
-			custom_description = {
-				text = "spending_hook"
-				subject = scope:actor
-				object = scope:recipient
-				scope:hook = yes
-				scope:actor = { has_strong_hook = scope:recipient }
+		scope:recipient = {
+			calc_true_if = {
+				amount >= 1
+				custom_description = {
+					text = "baron_revocation"
+					highest_held_title_tier = tier_barony
+				}
+				custom_description = {
+					text = "prisoner_revocation"
+					is_imprisoned_by = scope:actor
+				}
+				custom_description = {
+					text = "spending_hook"
+					subject = scope:actor
+					object = scope:recipient
+					scope:hook = yes
+					scope:actor = { has_strong_hook = scope:recipient }
+				}
+				custom_description = {
+					text = "foreign_prison_revocation"
+					subject = scope:actor
+					object = scope:recipient
+					scope:recipient = {
+						is_imprisoned = yes
+						NOT = { is_imprisoned_by = scope:actor }
+					}
+					scope:actor = {
+						has_opinion_modifier = {
+							target = scope:recipient
+							modifier = foreign_prison_revocation_opinion
+						}
+					}
+				}
 			}
 		}
 	}
@@ -387,7 +426,7 @@ revoke_title_interaction = {
 			add = -20
 		}
 		modifier = { #Title is part of vassal's primary title de-jure.
-			add = -30
+			add = -25
 			OR = {
 				scope:recipient.primary_title = {
 					is_de_jure_liege_or_above_target = scope:landed_title
@@ -427,6 +466,14 @@ revoke_title_interaction = {
 				multiply = 50
 				max = 20
 	  		}
+		}
+		modifier = { # Legalistic tradition
+			desc = tradition_legalistic_name
+			scope:actor = {
+				has_revoke_title_reason = scope:recipient
+				culture = { has_cultural_parameter = vassals_more_likely_accept_punishments }
+			}
+			add = legalistic_vassal_punishment_acceptance
 		}
 	}
 

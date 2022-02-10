@@ -321,18 +321,22 @@ call_tributaries_to_war = {
     }
 
     is_valid_showing_failures_only = {
-        scope:actor = {
-            custom_tooltip = tributaries_not_already_called
-            any_in_list = {
-                variable = permanent_tributaries
-                NOT = {
-                    any_war_ally = {
-                        this = prev
-                    }
-                }
-            }
-        }
-    }
+		scope:actor = {
+			any_war_ally = {
+				this = scope:recipient
+			}
+		}
+		scope:recipient = {
+			NOR = { 
+				is_at_war_with = scope:actor 
+			}
+			custom_description = {
+				text = trib_type_allows_call_to_arms
+				exists = var:can_call_to_war_suzerain
+				var:can_call_to_war_suzerain.compare_value = flag:yes
+			}			
+		}
+	}
 
     auto_accept = {
         always = yes
@@ -1354,7 +1358,20 @@ turn_non_perma_tributary_to_perma = {
 
 	is_valid_showing_failures_only = {
 		exists = scope:recipient.var:possible_permafication_year
-		scope:recipient.var:possible_permafication_year.compare_value <= current_year			
+		OR = {
+			custom_description = {
+				text = trib_type_disallow_permafing_subjects
+				cope:recipient.var:possible_permafication_year.compare_value <= -1
+			}
+			custom_description = {
+				text = trib_type_allow_permafing_subjects
+				AND = {
+					cope:recipient.var:possible_permafication_year.compare_value > -1
+					scope:recipient.var:possible_permafication_year.compare_value <= current_year	
+				}
+			}		
+		}
+		
 	}
 
 	auto_accept = {

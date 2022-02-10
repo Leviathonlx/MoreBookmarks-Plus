@@ -1,6 +1,4 @@
-﻿#MGR
-#MODIFIED VANILLA FILE
-minor_religious_war = {
+﻿minor_religious_war = {
 	group = religious
 
 	defender_faith_can_join = yes
@@ -17,6 +15,7 @@ minor_religious_war = {
 	}
 
 	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
 		trigger_if = {
 			limit = {
 				has_variable_list = humsacd_hofs
@@ -25,33 +24,34 @@ minor_religious_war = {
 					target = scope:attacker.faith
 				}
 			}
-			piety_level >= 0
+			trigger_if = {
+				limit = {
+					culture = {
+						has_cultural_parameter = cb_lower_piety_level_requirement
+					}
+				}
+				piety_level >= -1
+			}
+			trigger_else = {
+				piety_level >= 0
+			}
 		}
-		trigger_else = { piety_level >= 1 }
-		trigger_if = {
-			limit = { NOT = { has_game_rule = holy_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_holy_war }
+		trigger_else = {
+			trigger_if = {
+				limit = {
+					culture = {
+						has_cultural_parameter = cb_lower_piety_level_requirement
+					}
+				}
+				piety_level >= 0
+			}
+			trigger_else = {
+				piety_level >= 1
+			}
 		}
 	}
 
 	allowed_against_character = {
-	#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
 		scope:attacker = {
 			faith = {
 				faith_hostility_level = {
@@ -224,6 +224,21 @@ minor_religious_war = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -270,7 +285,6 @@ minor_religious_war = {
 
 	on_declaration = {
 		on_declared_war = yes
-		scope:attacker = { holy_war_cb_cooldown_effect = yes }
 	}
 
 	on_victory_desc = {
@@ -359,18 +373,25 @@ minor_religious_war = {
 			}
 		}
 
-		scope:attacker.faith = {
-			change_fervor = -1
+		ordered_in_list = {
+			list = target_titles
+			order_by = tier
+			max = 1
+
+			save_scope_as = war_goal_title
 		}
-			 
-												
-												  
+
+		scope:attacker.faith = {
+			change_fervor = {
+				value = -1
+				desc = fervor_loss_religious_war
+			}
+		}
 		scope:defender.faith = {
-   
-			 
-												 
-											   
-			change_fervor = 3
+			change_fervor = {
+				value = 3
+				desc = fervor_gain_religious_war
+			}
 		}
 
 		# Truce
@@ -416,7 +437,6 @@ minor_religious_war = {
 
 		scope:defender = {
 			stress_impact = {
-				ambitious = medium_stress_impact_gain
 				arrogant = medium_stress_impact_gain
 			}
 		}
@@ -540,6 +560,7 @@ religious_war = {
 	}
 
 	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
 		trigger_if = {
 			limit = {
 				has_variable_list = humsacd_hofs
@@ -548,34 +569,34 @@ religious_war = {
 					target = scope:attacker.faith
 				}
 			}
-			piety_level >= 1
+			trigger_if = {
+				limit = {
+					culture = {
+						has_cultural_parameter = cb_lower_piety_level_requirement
+					}
+				}
+				piety_level >= 0
+			}
+			trigger_else = {
+				piety_level >= 1
+			}
 		}
-		trigger_else = { piety_level >= 2 }
-		trigger_if = {
-			limit = { NOT = { has_game_rule = holy_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_holy_war }
+		trigger_else = {
+			trigger_if = {
+				limit = {
+					culture = {
+						has_cultural_parameter = cb_lower_piety_level_requirement
+					}
+				}
+				piety_level >= 1
+			}
+			trigger_else = {
+				piety_level >= 2
+			}
 		}
 	}
 
 	allowed_against_character = {
-	
-	#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
 		scope:attacker = {
 			faith = {
 				faith_hostility_level = {
@@ -737,6 +758,21 @@ religious_war = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -783,7 +819,6 @@ religious_war = {
 
 	on_declaration = {
 		on_declared_war = yes
-		scope:attacker = { holy_war_cb_cooldown_effect = yes }
 	}
 
 	on_victory_desc = {
@@ -873,13 +908,25 @@ religious_war = {
 			}
 		}
 
-		scope:attacker.faith = {
-			change_fervor = -2
+		ordered_in_list = {
+			list = target_titles
+			order_by = tier
+			max = 1
+
+			save_scope_as = war_goal_title
 		}
-			 
-												
+
+		scope:attacker.faith = {
+			change_fervor = {
+				value = -2
+				desc = fervor_loss_religious_war
+			}
+		}
 		scope:defender.faith = {
-			change_fervor = 4
+			change_fervor = {
+				value = 4
+				desc = fervor_gain_religious_war
+			}
 		}
 
 		# Truce
@@ -925,7 +972,6 @@ religious_war = {
 
 		scope:defender = {
 			stress_impact = {
-				ambitious = medium_stress_impact_gain
 				arrogant = medium_stress_impact_gain
 			}
 		}
@@ -1061,6 +1107,7 @@ major_religious_war = {
 	}
 
 	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
 		trigger_if = {
 			limit = {
 				has_variable_list = humsacd_hofs
@@ -1069,39 +1116,47 @@ major_religious_war = {
 					target = scope:attacker.faith
 				}
 			}
-			piety_level >= 3
+			trigger_if = {
+				limit = {
+					culture = {
+						has_cultural_parameter = cb_lower_piety_level_requirement
+					}
+				}
+				piety_level >= 2
+			}
+			trigger_else = {
+				piety_level >= 3
+			}
 		}
-		trigger_else = { piety_level >= 4 }
+		trigger_else = {
+			trigger_if = {
+				limit = {
+					culture = {
+						has_cultural_parameter = cb_lower_piety_level_requirement
+					}
+				}
+				piety_level >= 3
+			}
+			trigger_else = {
+				piety_level >= 4
+			}
+		}
 		trigger_if = {
-			limit = { NOT = { has_game_rule = holy_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_holy_war }
-		}
-		custom_description = {
-			text = declared_major_religious_war_flag_tt
-			NOT = { has_character_flag = declared_major_religious_war_flag }
+			limit = {
+				culture = {
+					NOT = {
+						has_cultural_parameter = no_limit_to_kingdom_level_holy_wars
+					}
+				}
+			}
+			custom_description = {
+				text = declared_major_religious_war_flag_tt
+				NOT = { has_character_flag = declared_major_religious_war_flag }
+			}
 		}
 	}
 
 	allowed_against_character = {
-	
-	#Don't declare wars on your own tributaries or suzerain
-		#NOT = { exists = var:my_suzerain }
-        scope:defender = {
-            #NOT = { exists = var:my_suzerain } # defender does not already have a suzerain
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }
-        }
-		
 		scope:attacker = {
 			faith = {
 				faith_hostility_level = {
@@ -1263,6 +1318,21 @@ major_religious_war = {
 				}
 			}
 
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
+				}
+			}
+
 			# Vassal contract in-realm cost reduction
 			if = {
 				limit = {
@@ -1309,10 +1379,7 @@ major_religious_war = {
 
 	on_declaration = {
 		on_declared_war = yes
-		scope:attacker = { 
-			add_character_flag = declared_major_religious_war_flag 
-			holy_war_cb_cooldown_effect = yes
-		}
+		scope:attacker = { add_character_flag = declared_major_religious_war_flag }
 	}
 
 	on_victory_desc = {
@@ -1404,15 +1471,27 @@ major_religious_war = {
 			}
 		}
 
+		ordered_in_list = {
+			list = target_titles
+			order_by = tier
+			max = 1
+
+			save_scope_as = war_goal_title
+		}
+
 		scope:attacker.faith = {
-			change_fervor = -5
+			change_fervor = {
+				value = -5
+				desc = fervor_loss_religious_war
+			}
 		}
-			 
-												
 		scope:defender.faith = {
-			change_fervor = 10
+			change_fervor = {
+				value = 10
+				desc = fervor_gain_religious_war
+			}
 		}
-		
+
 		# Truce
 		add_truce_attacker_victory_effect = yes
 
@@ -1453,7 +1532,6 @@ major_religious_war = {
 
 		scope:defender = {
 			stress_impact = {
-				ambitious = medium_stress_impact_gain
 				arrogant = medium_stress_impact_gain
 			}
 		}
@@ -1595,8 +1673,10 @@ excommunication_war = {
 
 		scope:attacker = {
 			#We can't DoW our own liege
-			NOT = {
+			NOR = {
 				liege = scope:defender
+			#No pot calling the kettle black
+				has_trait = excommunicated
 			}
 
 			trigger_if = {
@@ -1609,6 +1689,9 @@ excommunication_war = {
 		}
 	}
 
+	allowed_for_character_display_regardless = {
+		casus_belli_block = yes
+	}
 	target_de_jure_regions_above = yes
 
 	valid_to_start = {
@@ -1680,7 +1763,6 @@ excommunication_war = {
 
 		scope:defender = {
 			stress_impact = {
-				ambitious = medium_stress_impact_gain
 				arrogant = medium_stress_impact_gain
 			}
 		}
@@ -1772,7 +1854,6 @@ excommunication_war = {
 		}
 
 		scope:defender = {
-			depose = yes
 
 			#Used for the piety_change scripted effect.
 			save_scope_as = loser
@@ -1917,6 +1998,21 @@ flowery_war_cb = {
 				multiply = {
 					value = warfare_legacy_2_discount
 					desc = CB_ATTACKER_DYNASTY_WARFARE
+				}
+			}
+
+			# Culture
+			if = {
+				limit = {
+					scope:attacker = {
+						culture = {
+							has_cultural_parameter = cheaper_cbs
+						}
+					}
+				}
+				multiply = {
+					value = 0.8
+					desc = "CB_ATTACKER_CULTURE"
 				}
 			}
 
@@ -2475,7 +2571,6 @@ flowery_war_cb = {
 
 		scope:defender = {
 			stress_impact = {
-				ambitious = medium_stress_impact_gain
 				arrogant = medium_stress_impact_gain
 			}
 		}
@@ -2959,6 +3054,10 @@ flowery_war_cb = {
 	max_defender_score_from_battles = 200
 
 	max_ai_diplo_distance_to_title = 500
+	
+	ai_score = {
+		value = raid_for_captives_ai_score_value
+	}
 
 	ai_score_mult = {
 		value = 1
@@ -3013,13 +3112,8 @@ undirected_great_holy_war = {
 	}
 
 	allowed_for_character_display_regardless = {
-		piety_level >= 1
-		trigger_if = {
-			limit = { NOT = { has_game_rule = holy_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_holy_war }
-		}
+		casus_belli_block = yes
 	}
-
 	valid_to_start = {
 		scope:target = {
 			tier = tier_kingdom
@@ -3077,7 +3171,6 @@ undirected_great_holy_war = {
 			trigger_event = great_holy_war.0051
 		}
 		on_declared_war = yes
-		scope:attacker = { holy_war_cb_cooldown_effect = yes }
 		scope:attacker.faith.great_holy_war = {
 			divide_war_chest = {
 				fraction = ghw_war_start_handout_percentage
@@ -3105,6 +3198,10 @@ undirected_great_holy_war = {
 		}
 
 		debug_log = undirected_ghw_debug_loc
+	}
+
+	should_invalidate = {
+		scope:attacker.faith = scope:defender.faith # Primary defender has converted
 	}
 
 	on_invalidated_desc = msg_invalidate_war_title
@@ -3184,6 +3281,13 @@ undirected_great_holy_war = {
 				every_war_attacker = {
 					add_achievement_flag_effect = { FLAG = achievement_for_the_faith_flag }
 				}
+			}
+		}
+
+		scope:defender.faith = {		#needed for hold_court.6150
+			set_variable = {
+				name = 6150_lost_ghw_recently		
+				years = 5
 			}
 		}
 
@@ -3531,6 +3635,27 @@ undirected_great_holy_war = {
 			}
 		}
 
+		ordered_in_list = {
+			list = target_titles
+			order_by = tier
+			max = 1
+
+			save_scope_as = war_goal_title
+		}
+
+		scope:attacker.faith = {
+			change_fervor = {
+				value = -25
+				desc = fervor_loss_great_holy_war
+			}
+		}
+		scope:defender.faith = {
+			change_fervor = {
+				value = 30
+				desc = fervor_gain_great_holy_war
+			}
+		}
+
 		#Truce between the chief beneficiary & all defenders
 		add_truce_GHW_attacker_victory_effect = yes
 		debug_log = undirected_ghw_victory_debug_message
@@ -3556,11 +3681,6 @@ undirected_great_holy_war = {
 			}
 		}
 
-		scope:attacker = {
-			faith = {
-				change_fervor = -15
-			}
-		}
 		scope:attacker.faith.great_holy_war.ghw_target_title = { #Loc keys for localization fluff.
 			save_scope_as = target_kingdom
 		}
@@ -3575,6 +3695,19 @@ undirected_great_holy_war = {
 		}
 		scope:attacker.faith.great_holy_war = {
 			save_scope_as = the_ghw
+		}
+
+		scope:attacker = {
+			faith = {
+				change_fervor = {
+					value = -15
+					desc = fervor_loss_lost_great_holy_war
+				}
+				set_variable = {			#needed for hold_court.6150
+					name = 6150_lost_ghw_recently
+					years = 5
+				}
+			}
 		}
 
 		scope:defender = {	#Achievement setup.
@@ -3681,10 +3814,7 @@ directed_great_holy_war = {
 			text = great_holy_war_cooldown
 			NOT = {	scope:attacker.faith = { exists = var:variable_ghw_cooldown }}
 		}
-		trigger_if = {
-			limit = { NOT = { has_game_rule = holy_war_cb_default } }
-			NOT = { has_character_modifier = mgr_recent_holy_war }
-		}
+		casus_belli_block = yes				 
 	}
 
 	allowed_against_character = {
@@ -3717,6 +3847,9 @@ directed_great_holy_war = {
 				}
 			}
 		}
+
+		#The war seems to be launching without a valid defender sometimes, so we double-check that one is set here
+		exists = scope:defender
 	}
 
 	on_declaration = {
@@ -3817,6 +3950,12 @@ directed_great_holy_war = {
 
 		debug_log = directed_ghw_debug_loc
 	}
+
+	should_invalidate = {
+		scope:attacker.faith = scope:defender.faith # Primary defender has converted
+	}
+
+	on_invalidated_desc = msg_invalidate_war_title
 
 	on_victory_desc = {
 		desc = great_holy_war_directed_victory_desc
@@ -3957,15 +4096,27 @@ directed_great_holy_war = {
 			}
 		}
 
+		ordered_in_list = {
+			list = target_titles
+			order_by = tier
+			max = 1
+
+			save_scope_as = war_goal_title
+		}
+
 		scope:attacker.faith = {
-			change_fervor = -25
+			change_fervor = {
+				value = -25
+				desc = fervor_loss_great_holy_war
+			}
 		}
-			 
-												
 		scope:defender.faith = {
-			change_fervor = 30
+			change_fervor = {
+				value = 30
+				desc = fervor_gain_great_holy_war
+			}
 		}
-		
+
 		#Truce between the chief beneficiary & all defenders
 		add_truce_GHW_attacker_victory_effect = yes
 
@@ -4042,9 +4193,13 @@ directed_great_holy_war = {
 
 		scope:attacker = {
 			faith = {
-				change_fervor = -15
+				change_fervor = {
+					value = -15
+					desc = fervor_loss_lost_great_holy_war
+				}
 			}
 		}
+
 		#Set 30 years cooldown.
 		hidden_effect = {
 			scope:attacker = {

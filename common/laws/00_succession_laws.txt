@@ -1,5 +1,4 @@
 ﻿##MODIFIED VANILLA FILE##
-#Has #RESREPUBLICA# in it
 #Added Muslim Enhacements has_government = siyasa_government to the file. If that mod isn't used it just pops an error in the error log complaining that the government doesn't exist and nothing more
 succession_order_laws = {
 	flag = succession_order_laws
@@ -312,8 +311,7 @@ succession_order_laws = {
 					primary_title.tier > tier_county
 					OR = {
 						#West Slavic
-						has_culture = culture:czech
-						has_culture = culture:slovien
+						culture = { has_cultural_pillar = heritage_west_slavic }
 					}
 				}
 				value = 2
@@ -398,12 +396,10 @@ succession_order_laws = {
 			has_government = republic_government
 		}
 		succession = {
-		#RESREPUBLICA#
 			order_of_succession = inheritance
 			traversal_order = children
 			rank = oldest
 			title_division = single_heir
-		##
 		}
 	}
 }
@@ -420,8 +416,14 @@ succession_gender_laws = {
 			always = no
 			}
 		can_keep = {
-			faith = {
-				has_doctrine = doctrine_gender_male_dominated
+			custom_tooltip = {
+				text = culture_not_female_only_tt
+				OR = {
+					faith = { has_doctrine = doctrine_gender_male_dominated }
+					NOT = {
+						culture = { has_cultural_parameter = female_only_inheritance }
+					}
+				}
 			}
 		}
 		can_pass = {
@@ -450,7 +452,6 @@ succession_gender_laws = {
 				culture = culture:hausa
 				culture = culture:sumpa
 				culture = culture:breton
-				culture = culture:outremer
 				culture = culture:visigothic
 			#Titles
 				has_title = title:k_norway
@@ -508,6 +509,15 @@ succession_gender_laws = {
 					NOT = { has_doctrine = doctrine_gender_female_dominated }
 				}
 			}
+			custom_tooltip = {
+				text = culture_not_female_only_tt
+				OR = {
+					faith = { has_doctrine = doctrine_gender_male_dominated }
+					NOT = {
+						culture = { has_cultural_parameter = female_only_inheritance }
+					}
+				}
+			}
 		}
 		can_pass = {
 			can_change_succession_law_trigger = yes
@@ -515,9 +525,10 @@ succession_gender_laws = {
 
 		should_start_with = {
 	
-			faith = {
-				has_doctrine = doctrine_gender_male_dominated
+			NOT = {
+				culture = { has_cultural_parameter = female_preference_inheritance }
 			}
+			
 			OR = {
 			#Cultures
 				culture = culture:english
@@ -536,7 +547,6 @@ succession_gender_laws = {
 				culture = culture:hausa
 				culture = culture:sumpa
 				culture = culture:breton
-				culture = culture:outremer
 				culture = culture:visigothic
 			#Titles
 				has_title = title:k_norway
@@ -589,41 +599,31 @@ succession_gender_laws = {
 			always = no
 		}
 		can_keep = {
-			trigger_if = {
-				limit = {
-					OR = {
-						culture = culture:occitan
-						culture = culture:gascon
-						culture = culture:basque
-						culture = culture:aragonese
-						culture = culture:catalan
+			custom_tooltip = {
+				text = equal_law_culture_faith_or_innovation_trigger
+				OR = {
+					culture = { has_cultural_parameter = gender_equal_inheritance }						  
+					#culture = { has_innovation = innovation_visigothic_codes }
+					faith = { has_doctrine = doctrine_gender_equal }
+					AND = { #Culture is female dominated but religion is male dominated
+						faith = { has_doctrine = doctrine_gender_male_dominated }
+						culture = { has_cultural_parameter = female_only_inheritance }
 					}
-					NOT = {
-						faith = { has_doctrine = doctrine_gender_equal }
+					AND = { #Culture is male dominated but faith is female dominated
+						faith = { has_doctrine = doctrine_gender_female_dominated }
+						NOT = { culture = { has_cultural_parameter = female_only_inheritance } }
 					}
-				}
-				culture = { has_innovation = innovation_visigothic_codes }
-			}
-			trigger_else = {
-				limit = {
-					NOT = {
-						OR = {
-							culture = culture:hausa
-							culture = culture:sumpa
-						}
-					}
-				}
-				faith = {
-					has_doctrine = doctrine_gender_equal
-				}
+				}														  
 			}
 		}
 		can_pass = {
-			can_change_to_equal_succession_law_trigger = yes
+			#can_change_to_equal_succession_law_trigger = yes
+			can_change_succession_law_trigger = yes
 		}
 		should_start_with = {
-		NOT = {
-						culture = culture:mongol #Added or Yuan starts as equal
+			NOR = {
+				culture = { has_cultural_parameter = female_preference_inheritance }
+				culture = { has_cultural_tradition = tradition_nubian_warrior_queens }
 			}
 			faith = {
 				has_doctrine = doctrine_gender_equal
@@ -649,7 +649,11 @@ succession_gender_laws = {
 			if = {
 				limit = {
 					primary_title.tier > tier_county
-					has_culture = culture:basque
+					faith = {
+						NOT = {
+							has_dominant_ruling_gender = prev
+						}
+					}
 				}
 				value = 2
 			}
@@ -662,17 +666,21 @@ succession_gender_laws = {
 		}
 		should_show_for_title = { # Never show this in the UI, just apply it through script
 			always = no
-			}
+		}
 		can_keep = {
-			custom_description = {
-				text = change_law_female_preference_faith_requirement
-				faith = {
-					NOT = { has_doctrine = doctrine_gender_male_dominated }
+			custom_tooltip = {
+				text = female_preference_law_faith_or_culture_trigger
+				OR = {
+					faith = {
+						NOT = { has_doctrine = doctrine_gender_male_dominated }
+					}
+					culture = { has_cultural_parameter = female_preference_inheritance }
 				}
 			}
 		}
 		should_start_with = {
 			OR = {
+				culture = { has_cultural_parameter = female_preference_inheritance }
 				faith = {
 					has_doctrine = doctrine_gender_female_dominated
 				}
@@ -702,10 +710,14 @@ succession_gender_laws = {
 		}
 		should_show_for_title = { # Never show this in the UI, just apply it through script
 			always = no
-			}
+		}
 		can_keep = {
-			faith = {
-				has_doctrine = doctrine_gender_female_dominated
+			custom_tooltip = {
+				text = female_only_law_faith_or_culture_trigger
+				OR = {
+					faith = { has_doctrine = doctrine_gender_female_dominated }
+					culture = { has_cultural_parameter = female_only_inheritance }
+				}
 			}
 		}
 		can_pass = {
@@ -722,6 +734,29 @@ succession_gender_laws = {
 		}
 		revoke_cost = {
 			prestige = change_succession_law_prestige_cost
+		}
+
+		should_start_with = {
+			OR = {
+				culture = { has_cultural_parameter = female_only_inheritance }
+			}
+		}
+	}
+}
+
+succession_faith = {
+	same_faith_only_law = {
+		can_keep = {
+			should_have_same_faith_succession_trigger = yes
+		}
+		can_pass = {
+			should_have_same_faith_succession_trigger = yes
+		}
+		should_start_with = {
+			should_have_same_faith_succession_trigger = yes
+		}
+		succession = {
+			faith = same_faith
 		}
 	}
 }

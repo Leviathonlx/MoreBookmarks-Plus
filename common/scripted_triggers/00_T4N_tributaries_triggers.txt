@@ -29,15 +29,48 @@ is_suzerain = {
 
 has_tributaries = {
 	OR = {
-		variable_list_size = { name = non_permanent_tributaries target > 0 }
-		variable_list_size = { name = permanent_tributaries target > 0 }
+		variable_list_size = { name = non_permanent_tributaries value > 0 }
+		variable_list_size = { name = permanent_tributaries value > 0 }
 	}
 }
 
 has_permanent_tributaries = {
-	variable_list_size = { name = permanent_tributaries target > 0 }
+	variable_list_size = { name = permanent_tributaries value > 0 }
 }
 
 has_non_permanent_tributaries = {
-	variable_list_size = { name = non_permanent_tributaries target > 0 }
+	variable_list_size = { name = non_permanent_tributaries value > 0 } #target
+}
+
+can_declare_war_on_tributary = {
+	#exists = var:suzerain
+	$SCOPE$ = {
+		exists = var:can_declare_war_on_trib 
+		var:can_declare_war_on_trib = flag:no
+		#exists = var:my_suzerain
+		#var:my_suzerain = prev  
+	}
+}
+
+can_declare_war_on_suzerain = {
+	$SCOPE$ = {
+		exists = var:my_suzerain
+		var:my_suzerain = $SCOPE2$
+	}
+}
+
+casus_belli_block = {
+	#CB Tributaries block
+	scope:attacker = {
+		#OR = {
+			custom_description = {
+				text = cannot_attack_tributary
+				NOT = { can_declare_war_on_tributary = { SCOPE = scope:defender } }
+			}
+			custom_description = {
+				text = cannot_attack_suzerain
+				NOT = { can_declare_war_on_suzerain = { SCOPE = scope:attacker SCOPE2 = scope:defender } } 
+			}
+		#}
+	}
 }
