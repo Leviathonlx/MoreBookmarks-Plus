@@ -1,4 +1,4 @@
-﻿#ResRepublica#
+﻿#RESREPUBLICA
 declare_war_interaction = {
 	category = interaction_category_diplomacy
 	common_interaction = yes
@@ -6,7 +6,7 @@ declare_war_interaction = {
 	interface = declare_war
 	interface_priority = 70
 	popup_on_receive = yes
-	pause_on_receive = yes
+	pause_on_receive = no
 
 	desc = declare_war_desc
 
@@ -87,6 +87,22 @@ declare_war_interaction = {
 			custom_description = {
 				text = "is_not_bankrupt"
 				gold > 0
+			}
+			trigger_if = {
+				limit = {
+					culture = { has_cultural_parameter = cannot_attack_allies }
+				}
+				NOT = {
+					is_allied_to = scope:recipient
+				}
+			}
+			trigger_if = {
+				limit = {
+					culture = { has_cultural_parameter = cannot_attack_truces }
+				}
+				NOT = {
+					has_truce = scope:recipient
+				}
 			}
 			is_imprisoned = no
 			trigger_if = {
@@ -266,6 +282,55 @@ declare_war_interaction = {
 					}
 				}
 			}
+			#Notify defender's vassals if the war is targeting one or more of their titles
+			scope:recipient = {
+				if = {
+					limit = {
+						any_vassal = {
+							any_character_war = {
+								casus_belli = {
+									primary_attacker = scope:actor
+									primary_defender = scope:recipient
+									any_target_title = {
+										holder = {
+											OR = {
+												this = prev.prev
+												is_vassal_or_below_of = prev.prev
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+					every_vassal = {
+						limit = {
+							any_character_war = {
+								casus_belli = {
+									primary_attacker = scope:actor
+									primary_defender = scope:recipient
+									any_target_title = {
+										holder = {
+											OR = {
+												this = prev.prev
+												is_vassal_or_below_of = prev.prev
+											}
+										}
+									}
+								}
+							}
+						}
+						send_interface_toast = {
+							title = declare_war_interaction_notification
+
+							left_icon = scope:actor					
+							right_icon = scope:recipient
+
+							custom_tooltip = declare_war_interaction_notification_tooltip
+						}
+					}
+				}
+			}
 		}
 	}
 	
@@ -326,35 +391,17 @@ end_war_attacker_victory_interaction = {
 					send_interface_toast = {
 						title = war_event.notification_liege_win.t
 						left_icon = scope:attacker_winner
+						left_icon = scope:defender_loser
 						custom_tooltip = war_event.1901
 					}
 				}
 			}
 			if = {
 				limit = { holds_valid_merchant_republic = yes republic_has_council_form = yes }
-				custom_description = {
-					text = effect_change_popular_appeasement_positive
-					value = 10
-					primary_title = {
-						change_popular_appeasement_positive = { AMOUNT = 10 }
-						specific_post_appeasement= { CLASS = popular }
-					}
-				}
-				custom_description = {
-					text = effect_change_clergy_appeasement_positive
-					value = 10
-					primary_title = {
-						change_clergy_appeasement_positive = { AMOUNT = 10 }
-						specific_post_appeasement= { CLASS = clergy }
-					}
-				}
-				custom_description = {
-					text = effect_change_noble_appeasement_positive
-					value = 10
-					primary_title = {
-						change_noble_appeasement_positive = { AMOUNT = 10 }
-						specific_post_appeasement= { CLASS = nobility }
-					}
+				primary_title = {
+					change_appeasement_positive = { CLASS = nobility AMOUNT = 10 }
+					change_appeasement_positive = { CLASS = clergy AMOUNT = 10 }
+					change_appeasement_positive = { CLASS = popular AMOUNT = 10 }
 				}
 			}
 		}
@@ -385,35 +432,17 @@ end_war_attacker_victory_interaction = {
 					send_interface_toast = {
 						title = war_event.notification_liege_loss.t
 						left_icon = scope:defender_loser
+						right_icon = scope:attacker_winner
 						custom_tooltip = war_event.1902
 					}
 				}
 			}
 			if = {
 				limit = { holds_valid_merchant_republic = yes republic_has_council_form = yes }
-				custom_description = {
-					text = effect_change_popular_appeasement_negative
-					value = 30
-					primary_title = {
-						change_popular_appeasement_negative = { AMOUNT = 30 }
-						specific_post_appeasement= { CLASS = popular }
-					}
-				}
-				custom_description = {
-					text = effect_change_clergy_appeasement_negative
-					value = 30
-					primary_title = {
-						change_clergy_appeasement_negative = { AMOUNT = 30 }
-						specific_post_appeasement= { CLASS = clergy }
-					}
-				}
-				custom_description = {
-					text = effect_change_noble_appeasement_negative
-					value = 30
-					primary_title = {
-						change_noble_appeasement_negative = { AMOUNT = 30 }
-						specific_post_appeasement= { CLASS = nobility }
-					}
+				primary_title = {
+					change_appeasement_negative = { CLASS = nobility AMOUNT = 30 }
+					change_appeasement_negative = { CLASS = clergy AMOUNT = 30 }
+					change_appeasement_negative = { CLASS = popular AMOUNT = 30 }
 				}
 			}
 		}
@@ -555,6 +584,7 @@ end_war_attacker_white_peace_interaction = {
 					send_interface_toast = {
 						title = WAR_RESULTS_WHITE_PEACE
 						left_icon = scope:attacker_white_peace
+						right_icon = scope:defender_white_peace
 						custom_tooltip = war_event.1903
 					}
 				}
@@ -572,35 +602,17 @@ end_war_attacker_white_peace_interaction = {
 					send_interface_toast = {
 						title = WAR_RESULTS_WHITE_PEACE
 						left_icon = scope:defender_white_peace
+						right_icon = scope:attacker_white_peace
 						custom_tooltip = war_event.1904
 					}
 				}
 			}
 			if = {
 				limit = { holds_valid_merchant_republic = yes republic_has_council_form = yes }
-				custom_description = {
-					text = effect_change_popular_appeasement_positive
-					value = 2
-					primary_title = {
-						change_popular_appeasement_positive = { AMOUNT = 2 }
-						specific_post_appeasement= { CLASS = popular }
-					}
-				}
-				custom_description = {
-					text = effect_change_clergy_appeasement_positive
-					value = 2
-					primary_title = {
-						change_clergy_appeasement_positive = { AMOUNT = 2 }
-						specific_post_appeasement= { CLASS = clergy }
-					}
-				}
-				custom_description = {
-					text = effect_change_noble_appeasement_positive
-					value = 2
-					primary_title = {
-						change_noble_appeasement_positive = { AMOUNT = 2 }
-						specific_post_appeasement= { CLASS = nobility }
-					}
+				primary_title = {
+					change_appeasement_positive = { CLASS = nobility AMOUNT = 2 }
+					change_appeasement_positive = { CLASS = clergy AMOUNT = 2 }
+					change_appeasement_positive = { CLASS = popular AMOUNT = 2 }
 				}
 			}
 		}
@@ -996,6 +1008,29 @@ end_war_attacker_white_peace_interaction = {
 			
 			desc = "PEACEMAKER_PERK_MODIFIER"
 		}
+		modifier = {
+			trigger = {
+				scope:war.casus_belli = {
+					primary_defender = scope:recipient
+					primary_attacker = { culture = { has_cultural_parameter = facilitate_white_peace } }
+				}
+			}
+			add = 10
+			
+			desc = "TRADITION_BONUS_WHITE_PEACE"
+		}
+		
+		modifier = {
+			trigger = {
+				scope:war.casus_belli = {
+					primary_attacker = scope:recipient
+					primary_defender = { culture = { has_cultural_parameter = facilitate_white_peace } }
+				}
+			}
+			add = 10
+			
+			desc = "TRADITION_BONUS_WHITE_PEACE"
+		}
 	}
 	
 	is_valid_showing_failures_only = {
@@ -1067,35 +1102,17 @@ end_war_attacker_defeat_interaction = {
 					send_interface_toast = {
 						title = war_event.notification_liege_loss.t
 						left_icon = scope:attacker_loser
+						right_icon = scope:defender_winner
 						custom_tooltip = war_event.1905 
 					}
 				}
 			}
 			if = {
 				limit = { holds_valid_merchant_republic = yes republic_has_council_form = yes }
-				custom_description = {
-					text = effect_change_popular_appeasement_negative
-					value = 30
-					primary_title = {
-						change_popular_appeasement_negative = { AMOUNT = 30 }
-						specific_post_appeasement= { CLASS = popular }
-					}
-				}
-				custom_description = {
-					text = effect_change_clergy_appeasement_negative
-					value = 30
-					primary_title = {
-						change_clergy_appeasement_negative = { AMOUNT = 30 }
-						specific_post_appeasement= { CLASS = clergy }
-					}
-				}
-				custom_description = {
-					text = effect_change_noble_appeasement_negative
-					value = 30
-					primary_title = {
-						change_noble_appeasement_negative = { AMOUNT = 30 }
-						specific_post_appeasement= { CLASS = nobility }
-					}
+				primary_title = {
+					change_appeasement_negative = { CLASS = nobility AMOUNT = 30 }
+					change_appeasement_negative = { CLASS = clergy AMOUNT = 30 }
+					change_appeasement_negative = { CLASS = popular AMOUNT = 30 }
 				}
 			}
 		}
@@ -1111,35 +1128,17 @@ end_war_attacker_defeat_interaction = {
 					send_interface_toast = {
 						title = war_event.notification_liege_win.t
 						left_icon = scope:defender_winner
+						right_icon = scope:attacker_loser
 						custom_tooltip = war_event.1906 
 					}
 				}
 			}
 			if = {
 				limit = { holds_valid_merchant_republic = yes republic_has_council_form = yes }
-				custom_description = {
-					text = effect_change_popular_appeasement_positive
-					value = 10
-					primary_title = {
-						change_popular_appeasement_positive = { AMOUNT = 10 }
-						specific_post_appeasement= { CLASS = popular }
-					}
-				}
-				custom_description = {
-					text = effect_change_clergy_appeasement_positive
-					value = 10
-					primary_title = {
-						change_clergy_appeasement_positive = { AMOUNT = 10 }
-						specific_post_appeasement= { CLASS = clergy }
-					}
-				}
-				custom_description = {
-					text = effect_change_noble_appeasement_positive
-					value = 10
-					primary_title = {
-						change_noble_appeasement_positive = { AMOUNT = 10 }
-						specific_post_appeasement= { CLASS = nobility }
-					}
+				primary_title = {
+					change_appeasement_positive = { CLASS = nobility AMOUNT = 10 }
+					change_appeasement_positive = { CLASS = clergy AMOUNT = 10 }
+					change_appeasement_positive = { CLASS = popular AMOUNT = 10 }
 				}
 			}
 		}
@@ -1205,6 +1204,20 @@ end_war_attacker_defeat_interaction = {
 			add = peacemaker_value
 			
 			desc = "PEACEMAKER_PERK_MODIFIER"
+		}
+		modifier = {
+			scope:war.casus_belli = {
+				primary_defender = {
+					culture = {
+						has_cultural_parameter = can_end_defensive_wars_earlier
+					}
+					NOT = { this = scope:recipient }
+				}
+			}
+			
+			add = 10
+			
+			desc = "TRADITION_BONUS_DEFENSIVE_WARS"
 		}
 	}
 	
