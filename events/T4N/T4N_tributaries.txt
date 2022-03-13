@@ -3,77 +3,6 @@
 #Clear "Roadblocks"
 
 ## Jamie-san: tributaries.1 and tributaries.2 now placed directly in on action to make sure that variable lists are removed from dead character before becoming invalid
-#Copy old Ruler tributaries list to his primary heir (on_death)
-#Root is old ruler
-#tributaries.1 = {
-#	type = character_event
-#	hidden = yes
-#
-#	immediate = {
-#		every_in_list = {
-#			variable = permanent_tributaries
-#			root.primary_heir = {
-#				add_to_variable_list = { name = permanent_tributaries target = prev }
-#				add_to_variable_list = { name = all_tributaries target = prev }
-#				set_variable = { name = suzerain value = this }
-#			}
-#			set_variable = { name = my_suzerain value = prev.primary_heir }
-#		}		
-#		every_in_list = {
-#			variable = non_permanent_tributaries
-#			remove_variable = my_suzerain
-#		}	
-#		remove_variable = suzerain
-#	}
-#}
-#
-##give the heir var:my_suzerain
-##Root is old tributary
-##on_death
-#tributaries.2 = {
-#	type = character_event
-#	hidden = yes
-#
-#	immediate = {
-#		if = {
-#			limit = {
-#				exists = var:my_suzerain
-#				var:my_suzerain = {
-#					is_target_in_variable_list = { name = permanent_tributaries target = prev }
-#				}
-#			}
-#			var:my_suzerain = {
-#				root.primary_heir = { 
-#					set_variable = { name = my_suzerain value = prev }
-#					#prev = {
-#					#	add_to_variable_list = { name = all_tributaries target = prev} #WORK YOU FUCK
-#					#}
-#				}
-#				remove_list_variable = { name = all_tributaries target = prev }
-#				remove_list_variable = { name = permanent_tributaries target = prev }
-#			}
-#			#move trib type + character income to the heir
-#			pass_tributary_type_to_heir = {
-#				SCOPE = root
-#				TYPE = var:tributary_type
-#				NEW_RULER = root.primary_heir
-#			}
-#		}
-#		if = {
-#			limit = {
-#				exists = var:my_suzerain
-#				var:my_suzerain = {
-#					is_target_in_variable_list = { name = non_permanent_tributaries target = prev }
-#				}
-#			}
-#			var:my_suzerain = {
-#				remove_list_variable = { name = non_permanent_tributaries target = prev }
-#				remove_list_variable = { name = all_tributaries target = prev}
-#			}	
-#
-#		}
-#	}
-#}
 
 #Attacker may or may mot become new suzerain
 #Root = scope:tributaries_slash_suzerain_war_winner
@@ -157,19 +86,12 @@ tributaries.4 = {
 		if = {
 			limit = {
 				NOT = {
-					is_suzerain = yes
-				}
-			}		
-		}
-		if = {
-			limit = {
-				NOT = {
 					has_permanent_tributaries = yes
 				}
 			}
 			clear_variable_list = permanent_tributaries
 		}
-		else_if = {
+		if = {
 			limit = {
 				NOT = {
 					has_non_permanent_tributaries = yes
@@ -177,11 +99,10 @@ tributaries.4 = {
 			}
 			clear_variable_list = non_permanent_tributaries
 		}
-		else_if = {
+		if = {
 			limit = {
-				NAND = {
-					has_permanent_tributaries = yes
-					has_non_permanent_tributaries = yes
+				NOT = {
+					has_tributaries = yes
 				}
 			}
 			clear_variable_list = permanent_tributaries
@@ -199,6 +120,7 @@ tributaries.5 = {
 	hidden = yes
 
 	immediate = {
+		#reset everything to 0
 		set_variable = {
 			name = cash_display
 			value = 0
@@ -361,6 +283,24 @@ tributaries.7 = {
 	}
 }
 
+#Tributary is informed that it no longer needs to pay tribute
+tributaries.8 = {
+	type = letter_event
+	opening = {
+		desc = tributaries.8_opening
+	}
+	desc = tributaries.8_desc
+	sender = scope:actor
+
+	immediate = {
+		custom_tooltip = stops_paying_tribute
+	}
+
+	option = {
+		name = nice
+	}	
+}
+
 #Response from new trib
 #Root is suzerain
 tributaries.9 = {
@@ -369,10 +309,9 @@ tributaries.9 = {
 		desc = tributaries.9_opening
 	}
 	desc = tributaries.9_desc
-	sender = scope:trib
+	sender = scope:recipient
 
 	immediate = {
-		custom_tooltip = becomes_a_trib
 	}
 
 	option = {
@@ -382,12 +321,12 @@ tributaries.9 = {
 
 #Response from new suzerain
 #Root is new trib
-tributaries.9.1 = {
+tributaries.10 = {
 	type = letter_event
 	opening = {
-		desc = tributaries.9.1_opening
+		desc = tributaries.10_opening
 	}
-	desc = tributaries.9.1_desc
+	desc = tributaries.10_desc
 	sender = scope:my_suzerain_evt
 
 	immediate = {
@@ -431,6 +370,7 @@ tributaries.12 = {
 
 #Call to arms recived from suzerain
 #Root is tributary
+#UNUSED RN to readd in 1.2.1
 tributaries.13 = {
 	type = letter_event
 	opening = {

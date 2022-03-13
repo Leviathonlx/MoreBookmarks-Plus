@@ -565,40 +565,56 @@ unite_the_western_slavs_decision_effects = {
 		limit = { highest_held_title_tier = tier_kingdom }
 		custom_tooltip = unite_the_western_slavs_decision_titles_tt
 	}
-	else = { custom_tooltip = unite_the_western_slavs_decision_titles_empire_tt }
+	custom_tooltip = unite_the_western_slavs_decision_titles_empire_tt
+	# If Saxony has been created, shift everything back into Polabia
+	if = {
+		limit = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_saxony
+			}
+		}
+		title:k_saxony = {
+			every_in_de_jure_hierarchy = {
+				limit = { tier = tier_duchy }
+				set_de_jure_liege_title = title:k_sorbia
+			}
+		}
+	}
 	hidden_effect = {
 		scope:western_slav_uniter = {
-			#If king-tier, proceed as normal.
+			#If king-tier, give them the West-Slavia title
 			if = {
 				limit = { highest_held_title_tier = tier_kingdom }
-				primary_title = { save_scope_as = wsu_primary_title }
-				every_in_list = {
-					list = west_slavic_kingdoms
-					limit = {
-						NOT = { this = scope:wsu_primary_title }
-						scope:western_slav_uniter = { completely_controls = prev }
-					}
-					#De jure shift all held west slavic titles into your primary title
-					every_in_de_jure_hierarchy = {
-						limit = { tier = tier_duchy }
-						set_de_jure_liege_title = scope:western_slav_uniter.primary_title
-					}
+				create_title_and_vassal_change = {
+					type = created
+					save_scope_as = title_change
+					add_claim_on_loss = no
+											  
+																
+	  
+																	   
+								   
+								   
+																	   
+	  
 				}
-				#Destroy the waste titles
-				every_in_list = {
-					list = west_slavic_kingdoms
-					limit = {
-						NOT = { this = scope:wsu_primary_title }
+				title:e_west_slavia = {
+					change_title_holder = {
+						holder = scope:western_slav_uniter
+						change = scope:title_change
+											  
 					}
-					scope:western_slav_uniter = { destroy_title = prev }
+														 
 				}
+				resolve_title_and_vassal_change = scope:title_change
 			}
-			#If higher than king tier, drift kingdoms to empire
-			else = {
-				every_in_list = {
-					list = west_slavic_kingdoms
-					set_de_jure_liege_title = scope:western_slav_uniter.primary_title
-				}
+			# Drift kingdoms to empire
+		   
+			every_in_list = {
+				list = west_slavic_kingdoms
+				set_de_jure_liege_title = scope:western_slav_uniter.primary_title
+	 
 			}
 		}
 	}	
@@ -2347,11 +2363,16 @@ resolve_danelaw_partition_effect = {
 		}
 		# Sundry cosmetic changes.
 		title:k_england = {
-			# Set k_england's CoA to k_danelaw's.
-			custom_tooltip = resolve_danelaw_partition_effect.coa_changed.tt
-			title:k_england = { set_coa = title:k_danelaw }
-			# Give k_england the appropriate succession law.
-			add_title_law = scandinavian_elective_succession_law
+			if = { # Only do Scandinavian things for Scandinavians
+				limit = {
+					holder.culture = { has_cultural_pillar = heritage_north_germanic }
+				}
+				# Set k_england's CoA to k_danelaw's.
+				custom_tooltip = resolve_danelaw_partition_effect.coa_changed.tt
+				title:k_england = { set_coa = title:k_danelaw }
+				# Give k_england the appropriate succession law.
+				add_title_law = scandinavian_elective_succession_law
+			}
 			# Use k_danelaw's title history, as they won the cold war.
 			copy_title_history = title:k_danelaw
 			# And make York the de jure capital.
@@ -2488,6 +2509,30 @@ found_cadet_house_decision_effect = {
 			left_icon = scope:new_head
 			right_icon = scope:former_house_head
 			desc = created_cadet_branch_toast_new_house_other_tt
+		}
+		if = {
+			limit = {
+				any_artifact = {
+                	trigger_if = {
+                    	limit = { exists = var:banner_dynasty }
+                    	var:banner_dynasty = root.dynasty
+                    }
+                    trigger_else = { always = no }
+                    artifact_owner = {
+                    	NOT = { this = root }
+           				in_diplomatic_range = root
+                    }
+                }
+			}
+			random_artifact = {
+				limit = {
+					exists = var:banner_dynasty
+                    var:banner_dynasty = root.dynasty
+                    artifact_owner = { in_diplomatic_range = root }
+				}
+				save_scope_as = new_branch_dynasty_banner
+			}
+			scope:new_house = { add_house_artifact_claim = scope:new_branch_dynasty_banner }
 		}
 	}
 }

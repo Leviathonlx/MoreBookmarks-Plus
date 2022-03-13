@@ -91,12 +91,12 @@ game_rule.1000 = {
 			if = {
 				limit = { only_ai_if_ai_only_trigger = yes }
 				trigger_event = game_rule.1001
-				trigger_event = game_rule.1002
+				
 			}
 			every_vassal_or_below = {
 				limit = { only_ai_if_ai_only_trigger = yes }
 				trigger_event = game_rule.1001
-				trigger_event = game_rule.1002
+				
 			}
 		}
 	}
@@ -238,6 +238,83 @@ game_rule.3 = { # Exclave Independence, on war end
 	}
 }
 
+scripted_trigger weak_empire = {
+	tier = tier_empire
+	is_titular = no
+	is_landless_type_title = no
+	NOT = { exists = controlled_faith }
+	NOT = { # Need to own 20% of De Jure counties
+		any_in_de_jure_hierarchy = {
+			filter = {
+				tier = tier_county
+			}
+			continue = {
+				tier > tier_county
+			}
+			OR = {
+				holder = root
+				holder = {
+					target_is_liege_or_above = root
+				}
+			}
+			percent >= 0.20
+		}
+	}
+}
+
+game_rule.4 = { # Empire Obscurity Game Rule
+	type = character_event
+	title = game_rule.4.t
+	desc = game_rule.4.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+	
+	cooldown = { years = 25 }
+
+	trigger = {
+		has_game_rule = on_empire_obscurity_requirement
+		is_landed = yes
+		is_at_war = no
+		primary_title.tier >= tier_empire
+		any_held_title = {
+			weak_empire = yes
+		}
+	}
+
+	immediate = {
+		random_held_title = {
+			limit = {
+				weak_empire = yes
+			}
+			save_scope_as = falling_empire
+		}
+	}
+
+	option = { # No! I just need time!
+		name = game_rule.4.a
+		
+		add_prestige = -2000
+		add_prestige_experience = -2000
+		
+		ai_chance = {
+			base = 0
+		}
+	}
+
+	option = { # Farewell, dear empire...
+		name = game_rule.4.b
+		
+		destroy_title = scope:falling_empire
+		add_pressed_claim = scope:falling_empire
+		
+		ai_chance = {
+			base = 100
+		}
+	}
+}
 #######################
 # HUNGARIAN MIGRATION #
 #######################
@@ -467,50 +544,50 @@ game_rule.1012 = {
 	}
 }
 
-game_rule.1002 = {
-	type = character_event
-	hidden = yes
-	
-	trigger = {
-		is_from_ruler_designer = no # Do not modify the family of somoene from the ruler designer
-		#Is in need of spouse
-		AND = {
-			is_married = no
-			any_spouse = {
-				even_if_dead = yes
-				count = 0
-			}
-			any_child = {
-				count > 0
-				NOR = {
-					has_trait = bastard
-					has_trait = legitimized_bastard
-					has_trait = child_of_concubine
-					has_trait = wild_oat
-				}
-			}
-		}
-		NOR = {
-			has_trait = celibate
-			has_trait = eunuch
-		}
-		age >= 17 #Because you need ~1 year of pregnancy
-		is_landed = yes
-		primary_title = {
-			is_mercenary_company = no
-			is_holy_order = no
-		}
-		NOR = {
-			has_government = republic_government
-			has_government = theocracy_government
-		}
-	}
-
-	immediate = {
-		if = {
-			limit = { faith = { has_doctrine_parameter = marriage_event } }
-			add_character_flag = ignore_marriage_event
-		}
-		game_rule_create_spouse = { CHARACTER = root }
-	}
-}
+#game_rule.1002 = {
+#	type = character_event
+#	hidden = yes
+#	
+#	trigger = {
+#		is_from_ruler_designer = no # Do not modify the family of somoene from the ruler designer
+#		#Is in need of spouse
+#		AND = {
+#			is_married = no
+#			any_spouse = {
+#				even_if_dead = yes
+#				count = 0
+#			}
+#			any_child = {
+#				count > 0
+#				NOR = {
+#					has_trait = bastard
+#					has_trait = legitimized_bastard
+#					has_trait = child_of_concubine
+#					has_trait = wild_oat
+#				}
+#			}
+#		}
+#		NOR = {
+#			has_trait = celibate
+#			has_trait = eunuch
+#		}
+#		age >= 17 #Because you need ~1 year of pregnancy
+#		is_landed = yes
+#		primary_title = {
+#			is_mercenary_company = no
+#			is_holy_order = no
+#		}
+#		NOR = {
+#			has_government = republic_government
+#			has_government = theocracy_government
+#		}
+#	}
+#
+#	immediate = {
+#		if = {
+#			limit = { faith = { has_doctrine_parameter = marriage_event } }
+#			add_character_flag = ignore_marriage_event
+#		}
+#		game_rule_create_spouse = { CHARACTER = root }
+#	}
+#}

@@ -16,31 +16,14 @@ make_tributary = {
 	}
 }
 
-# THIS is the tributary
-free_tributary = {
-	var:my_suzerain = {
-		if = {
-			limit = {
-				is_target_in_variable_list = { name = non_permanent_tributaries target = prev }
-			}
-			remove_list_variable = { name = non_permanent_tributaries target = prev }				
-		}
-		else = {
-			remove_list_variable = { name = permanent_tributaries target = prev }
-		}
-		remove_list_variable = { name = all_tributaries target = prev }
-		trigger_event = { id = tributaries.4 }
-	}
-	remove_variable = my_suzerain
-}
 
 # Params
 # $SUZERAIN$
 # 	Character
 #	The character to receive tribute
 # $TRIBUTARY_BASE_TYPE$
-#   Value
-#   Base type of tributary ( permanent non_permanent )
+#   Flag
+#   Base type of tributary ( flag:permanent flag:non_permanent )
 # $TRIBUTARY$
 # 	Character
 # 	The character to be paying tribute
@@ -64,8 +47,33 @@ free_tributary = {
 # 	Value
 # 	How much piety does the tributary earn every month
 # 	Can be positive or negative
+# $MAN_AT_ARM_CAP_PER_TEN_SUBJECTS$
+#	Value
+#	How much Men at Arms suzerain will get per 10 tributaries of said type
+#	Can be intiger, float, negative or positive (hard coded max of 20 any value over it will loop to 20) [blame pdx for not allowing dynamic modifiers]
+# $MONTHLY_LEVY_REINFORCEMENT_RATE_PER_SUBJECT$
+#	Value
+#	How much of levy reinforcment rate does suzerain gets per every subject
+#	must be a % value, can be both negative or positive (hard coded max is 40% any value over it will loop to 40%) [same as before]
+# $MONTHLY_LEVY_REINFORCEMENT_RATE_TRIBUTARY$
+#	Value
+#	How much of levy reinforcment rate does tributary loses to\gains from suzerain
+#	must be a % value, can be both negative or positive (hard coded max is 20% any value over it will loop to 20%) [same as before]
+# $CAN_DECLARE_WAR_ON_TRIB_FLAG$
+#	Flag
+#	Can suzerain declare war on his tributaries
+#	Accepted values: flag:yes and flag:no
+# $CAN_CALL_TO_WAR_SUZERAIN_FLAG$
+#	Flag
+#	Can suzerain call to war his tributaries
+#	Accepted values: flag:yes and flag:no
+# $CAN_CALL_TO_WAR_TRIBUTARY_FLAG$
+#	Flag
+#	Can Tributary call to war his suzerain
+#	Accepted values: flag:yes and flag:no
 
-make_custom_tributary = {
+
+define_tributary = {
 	# Setup suzerain variables
 	$SUZERAIN$ = {
 		if = {
@@ -158,38 +166,80 @@ make_custom_tributary = {
 			value = $CAN_CALL_TO_WAR_TRIBUTARY_FLAG$
 		}		
 	}
+
+	#calulate income
+	$SUZERAIN$ = {
+		if = {
+			limit = {
+				exists = var:cash_display #if it exists then every other also must exist 
+			}
+			every_in_list = {
+				variable = all_tributaries
+				prev = {
+					change_variable = {
+						name = cash_display
+						add = { value = prev.monthly_character_income multiply = prev.var:tribute_gold_percent }
+					}
+					change_variable = {
+						name = prestige_display
+						add = prev.var:monthly_prestige_suzerain
+					}
+					change_variable = {
+						name = piety_display
+						add = prev.var:monthly_piety_suzerain
+					}
+				}
+			}
+		}
+		else = {
+			every_in_list = {
+				variable = all_tributaries
+				prev = {
+					set_variable = {
+						name = cash_display
+						value = { value = prev.monthly_character_income multiply = prev.var:tribute_gold_percent }
+					}
+					set_variable = {
+						name = prestige_display
+						value = prev.var:monthly_prestige_suzerain
+					}
+					set_variable = {
+						name = piety_display
+						value = prev.var:monthly_piety_suzerain
+					}
+				}
+			}
+		}
+	}
 }
 
 pass_tributary_type_to_heir = {
 	$SCOPE$ = {
+		remove_variable = my_suzerain
 		switch = {
 			trigger = $TYPE$
 
 			flag:karling_tributary = {
 				make_tributary = {
 					TYPE = tributary_karling
-					TRIBUTARY = $NEW_RULER$
-					SUZERAIN = var:my_suzerain
+					TRIBUTARY = $TRIBUTARY$
+					SUZERAIN = $NEW_RULER$
 				}				
 			}
 			flag:china_tributary = {
 				make_tributary = {
 					TYPE = tributary_china
-					TRIBUTARY = $NEW_RULER$
-					SUZERAIN = var:my_suzerain
+					TRIBUTARY = $TRIBUTARY$
+					SUZERAIN = $NEW_RULER$
 				}	
 			}
 			flag:permanent_tributary = {
 				make_tributary = {
 					TYPE = tributary_permanent
-					TRIBUTARY = $NEW_RULER$
-					SUZERAIN = var:my_suzerain
+					TRIBUTARY = $TRIBUTARY$
+					SUZERAIN = $NEW_RULER$
 				}	
 			}
-		}
-		var:my_suzerain = {
-			remove_list_variable = { name = all_tributaries target = $SCOPE$ }
-			remove_variable = my_suzerain
 		}
 	}
 }
@@ -242,5 +292,49 @@ offer_tribute_effect = {
 				SUZERAIN = scope:actor
 			}					
 		}
+	}
+}
+
+unset_tributary = {
+	$TRIBUTARY$ = {
+		switch = {
+			trigger = $TRIBUTARY_BASE_TYPE$
+			flag:permanent = {
+				var:my_suzerain = {
+					remove_list_variable = { name = permanent_tributaries target = prev }			
+				}
+				remove_variable = possible_vasalisation_year
+			}
+			flag:non_permanent = {
+				var:my_suzerain = {
+					remove_list_variable = { name = non_permanent_tributaries target = prev }
+				}
+				remove_variable = possible_permafication_year
+			}
+		}
+
+		var:my_suzerain = { remove_list_variable = { name = all_tributaries target = prev } }
+
+		# Store suzerain scope
+		remove_variable = my_suzerain
+
+		# Store tributary type
+		remove_variable = tributary_type
+
+		# Tribute values
+		remove_variable = tribute_gold_percent
+		remove_variable = monthly_prestige_suzerain
+		remove_variable = monthly_prestige_tributary
+		remove_variable = monthly_piety_suzerain
+		remove_variable = monthly_piety_tributary
+		remove_variable = man_at_arm_cap_per_ten_subjects
+		remove_variable = monthly_levy_reinforcement_rate_per_subject
+		remove_variable = monthly_levy_reinforcement_rate_tributary
+		#can declare war on tributary
+		#can call to war Suzerain
+		#can call to war Tributary flags
+		remove_variable = can_declare_war_on_trib
+		remove_variable = can_call_to_war_suzerain	
+		remove_variable = can_call_to_war_tributary	
 	}
 }

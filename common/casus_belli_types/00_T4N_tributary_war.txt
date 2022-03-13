@@ -9,39 +9,49 @@
 
     truce_days = 970
 
-    allowed_for_character_display_regardless = {
-        scope:defender = {
-            primary_title = {
-                tier >= tier_county
-            }
-            NOT = { exists = var:my_suzerain }
-            scope:attacker.primary_title.tier >= scope:defender.primary_title.tier  
-            custom_description = {
-                text = not_a_tributary
-                subject = scope:defender
-                NOT = {
-                    scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
-                    }
-                }
-            }            
-        }
+    allowed_for_character = {
+	
+		#NB - Changed this to allowed_for_character from allowed_for_character_display_regardless. 
+		trigger_if = {
+			limit = { is_ai = no }
+			prestige_level >= medium_prestige_level
+		}
+		trigger_else = { prestige_level >= low_prestige_level }
+		#END NB
+		 
+		# Ensure that this is only done every now and then.
+		is_independent_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		
         NAND = {
-            scope:attacker = {
-                primary_title = {
-                    tier < tier_county
-                }
-                scope:attacker.primary_title.tier < scope:defender.primary_title.tier  
-                exists = var:my_suzerain
+            primary_title = {
+                tier < tier_county
             }
+            scope:attacker.primary_title.tier < scope:defender.primary_title.tier  
+            exists = var:my_suzerain
         }
+    }
+    allowed_against_character = {
+        primary_title = {
+            tier >= tier_county
+        }
+        NOT = { exists = var:my_suzerain }
+        scope:attacker.primary_title.tier >= scope:defender.primary_title.tier  
+        custom_description = {
+            text = not_a_tributary
+            subject = scope:defender
+            NOT = {
+                scope:attacker = {
+                    is_target_in_variable_list = { name = all_tributaries target = scope:defender }
+                }
+            }
+        } 
     }
 
     cost = {
-        prestige = 150
+        prestige = {
+            value = 150
+        }
     }
 
 	on_victory_desc = {
@@ -82,7 +92,9 @@
 
 	on_white_peace = { 
         scope:attacker = {
-            prestige = -150 
+            prestige = {
+                value = -150
+            }
         }
     }
 
@@ -124,22 +136,32 @@ permament_tributary_war_cb = {
 
     truce_days = 970
 
-    allowed_for_character_display_regardless = {
+    allowed_for_character = {
+	
+		#NB#
+		trigger_if = {
+			limit = { is_ai = no }
+			prestige_level >= medium_prestige_level
+		}
+		trigger_else = { prestige_level >= low_prestige_level }
+		#End NB#
+		
+		# Ensure that this is only done every now and then.
+		is_independent_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		
         scope:defender = {
             primary_title = {
                 tier >= tier_county
             }
-            root.primary_title.tier >= scope:defender.primary_title.tier 
+            scope:attacker.primary_title.tier >= scope:defender.primary_title.tier 
             NOT = { exists = var:my_suzerain }
             custom_description = {
                 text = not_a_tributary
                 subject = scope:defender
                 NOT = {
                     scope:attacker = {
-                        OR = {
-                            is_target_in_variable_list = { name = permanent_tributaries target = scope:defender }
-                            is_target_in_variable_list = { name = non_permanent_tributaries target = scope:defender }
-                        }
+                        is_target_in_variable_list = { name = all_tributaries target = scope:defender }
                     }
                 }
             }            
@@ -156,7 +178,9 @@ permament_tributary_war_cb = {
     }
 
     cost = {
-        prestige = 150
+        prestige = {
+            value = 150
+        }
     }
 
 	on_victory_desc = {
@@ -197,7 +221,9 @@ permament_tributary_war_cb = {
 
 	on_white_peace = { 
         scope:attacker = {
-            prestige = -150 
+            prestige = {
+                value = -150
+            }
         }
     }
 
@@ -239,27 +265,17 @@ independence_tributary_war_cb = {
 
     truce_days = 970
 
-    allowed_for_character = {
-        scope:attacker = {
-            exists = var:my_suzerain
-            var:my_suzerain = scope:defender
-        }
-    }
-
-    allowed_for_character_display_regardless = {
-        scope:attacker = {
-            exists = var:my_suzerain
-            var:my_suzerain = {
-                OR = {
-                    is_target_in_variable_list = { name = non_permanent_tributaries target = scope:attacker }
-                    is_target_in_variable_list = { name = permanent_tributaries target = scope:attacker }
-                }
-            }
+    allowed_against_character = {
+        scope:defender = {
+            exists = var:suzerain
+            is_target_in_variable_list = { name = all_tributaries target = scope:attacker }
         }
     }
 
     cost = {
-        prestige = 150
+        prestige = {
+            value = 150
+        }
     }
 
 
@@ -279,23 +295,24 @@ independence_tributary_war_cb = {
 
     on_victory = {
         scope:attacker = {
-            delete_variable = var:my_suzerain
-        }
-        scope:defender = {
             if = {
                 limit = {
-                    is_target_in_variable_list = { name = permanent_tributaries target = scope:attacker }
+                    is_permanent_tributary = {
+                        SUZERAIN = scope:defender
+                        TRIBUTARY = scope:attacker
+                    }
                 }
-                remove_list_variable = { name = permanent_tributaries target = scope:attacker }
-                remove_list_variable = { name = all_tributaries target = scope:attacker }
+                unset_tributary = {
+                    TRIBUTARY = scope:attacker
+                    TRIBUTARY_BASE_TYPE = flag:permanent
+                }                
             }
-            if = {
-                limit = {
-                    is_target_in_variable_list = { name = non_permanent_tributaries target = scope:attacker }
+            else = {
+                unset_tributary = {
+                    TRIBUTARY = scope:attacker
+                    TRIBUTARY_BASE_TYPE = flag:non_permanent
                 }
-                remove_list_variable = { name = non_permanent_tributaries target = scope:attacker }
-                remove_list_variable = { name = all_tributaries target = scope:attacker }
-            }           
+            }
         }
     }
 
@@ -315,7 +332,9 @@ independence_tributary_war_cb = {
 
 	on_white_peace = { 
         scope:attacker = {
-           prestige = -150 
+            prestige = {
+               value = -150
+            } 
         }
     }
 
@@ -336,7 +355,9 @@ independence_tributary_war_cb = {
 
     on_defeat = {
         scope:attacker = {
-            prestige = -150
+            prestige = {
+                value = -150
+            }
             pay_long_term_gold = { target = scope:defender gold = 150 }
         }
     }

@@ -1,0 +1,224 @@
+﻿#############################
+# Establish Rus Cultue 		#
+# by Sean Hughes			#
+#############################
+
+establish_russian_culture_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+
+	ai_check_interval = 120
+
+	desc = establish_russian_culture_decision_desc
+	selection_tooltip = establish_russian_culture_decision_tooltip
+
+	is_shown = {
+	
+		#is_ruler = yes
+		#is_landed = yes
+		
+		culture = culture:norse
+		any_sub_realm_county = {
+			target_is_de_jure_liege_or_above = title:k_ruthenia #Overall Kingdom title used since the formation of Kiev Rus played a large part in a making a single language be the lingua franca of such a large area
+			OR = {
+			culture = culture:volhynian
+			culture = culture:severian
+			culture = culture:ilmenian
+			}
+		}
+		NOT = {	
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_russian_decision
+			}
+		}
+	}
+
+	is_valid = {
+		culture = culture:norse
+		completely_controls = title:k_ruthenia
+	}
+
+	is_valid_showing_failures_only = {
+		is_at_war = no
+		is_imprisoned = no
+	}
+
+	effect = {
+		hidden_effect = {
+			# Generate a list of counties we want to flip to the new culture.
+			title:e_russia = {
+				every_in_de_jure_hierarchy = {
+					limit = { tier = tier_county}
+					add_to_list = russian_counties
+				}
+			}
+			every_sub_realm_title = {
+				limit = {
+					tier = tier_county
+				}
+				if = {
+					limit = {
+						title_province = { geographical_region = special_russian_culture_region }
+						AND = {
+							culture = culture:volhynian
+							culture = culture:severian
+							culture = culture:ilmenian
+							culture = culture:norse
+							}
+					}
+					add_to_list = russian_counties
+				}
+			}
+
+			# Perform the culture flip.
+			every_in_list = {
+				list = russian_counties
+				merge_cultures_in_region_effect = {
+					OLD_CULTURE_1 = culture:norse
+					OLD_CULTURE_2 = culture:volhynian #It's honestly all 3 Rus tribes but you can only have 2 things here and Volhynian is the largest one
+					NEW_CULTURE = culture:russian
+					REGION = special_russian_culture_region
+				}
+			}
+			
+			every_in_list = {
+				list = russian_counties
+				limit = {
+					holder.top_liege = root.top_liege
+				}	
+				# All proto-Rus counties in Kiev-Rus become Russian
+				hidden_effect = {
+					convert_county_and_holder_if_in_region_effect = {
+						OLD_CULTURE = culture:severian
+						NEW_CULTURE = culture:russian
+						REGION = special_russian_culture_region
+					}
+				}
+			}
+			
+			every_in_list = {
+				list = russian_counties
+				limit = {
+					holder.top_liege = root.top_liege
+				}	
+				# All proto-Rus counties in Kiev-Rus become Russian
+				hidden_effect = {
+					convert_county_and_holder_if_in_region_effect = {
+						OLD_CULTURE = culture:ilmenian
+						NEW_CULTURE = culture:russian
+						REGION = special_russian_culture_region
+					}
+				}
+			}
+
+			# Send all players in the game a notification event about the flip.
+			save_scope_as = russian_founder
+			culture:norse = {save_scope_as = old_culture_1}
+			culture:volhynian = {save_scope_as = old_culture_2}
+			culture:russian = {
+				reset_culture_creation_date = yes
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+				save_scope_as = new_culture
+			}
+			every_player = {
+				if = {
+					limit = {
+						NOT = { this = root }
+						AND = {
+							culture = culture:volhynian
+							culture = culture:severian
+							culture = culture:ilmenian
+							culture = culture:norse
+						}
+						exists = capital_province
+						capital_province = { geographical_region = special_russian_culture_region }
+					}
+					trigger_event = global_culture.5000
+				}
+				else_if = {
+					limit = { this = root }
+					trigger_event = global_culture.5001
+				}
+				else_if = {
+					limit = {
+						exists = capital_province
+						capital_province = { geographical_region = world_europe }
+					}
+					trigger_event = global_culture.5002
+				}
+			}
+		}
+
+		# Player changes culture
+		set_culture = culture:russian
+		add_character_flag = converted_culture_this_lifetime
+		hidden_effect = {
+			every_in_list = {
+				list = russian_counties
+				limit = {
+					holder.capital_county = { is_in_list = russian_counties }
+				}
+				holder = {
+					add_to_list = mass_melting_pot_list
+					every_courtier = { add_to_list = mass_melting_pot_list }
+					every_courtier_away = { add_to_list = mass_melting_pot_list }
+				}
+				every_in_list = {
+					list = mass_melting_pot_list
+					limit = {
+						OR = {
+							culture = culture:volhynian
+							culture = culture:severian
+							culture = culture:ilmenian
+							culture = culture:norse
+						}
+					}
+					set_culture = culture:russian
+				}
+			}
+		}
+
+		# Summary of above hidden effects to inform players of the decision's impact.
+		show_as_tooltip = {
+			custom_tooltip = establish_russian_culture_decision_effect.tt
+			culture:russian = {
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+			}
+		}
+
+		## Rename the duchy to Normandy
+		#title:d_normandy = {
+		#	save_scope_as = normandy_title
+		#	hidden_effect = {
+		#		set_title_name = d_normandy
+		#	}
+		#	custom_tooltip = establish_russian_culture_decision_effect.tt.2
+		#}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:flag_formed_russian_decision
+		}
+	}
+
+	cost = {
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 0
+
+		modifier = {
+			add = 100
+			any_sub_realm_county = {
+				percent >= 0.5
+				culture = culture:volhynian
+			}
+		}
+	}
+}
