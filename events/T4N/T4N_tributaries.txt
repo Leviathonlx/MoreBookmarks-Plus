@@ -14,53 +14,51 @@ tributaries.3 = {
 	immediate = {
 		
 		scope:tributary_slash_suzerain_loser = {
-
-			switch = {
-				trigger = is_suzerain
-
-				yes = {
-					if = {
-						limit = {
-							AND = {
-								is_independent_ruler = no
-								is_landed = no
-							}
-						}
-						every_in_list = {
-							variable = permanent_tributaries
-							
-							set_variable = { name = my_suzerain value = root }
-							root = {
-								add_to_variable_list = { name = permanent_tributaries target = prev }
-							}
-						}
-						clear_variable_list = permanent_tributaries
-						clear_variable_list = non_permanent_tributaries
-					}
+			if = {
+				limit = {
+					is_suzerain = yes
 				}
-				no = {
-					if = {
-						limit = {
+				if = {
+					limit = {
+						AND = {
+							is_independent_ruler = no
 							is_landed = no
 						}
-						if = {
-							limit = {
-								is_permanent_tributary = {
-									SUZERAIN = var:my_suzerain
-									TRIBUTARY = this
-								}
-							}
-							var:my_suzerain = {
-								remove_list_variable = { name = permanent_tributaries target = prev }
-								remove_list_variable = { name = all_tributaries target = prev }
+					}
+					every_in_list = {
+						variable = permanent_tributaries
+						
+						set_variable = { name = my_suzerain value = root }
+						root = {
+							add_to_variable_list = { name = permanent_tributaries target = prev }
+						}
+					}
+					clear_variable_list = permanent_tributaries
+					clear_variable_list = non_permanent_tributaries
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						is_landed = no
+					}
+					if = {
+						limit = {
+							is_permanent_tributary = {
+								SUZERAIN = var:my_suzerain
+								TRIBUTARY = this
 							}
 						}
-						else = {
-							var:my_suzerain = {
-								remove_list_variable = { name = non_permanent_tributaries target = prev }
-								remove_list_variable = { name = all_tributaries target = prev }
-							}					
+						var:my_suzerain = {
+							remove_list_variable = { name = permanent_tributaries target = prev }
+							remove_list_variable = { name = all_tributaries target = prev }
 						}
+					}
+					else = {
+						var:my_suzerain = {
+							remove_list_variable = { name = non_permanent_tributaries target = prev }
+							remove_list_variable = { name = all_tributaries target = prev }
+						}					
 					}
 				}
 			}
@@ -197,25 +195,24 @@ tributaries.5 = {
 #on_war_started
 #Root is suzerain
 #call_to_arms_tribute is defender
+#UNUSED RN to readd in 1.2.1
 tributaries.6 = {
-	type = character_event
+	type = letter_event
+	opening = {
+		title = tributary_6_tit
+	}
 	title = tributary_6_tit
 	desc = tributary_6_desc
-	right_portrait = {
-		character = call_to_arms_tribute
-		animation = war_defender 
-
-	}
-	left_portrait = { 
-		character = root
-		animation = personality_rational 
+	sender = {
+		character = scope:call_to_arms_tribute
+		animation = war_defender
 	}
 
 	option = {
 		name = suzerain_joins_the_war
 		add_piety = minor_piety_value
 		scope:call_to_arms_tribute = {
-			any_war = {
+			if = {
 				limit = {
 					root = {
 						NOR = {
@@ -261,14 +258,12 @@ tributaries.6 = {
 #Tribute gets negative a response from suzerain
 #root is defender and former tribute
 tributaries.7 = {
-	type = character_event
-	title = tributary_7_tit
-	desc = tributary_7_desc
-	right_portrait = {
-		character = root
-		animation = disapproval 
+	type = letter_event
+	opening = {
+		title = tributary_7_tit
 	}
-	left_portrait = { 
+	desc = tributary_7_desc
+	sender = {
 		character = scope:former_suzerain
 		animation = personality_dishonorable
 	}
@@ -382,18 +377,23 @@ tributaries.13 = {
 	option = {
 		name = join_suzerain_war
 		scope:suzerain_cta_caller = {
-			if = {
-				limit = {
-					is_attacker_in_war = yes
+			ordered_character_war = {
+				if = {
+					limit = {
+						prev = {
+							is_attacker_in_war = prev
+						}
+					}
+					add_attacker = root
 				}
-				add_attacker = prev
-			}
-			if = {
-				limit = {
-					is_defender_in_war = yes
+				if = {
+					limit = {
+						prev = {
+							is_defender_in_war = prev
+						}
+					}
+					add_defender = root
 				}
-				add_defender = prev
-				
 			}
 		}
 	}
