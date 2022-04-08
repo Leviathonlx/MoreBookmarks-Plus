@@ -16,6 +16,9 @@ window = {
 	state = {
 		name = _show
 		position = { 0 0 }
+		#Title Manager
+		on_start = "[GetVariableSystem.Clear( 'display_allegiance' )]"
+		#End Title Manager
 		# [UniUI] [Vanilla] better tab management
 		on_start = "[GetVariableSystem.Set( 'title_view_tab', 'de_jure_tab' )]"
 		# [/Vanilla] [/UniUI]
@@ -23,6 +26,9 @@ window = {
 
 		using = Animation_FadeIn_Quick
 		using = Sound_WindowShow_Standard
+		# MOD(custom-form-of-address)
+		using = CTFA_title_window_show_state_actions
+		# END MOD  
 	}
 
 	state = {
@@ -34,6 +40,9 @@ window = {
 		using = Sound_WindowHide_Standard
 	}
 
+	# MOD(custom-form-of-address)
+	using = CTFA_title_window_mouse_hierarchy_enter_state
+	# END MOD
 	vbox = {
 		using = Window_Margins_Sidebar
 
@@ -128,7 +137,7 @@ window = {
 									layoutpolicy_horizontal = expanding
 									ignoreinvisible = yes
 									spacing = 5
-
+									tooltip = "[Title.Custom('demd_show_title_stats')]"
 									text_multi = {
 										text = "[TitleViewWindow.GetTitle.GetNameNoTooltip|U]"
 										default_format = "#high"
@@ -137,18 +146,38 @@ window = {
 										using = Font_Size_Big
 									}
 
+									# MOD(custom-form-of-address)
+									hbox = {
+										using = CTFA_hide_if_vanity_title
+										# Note no closing brace here - this block is closed later
+									# END MOD
 									button_edit_text = {
 										visible = "[TitleViewWindow.GetTitle.CanPlayerCustomizeTitle]"
 										onclick = "[OpenTitleCustomizationWindow(TitleViewWindow.GetTitle)]"
 										tooltip = "CUSTOMIZE_TITLE"
 									}
+									# MOD(custom-form-of-address)
+									} # This closes hbox
+									# END MOD
+
+									# MOD(remove-title-tier-prefix)
+									hbox = {
+										using = remove_title_prefix_toggle
+									}
+									# END MOD
 
 									expand = {}
 								}
 
 								vbox_title_type_text = {
+									# MOD(custom-form-of-address)
+									using = CTFA_hide_if_vanity_title
+									# END MOD
+
 									layoutpolicy_horizontal = expanding
 								}
+
+								CTFA_vbox_title_type_text = {}
 							}
 
 							watch_window_button = {
@@ -183,6 +212,15 @@ window = {
 									}
 								}
 
+								# MOD(custom-form-of-address)
+								hbox = { using = rcoa_window_title } # Compatibility hook for "Randomized CoA" by Degreeno
+								#End Title Manager
+
+								# Compatibility hooks for "Title Manager" by Xman7373
+								flowcontainer = { using = title_manager_button_1 }
+								flowcontainer = { using = title_manager_button_2 }
+								# END MOD
+								
 								expand = {}
 							}
 						}
@@ -240,6 +278,10 @@ window = {
 										minimumsize = { 200 50 }
 										visible = "[And(NotEqualTo_uint32( Title.GetHolder.GetID, GetPlayer.GetID ), GetPlayer.HasClaimOnTitle(TitleViewWindow.GetTitle ))]"
 									}
+									# MOD(custom-form-of-address)
+									CTFA_flowcontainer_title_foa = {}
+									# END MOD
+									
 								}
 
 								expand = {}
@@ -613,6 +655,10 @@ window = {
 					}
 
 					vbox = {
+						# MOD(custom-form-of-address)
+						using = CTFA_hide_if_vanity_title
+						# END MOD
+						
 						layoutpolicy_horizontal = expanding
 
 						hbox = {
@@ -693,10 +739,16 @@ window = {
 					}
 
 					text_single = {
+						# MOD(custom-form-of-address)
+						using = CTFA_hide_if_vanity_title
+						# END MOD
 						text = "[TitleViewWindow.GetPrestigeGainText]"
 					}
 
 					button_primary = {
+						# MOD(custom-form-of-address)
+						using = CTFA_hide_if_vanity_title
+						# END MOD
 						enabled = "[TitleViewWindow.CanTitleBeCreated]"
 						text = "TITLE_VIEW_CREATE_TITLE"
 						onclick = "[TitleViewWindow.CreateTitle]"
@@ -861,6 +913,9 @@ window = {
 				hbox = {
 					spacing = 5
 
+					# MOD(custom-form-of-address)
+					using = CTFA_hide_if_vanity_title
+					# END MOD
 					vbox = {
 						spacing = 5
 
@@ -925,6 +980,9 @@ window = {
 								text = "TITLE_VIEW_MAKE_PRIMARY"
 								visible = "[And(And(And( Character.IsLocalPlayer, TitleViewWindow.CanMakePrimary ),Not(GetScriptedGui('is_title_federation').IsShown(GuiScope.SetRoot(TitleViewWindow.GetTitle.MakeScope).End))),Not(GetScriptedGui('personally_has_republic_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)))]"
 								onclick = "[TitleViewWindow.MakePrimary]"
+								# MOD(custom-form-of-address)
+								using = CTFA_onclick_handle_primary_title_change
+								# END MOD
 								tooltip = "TITLE_MAKE_PRIMARY_TOOLTIP"
 							}
 
@@ -975,9 +1033,8 @@ template title_window_background_illustration
 		fittype = centercrop
 
 		modify_texture = {
-			texture = "gfx/interface/component_masks/mask_fade_vertical.dds"
+			texture = "gfx/interface/component_masks/mask_fade_vertical_up.dds"
 			blend_mode = alphamultiply
-			mirror = vertical
 		}
 
 		using = Mask_Rough_Edges

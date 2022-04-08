@@ -33,9 +33,9 @@ call_suzerain_to_war = {
 			}
 		}
 		custom_description = {
-			text = trib_type_allows_call_to_arms_trib
+			text = trib_type_allows_call_to_arms
 			exists = var:can_call_to_war_tributary
-			var:can_call_to_war_tributary = flag:yes
+			var:can_call_to_war_tributary.compare_value = flag:yes
 		}
 	}
 
@@ -270,7 +270,7 @@ call_tributaries_to_war = {
 				any_in_list = {
 					variable = all_tributaries
 					exists = var:can_call_to_war_suzerain
-					var:can_call_to_war_suzerain = flag:yes
+					var:can_call_to_war_suzerain.compare_value = flag:yes
 				}
 			}				
 		}
@@ -285,26 +285,17 @@ call_tributaries_to_war = {
 			variable = all_tributaries
 			limit = {
 				exists = var:can_call_to_war_suzerain
-				var:can_call_to_war_suzerain = flag:yes
+				var:can_call_to_war_suzerain.compare_value = flag:yes
 			}
-			save_temporary_scope_as = temp_trib_war
 			scope:actor = {
-				random_character_war = {
-					save_temporary_scope_as = temp_war
-				}
 				if = {
 					limit = {
-						is_attacker_in_war = scope:tmp_war
+						is_attacker_in_war = yes
 					}
-					scope:tmp_war = {
-						add_attacker = scope:temp_trib_war
-					}
-						
+					add_attacker = prev
 				}
 				else = {
-					scope:tmp_war = {
-						add_defender = scope:temp_trib_war
-					}
+					add_defender = prev
 				}
 			}
 		}
@@ -383,8 +374,7 @@ call_tributaries_to_war = {
 	}	
 }
 
-#Offer to be made a tributary decision
-
+#ruler offers tribute to other character
 offer_tribute = {
 	category = interaction_category_diplomacy
 	use_diplomatic_range = yes
@@ -394,13 +384,6 @@ offer_tribute = {
 				is_tributary = yes
 				is_suzerain = yes
 			}
-			
-			tier_difference = { #We don't want a King to be able to offer to be a tributary of a Duke. Also don't want a King offering to become a tributary as a King would be unlikely to do such a thing
-                        target = scope:recipient
-                        value > 1
-                    }
-			is_independent_ruler = yes #We don't want people who are direct vassals of one country offering to become a tributary of an external country
-
 			is_at_war = no
 			NOT = { this = scope:recipient }
 			NOR = {
@@ -416,7 +399,6 @@ offer_tribute = {
 			NOT = {
 				is_tributary = yes
 			}
-			is_independent_ruler = yes #Like above we don't want an external country trying to make a direct vassal of another country their tributary. It can make for some neat ideas like a vassal betraying their liege but the game itself can't handle multiple lieges
 			is_at_war = no				
 			highest_held_title_tier >= tier_county
 		}
@@ -486,12 +468,12 @@ offer_tribute = {
 		base = 5
 
 		modifier = {
-			add = 50
+			add = 150
 			scope:actor.realm_size > scope:recipient.realm_size
 			desc = will_accept_bigger_trib
 		}
 		modifier = {
-			add = 25
+			add = 50
 			scope:actor.realm_size < scope:recipient.realm_size
 			desc = will_accept_smaller_trib			
 		}
@@ -799,7 +781,7 @@ offer_tribute = {
 			desc = offer_vassalization_interaction_aibehavior_culture_tt
 			trigger = {
 				scope:actor = {
-					has_same_culture_heritage = scope:recipient
+					has_same_culture_group_as = scope:recipient
 					NOT = { has_same_culture_as = scope:recipient }
 				}
 			}
@@ -810,7 +792,7 @@ offer_tribute = {
 			desc = offer_vassalization_interaction_aibehavior_culture_group_tt
 			trigger = {
 				scope:actor = {
-					NOT = { has_same_culture_heritage = scope:recipient }
+					NOT = { has_same_culture_group_as = scope:recipient }
 				}
 			}
 		}
@@ -919,37 +901,17 @@ offer_tribute = {
 	}
 }
 
-#Demand Tribute Decision
-
+#Ruler offers character to become a tribute
 ruler_offer_tribute_to_recipient = {
 	category = interaction_category_diplomacy
 	use_diplomatic_range = yes
-	
-	#MB#
-	#Let's make it so the AI doesn't spam you to death with this and so the player can't spam it
-	cooldown = { years = 1 }
-	cooldown_against_recipient = { years = 5 }
-	
 	is_shown = {
-		
-		#MB
-		#Let's not let a Duke even see the option to ask a King or Emperor to be a tributary as obviously a King would laugh at a Duke asking such a thing
-		
-		scope:actor.primary_title.tier >= scope:recipient.primary_title.tier
-		
-		#/MB
-		
 		scope:actor = {
 			NOT = {
 				is_tributary = yes
 			}
 			is_at_war = no
 			NOT = { this = scope:recipient }
-			
-			#MB
-			highest_held_title_tier >= tier_duchy #We don't want someone who only holds a county trying to make tributaries
-			#/MB
-			
 		}
 		scope:recipient = {
 			NOT = {
@@ -978,7 +940,6 @@ ruler_offer_tribute_to_recipient = {
 					SUZERAIN = scope:actor
 					TRIBUTARY = scope:recipient
 				}
-				
 			}
 			else_if = {
 				limit = {
@@ -988,8 +949,7 @@ ruler_offer_tribute_to_recipient = {
 					TYPE = tributary_permanent
 					SUZERAIN = scope:actor
 					TRIBUTARY = scope:recipient
-				}	
-				
+				}		
 			}
 			save_scope_as = trib
 			scope:actor = {
@@ -1028,7 +988,7 @@ ruler_offer_tribute_to_recipient = {
 	}
 
 	ai_accept = {
-		base = 15
+		base = 5
 
 		modifier = {
 			add = -1000
@@ -1036,7 +996,7 @@ ruler_offer_tribute_to_recipient = {
 			desc = will_not_accept_smaller_suzerain
 		}
 		modifier = {
-			add = 50 #Was 500
+			add = 500
 			scope:actor.realm_size > scope:recipient.realm_size
 			desc = will_accept_bigger_suzerain		
 		}
@@ -1192,19 +1152,12 @@ ruler_offer_tribute_to_recipient = {
 				}
 			}
 		}
-		 modifier = { #I am a King!
+		modifier = { #I am a King!
 			desc = offer_vassalization_interaction_aibehavior_amkingtier_tt
 			trigger = {
 				scope:recipient = { highest_held_title_tier = tier_kingdom }
 			}
 			add = -50
-		}
-		modifier = { #I am a Emperor!
-			desc = offer_vassalization_interaction_aibehavior_amkingtier_tt
-			trigger = {
-				scope:recipient = { highest_held_title_tier = tier_empire }
-			}
-			add = -200
 		}
 		modifier = { #We just fought against each other.
 			desc = offer_vassalization_interaction_aibehavior_recent_war_tt
@@ -1351,7 +1304,7 @@ ruler_offer_tribute_to_recipient = {
 			desc = offer_vassalization_interaction_aibehavior_culture_tt
 			trigger = {
 				scope:actor = {
-					has_same_culture_heritage = scope:recipient
+					has_same_culture_group_as = scope:recipient
 					NOT = { has_same_culture_as = scope:recipient }
 				}
 			}
@@ -1362,7 +1315,7 @@ ruler_offer_tribute_to_recipient = {
 			desc = offer_vassalization_interaction_aibehavior_culture_group_tt
 			trigger = {
 				scope:actor = {
-					NOT = { has_same_culture_heritage = scope:recipient }
+					NOT = { has_same_culture_group_as = scope:recipient }
 				}
 			}
 		}
