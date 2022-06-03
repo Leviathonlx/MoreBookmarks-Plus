@@ -77,7 +77,7 @@ global_culture.0001 = {
 
 		every_county = {
 			limit = {
-				# All visigothic countie in Iberia will convert to the appropraite culture.
+				# All visigothic countie in Iberia will convert to the appropiate culture.
 				culture = culture:visigothic
 				title_province = {	
 					OR = {					
@@ -185,7 +185,7 @@ global_culture.0001 = {
 			}
 		}
 
-		# Send the appropraite notification event to each player.
+		# Send the appropiate notification event to each player.
 		every_player = {
 			if = {
 				limit = {
@@ -910,7 +910,7 @@ global_culture.0031 = {
 			}
 		}
 
-		# Send the appropraite notification event to each player.
+		# Send the appropiate notification event to each player.
 		every_player = {
 			if = {
 				limit = {
@@ -1470,7 +1470,7 @@ global_culture.3012 = {
 #		}
 #		
 #		
-#		# Send the appropraite notification event to each player.
+#		# Send the appropiate notification event to each player.
 #		every_player = {
 #			if = {
 #				limit = {
@@ -1717,7 +1717,7 @@ global_culture.5003 = {
 			}
 		}
 
-		# Send the appropraite notification event to each player.
+		# Send the appropiate notification event to each player.
 		every_player = {
 			if = {
 				limit = {
@@ -1941,11 +1941,11 @@ global_culture.5002 = {
 #########################################################################
 # Converting stragglers to Russian										#
 # 																		#
-# global_culture.5003-5004												#
+# global_culture.5009-5010												#
 #########################################################################
 
 ################################
-# Russian Spreads im lands of Kiev Rus
+# Russian Spreads in lands of Kiev Rus
 # 
 # 
 ################################
@@ -1969,7 +1969,7 @@ scripted_trigger global_culture_5003_valid_for_russian_culture_trigger = {
 	}
 }
 
-global_culture.5003 = {
+global_culture.5009 = {
 	type = character_event
 	title = global_culture.5003.t
 	desc = global_culture.5003.desc
@@ -2020,7 +2020,7 @@ global_culture.5003 = {
 		culture:russian = {
 			save_scope_as = russian # For loc
 		}
-		debug_log = "Converted a province to russian from global_culture.5003"
+		debug_log = "Converted a province to russian from global_culture.5009"
 	}
 
 	option = {
@@ -2060,10 +2060,10 @@ scripted_trigger global_culture_5004_valid_for_russian_culture_trigger = {
 	}
 }
 
-global_culture.5004 = {
+global_culture.5010 = {
 	type = character_event
-	title = global_culture.5003.t
-	desc = global_culture.5003.desc
+	title = global_culture.5010.t
+	desc = global_culture.5010.desc
 	theme = culture_change
 	left_portrait = root
 	
@@ -2089,13 +2089,231 @@ global_culture.5004 = {
 		culture:russian = {
 			save_scope_as = russian # For loc
 		}
-		debug_log = "Converted a province to russian from global_culture.5004"
+		debug_log = "Converted a province to russian from global_culture.5010"
 	}
 
 	option = {
-		name = global_culture.5004.a
+		name = global_culture.5010.a
 		scope:county_to_change = {
 			set_county_culture = culture:russian
 		}
 	}
 }
+
+
+#########################################################################
+# Converting Frankish into French										#
+# by Sean Hughes														#
+# global_culture.5006-5007												#
+#########################################################################
+
+global_culture.5006 = {
+	type = empty
+	hidden = yes
+	
+	immediate = {
+		# Save scopes for player notification events.
+		culture:frankish = { save_scope_as = frankish }
+		culture:french = {
+			# 'Hybridize' this culture by copying innovations from parent cultures. Leave traditions as defined in the database.
+			reset_culture_creation_date = yes
+			get_all_innovations_from = culture:frankish
+
+			# Save scope for player notification events.
+			save_scope_as = french
+		}
+
+		# All Frankish counties in France will convert to French
+		culture:frankish = {
+			every_culture_county = {
+				limit = {
+					title_province = {
+						geographical_region = custom_franceMB
+					}
+				}
+				add_to_list = frankish_counties
+			}
+		}
+
+		# Convert the Frankish counties to French
+		every_in_list = {
+			list = frankish_counties
+			limit = {
+				# Same-culture players get an event informing them of their county's conversion *before* it happens (for their provinces only).
+				NOT = {
+					holder = {
+						OR = {
+							AND = {
+								is_ai = no
+								culture = culture:frankish
+								capital_province = { geographical_region = custom_franceMB }
+							}
+							any_liege_or_above = {
+								is_ai = no
+								culture = culture:frankish
+								capital_province = { geographical_region = custom_franceMB }
+							}
+						}
+					}
+				}
+			}
+						
+			# All Frankish counties in France become French
+			convert_county_and_holder_if_in_region_effect = {
+				OLD_CULTURE = culture:frankish
+				NEW_CULTURE = culture:french
+				REGION = custom_franceMB
+			}
+		}
+
+		# Send the appropiate notification event to each player.
+		every_player = {
+			if = {
+				limit = {
+					culture = culture:frankish
+					capital_province = { geographical_region = custom_franceMB }
+					any_sub_realm_county = {
+						culture = culture:frankish
+						title_province = {
+							geographical_region = custom_franceMB
+						}
+					}
+				}
+				if = {
+					limit = {
+						NOT = {
+							any_liege_or_above = {
+								is_ai = no
+							}
+						}
+					}
+					trigger_event = global_culture.5007
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						is_ai = no
+						save_temporary_scope_as = player
+						any_in_list = {
+							list = frankish_counties
+							holder = {
+								is_within_diplo_range = { CHARACTER = scope:player }
+							}
+						}
+					}
+					trigger_event = global_culture.5008
+				}
+			}
+		}
+	}
+}
+
+# If a player is strong enough, they can resist the culture flip for their sub-realm only.
+global_culture.5007 = {
+	type = character_event
+	title = global_culture.5007.t
+	desc = global_culture.5007.desc
+	theme = culture_change
+	left_portrait = root
+
+	immediate = {
+		# All of frankish turns french, there is no 'splitting'.
+		culture = { save_scope_as = old_culture }
+		culture:french = { save_scope_as = my_new_culture }
+	}
+
+	# Option 1 (Almost always the only option): Accept the culture conversion.
+	option = {
+		name = global_culture.5007.a
+		show_as_tooltip = {
+			set_culture = culture:french
+			every_in_list = {
+				list = frankish_counties
+				limit = {
+					holder.top_liege = root.top_liege
+				}
+				set_county_culture = culture:french
+			}
+		}
+		# Convert the Frankish counties to French
+		every_in_list = {
+			list = frankish_counties
+			limit = {
+				holder.top_liege = root.top_liege
+			}	
+			# All Frankish counties in France become French
+			hidden_effect = {
+				convert_county_and_holder_if_in_region_effect = {
+					OLD_CULTURE = culture:frankish
+					NEW_CULTURE = culture:french
+					REGION = custom_franceMB
+				}
+			}
+		}
+	}
+
+	# Option 2: I am strong enough to keep our old culture intact!
+	option = {
+		name = global_culture.5007.b
+
+		trigger = {
+			custom_description = {
+				text = controls_enough_culture_counties
+				any_in_list = {
+					list = frankish_counties
+					percent >= 0.8
+
+					OR = {
+						holder = root
+						holder = {
+							any_liege_or_above = {
+								this = root
+							}
+						}
+					}
+				}
+			}
+		}
+
+		show_as_unavailable = {
+			custom_description = {
+				text = controls_enough_culture_counties	
+				any_in_list = {
+					list = frankish_counties
+					percent < 0.8
+
+					OR = {
+						holder = root
+						holder = {
+							any_liege_or_above = {
+								this = root
+							}
+						}
+					}
+				}
+			}
+		}
+
+		custom_tooltip = global_culture.custom.keep_culture
+	}
+}
+
+# As this is purely an informative event for players, it doesn't actually have any gameplay effects.
+global_culture.5008 = {
+	type = character_event
+	title = global_culture.5008.t
+	desc = global_culture.5008.desc
+	theme = culture_change
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	option = {
+		name = global_culture.5008.a
+	}
+}
+
+##Last used is 5010

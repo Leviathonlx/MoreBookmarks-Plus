@@ -26,27 +26,38 @@ form_portugal_decision = {
 	}
 
 	is_valid = {
-		is_independent_ruler = yes 
-		
 		culture = { has_cultural_pillar = heritage_iberian }
+		
+		trigger_if = {
+			limit = {
+				has_fp2_dlc_trigger = yes
+				exists = struggle:iberian_struggle
+			}
+			OR = {
+				custom_tooltip = {
+					text = struggle_iberia_form_portugal_decision_correct_phase_tt
+					any_character_struggle = {
+						involvement = involved
+						is_struggle_type = iberian_struggle
+						is_struggle_phase = struggle_iberia_phase_opportunity
+					}
+				}
+				is_independent_ruler = yes
+			}
 
-		trigger_if = {
-			limit = { title:d_porto = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
-			completely_controls = title:d_porto
 		}
-		trigger_if = {
-			limit = { title:d_coimbra = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
-			completely_controls = title:d_coimbra
+		trigger_else = {
+			is_independent_ruler = yes
+										
 		}
-		trigger_if = {
-			limit = { title:d_beja = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
-			completely_controls = title:d_beja
-		}
-		trigger_if = {
-			limit = { title:d_algarve = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
-			completely_controls = title:d_algarve
-		}
+		highest_held_title_tier < tier_kingdom
+
+		has_title = title:d_porto
+		has_title = title:d_coimbra
+		has_title = title:d_beja
+		has_title = title:d_algarve
 	}
+	
 	is_valid_showing_failures_only = {
 		game_start_date < 1139.1.1
 	}
@@ -94,7 +105,8 @@ form_portugal_decision = {
 	cost = { gold = { value = 300 } }
 
 	ai_potential = {
-		always = yes
+		# Only for the AI if independent ruler
+		is_independent_ruler = yes
 	}
 
 	ai_will_do = {
@@ -287,6 +299,139 @@ avenge_the_battle_of_tours_decision = {
 			name = unavailable_unique_decisions
 			target = flag:avenge_the_battle_of_tours_decision
 		}
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+##################################################
+# Form the Kingdom of Aragon
+# by Sean Hughes & Ewan Cowhig Croft
+##################################################
+
+form_the_kingdom_of_aragon_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+	major = yes
+
+	ai_check_interval = 60
+
+	desc = form_the_kingdom_of_aragon_decision_desc
+	selection_tooltip = form_the_kingdom_of_aragon_decision_tooltip
+
+	is_shown = {
+		# Can't form Aragon if Aragon already formed.
+		 game_start_date <= 1035.1.1
+		# Not relevant for characters who are already kings.
+		highest_held_title_tier <= tier_duchy
+		# Cast a broad net for folks who might like to try this.
+		capital_province = { geographical_region = dlc_fp2_form_aragon_region }
+		# Aaaaand it can't have happened already.
+		NOT = {	
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_kingdom_of_aragon
+			}
+		}
+	}
+
+	is_valid = {
+		is_independent_ruler = yes
+		completely_controls = title:d_aragon
+		OR = {
+			completely_controls = title:d_barcelona
+			completely_controls = title:d_valencia
+			completely_controls = title:d_navarra
+		}
+	}
+
+	effect = {
+		# Grab scopes for loc.
+		save_scope_as = founder
+		culture = { save_scope_as = founder_culture }
+		culture:aragonese = { save_scope_as = aragonese_culture }
+		title:k_aragon = { save_scope_as = k_aragon }
+		title:d_aragon = { save_scope_as = d_aragon }
+		title:d_valencia = { save_scope_as = d_valencia }
+		title:d_barcelona = { save_scope_as = d_barcelona }
+		title:d_navarra = { save_scope_as = d_navarra }
+		# Create kingdom title.
+		create_title_and_vassal_change = {
+			type = created
+			save_scope_as = change
+		}
+		title:k_aragon = {
+			change_title_holder = {
+				holder = scope:founder
+				change = scope:change
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+		# Gain some prestige.
+		add_prestige = major_prestige_gain
+		# You shift to Aragonese culture, but will have a chance to change it.
+		## We do the actual change inside the event for nicer tooltip grouping.
+		show_as_tooltip = { set_culture = culture:aragonese }
+		custom_tooltip = form_the_kingdom_of_aragon_decision.tt.form_aragonese
+		trigger_event = iberia_north_africa.0131
+		# De jure shifts.
+		## Take care of the preferred empire.
+		if = {
+			limit = {
+				NOT = { title:k_aragon.empire = title:d_aragon.empire }
+			}
+			title:k_aragon = { set_de_jure_liege_title = title:d_aragon.empire }
+		}
+		## The heartlands drift over.
+		title:d_aragon = { set_de_jure_liege_title = title:k_aragon }
+		## Various neighbouring duchies can be preemptively integrated.
+		### From Valencia.
+		if = {
+			limit = { completely_controls = title:d_valencia }
+			title:d_valencia = { set_de_jure_liege_title = title:k_aragon }
+		}
+		else = { custom_tooltip = form_the_kingdom_of_aragon_decision.tt.drift.d_valencia }
+		### From Aquitaine.
+		if = {
+			limit = { completely_controls = title:d_barcelona }
+			title:d_barcelona = { set_de_jure_liege_title = title:k_aragon }
+		}
+		else = { custom_tooltip = form_the_kingdom_of_aragon_decision.tt.drift.d_barcelona }
+		### From Navarre.
+		if = {
+			limit = { completely_controls = title:d_navarra }
+			title:d_navarra = { set_de_jure_liege_title = title:k_aragon }
+		}
+		else = { custom_tooltip = form_the_kingdom_of_aragon_decision.tt.drift.d_navarra }
+		# Plus, call the place Aragon rather than Zaragoza.
+		title:d_aragon = { reset_title_name = yes }
+		# Once per game.
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:flag_formed_kingdom_of_aragon
+		}
+		# Note this for books and such.
+		set_global_variable = {
+			name = flag_formed_kingdom_of_aragon
+			value = scope:founder
+		}
+	}
+
+	cost = {
+		gold = {
+			# Since we want this to happen, it free for the AI...
+			value = 0
+			# ... but costs for players.
+			if = {
+				limit = { is_ai = no }
+				add = 200
+			}
+		}
+	}
+
+	ai_potential = {
+		any_held_title = { this = title:d_aragon }
 	}
 
 	ai_will_do = {

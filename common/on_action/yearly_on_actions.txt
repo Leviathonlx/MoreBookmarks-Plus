@@ -160,6 +160,38 @@ yearly_global_pulse = {
 			}
 		}
 		
+		# Frankish -> French Culture Shift
+		if = {
+			limit = {
+				current_date <= 920.1.1 # No need to check this in later starts
+				NOT = { has_global_variable = french_culture_creation }
+				current_date >= 840.1.1
+			}
+			random = {
+				chance = 0 # No chance the first year of play if starting in 867
+				modifier = {
+					add = 20 # 30% chance
+					current_date >= 845.1.1
+				}
+				modifier = {
+					add = 30 # 60% chance
+					current_date >= 860.1.1
+				}
+				modifier = {
+					add = 40 # 100% chance
+					current_date >= 890.1.1
+				}
+				set_global_variable = {
+					name = french_culture_creation
+					value = yes
+				}
+				trigger_event = {
+					id = global_culture.5006
+					days = { 60 300 }
+				}
+			}
+		}
+		
 	# Mongol Invasion
 		if = {
 			limit = {
@@ -315,6 +347,81 @@ yearly_global_pulse = {
 				}
 			}
 		}
+		# A wandering French monk appears.
+		if = {
+			limit = {
+				# Do we have the correct flavour pack?
+				has_fp2_dlc_trigger = yes
+				# Must be before the monk would likely die.
+				current_date <= 880.1.1
+				# The monk hasn't already tried to turn up somewhere.
+				NOT = {
+					is_target_in_global_variable_list = {
+						name = unavailable_unique_events
+						target = flag:lyonese_monk_event
+					}
+				}
+			}
+			# If there's a player in this region, we wait for one to become eligible.
+			if = {
+				limit = {
+					any_player = {
+						capital_province = { geographical_region = dlc_fp2_lyonese_monk_region }
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							any_player = {
+								capital_province = { geographical_region = dlc_fp2_lyonese_monk_region }
+								fp2_lyonese_monk_0002_valid_character_configuration_trigger = yes
+							}
+							current_date = 880.1.1
+						}
+					}
+					# Fire the event.
+					trigger_event = {
+						id = fp2_lyonese_monk.0002
+						days = { 30 90 }
+					}
+				}
+			}
+			# Otherwise, we roll randomly per year immediately.
+			else_if = {
+				limit = {
+					any_county_in_region = {
+						region = dlc_fp2_lyonese_monk_region
+						holder = { fp2_lyonese_monk_0002_valid_court_trigger = yes }
+					}
+				}
+				random = {
+					# Low initial chance, to give the player time.
+					chance = 5
+					# Slowly ramp up the chance till *someone* is selected, assuming we have any valid candidates.
+					modifier = {
+						add = 20
+						current_date >= 870.1.1
+					}
+					modifier = {
+						add = 25
+						current_date >= 873.1.1
+					}
+					modifier = {
+						add = 25
+						current_date >= 876.1.1
+					}
+					modifier = {
+						add = 25
+						current_date = 880.1.1
+					}
+					# Fire the event.
+					trigger_event = {
+						id = fp2_lyonese_monk.0002
+						days = { 30 90 }
+					}
+				}
+			}
+		}
 	}
 	on_actions = {
 		inspiration_maintenance_global_pulse
@@ -388,7 +495,7 @@ five_year_playable_pulse = {
 						is_available_ai = yes
 						age > 6
 						NOT = {
-							knows_court_language_of = liege
+							knows_court_language_of = host
 						}
 					}
 					random = {
@@ -403,7 +510,7 @@ five_year_playable_pulse = {
 							}
 							if = {
 								limit = {
-									liege = {
+									host = {
 										employs_court_position = court_tutor_court_position
 									}
 								}
@@ -411,7 +518,7 @@ five_year_playable_pulse = {
 							}
 							if = {
 								limit = {
-									liege = {
+									host = {
 										has_court_type = court_diplomatic
 									}
 								}
@@ -419,14 +526,14 @@ five_year_playable_pulse = {
 							}
 							if = {
 								limit = {
-									liege = {
+									host = {
 										has_court_type = court_scholarly
 									}
 								}
 								add = 4
 							}
 						}
-						learn_court_language_of = liege
+						learn_court_language_of = host
 					}
 				}
 				if = {
@@ -561,6 +668,7 @@ random_yearly_playable_pulse = {
 		}
 		5 = on_yearly_events
 		4 = fp1_yearly_events
+		3 = fp2_yearly_events			   
 	}
 	on_actions = {
 		delay = { days = { 45 75 } }
@@ -662,6 +770,24 @@ five_year_everyone_pulse = {
 				else = {
 					marry = scope:spouse
 				}
+			}
+
+			# FP2 - Checks to start El Cid's Travels
+			if = {
+				limit = { # Am I El Cid?
+					this = character:107590
+					NOT = { has_character_flag = has_already_begun_travelling } # Separate first check, for performance
+
+					NOT = { # Start date employer is either dead or gone
+						OR = {
+							top_liege = character:107500
+							liege = character:107500
+							employer = character:107500
+						}
+					}
+					is_available_healthy_ai_adult = yes # Am I ready to go on an adventure?
+				}
+				trigger_event = fp2_struggle.2045
 			}
 		}
 	}
@@ -1107,6 +1233,27 @@ on_yearly_events = {
 		100 = culture_tradition_events.0131	# A mendicant is repulsed by your sins, and invokes the wrath of HighGodName against you.
 		100 = culture_tradition_events.0141	# A mendicant of your culture, but not your faith, offers tutelage if you'll convert.
 		#Trait Events
-		100 = trait_specific.8501 #Someone mocks your lisp										
+		100 = trait_specific.8501 #Someone mocks your lisp
+		
+		# FP2 - Fate of Iberia Events
+		180 = fp2_yearly.2020	# Horchata colonialism event
+		160 = fp2_yearly.8000	# Burning the Vineyards
+		180 = fp2_yearly.8001	# Assembling the Cortes
+		180 = fp2_struggle.1002	# Xenophilic Advancment
+		160 = fp2_struggle.1050	# Dreams of Destruction
+		150 = fp2_struggle.2000	# Disorderly Market
+		140 = fp2_struggle.2008	# Misdeeds of the Councillor
+		200 = fp2_struggle.2013	# The Secret to Freedom
+		130 = fp2_struggle.2015	# Letter on the Back
+		#100 = fp2_yearly.2017	# Chess for Friends (TODO_FP2_POLISH Fix possible OOO bug)
+		180 = fp2_yearly.2025	# Suffering from Success
+		150 = fp2_yearly.4001	# You fancy a little siesta
+		150 = fp2_yearly.4002	# A county is increasingly religiously intertwined
+		150 = fp2_yearly.4003	# The road to Santiago is under threat from bandits
+		150 = fp2_yearly.4007 	#Finding a shell on the road to Santiago
+		150 = fp2_yearly.4008 	#Folk stories around the fireside
+		300 = fp2_yearly.4009 	#Visiting the Malato Tree
+		150 = fp2_yearly.4010 	#Finding a Verraco
+		300 = fp2_flavor.0001 	# Neighboring Muslims are growing rice, adopt the practice yourself?
 	}
 }
