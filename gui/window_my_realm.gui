@@ -9,9 +9,7 @@ window = {
 	parentanchor = top|right
 	allow_outside = yes
 	movable = no
-	##RES
 	window_appoint_governor = {}
-	##/RES##
 	layer = windows_layer
 
 	using = Window_Size_MainTab
@@ -21,10 +19,10 @@ window = {
 		using = Animation_FadeIn_Quick
 		using = Sound_WindowShow_Standard
 		using = Window_Position_MainTab
-		##RES
+		on_start = "[GetVariableSystem.Set( 'realm_tabs', 'domain' )]"
+
 		on_start = "[GetVariableSystem.Clear('show_governors')]"
 		on_start = "[GetVariableSystem.Set( 'bicameral_view_tabs', 'maintab' )]"
-		##/RES
 	}
 
 	state = {
@@ -44,7 +42,7 @@ window = {
 	margin_widget = {
 		size = { 100% 100% }
 		margin = { 0 26 }
-		margin_right = 20
+		margin_right = 13
 
 		widget = {
 			size = { 100% 100% }
@@ -73,23 +71,18 @@ window = {
 					blockoverride "button_close"
 					{
 						onclick = "[MyRealmWindow.Close]"
-						##RES
 						onclick = "[GetVariableSystem.Clear( 'window_republic_family' )]"
 						onclick = "[GetVariableSystem.Clear( 'window_republic_council_form' )]"
 						onclick = "[GetVariableSystem.Clear( 'window_republic_families' )]"
 						onclick = "[GetVariableSystem.Clear( 'window_republic_senate_form' )]"
 						onclick = "[GetVariableSystem.Clear( 'window_republic_elected_ruler_form' )]"
 						onclick = "[GetVariableSystem.Clear( 'window_republic_bicameral_form' )]"
-						##/RES
 					}
 
 					vbox = {
 						margin_top = 42
-						margin_bottom = 5
-						##NEW
-						layoutpolicy_horizontal = expanding
-						layoutpolicy_vertical = expanding
-						##/NEW
+						#margin_bottom = 5
+
 						hbox = {
 							spacing = 20
 
@@ -122,13 +115,15 @@ window = {
 								name = "crown_authority"
 								datamodel = "[MyRealmWindow.GetRealmLaws]"
 								ignoreinvisible = yes
-
+								margin_left = 10
+								
 								item = {
 									vbox = {
 										layoutpolicy_vertical = expanding
 										datacontext = "[GuiLawGroup.GetLawGroup]"
-										visible = "[And( GuiLawGroup.GetLawGroup.HasFlag( 'realm_law' ), GuiLawGroup.IsAvailable )]"
+										visible = "[And( Or(GuiLawGroup.GetLawGroup.HasFlag( 'realm_law' ), GuiLawGroup.GetLawGroup.HasFlag( 'investiture_law' )), GuiLawGroup.IsAvailable )]"
 										ignoreinvisible = yes
+										spacing = 3
 
 										text_label_center = {
 											visible = "[Not(GetPlayer.HasLiege)]"
@@ -143,16 +138,18 @@ window = {
 												visible = "[GetPlayer.HasLiege]"
 												layoutpolicy_horizontal = expanding
 												text = "[LawGroup.GetName]"
+												margin_left = 10
 											}
 										}
 
-										spacer = {
-											visible = "[GetPlayer.HasLiege]"
-											size = { 5 8 }
-										}
+										# spacer = {
+										# 	visible = "[GetPlayer.HasLiege]"
+										# 	size = { 5 8 }
+										# }
 
 										hbox = {
 											datamodel = "[GuiLawGroup.GetLaws]"
+											visible = "[Not(GetPlayer.HasLiege)]"
 
 											background = {
 												texture = "gfx/lines/line_lifestyles_unavailable.dds"
@@ -161,6 +158,7 @@ window = {
 											}
 
 											item = {
+
 												icon_button_decorative = {
 													datacontext = "[GuiLaw.GetLaw]"
 													size = { 60 60 }
@@ -290,8 +288,10 @@ window = {
 
 									text_single = {
 										layoutpolicy_horizontal = expanding
-										text = "[Character.GetUIName]"
+										text = "GeneralUniUICharGetUIName"
 										autoresize = no
+										align = left
+										max_width = 330
 									}
 
 									hbox = {
@@ -315,7 +315,6 @@ window = {
 										}
 
 										expand = {}
-
 									}
 								}
 
@@ -346,15 +345,19 @@ window = {
 						}
 					}
 				}
+
 				hbox = {
 					name = "vassals_succession_tabs"
 					layoutpolicy_horizontal = expanding
-					##RES
+
 					button_tab = {
 						name = "tutorial_highlight_domain_tab"
 						layoutpolicy_horizontal = expanding
 						layoutpolicy_vertical = expanding
 						onclick = "[MyRealmWindow.ShowDomain]"
+						onclick = "[GetVariableSystem.Set( 'realm_tabs', 'domain' )]"
+						down = "[GetVariableSystem.HasValue( 'realm_tabs', 'domain' )]"
+						#Fixing a UnifiedUI error
 						down = "[And(MyRealmWindow.IsShowingDomain,Not(GetVariableSystem.Exists('show_governors')))]"
 						onclick = "[GetVariableSystem.Clear('show_governors')]"
 						text = "MY_REALM_WINDOW_DOMAIN_TAB"
@@ -365,6 +368,9 @@ window = {
 						layoutpolicy_horizontal = expanding
 						layoutpolicy_vertical = expanding
 						onclick = "[MyRealmWindow.ShowVassals]"
+						onclick = "[GetVariableSystem.Set( 'realm_tabs', 'vassals' )]"
+						down = "[GetVariableSystem.HasValue( 'realm_tabs', 'vassals' )]"
+						#Fixing a UnifiedUI error
 						down = "[And(MyRealmWindow.IsShowingVassals,Not(GetVariableSystem.Exists('show_governors')))]"
 						onclick = "[GetVariableSystem.Clear('show_governors')]"
 						text = "MY_REALM_WINDOW_VASSALS_TAB"
@@ -375,13 +381,16 @@ window = {
 						layoutpolicy_horizontal = expanding
 						layoutpolicy_vertical = expanding
 						onclick = "[MyRealmWindow.ShowSuccession]"
+						onclick = "[GetVariableSystem.Set( 'realm_tabs', 'succession' )]"
+						down = "[GetVariableSystem.HasValue( 'realm_tabs', 'succession' )]"
+						#Fixing a UnifiedUI error
 						down = "[And(MyRealmWindow.IsShowingSuccession,Not(GetVariableSystem.Exists('show_governors')))]"
 						onclick = "[GetVariableSystem.Clear('show_governors')]"
 						text = "MY_REALM_WINDOW_SUCCESSION_TAB_REPUBLIC"
 					}
 
 					button_tab = {
-						visible = "[GetScriptedGui('qualifies_for_governorships').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						visible = "[GetScriptedGui('qualifies_for_governorships_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						name = "tutorial_highlight_governor_tab"
 						layoutpolicy_horizontal = expanding
 						layoutpolicy_vertical = expanding
@@ -391,18 +400,26 @@ window = {
 						onclick = "[GetScriptedGui('get_all_governorships').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						onclick = "[GetScriptedGui('additional_titles_for_governor').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 
-						text = "Governorships"
+						raw_text = "Governorships"
+					}
+
+					button_tab = {
+						name = "Laws"
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+						down = "[GetVariableSystem.HasValue( 'realm_tabs', 'laws' )]"
+						visible = "[GetScriptedGui('legions_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						onclick = "[GetVariableSystem.Set( 'realm_tabs', 'laws' )]"
+						text = "Imperial Laws"
 					}
 				}
-				##/RES
+
 				### DOMAIN TAB
 				vbox = {
 					name = "tab_domain"
 					layoutpolicy_horizontal = expanding
 					layoutpolicy_vertical = expanding
-					##RES
-					visible = "[And( MyRealmWindow.IsShowingDomain,Not(GetVariableSystem.Exists('show_governors')))]"
-					##/RES
+					visible = "[GetVariableSystem.HasValue( 'realm_tabs', 'domain' )]"
 
 					using = Animation_Tab_Switch
 
@@ -414,7 +431,7 @@ window = {
 							vbox = {
 								datamodel = "[MyRealmWindow.GetDomainItems]"
 								layoutpolicy_horizontal = expanding
-								spacing = 25
+								spacing = 20
 
 								item = {
 									vbox = {
@@ -424,19 +441,15 @@ window = {
 										hbox = {
 											layoutpolicy_horizontal = expanding
 
-											background = {
-												using = Background_Area_Light
-											}
-
 											hbox = {
-												spacing = 10
+												spacing = 5
 
 												coa_title_tiny_crown = {
 													datacontext = "[DuchyGroup.GetDuchy]"
 													using = tooltip_ws
 												}
 
-												text_single = {
+												text_label_center = {
 													text = "[DuchyGroup.GetDuchy.GetNameNoTooltip]"
 													using = Font_Size_Medium
 													default_format = "#low"
@@ -444,30 +457,33 @@ window = {
 											}
 										}
 
+										hbox = {
+											layoutpolicy_horizontal = expanding
+											margin = { 10 0 }
+
+											divider_light = {
+												layoutpolicy_horizontal = expanding
+												alpha = 0.6
+											}
+										}
+
 										vbox = {
 											name = "county_group"
 											datamodel = "[DuchyGroup.GetCounties]"
 											layoutpolicy_horizontal = expanding
-											margin = { 0 5 }
 											spacing = 20
 
 											item = {
 												vbox = {
 													layoutpolicy_horizontal = expanding
-													spacing = 5
 													datacontext = "[CountyGroup.GetCounty]"
 													datacontext = "[CountyGroup.GetCapitalProvince.GetCounty]"
 
 													hbox = {
 														layoutpolicy_horizontal = expanding
-														margin = { 5 0 }
+														margin_left = 5
+														margin_right = 10
 														spacing = 7
-
-														background = {
-															using = Background_Area
-															margin_right = 3
-															margin_left = 3
-														}
 
 														coa_title_tiny = {}
 
@@ -492,7 +508,8 @@ window = {
 													vbox = {
 														datamodel = "[CountyGroup.GetHoldings]"
 														layoutpolicy_horizontal = expanding
-														margin_left = 25
+														margin_left = 10
+														margin_right = 10
 														margin_bottom = 5
 														spacing = 3
 
@@ -507,9 +524,8 @@ window = {
 																	texture = "[HoldingItem.GetHolding.GetIllustration]"
 
 																	modify_texture = {
-																		texture = "gfx/interface/component_masks/mask_fade_horizontal_right.dds"
+																		texture = "gfx/interface/component_masks/mask_fade_horizontal.dds"
 																		blend_mode = alphamultiply
-																		rotate_uv = 180
 																	}
 
 																	modify_texture = {
@@ -558,8 +574,9 @@ window = {
 
 																					modify_texture = {
 																						name = "mask"
-																						texture = "gfx/interface/component_masks/mask_fade_horizontal_right.dds"
+																						texture = "gfx/interface/component_masks/mask_fade_horizontal.dds"
 																						blend_mode = alphamultiply
+																						mirror = horizontal
 																					}
 																				}
 
@@ -653,7 +670,8 @@ window = {
 														layoutpolicy_horizontal = expanding
 														visible = "[DataModelHasItems(CountyGroup.GetEmptyHoldings)]"
 														spacing = 5
-														margin_left = 25
+														margin_left = 10
+														margin_right = 10
 
 														button_group = {
 															onclick = "[CountyGroup.ToggleExpanded]"
@@ -704,7 +722,11 @@ window = {
 																		down = "[Holding.IsSelected]"
 
 																		using = Holding_Mouse_Entry
-																		tooltipwidget = { holding_tooltip_click = {} }
+																		using = Background_Vignette_Button
+
+																		tooltipwidget = {
+																			holding_tooltip_click = {}
+																		}
 																		using = tooltip_ne
 
 																		widget = {
@@ -729,13 +751,13 @@ window = {
 																		}
 
 																		hbox = {
-																			margin = { 10 2 }
+																			margin = { 10 0 }
 
 																			vbox = {
 																				layoutpolicy_vertical = expanding
 																				margin_top = 2
 
-																				text_label_left = {
+																				text_single = {
 																					text = "[HoldingItem.GetBarony.GetNameNoTierNoTooltip]"
 																				}
 
@@ -749,7 +771,7 @@ window = {
 																				visible = "[HoldingItem.GetHolding.IsConstructionInProgress]"
 																				margin = { 0 4 }
 
-																				text_label_right = {
+																				text_single = {
 																					layoutpolicy_horizontal = expanding
 																					text = "[HoldingItem.GetStatusText]"
 
@@ -760,14 +782,12 @@ window = {
 
 																				hbox = {
 																					layoutpolicy_horizontal = expanding
-																					margin_right = -1
-																					expand = {}
+																					margin_bottom = 3
 
 																					progressbar_standard = {
 																						name = "building_progressbar"
-
 																						alwaystransparent = yes
-																						size = { 180 15 }
+																						size = { 180 12 }
 																						value = "[HoldingItem.GetHolding.GetConstructionProgress]"
 																						direction = horizontal
 																					}
@@ -810,9 +830,8 @@ window = {
 					name = "tab_vassals"
 					layoutpolicy_horizontal = expanding
 					layoutpolicy_vertical = expanding
-					##RES
-					visible = "[And(MyRealmWindow.IsShowingVassals,Not(GetVariableSystem.Exists('show_governors')))]"
-					##/RES
+					visible = "[GetVariableSystem.HasValue( 'realm_tabs', 'vassals' )]"
+
 					state = {
 						name = _show
 						using = Animation_FadeIn_Quick
@@ -823,77 +842,87 @@ window = {
 						alpha = 0
 					}
 
-					hbox = {
-						name = "government_filters_container"
-						margin = { 0 7 }
+					scrollarea = {
+						layoutpolicy_horizontal = expanding
+						minimumsize = { 0 75 }
+						scrollbarpolicy_vertical = always_off
 
-						hbox = {
-							name = "government_filters"
-							datamodel = "[MyRealmWindow.GetGovernmentTypeHeaders]"
-							visible = "[LessThan_int32(GetDataModelSize(MyRealmWindow.GetGovernmentTypeHeaders), '(int32)3')]"
-							spacing = 5
-							layoutpolicy_horizontal = expanding
-
-							button_standard_clean = {
-								name = "all_governments"
-								size = { 60 33 }
-								default_format = "#low"
-
-								text = "MRW_GOVERNMENT_FILTER_ALL"
-								tooltip = "MRW_GOVERNMENT_FILTER_ALL_TT"
-								using = tooltip_above
-								down = "[Not(MyRealmWindow.HasGovernmentTypeFilter)]"
-								onclick = "[MyRealmWindow.ResetGovernmentTypeFilter]"
-							}
-
-							item = {
-								button_standard_clean = {
-									name = "government_filter"
-									datacontext = "[GovernmentTypeHeader.GetGovernmentType]"
-
-									text = "MRW_GOVERNMENT_FILTER"
-									default_format = "#low"
-
-									tooltip = "MRW_GOVERNMENT_FILTER_TT"
-									using = tooltip_above
-									down = "[GovernmentTypeHeader.IsSelected]"
-									onclick = "[GovernmentTypeHeader.OnClick]"
-								}
-							}
+						scrollbar_horizontal = {
+							using = Scrollbar_Horizontal
 						}
 
-						hbox = {
-							name = "small_government_filters"
-							datamodel = "[MyRealmWindow.GetGovernmentTypeHeaders]"
-							visible = "[GreaterThanOrEqualTo_int32(GetDataModelSize(MyRealmWindow.GetGovernmentTypeHeaders), '(int32)3')]"
-							spacing = 2
-							layoutpolicy_horizontal = expanding
+						scrollwidget = {
+							hbox = {
+								name = "government_filters_container"
+								margin = { 0 7 }
 
-							button_standard_clean = {
-								name = "all_governments"
-								size = { 56 33 }
-								default_format = "#low"
+								hbox = {
+									name = "government_filters"
+									datamodel = "[MyRealmWindow.GetGovernmentTypeHeaders]"
+									visible = "[LessThan_int32(GetDataModelSize(MyRealmWindow.GetGovernmentTypeHeaders), '(int32)3')]"
+									spacing = 5
 
-								text = "MRW_GOVERNMENT_FILTER_ALL"
-								tooltip = "MRW_GOVERNMENT_FILTER_ALL_TT"
-								using = tooltip_above
-								down = "[Not(MyRealmWindow.HasGovernmentTypeFilter)]"
-								onclick = "[MyRealmWindow.ResetGovernmentTypeFilter]"
-							}
+									button_standard_clean = {
+										name = "all_governments"
+										size = { 60 33 }
+										default_format = "#low"
 
-							item = {
-								button_standard_clean = {
-									name = "small_government_filter"
-									datacontext = "[GovernmentTypeHeader.GetGovernmentType]"
-									size = { 96 33 }
+										text = "MRW_GOVERNMENT_FILTER_ALL"
+										tooltip = "MRW_GOVERNMENT_FILTER_ALL_TT"
+										using = tooltip_above
+										down = "[Not(MyRealmWindow.HasGovernmentTypeFilter)]"
+										onclick = "[MyRealmWindow.ResetGovernmentTypeFilter]"
+									}
 
-									text = "[GovernmentType.GetNameNoTooltip]"
-									default_format = "#low"
+									item = {
+										button_standard_clean = {
+											name = "government_filter"
+											datacontext = "[GovernmentTypeHeader.GetGovernmentType]"
 
-									tooltip = "MRW_GOVERNMENT_FILTER_TT"
-									using = tooltip_above
-									down = "[GovernmentTypeHeader.IsSelected]"
-									onclick = "[GovernmentTypeHeader.OnClick]"
+											text = "MRW_GOVERNMENT_FILTER"
+											default_format = "#low"
+
+											tooltip = "MRW_GOVERNMENT_FILTER_TT"
+											using = tooltip_above
+											down = "[GovernmentTypeHeader.IsSelected]"
+											onclick = "[GovernmentTypeHeader.OnClick]"
+										}
+									}
+								}
+
+								hbox = {
+									name = "small_government_filters"
+									datamodel = "[MyRealmWindow.GetGovernmentTypeHeaders]"
+									visible = "[GreaterThanOrEqualTo_int32(GetDataModelSize(MyRealmWindow.GetGovernmentTypeHeaders), '(int32)3')]"
+									spacing = 2
+
+									button_standard_clean = {
+										name = "all_governments"
+										size = { 60 33 }
+										default_format = "#low"
+
+										text = "MRW_GOVERNMENT_FILTER_ALL"
+										tooltip = "MRW_GOVERNMENT_FILTER_ALL_TT"
+										using = tooltip_above
+										down = "[Not(MyRealmWindow.HasGovernmentTypeFilter)]"
+										onclick = "[MyRealmWindow.ResetGovernmentTypeFilter]"
+									}
+
+									item = {
+										button_standard_clean = {
+											name = "small_government_filter"
+											datacontext = "[GovernmentTypeHeader.GetGovernmentType]"
+											size = { 93 33 }
+
+											text = "[GovernmentType.GetNameNoTooltip]"
+											default_format = "#low"
+
+											tooltip = "MRW_GOVERNMENT_FILTER_TT"
+											using = tooltip_above
+											down = "[GovernmentTypeHeader.IsSelected]"
+											onclick = "[GovernmentTypeHeader.OnClick]"
+										}
+									}
 								}
 							}
 						}
@@ -973,7 +1002,9 @@ window = {
 
 					vbox = {
 						layoutpolicy_horizontal = expanding
-						margin = { 15 5 }
+						margin = { 15 0 }
+						margin_top = 15
+						margin_bottom = 15
 
 						vbox = {
 							layoutpolicy_horizontal = expanding
@@ -1046,9 +1077,7 @@ window = {
 				### SUCCESSION TAB
 				vbox = {
 					name = "tab_succession"
-					##RES
-					visible = "[And(MyRealmWindow.IsShowingSuccession,Not(GetVariableSystem.Exists('show_governors')))]"
-					##/RES
+					visible = "[GetVariableSystem.HasValue( 'realm_tabs', 'succession' )]"
 					layoutpolicy_horizontal = expanding
 					layoutpolicy_vertical = expanding
 
@@ -1063,61 +1092,74 @@ window = {
 					}
 
 					vbox = {
-						margin = { 30 15 }
+						margin = { 20 15 }
 						margin_bottom = 10
-						spacing = 8
+						spacing = 4
 						layoutpolicy_horizontal = expanding
 
 						text_label_center = {
 							text = "MY_REALM_WINDOW_CURRENT_SUCCESSION"
 						}
 
-						vbox = {
-							datamodel = "[MyRealmWindow.GetRealmLaws]"
-							spacing = 10
-							margin_bottom = 5
-							ignoreinvisible = yes
+						scrollbox = {
+							name = "laws_scrollbox"
 							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = expanding
+							minimumsize = { 0 185 }
+							maximunsize = { 0 400 }
+	
+							blockoverride "scrollbox_content" {
+								datamodel = "[MyRealmWindow.GetRealmLaws]"
+								spacing = 1
+								margin_bottom = 5
+								ignoreinvisible = yes
 
-							item = {
-								hbox = {
-									visible = "[And( Not( GuiLawGroup.GetLawGroup.HasFlag( 'realm_law' ) ), GuiLawGroup.IsAvailable )]"
-									layoutpolicy_horizontal = growing
-
-									vbox = {
+								item = {
+									hbox = {
+										visible = "[And( And( Not( GuiLawGroup.GetLawGroup.HasFlag( 'realm_law' ) ), GuiLawGroup.IsAvailable ), Not( GuiLawGroup.GetLawGroup.HasFlag( 'policy' ) ))]"
 										layoutpolicy_horizontal = growing
 
-										text_single = {
+										vbox = {
 											layoutpolicy_horizontal = growing
-											max_width = 350
-											raw_text = "[GuiLawGroup.GetLawGroup.GetNameSingular]:"
+
+											text_single = {
+												layoutpolicy_horizontal = growing
+												max_width = 350
+												raw_text = "[GuiLawGroup.GetLawGroup.GetNameSingular]:"
+											}
+
+											text_single = {
+												layoutpolicy_horizontal = growing
+												max_width = 350
+												text = "[GuiLawGroup.GetCurrentLevel.GetLaw.GetName]"
+												default_format = "#high"
+											}
+
+											text_single = {
+												layoutpolicy_horizontal = growing
+												max_width = 350
+												visible = "[GuiLawGroup.GetCurrentLevel.GetLaw.HasSubName]"
+												text = "[GuiLawGroup.GetCurrentLevel.GetLaw.GetSubName]"
+												default_format = "#F"
+											}
+
+											divider_light = {
+												layoutpolicy_horizontal = expanding
+											}
+	
+											spacing = 5
+										}
+										expand = {
+											layoutpolicy_horizontal = growing
 										}
 
-										text_single = {
-											layoutpolicy_horizontal = growing
-											max_width = 350
-											text = "[GuiLawGroup.GetCurrentLevel.GetLaw.GetName]"
-											default_format = "#high"
+										button_standard = {
+											datacontext = "[GuiLawGroup]"
+											size = { 150 32 }
+											onclick = "[OpenSuccessionLawChangeWindow(GuiLawGroup.Self)]"
+											text = "MRW_CHANGE_LAW"
+											tooltip = "MRW_CHANGE_LAW_TT"
 										}
-
-										text_single = {
-											layoutpolicy_horizontal = growing
-											max_width = 350
-											visible = "[GuiLawGroup.GetCurrentLevel.GetLaw.HasSubName]"
-											text = "[GuiLawGroup.GetCurrentLevel.GetLaw.GetSubName]"
-											default_format = "#F"
-										}
-									}
-									expand = {
-										layoutpolicy_horizontal = growing
-									}
-
-									button_standard = {
-										datacontext = "[GuiLawGroup]"
-										size = { 150 32 }
-										onclick = "[OpenSuccessionLawChangeWindow(GuiLawGroup.Self)]"
-										text = "MRW_CHANGE_LAW"
-										tooltip = "MRW_CHANGE_LAW_TT"
 									}
 								}
 							}
@@ -1163,64 +1205,64 @@ window = {
 								onclick = "[OpenDesignateHeirWindow]"
 							}
 						}
-						##RES
+
 						divider_light = {
 							layoutpolicy_horizontal = growing
-							visible = "[GetScriptedGui('has_republic_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('has_republic_government_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 						}
 
 						hbox = {
-							visible = "[GetScriptedGui('has_republic_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('has_republic_government_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							layoutpolicy_horizontal = growing
 							vbox = {
 								layoutpolicy_horizontal = growing
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "LEADING_FAMILY_TITLE"
+									raw_text = "LEADING_FAMILY_TITLE"
 								}
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "YOUR_OR_LIEGE_REPUBLIC"
+									raw_text = "YOUR_OR_LIEGE_REPUBLIC"
 								}
 							}
 
 							button_standard = {
-								text = "VIEW_REPUBLIC_HOUSES"
+								raw_text = "VIEW_REPUBLIC_HOUSES"
 								size = { 150 32 }
-								tooltip = "VIEW_REPUBLIC_HOUSES_TT"
+								raw_tooltip = "VIEW_REPUBLIC_HOUSES_TT"
 								onclick = "[GetVariableSystem.Toggle('window_republic_families')]"
 								onclick = "[GetScriptedGui('most_likely_to_succeed').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							}
 						}
 
 						spacer = {
-							visible = "[GetScriptedGui('has_republic_elected_ruler_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('has_republic_elected_ruler_government_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 0 4 }
 						}
 
 						hbox = {
-							visible = "[GetScriptedGui('has_republic_elected_ruler_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('has_republic_elected_ruler_government_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							layoutpolicy_horizontal = growing
 							vbox = {
 								layoutpolicy_horizontal = growing
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "REPUBLIC_TERM_LIMITS"
+									raw_text = "REPUBLIC_TERM_LIMITS"
 								}
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "GET_REPUBLIC_TERM_LIMIT"
+									raw_text = "GET_REPUBLIC_TERM_LIMIT"
 								}
 							}
 
 							button_standard = {
-								text = "CHANGE_REPUBLIC_TERM_LIMIT"
+								raw_text = "CHANGE_REPUBLIC_TERM_LIMIT"
 								size = { 150 32 }
-								tooltip = "CHANGE_REPUBLIC_TERM_LIMIT"
+								raw_tooltip = "CHANGE_REPUBLIC_TERM_LIMIT"
 								onclick = "[GetVariableSystem.Toggle('window_republic_elected_ruler_form')]"
 							}
 						}
@@ -1230,49 +1272,49 @@ window = {
 						}
 
 						hbox = {
-							visible = "[GetScriptedGui('has_republic_senate_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('has_republic_senate_government_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							layoutpolicy_horizontal = growing
 							vbox = {
 								layoutpolicy_horizontal = growing
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "SENATE_VIEW"
+									raw_text = "SENATE_VIEW"
 								}
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "GET_YOUR_SEATS"
+									raw_text = "GET_YOUR_SEATS"
 								}
 							}
 
 							button_standard = {
-								text = "OPEN_SENATE_VIEW"
+								raw_text = "OPEN_SENATE_VIEW"
 								size = { 150 32 }
-								tooltip = "VIEW_SENATE"
+								raw_tooltip = "VIEW_SENATE"
 								onclick = "[GetVariableSystem.Toggle('window_republic_senate_form')]"
 							}
 						}
 
 						hbox = {
-							visible = "[GetScriptedGui('has_republic_council_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('has_republic_council_government_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							layoutpolicy_horizontal = growing
 							vbox = {
 								layoutpolicy_horizontal = growing
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "COUNCIL_VIEW"
+									raw_text = "COUNCIL_VIEW"
 								}
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "IS_COUNCILLOR_REPUBLIC"
+									raw_text = "IS_COUNCILLOR_REPUBLIC"
 								}
 							}
 
 							button_standard = {
-								text = "OPEN_COUNCIL_VIEw"
+								raw_text = "OPEN_COUNCIL_VIEw"
 								size = { 150 32 }
 								tooltip = "VIEW_COUNCIL"
 								onclick = "[GetVariableSystem.Toggle('window_republic_council_form')]"
@@ -1280,21 +1322,21 @@ window = {
 						}
 
 						hbox = {
-							visible = "[GetScriptedGui('has_republic_bicameral_government').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							visible = "[GetScriptedGui('has_republic_bicameral_government_uniui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							layoutpolicy_horizontal = growing
 							vbox = {
 								layoutpolicy_horizontal = growing
 								text_single = {
 									layoutpolicy_horizontal = growing
 									max_width = 350
-									text = "CONSTITUTIONAL_VIEW"
+									raw_text = "CONSTITUTIONAL_VIEW"
 								}
 							}
 
 							button_standard = {
-								text = "OPEN_CONSTITUTIONAL_VIEW"
+								raw_text = "OPEN_CONSTITUTIONAL_VIEW"
 								size = { 150 32 }
-								tooltip = "VIEW_CONSTITUTIONAL"
+								raw_tooltip = "VIEW_CONSTITUTIONAL"
 								onclick = "[GetVariableSystem.Toggle('window_republic_bicameral_form')]"
 							}
 						}
@@ -1303,7 +1345,7 @@ window = {
 					spacer = {
 						size = { 0 10 }
 					}
-					##/RES
+
 					scrollbox = {
 						name = "succession_scrollbox"
 						layoutpolicy_horizontal = expanding
@@ -1312,7 +1354,7 @@ window = {
 
 						blockoverride "scrollbox_content"
 						{
-							margin = { 17 10 }
+							margin = { 20 10 }
 							spacing = 10
 
 							hbox = {
@@ -1320,7 +1362,14 @@ window = {
 								layoutpolicy_horizontal = expanding
 
 								background = {
-									using =  Background_Area
+									using =  Background_Area_Dark
+									alpha = 0.8
+
+									modify_texture = {
+										texture = "gfx/interface/component_masks/mask_fade_horizontal.dds"
+										blend_mode = alphamultiply
+										mirror = horizontal
+									}
 								}
 
 								portrait_head = {
@@ -1334,10 +1383,22 @@ window = {
 								vbox = {
 									layoutpolicy_vertical = expanding
 									layoutpolicy_horizontal = expanding
-									margin = { 10 8 }
+									margin = { 5 0 }
+									margin_top = 5
 
 									vbox = {
 										layoutpolicy_horizontal = expanding
+
+										text_single = {
+											visible = "[MyRealmWindow.HasHeir]"
+											layoutpolicy_horizontal = expanding
+											autoresize = no
+											using = Font_Size_Medium
+											fontsize_min = 14
+
+											text = "MyRealmPlayerHeirGetUINameNoTooltip"
+											default_format = "#low"
+										}
 
 										text_single = {
 											visible = "[MyRealmWindow.HasHeir]"
@@ -1347,17 +1408,6 @@ window = {
 
 											text = "MRW_YOUR_PLAYER_HEIR"
 											default_format = "#weak"
-										}
-
-										text_single = {
-											visible = "[MyRealmWindow.HasHeir]"
-											layoutpolicy_horizontal = expanding
-											autoresize = no
-											using = Font_Size_Medium
-											fontsize_min = 14
-
-											text = "[MyRealmWindow.GetCharacter.GetPlayerHeir.GetUINameNoTooltip]"
-											default_format = "#low"
 										}
 									}
 
@@ -1378,11 +1428,9 @@ window = {
 											text = "MY_REALM_WINDOW_NOT_PRIMARY_HEIR"
 										}
 									}
-								}
-							}
 
-							divider = {
-								layoutpolicy_horizontal = expanding
+									expand = {}
+								}
 							}
 
 							##### FROM REALM'S PARTITION #####
@@ -1393,11 +1441,13 @@ window = {
 									name = "their_partition_share"
 									visible = "[And(MyRealmWindow.HasPartition, DataModelHasItems(MyRealmWindow.GetMyPartitionShare))]"
 									layoutpolicy_horizontal = expanding
+									margin_left = 5
 
 									hbox = {
 										layoutpolicy_horizontal = expanding
 
-										text_label_center = {
+										text_label_left = {
+											layoutpolicy_horizontal = expanding
 											text = "MY_REALM_WINDOW_PARTITION_SHARE"
 										}
 
@@ -1491,7 +1541,7 @@ window = {
 
 												text_single = {
 													name = "heir_name"
-													text = "[Character.GetUINameNoTooltip]"
+													text = "GeneralUniUICharGetUINameNoTooltip"
 													layoutpolicy_horizontal = expanding
 													using = Font_Size_Medium
 													max_width = 400
@@ -1602,13 +1652,15 @@ window = {
 								name = "exceptions"
 								layoutpolicy_horizontal = expanding
 								layoutpolicy_vertical = growing
+								margin_left = 5
 
 								visible = "[DataModelHasItems(MyRealmWindow.GetSuccessionExceptions)]"
 
 								hbox = {
 									layoutpolicy_horizontal = expanding
 
-									text_label_center = {
+									text_label_left = {
+										layoutpolicy_horizontal = expanding
 										text = "MY_REALM_WINDOW_EXCEPTIONS"
 									}
 
@@ -1646,7 +1698,7 @@ window = {
 
 									text_label_left = {
 										name = "line_of_succession_label"
-
+										layoutpolicy_horizontal = expanding
 										text = "MY_REALM_WINDOW_LINE_OF_SUCCESSION"
 									}
 
@@ -1669,19 +1721,17 @@ window = {
 								}
 							}
 
-							divider = {
-								layoutpolicy_horizontal = expanding
-							}
-
 							#### ELECTIONS ####
 							vbox = {
 								layoutpolicy_horizontal = expanding
 								visible = "[MyRealmWindow.CanVote]"
+								margin_left = 5
 
 								hbox = {
 									layoutpolicy_horizontal = expanding
 
-									text_label_center = {
+									text_label_left = {
+										layoutpolicy_horizontal = expanding
 										text = "MY_REALM_WINDOW_ELECTIONS"
 									}
 
@@ -1694,14 +1744,14 @@ window = {
 
 									fixedgridbox = {
 										name = "exceptions_box"
-										addcolumn = 480
+										addcolumn = 510
 										addrow = 90
 										datamodel = "[MyRealmWindow.GetTitlesCanVote]"
 
 										item = {
 											widget = {
 												name = "election_title"
-												size = { 480 90 }
+												size = { 510 90 }
 												datacontext = "[TitleItem.GetTitle]"
 
 												hbox = {
@@ -1753,10 +1803,69 @@ window = {
 					}
 				}
 
+				#LAWS TAB
+
 				vbox = {
-					##RES
+					name = "tab_laws"
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					visible = "[GetVariableSystem.HasValue( 'realm_tabs', 'laws' )]"
+
+					state = {
+						name = _show
+						using = Animation_FadeIn_Quick
+					}
+
+					state = {
+						name = _hide
+						alpha = 0
+					}
+
+					scrollbox = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+						blockoverride "scrollbox_content"
+						{	
+							vbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+								Laws = {
+									blockoverride "visible" {
+										visible = "[And( GuiLawGroup.GetLawGroup.HasFlag( 'policy_1' ), GuiLawGroup.IsAvailable )]"
+									}
+								}
+
+								Laws = {
+									blockoverride "visible" {
+										visible = "[And( GuiLawGroup.GetLawGroup.HasFlag( 'policy_2' ), GuiLawGroup.IsAvailable )]"
+									}
+								}
+								Laws = {
+									blockoverride "visible" {
+										visible = "[And( GuiLawGroup.GetLawGroup.HasFlag( 'policy_3' ), GuiLawGroup.IsAvailable )]"
+									}
+								}
+								Laws = {
+									blockoverride "visible" {
+										visible = "[And( GuiLawGroup.GetLawGroup.HasFlag( 'policy_4' ), GuiLawGroup.IsAvailable )]"
+									}
+								}
+								Laws = {
+									blockoverride "visible" {
+										visible = "[And( GuiLawGroup.GetLawGroup.HasFlag( 'policy_5' ), GuiLawGroup.IsAvailable )]"
+									}
+								}
+								spacer = {
+									size = {0 50}
+									visible = "[And( GuiLawGroup.GetLawGroup.HasFlag( 'policy_5' ), GuiLawGroup.IsAvailable )]"
+								}
+							}
+						}
+					}
+				}
+
+				vbox = {
 					visible = "[And(Or( MyRealmWindow.IsShowingDomain, MyRealmWindow.IsShowingVassals),Not(GetVariableSystem.Exists('show_governors')))]"
-					##/RES
 					layoutpolicy_horizontal = expanding
 					margin = { 15 5 }
 					margin_bottom = 15
@@ -2014,7 +2123,7 @@ window = {
 						}
 					}
 				}
-				##RES
+
 				### GOV TAB
 				vbox = {
 					name = "tab_governors"
@@ -2107,9 +2216,9 @@ window = {
 												}
 												text_single = {
 													visible = "[GetScriptedGui('holder_is_not_you').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('important_holder',Scope.Title.GetHolder.MakeScope).End)]"
-													text = "EFFECTIVENESS"
+													raw_text = "EFFECTIVENESS"
 													minimumsize = { 300 -1 }
-													tooltip = EFFECTIVENESS_TOOLTIP
+													raw_tooltip = "EFFECTIVENESS_TOOLTIP"
 												}
 											}
 											vbox = {
@@ -2179,13 +2288,12 @@ window = {
 							}
 
 							text_single = {
-								text = "[GetPlayer.MakeScope.Var('office_slots').GetValue|0]/[GetPlayer.MakeScope.Var('office_slots_max').GetValue|0] Holdings"
+								raw_text = "[GetPlayer.MakeScope.Var('office_slots').GetValue|0]/[GetPlayer.MakeScope.Var('office_slots_max').GetValue|0] Holdings"
 							}
 						}					
 
 					}
 				}
-				##/RES
 			}
 		}
 	}

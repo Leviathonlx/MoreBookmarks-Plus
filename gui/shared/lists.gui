@@ -94,6 +94,7 @@ types Lists
 			portrait_head_small = {}
 
 			button_standard = {
+				visible = "[Not(GetGlobalVariable('DUIT_is_loaded').IsSet)]"
 				layoutpolicy_horizontal = expanding
 				layoutpolicy_vertical = expanding
 
@@ -118,7 +119,6 @@ types Lists
 				block "button_content"
 				{
 					hbox = {
-								   
 						vbox = {
 							layoutpolicy_horizontal = expanding
 							layoutpolicy_vertical = expanding
@@ -134,7 +134,288 @@ types Lists
 									using = Font_Size_Medium
 									autoresize = no
 
-									text = "[Character.GetUINameNoTooltip]"
+									text = "GeneralUniUICharGetUINameNoTooltip"
+								}
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									layoutpolicy_vertical = expanding
+
+									using = character_age_or_death_text
+									blockoverride "list_layout" {}
+
+									block "character_relation"
+									{
+										text_single = {
+											name = "character_relation"
+											layoutpolicy_horizontal = expanding
+											raw_text = "|  [Character.GetRelationToString( GetPlayer )]"
+											tooltip = "EXTENDED_RELATIONS_TOOLTIP"
+											default_format = "#low"
+											autoresize = no
+											align = nobaseline
+											visible = "[Character.HasRelationTo( GetPlayer )]"
+										}
+
+										expand = {
+											visible = "[Not(Character.HasRelationTo( GetPlayer ))]"
+										}
+									}
+								}
+							}
+
+							# Dynasty
+							hbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+								margin_left = 5
+
+								widget = {
+									size = { 45 60 }
+
+									coa_house_small = {
+										datacontext = "[Character.GetHouse]"
+										scale = 0.7
+									}
+								}
+
+								# Traits
+
+								fixedgridbox = {
+									name = "traits_grid"
+									datamodel = "[CharacterListItem.GetTraits]"
+									flipdirection = yes
+									size = { 150 60 }
+									addcolumn = 30
+									addrow = 45
+									maxhorizontalslots = 8
+									maxverticalslots = 1
+
+									item = {
+										container = {
+											visible = "[Trait.IsValid]"
+
+											icon_trait = {
+												blockoverride "icon_size"
+												{
+													size = { 30 30 }
+												}
+
+												blockoverride "tooltip_placement"
+												{
+													using = tooltip_se
+												}
+
+												blockoverride "glow_radius"
+												{
+													glow_radius = 3
+												}
+											}
+										}
+									}
+								}
+
+								block "bottom_middle_box" {
+									expand  = {}
+								}
+
+							}
+						}
+
+						expand = {}
+
+						vbox = {
+							minimumsize = { 200 0 }
+							datacontext = "[CharacterListItem.GetCharacter]"
+							layoutpolicy_vertical = expanding
+							margin_top = 5
+							margin_right = 5
+
+							# Skills
+							hbox = {
+								name = "skills_grid"
+								layoutpolicy_horizontal = expanding
+
+								expand = {}
+
+								datamodel = "[CharacterListItem.GetSkillItems]"
+								margin_right = 5
+
+								item = {
+									widget = {
+										size = { 32 25 }
+
+										text_single = {
+											name = "value"
+											parentanchor = center
+											margin_bottom = 4
+											align = center
+											text = "[SkillItem.GetValue]"
+											tooltip = "[SkillItem.GetName]"
+										}
+
+										background = {
+											name = "skill_icon_bg"
+											texture = "gfx/interface/window_character/character_view_skills_bg.dds"
+											framesize = { 70 26 }
+											margin = { 5 0 }
+
+											block "bg"
+											{
+												frame = "[SkillItem.GetFrame]"
+											}
+										}
+
+									}
+								}
+							}
+
+							expand = {}
+
+							block "bottom_right_box"
+							{
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									layoutpolicy_vertical = expanding
+
+									# Realm
+									widget = {
+										size = {55 58 }
+										visible = "[Not( IsDataModelEmpty( CharacterListItem.GetTitleItems ) )]"
+
+										block "claims_visibility" {}
+
+										datacontext = "[CharacterListItem.GetFirstClaim]"
+
+										coa_title_tiny_crown = {
+											using = tooltip_ne
+											datacontext = "[Claim.GetTitle]"
+
+											highlight_icon = {
+												name = "pressed_claim"
+												visible = "[And(Claim.IsPressed, Not(Claim.IsImplicit))]"
+												texture = "gfx/interface/icons/title_status/icon_claim_pressed.dds"
+												size = { 24 24 }
+												parentanchor = bottom|right
+											}
+
+											highlight_icon = {
+												name = "unpressed_claim"
+												visible = "[And(Not(Claim.IsPressed), Not(Claim.IsImplicit))]"
+												texture = "gfx/interface/icons/title_status/icon_claim_unpressed.dds"
+												size = { 24 24 }
+												parentanchor = bottom|right
+											}
+
+											highlight_icon = {
+												name = "implicit_claim"
+												visible = "[Claim.IsImplicit]"
+												texture = "gfx/interface/icons/title_status/icon_claim_implicit.dds"
+												size = { 24 24 }
+												parentanchor = bottom|right
+											}
+
+											blockoverride "coa_tooltip"
+											{
+												tooltip = "CHARACTER_LIST_CLAIM_TOOLTIP"
+											}
+										}
+
+										text_single = {
+											align = right
+											minimumsize = { 15 0 }
+											parentanchor = vcenter|right
+											text = "[CharacterListItem.GetTitleItemCount]"
+											tooltip = "CHARACTER_LIST_CLAIM_TOOLTIP"
+										}
+									}
+
+									expand = {}
+
+									# Religion
+									icon = {
+										name = "faith_button"
+										size = { 35 35 }
+										datacontext = "[Character.GetFaith]"
+										tooltipwidget = { faith_tooltip = {} }
+										texture = "[Faith.GetIcon]"
+									}
+
+									widget = {
+										datacontext = "[Character.GetCulture]"
+										size = { 120 24 }
+
+										tooltipwidget = {
+											culture_tooltip = {}
+										}
+										using = tooltip_se
+
+										hbox = {
+											spacing = 3
+
+											icon = {
+												name = "culture"
+												texture = "gfx/interface/icons/icon_culture.dds"
+												size = { 24 24 }
+											}
+
+											text_multi = {
+												layoutpolicy_horizontal = expanding
+												min_width = 95
+												max_width = 95
+												autoresize = yes
+												text = "CULTURE_LISTS_WINDOW"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			button_standard = {
+				visible = "[GetGlobalVariable('DUIT_is_loaded').IsSet]"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				onclick = "[CharacterListItem.OnClick('character')]"
+				enabled = "[CharacterListItem.IsSelectable]"
+
+				framesize = { 249 78 }
+				spriteType = Corneredtiled
+				spriteborder = { 20 20 }
+				texture = "[GetIllustration( 'duit_button_entry_characterlist' ).GetTexture(GetPlayer)]"
+
+				block "button" {}
+
+				character_list_arrow = {
+					name = "character_list_arrow"
+				}
+
+				block "overlay" {
+					using = default_character_list_overlay
+				}
+
+				block "button_content"
+				{
+					hbox = {
+						vbox = {
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = expanding
+
+							# Name and age
+							vbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+								margin_left = 10
+
+								text_single = {
+									layoutpolicy_horizontal = expanding
+									using = Font_Size_Medium
+									autoresize = no
+
+									text = "GeneralUniUICharGetUINameNoTooltip"
 								}
 
 								hbox = {
@@ -445,7 +726,7 @@ types Lists
 									using = Font_Size_Medium
 									layoutpolicy_horizontal = expanding
 									align = nobaseline
-									text = "[Character.GetUINameNoTooltip]"
+									text = "GeneralUniUICharGetUINameNoTooltip"
 									autoresize = no
 									fontsize_min = 14
 								}
@@ -661,6 +942,23 @@ types Lists
 				alwaystransparent = no
 
 				button_drop = {
+					visible = "[GetPlayer.IsValid]"
+					block "dropdown_size"
+					{
+						size = { 200 32 }
+					}
+					block "dropdown_active_item_properties"
+					{
+						raw_text = "#D Current Option#!"
+					}
+					button_trigger = none
+
+
+				}
+
+				button_drop = {
+					visible = "[Not(GetPlayer.IsValid)]"
+					texture = "gfx/interface/buttons/button_drop_down.dds"
 					block "dropdown_size"
 					{
 						size = { 200 32 }
@@ -1187,7 +1485,6 @@ types Lists
 		size = { 0 125 }
 
 		hbox = {
-					
 			spacing = 5
 
 			background = {
@@ -1210,7 +1507,7 @@ types Lists
 						name = "name"
 						layoutpolicy_horizontal = expanding
 						autoresize = no
-						text = "[Character.GetUINameNoTooltip]"
+						text = "GeneralUniUICharGetUINameNoTooltip"
 						using = Font_Size_Medium
 						align = nobaseline
 						fontsize_min = 14
@@ -1346,7 +1643,7 @@ types Lists
 										}
 									}
 								}
-								fixedgridbox = {
+																fixedgridbox = {
 									name = "traits_grid_five"
 									datamodel = "[CharacterListItem.GetTraits]"
 									flipdirection = yes
@@ -1451,7 +1748,7 @@ types Lists
 		vbox = {
 			margin = { 0 5 }
 			margin_left = 10
-			margin_right = 15 	 
+			margin_right = 15 
 
 			hbox = {
 				layoutpolicy_horizontal = expanding
@@ -1489,7 +1786,7 @@ types Lists
 
 								text_single = {
 									layoutpolicy_horizontal = expanding
-									text = "[Character.GetUINameNoTooltip]"
+									text = "GeneralUniUICharGetUINameNoTooltip"
 									using = Font_Size_Medium
 									autoresize = no
 									fontsize_min = 13
@@ -1632,16 +1929,19 @@ types Lists
 						hbox = {
 							layoutpolicy_horizontal = expanding
 							visible = "[And( VassalContract.UsesObligationLevels, Not( Character.GetPrimaryTitle.IsBarony))]"
-							spacing = 10					
+							spacing = 10
+
 							button_round = {
 								enabled = "[Character.IsPlayerInteractionValid('liege_modify_vassal_contract_interaction')]"
 								onclick = "[Character.OpenPlayerInteraction('liege_modify_vassal_contract_interaction')]"
 								tooltip = "[Character.GetPlayerInteractionTooltip('liege_modify_vassal_contract_interaction')]"
+
 								button_feudal_contract = {
 									alwaystransparent = yes
 									parentanchor = center
 								}
 							}
+
 							text_single = { # Display the usual Levy and Tax for Feudal
 								visible = "[Character.GetGovernment.IsType('feudal_government')]"
 								layoutpolicy_horizontal = expanding
@@ -1649,31 +1949,40 @@ types Lists
 								default_format = "#low"
 								align = nobaseline
 							}
+
 							text_single = { # Display the government type for non Feudal
 								visible = "[Not(Character.GetGovernment.IsType('feudal_government'))]"
 								text = "[Character.GetGovernment.GetName]"
 								align = nobaseline
 							}
+
 							expand = {}
+
 							vassal_contract_not_default_icon = {}
 						}
+
 						hbox = {
 							layoutpolicy_horizontal = expanding
 							visible = "[Not(And( VassalContract.UsesObligationLevels, Not( Character.GetPrimaryTitle.IsBarony)))]"
 							spacing = 5
+
 							icon = {
 								size = { 42 42 }
 								texture = "gfx/interface/icons/symbols/icon_cross.dds"
 								tooltip = MY_REALM_WINDOW_NO_FEUDAL_CONTRACT_TT
 								enabled = no
 							}
+
 							text_single = {
 								text = "[Character.GetGovernment.GetName]"
 								align = nobaseline
 							}
+
 							expand = {}
 						}
+
 						expand = {}
+
 						hbox = {
 							visible = "[GetPlayer.GetGovernment.IsType('feudal_government')]"
 							spacing = 5
@@ -1683,13 +1992,16 @@ types Lists
 								size = { 30 30 }
 								texture = "gfx/interface/icons/message_feed/tier_up.dds"
 							}
+
 							icon = {
 								visible = "[LessThan_CFixedPoint(Character.MakeScope.ScriptValue('StA_submission'),'(CFixedPoint)0')]"
 								name = "submission_icon_down"
 								size = { 30 30 }
 								texture = "gfx/interface/icons/message_feed/tier_down.dds"
 							}
+
 							text_single = {
+								visible = "[GetGlobalVariable('StA_is_loaded').IsSet]"
 								# state = {
 								# 	name = _mouse_enter
 								# 	on_start = "[GetVariableSystem.Set('character_script_value_breakdown','StA_submission')]"
@@ -1700,11 +2012,13 @@ types Lists
 								# 	widget_value_breakdown_tooltip = {}
 								# }
 								tooltip = "[Character.MakeScope.GetScriptValueDesc('StA_submission')]"
-								text = "STA_VASSAL_SUBMISSION"
+								raw_text = "STA_VASSAL_SUBMISSION"
 							}
 						}
+
 						}
 						# [/StA] [/UniUI]
+
 
 						hbox = {
 							layoutpolicy_horizontal = expanding
