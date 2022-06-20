@@ -1,0 +1,156 @@
+﻿## Value for weighting burial sites
+mz_burial_rites_location_cap_value = {
+	value = 0
+
+	every_in_list = { # Add +1 for every entity in the list.
+		list = mz_personally_held_counties_list
+		add = 1
+	}
+	max = 3 # Cap it out at the max for the event.
+}
+
+mz_burial_rites_location_value = {
+	value = 0
+
+	if = { # Weight up for Arabic and East African cultures
+		limit = {
+			OR = {
+				culture = { has_cultural_pillar = heritage_east_african }
+				culture = { has_cultural_pillar = heritage_arabic }
+			}
+		}
+		add = 25
+	}
+	if = { # Weight up for faith with correct doctrine
+		limit = {
+			faith = { has_doctrine_parameter = mz_burial_rites_active }
+		}
+		add = 50
+	}
+	if = { # Weight up for capital province
+		limit = { title_province = root.capital_province }
+		add = 50
+	}
+	if = {
+		limit = { # Weight up very high for pyramids
+			OR = {
+				any_county_province = { has_building_or_higher = the_pyramids_01 }
+				any_county_province = { has_building_or_higher = mz_pyramids_01 }
+			}
+		}
+		add = 100
+	}
+	add = { # Weight up for low popular opinion
+		value = this.county_opinion
+		multiply = -1
+	}
+	if = { # Weight down for existing burial
+		limit = {
+			OR = {
+				has_county_modifier = mz_burial_rites_bonus_county_strong_modifier 
+				has_county_modifier = mz_burial_rites_bonus_county_weak_modifier 
+			}
+		}
+		multiply = 0.01
+	}
+}
+
+mz_pyramids_location_cap_value = {
+	value = 0
+
+	every_in_list = { # Add +1 for every entity in the list.
+		list = mz_personally_held_eligible_baronies_list
+		add = 1
+	}
+	max = 3 # Cap it out at the max for the event.
+}
+
+mz_pyramids_location_value = {
+	value = 0
+	if = { # Weight up for Arabic and East African cultures
+		limit = {
+			OR = {
+				county.culture = { has_cultural_pillar = heritage_east_african }
+				county.culture = { has_cultural_pillar = heritage_arabic }
+			}
+		}
+		add = 25
+	}
+	if = { # Weight up for same faith (for edge cases where two pyramid-building faiths exist)
+		limit = { county.faith = root.faith }
+		add = 50
+	}
+	if = { # Weight up county capitals
+		limit = { 
+			title_province = { is_county_capital = yes }
+		}
+		add = 75
+	}
+	if = { # Weight up for capital province
+		limit = { title_province = root.capital_province }
+		add = 100
+	}
+	if = { # Weight down for existing burial
+		limit = {
+			OR = {
+				county = { has_county_modifier = mz_burial_rites_bonus_county_strong_modifier }
+				county = { has_county_modifier = mz_burial_rites_bonus_county_weak_modifier }
+			}
+		}
+		add = -50
+	}
+	add = { # Weight up for development
+		value = county.development_level
+	}
+	if = {
+		limit = { # Weight down significantly if county already has pyramids in another barony
+			county = { 
+				any_county_province = { has_building_or_higher = mz_pyramids_01 }
+			}
+		}
+		multiply = 0.2
+	}
+}
+
+mz_grove_location_cap_value = {
+	value = 0
+
+	every_in_list = { # Add +1 for every entity in the list.
+		list = mz_personally_held_eligible_provinces_list
+		add = 1
+	}
+	max = 3 # Cap it out at the max for the event.	
+}
+
+mz_grove_location_value = {
+	value = 0
+	if = { # Weight up for capital province
+		limit = { this = root.capital_province }
+		add = 25
+	}
+	if = { # Weight up for no holding
+		limit = { has_holding = no }
+		add = 50
+	}
+	if = { # Weight up for trees
+		limit = { 
+			terrain = taiga
+			terrain = forest
+			terrain = jungle
+		}
+		add = 50
+	}
+	if = { # Weight up more for both of the above
+		limit = { 
+			terrain = taiga
+			terrain = forest
+			terrain = jungle
+			has_holding = no
+		}
+		add = 100
+	}
+	add = { # Weight down for development
+		value = 100
+		subtract = county.development_level
+	}
+}

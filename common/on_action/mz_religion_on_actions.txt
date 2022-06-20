@@ -1,0 +1,279 @@
+﻿mz_eldership_increase_skills_action = {
+	trigger = {
+		age >= 50
+		culture = { has_cultural_parameter = mz_eldership_increase_skills }
+	}
+	effect = {
+		if = {
+			limit = { 
+				NOT = { exists = var:mz_eldership_skill_increase_chance }
+			}
+			set_variable = {
+				name = mz_eldership_skill_increase_chance
+				value = 0
+			}
+		}
+		random_list = {
+			20 = {
+				modifier = {
+					add = {
+						value = {
+							add = var:mz_eldership_skill_increase_chance
+							multiply = 20
+						}
+					}
+				}
+				random_list = {
+					1 = {
+						send_interface_toast = {
+							title = mz_eldership_increase_skill_toast
+							left_icon = root
+							add_diplomacy_skill = 1
+						}
+					}
+					1 = {
+						send_interface_toast = {
+							title = mz_eldership_increase_skill_toast
+							left_icon = root
+							add_martial_skill = 1
+						}
+					}
+					1 = {
+						send_interface_toast = {
+							title = mz_eldership_increase_skill_toast
+							left_icon = root
+							add_intrigue_skill = 1
+						}
+					}
+					1 = {
+						send_interface_toast = {
+							title = mz_eldership_increase_skill_toast
+							left_icon = root
+							add_stewardship_skill = 1
+						}
+					}
+					1 = {
+						send_interface_toast = {
+							title = mz_eldership_increase_skill_toast
+							left_icon = root
+							add_learning_skill = 1
+						}
+					}
+				}
+				set_variable = {
+					name = mz_eldership_skill_increase_chance
+					value = 0
+				}
+			}
+			80 = {
+				modifier = {
+					add = {
+						value = {
+							add = var:mz_eldership_skill_increase_chance
+							multiply = -20
+						}
+					}
+				}
+				change_variable = {
+					name = mz_eldership_skill_increase_chance
+					add = 1
+				}
+			}
+		}
+	}
+}
+
+mz_burial_rites_ancestor = {
+	trigger = {
+		exists = player_heir
+		player_heir = {
+			is_close_family_of = root
+		}
+		dynasty = player_heir.dynasty
+		faith = player_heir.faith
+		faith = { has_doctrine_parameter = mz_burial_rites_active }
+	}
+	effect = {
+		player_heir = {
+			set_variable = {
+				name = ancestor_to_bury
+				value = root
+				years = 20
+			}
+			trigger_event = {
+				on_action = mz_burial_rites_minor_penalty
+				years = 5
+			}
+		}
+	}
+}
+
+mz_burial_rites_minor_penalty = {
+	trigger = {
+		exists = var:ancestor_to_bury
+	}
+	effect = {
+		add_character_modifier = {
+			modifier = mz_burial_rites_penalty_minor_modifier
+			years = 10
+		}
+		trigger_event = {
+			on_action = mz_burial_rites_major_penalty
+			years = 10
+		}
+	}
+}
+
+mz_burial_rites_major_penalty = {
+	trigger = {
+		exists = var:ancestor_to_bury
+	}
+	effect = {
+		add_character_modifier = {
+			modifier = mz_burial_rites_penalty_major_modifier
+		}
+	}
+}
+
+mz_dawnbreakers_spouse_update = {
+	trigger = { # Trigger to attempt to save performance, only worry about this if they have the modifier or a relevant faith
+		OR = {
+			faith = { has_doctrine_parameter = mz_dawnbreakers_active }
+			has_character_modifier = mz_dawnbreakers_modifier
+		}
+	}
+	effect = { 
+		mz_update_dawnbreakers_effect = yes
+		if = {
+			limit = { exists = scope:spouse }
+			scope:spouse = { mz_update_dawnbreakers_effect = yes }
+		}
+	}
+}
+
+mz_dawnbreakers_spouse_delayed_update = {
+	trigger = { # Trigger to attempt to save performance, only worry about this if they have the modifier or a relevant faith
+		any_consort = {
+			OR = {
+				faith = { has_doctrine_parameter = mz_dawnbreakers_active }
+				has_character_modifier = mz_dawnbreakers_modifier
+			}
+		}
+	}
+	effect = {
+		every_consort = {
+			trigger_event = {
+				days = 1
+				on_action = mz_dawnbreakers_spouse_update
+			}
+		}
+	}
+}
+
+mz_faith_creation_ai = {
+	trigger = {
+		NOT = { has_game_rule = mz_ai_will_not_use_custom_tenets } # Can disable this behavior via a game rule
+		is_ai = yes # This is for AI characters to adjust tenets/doctrines. We don't want this to trigger for players.
+	}
+	effect = {
+		if = { # Germanic
+			limit = {
+				has_fp1_dlc_trigger = yes
+				faith = { 
+					religion_tag = germanic_religion
+					has_doctrine = tenet_warmonger
+					has_doctrine = tenet_bhakti
+					NOT = { has_doctrine = tenet_ancestor_worship }
+				}
+			}
+			faith = {
+				remove_doctrine = tenet_warmonger
+				remove_doctrine = tenet_bhakti
+				add_doctrine = mz_tenet_valhalla_bound
+				add_doctrine = tenet_ancestor_worship
+			}
+		}
+		if = { # Tengrism
+			limit = {
+				faith = {
+					religion_tag = tengrism_religion
+					has_doctrine = tenet_warmonger
+				}
+			}
+			faith = {
+				remove_doctrine = tenet_warmonger
+				add_doctrine = mz_tenet_eternal_riders
+			}
+		}
+		if = { # Akom and Bori
+			limit = {
+				faith = {
+					OR = {
+						religion_tag = west_african_bori_religion
+						religion_tag = akom_religion
+					}
+					has_doctrine = tenet_ritual_celebrations
+				}
+			}
+			faith = {
+				remove_doctrine = tenet_ritual_celebrations
+				add_doctrine = mz_tenet_animism
+			}
+		}
+		if = { # Roog and Orisha
+			limit = {
+				faith = {
+					OR = {
+						religion_tag = west_african_roog_religion
+						religion_tag = west_african_orisha_religion
+					}
+					has_doctrine = tenet_reincarnation
+				}
+			}
+			faith = {
+				remove_doctrine = tenet_reincarnation
+				add_doctrine = mz_tenet_totem_spirits
+			}
+		}
+		if = { # Kushitism
+			limit = {
+				faith = {
+					religion_tag = kushitism_religion
+					has_doctrine = tenet_consolamentum
+				}
+			}
+			faith = {
+				remove_doctrine = tenet_consolamentum
+				add_doctrine = mz_tenet_burial_rites
+			}
+		}
+		if = { # Zunbil (again, unlikley)
+			limit = {
+				faith = {
+					religion_tag = zunism_religion
+					has_doctrine = tenet_unrelenting_faith
+				}
+			}
+			faith = {
+				remove_doctrine = tenet_unrelenting_faith
+				add_doctrine = mz_tenet_dawnbreakers
+				if = {
+					limit = { has_doctrine = doctrine_consanguinity_cousins }
+					remove_doctrine = doctrine_consanguinity_cousins
+					add_doctrine = tenet_divine_marriage
+				}
+				if = {
+					limit = { has_doctrine = doctrine_concubines }
+					remove_doctrine = doctrine_concubines
+					add_doctrine = doctrine_polygamy
+				}
+				if = {
+					limit = { has_doctrine = doctrine_no_head }
+					remove_doctrine = doctrine_no_head
+					add_doctrine = doctrine_spiritual_head
+				}
+			}
+		}
+		# End of AI reforms
+	}
+}
