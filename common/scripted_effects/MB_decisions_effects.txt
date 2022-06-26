@@ -1,0 +1,334 @@
+﻿unite_the_western_slavs_decision_effects = {
+	#Prestige
+	add_prestige = massive_prestige_gain
+
+	#Innovations
+	culture = {
+		add_random_innovation = culture_group_military
+		add_random_innovation = culture_group_civic
+	}
+
+	#Laws
+	if = {
+		limit = { has_realm_law = crown_authority_0 }
+		add_realm_law_skip_effects = crown_authority_2
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_realm_law = crown_authority_1
+				has_realm_law = crown_authority_2
+			}
+		}
+		add_realm_law_skip_effects = crown_authority_3
+	}
+
+	#Handle de jure drift & destructions of other kingdom titles
+	title:k_poland = { add_to_list = west_slavic_kingdoms }
+	title:k_pomerania = { add_to_list = west_slavic_kingdoms }
+	title:k_bohemia = { add_to_list = west_slavic_kingdoms }
+	title:k_moravia = { add_to_list = west_slavic_kingdoms }
+
+	if = {
+		limit = { highest_held_title_tier = tier_kingdom }
+		custom_tooltip = unite_the_western_slavs_decision_titles_tt
+	}
+	custom_tooltip = unite_the_western_slavs_decision_titles_empire_tt
+	# If Saxony has been created, shift everything back into Polabia
+	if = {
+		limit = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_saxony
+			}
+		}
+		title:k_saxony = {
+			every_in_de_jure_hierarchy = {
+				limit = { tier = tier_duchy }
+				set_de_jure_liege_title = title:k_sorbia
+			}
+		}
+	}
+	hidden_effect = {
+		scope:western_slav_uniter = {
+			#If king-tier, give them the West-Slavia title
+			if = {
+				limit = { highest_held_title_tier = tier_kingdom }
+				create_title_and_vassal_change = {
+					type = created
+					save_scope_as = title_change
+					add_claim_on_loss = no
+											  
+																
+	  
+																	   
+								   
+								   
+																	   
+	  
+				}
+				title:e_west_slavia = {
+					change_title_holder = {
+						holder = scope:western_slav_uniter
+						change = scope:title_change
+											  
+					}
+														 
+				}
+				resolve_title_and_vassal_change = scope:title_change
+			}
+			# Drift kingdoms to empire
+		   
+			every_in_list = {
+				list = west_slavic_kingdoms
+				set_de_jure_liege_title = scope:western_slav_uniter.primary_title
+	 
+			}
+		}
+	}	
+}
+
+unite_the_southern_slavs_decision_effects = {
+	#Prestige
+	add_prestige = massive_prestige_gain
+
+	#Innovations
+	culture = {
+		add_random_innovation = culture_group_military
+		add_random_innovation = culture_group_civic
+	}
+
+	#Handle de jure drift & destructions of other kingdom titles
+	title:k_croatia = { add_to_list = south_slavic_kingdoms }
+	title:k_serbia = { add_to_list = south_slavic_kingdoms }
+	title:k_bulgaria = { add_to_list = south_slavic_kingdoms }
+	title:k_dacia = { add_to_list = south_slavic_kingdoms }
+	title:k_moldavia = { add_to_list = south_slavic_kingdoms }
+	title:k_bosnia = { add_to_list = south_slavic_kingdoms }
+	title:k_carinthia = { add_to_list = south_slavic_kingdoms }												
+
+	custom_tooltip = unite_the_southern_slavs_decision_titles_tt
+	hidden_effect = {
+		every_in_list = {
+			list = south_slavic_kingdoms
+			limit = {
+				NOT = { this = scope:southern_slav_uniter.primary_title }
+				scope:southern_slav_uniter = { completely_controls = prev }
+			}
+
+			#De jure shift all held west slavic titles into your primary title
+			every_in_de_jure_hierarchy = {
+				limit = { tier = tier_duchy }
+				set_de_jure_liege_title = scope:southern_slav_uniter.primary_title
+			}
+
+			#Destroys them all!
+			scope:southern_slav_uniter = { destroy_title = prev }
+		}
+	}
+}
+
+unite_the_slavs_decision_effects = {
+	#Prestige
+	add_prestige = massive_prestige_gain
+
+	#Innovations
+	custom_tooltip = unite_the_slavs_decision_effects_innovations_tt
+	hidden_effect = {
+		#Add all Slavic cultures in the realm in a list
+		every_vassal_or_below = {
+			limit = {
+				OR = {
+					culture = { has_cultural_pillar = heritage_west_slavic }
+					culture = { has_cultural_pillar = heritage_east_slavic }
+					culture = { has_cultural_pillar = heritage_south_slavic }
+				}
+				save_temporary_scope_as = slavic_vassal
+				NOT = {
+					any_in_list = {
+						list = slavic_cultures
+						this = scope:slavic_vassal.culture
+					}
+				}
+			}
+			culture = {
+				add_to_list = slavic_cultures
+			}
+		}
+		#Add innovations from 3 random cultures
+		every_in_list = {
+			list = slavic_cultures
+			save_scope_as = culture_getting_innovations
+
+			set_while_counter_variable_effect = yes
+			while = {
+				limit = { var:while_counter < 3 }
+				random_in_list = {
+					limit = { scope:culture_getting_innovations = { can_get_innovation_from = prev } }
+					list = slavic_cultures
+					scope:culture_getting_innovations = { get_random_innovation_from = prev }
+				}
+				increase_while_counter_variable_effect = yes
+			}
+			remove_while_counter_variable_effect = yes
+		}
+	}
+
+	#Create the title and make it primary
+	create_title_and_vassal_change = {
+		type = created
+		save_scope_as = title_change
+		add_claim_on_loss = no
+	}
+	title:e_slavia = {
+		change_title_holder = {
+			holder = root
+			change = scope:title_change
+		}
+	}
+	resolve_title_and_vassal_change = scope:title_change
+
+	set_primary_title_to = title:e_slavia
+	title:e_slavia = { save_scope_as = slavia } #For localisation
+
+	#Destroy the other three empires if I have them
+	if = {
+		limit = { has_title = title:e_russia }
+		destroy_title = title:e_russia
+	}
+	if = {
+		limit = { has_title = title:e_wendish_empire }
+		destroy_title = title:e_wendish_empire
+	}
+	if = {
+		limit = { has_title = title:e_carpathia }
+		destroy_title = title:e_carpathia
+	}
+
+	###Handle de jure drift and empire destruction###
+
+	#First: add all the kingdoms
+	title:k_poland = { add_to_list = slavic_kingdoms }
+	title:k_pomerania = { add_to_list = slavic_kingdoms }
+	title:k_bohemia = { add_to_list = slavic_kingdoms }
+	title:k_moravia = { add_to_list = slavic_kingdoms }
+	title:k_croatia = { add_to_list = slavic_kingdoms }
+	title:k_serbia = { add_to_list = slavic_kingdoms }
+	title:k_bulgaria = { add_to_list = slavic_kingdoms }
+	title:k_dacia = { add_to_list = slavic_kingdoms }
+	title:k_moldavia = { add_to_list = slavic_kingdoms }
+	title:k_bosnia = { add_to_list = slavic_kingdoms }
+	title:k_carinthia = { add_to_list = slavic_kingdoms }											  
+	title:k_white_rus = { add_to_list = slavic_kingdoms }
+	title:k_galicia-volhynia = { add_to_list = slavic_kingdoms }
+	title:k_ruthenia = { add_to_list = slavic_kingdoms }
+	title:k_novgorod = { add_to_list = slavic_kingdoms }
+	title:k_opolye = { add_to_list = slavic_kingdoms }
+	title:k_hungary = { add_to_list = slavic_kingdoms }
+
+	# Inform players of the de jure drift
+	title:e_slavia = { custom_tooltip = unite_the_slavs_decision_titles_tt } #Scope change for tooltip formatting.
+
+	# Actually do the de jure drift
+	hidden_effect = {
+		every_in_list = {
+			list = slavic_kingdoms
+
+			set_de_jure_liege_title = scope:slav_uniter.primary_title
+		}
+	}
+}
+
+#New
+
+
+reunite_two_sicilies_effect = {
+	add_prestige = massive_prestige_gain
+
+	#Laws
+	if = {
+		limit = { has_realm_law = crown_authority_0 }
+		add_realm_law_skip_effects = crown_authority_2
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_realm_law = crown_authority_1
+				has_realm_law = crown_authority_2
+			}
+		}
+		add_realm_law_skip_effects = crown_authority_3
+	}
+	hidden_effect = {
+		every_held_title = {
+			limit = {
+				OR = {
+					this = title:k_naples
+					this = title:k_trinacria
+				}
+			}
+			every_in_de_jure_hierarchy = {
+				limit = {
+					tier = tier_duchy
+				}
+				set_de_jure_liege_title = title:k_sicily
+				
+			}
+		}
+	}
+	
+	create_title_and_vassal_change = {
+		type = created
+		save_scope_as = change
+		add_claim_on_loss = no
+	}
+	title:k_sicily = {
+		change_title_holder = {
+			holder = root
+			change = scope:change
+		}
+	}
+	resolve_title_and_vassal_change = scope:change
+	hidden_effect = { set_primary_title_to = title:k_sicily }
+	every_held_title = { #Should destroy all other Empires owned at the time.
+		limit = {
+			tier = tier_kingdom
+			OR = {
+				this = title:k_naples
+				this = title:k_trinacria
+			}
+		}
+		root = { destroy_title = prev }
+	}
+}
+
+custom_nb_restore_byzantine_decision_effect = {
+	
+	save_scope_as = founder
+	give_nickname = nick_the_restorer
+	add_dynasty_prestige = monumental_dynasty_prestige_gain	
+	create_title_and_vassal_change = {
+		type = created
+		save_scope_as = title_change
+		add_claim_on_loss = no
+	}
+	title:e_byzantium = {
+		change_title_holder = {
+			holder = root
+			change = scope:title_change
+		}
+	}
+	every_vassal = {
+		add_opinion = {
+			modifier = custom_nb_byzantine_decision_opinions
+			target = root
+		}
+		custom = custom_nb_byzantine_decision_opinions_vassals
+	}	
+	resolve_title_and_vassal_change = scope:title_change
+		
+		
+		
+		
+		
+}

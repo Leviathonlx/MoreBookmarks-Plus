@@ -1,0 +1,532 @@
+﻿retract_vassal_interaction = {
+	category = interaction_category_vassal
+	special_interaction = retract_vassal_interaction
+	interface = transfer_vassal
+	ai_maybe = yes
+	ai_min_reply_days = 4
+	ai_max_reply_days = 9
+	popup_on_receive = yes
+	pause_on_receive = yes
+
+	desc = retract_vassal_interaction_desc
+
+	on_decline_summary = general_rebellion_decline_summary
+	
+	prompt = RETRACT_VASSAL_SELECT_VASSAL_TO_RETRACT
+
+	notification_text = RETRACT_VASSAL_PROPOSAL
+
+	populate_recipient_list = {
+		scope:recipient = {
+			every_vassal = {
+				add_to_list = characters
+			}
+		}
+	}
+
+	is_shown = {
+		NOT = { scope:recipient = scope:actor }
+		scope:recipient = {
+			highest_held_title_tier > tier_barony
+			liege = scope:actor
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		NOT = { scope:actor = { is_at_war_with = scope:recipient } }
+		scope:recipient = {
+			custom_description = {
+				text = "basic_vassal_to_retract"
+				any_vassal = {
+					highest_held_title_tier > tier_barony # Make sure this exactly matches `can_be_picked` below
+				}
+			}
+		}
+		scope:actor = {
+			trigger_if = {
+				limit = { has_government = tribal_government }
+				custom_description = {
+					text = "has_law_allowing_vassal_retraction_tribal"
+					has_realm_law_flag = vassal_retraction_allowed
+				}
+			}
+			trigger_if = {
+				limit = {
+					NOT = { has_government = tribal_government }
+				}
+				custom_description = {
+					text = "has_law_allowing_vassal_retraction_crown"
+					has_realm_law_flag = vassal_retraction_allowed
+				}
+			}
+		}
+		scope:recipient = { is_diplomatically_available = yes }
+		trigger_if = {
+			limit = { exists = scope:secondary_recipient }
+			scope:secondary_recipient = { is_diplomatically_available = yes }
+		}
+		scope:recipient = { NOT = { has_strong_hook = scope:actor } }
+	}
+
+	can_send = {
+		scope:actor = {
+			custom_description = {
+				text = "character_interactions_hostile_actions_disabled_delay"
+				NOT = { has_character_flag = flag_hostile_actions_disabled_delay }
+			}
+		}
+	}
+	
+	can_be_picked = {
+		highest_held_title_tier > tier_barony
+	}
+
+	on_send = {
+		scope:actor = {
+			add_character_flag = {
+				flag = flag_hostile_actions_disabled_delay
+				days = 10
+			}
+		}
+		hidden_effect = {
+			scope:secondary_recipient = {
+				add_character_flag = {
+					flag = ai_should_not_transfer
+					years = 3
+				}
+			}
+		}
+	}
+
+	on_accept = {
+		retract_vassal_interaction_effect = yes
+		
+		if = {
+			limit = {
+				scope:actor = { has_character_flag = flag_hostile_actions_disabled_delay }
+			}
+			scope:actor = { remove_character_flag = flag_hostile_actions_disabled_delay }
+		}
+
+		scope:actor = {
+			trigger_event = char_interaction.0220
+		}
+	}
+
+	on_decline = {
+		scope:actor = { vassal_revocation_tyranny_effect = yes }
+		war_for_retraction_effect = yes
+		scope:recipient = {
+			add_opinion = {
+				target = scope:actor
+				modifier = retracted_vassal
+			}
+		}
+		if = {
+			limit = {
+				scope:actor = { has_realm_law_flag = vassal_refusal_is_treason }
+			}
+			scope:actor = {
+				add_opinion = {
+					target = scope:recipient
+					modifier = treasonous_retract_refusal
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:actor = { has_character_flag = flag_hostile_actions_disabled_delay }
+			}
+			scope:actor = { remove_character_flag = flag_hostile_actions_disabled_delay }
+		}
+	}
+
+	auto_accept = {
+		OR = {
+			scope:recipient = {
+				is_imprisoned_by = scope:actor
+			}
+			custom_description = {
+				text = "spending_hook"
+				subject = scope:actor
+				object = scope:recipient
+				scope:hook = yes
+				scope:actor = { has_strong_hook = scope:recipient }
+			}
+		}
+	}
+	
+	can_be_blocked = {
+		custom_description = { #Hook from Recipient can counteract, but only if Actor is not forcing the action via Strong Hook.
+			text = "spending_hook"
+			subject = scope:recipient
+			object = scope:actor
+			scope:recipient = { has_hook = scope:actor }
+			NAND = {
+				scope:hook = yes
+				scope:actor = { has_strong_hook = scope:recipient }
+			}
+		}
+	}
+
+	on_blocked_effect = {
+		scope:recipient = {
+			remove_hook = {
+				target = scope:actor
+			}
+		}
+	}
+
+	ai_accept = {
+		base = 0 # Try to make it 0 for most interactions
+
+		modifier = {
+			scope:hook = yes
+			add = 40
+			desc = SCHEME_WEAK_HOOK_USED
+		}
+		
+		opinion_modifier = { # Opinion Factor
+			who = scope:recipient
+			opinion_target = scope:actor
+			multiplier = 1.0
+			desc = AI_OPINION_REASON
+		}
+		
+		modifier = {
+			add = 25
+			scope:actor = {
+				has_realm_law_flag = vassal_refusal_is_treason
+			}
+			desc = AI_REFUSAL_IS_TREASON
+		}
+
+		ai_value_modifier = {
+			who = scope:recipient
+			ai_greed = {
+				if = {
+					limit = {
+						scope:recipient = { NOT = { ai_greed = 0 } }
+					}
+					value = -0.25
+				}
+			}
+			ai_honor  = {
+				if = {
+					limit = {
+						scope:recipient = { #If AI is honorable and the law compels to obey the liege, AI will be more likely to obey.
+							ai_honor > 0
+						}
+						scope:actor = {
+							has_realm_law_flag = vassal_refusal_is_treason
+						}
+					}
+					value = 0.75
+				}
+			}
+		}
+		modifier = {
+			exists = scope:actor.primary_title.title_capital_county
+			scope:secondary_recipient = {
+				OR = {
+					any_sub_realm_county = {
+						this = scope:actor.primary_title.title_capital_county
+					}
+					any_sub_realm_duchy = {
+						this = scope:actor.primary_title.title_capital_county.de_jure_liege
+					}
+				}
+			}
+			add = 50
+			desc = AI_VASSAL_HOLDS_REALM_CAPITAL
+		}
+		
+		modifier = { #Sub-Vassal is NOT De jure of current Vassal.
+			add = 25
+			NOT = {
+				scope:recipient = {
+					any_held_title = {
+						is_de_jure_liege_or_above_target = scope:secondary_recipient.primary_title
+					}
+				}
+			}
+			desc = AI_REFUSAL_IS_NOT_DE_JURE_LIEGE
+		}
+		modifier = { #Sub-Vassal is De jure of liege title.
+			add = 15
+			scope:actor = {
+				any_held_title = {
+					this = scope:secondary_recipient.primary_title.de_jure_liege
+				}
+			}
+			desc = AI_REFUSAL_IS_DE_JURE_LIEGE
+		}
+		modifier = {
+			add = intimidated_halved_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = cowed_halved_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+		modifier = { #Comparative military strength.
+			desc = offer_vassalization_interaction_aibehavior_power_tt
+			add = {
+				value = 1
+					subtract = {
+					value = scope:recipient.max_military_strength
+					divide = { value = scope:actor.max_military_strength min = 1 }
+					}
+				multiply = 100
+			}
+		}
+		modifier = { #Different faith, no pluralism.
+			desc = AI_REFUSAL_SPLITTING_SAME_FAITH_VASSALS
+			trigger = {
+				scope:actor.faith = scope:secondary_recipient.faith #Will not care as much if the vassal being retracted is of a different faith.
+				scope:actor = {
+					NOR = { #Of two different faiths AND the potential vassal's faith is not pluralistic.
+						faith = scope:recipient.faith
+						faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					}
+				}
+			}
+			add = {
+				value = -25
+				if = {
+					limit = {
+						scope:actor.faith = {
+							faith_hostility_level = {
+								target = scope:recipient.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -10
+				}
+				if = {
+					limit = {
+						scope:actor.faith = {
+							faith_hostility_level = {
+								target = scope:recipient.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -25
+				}
+			}
+		}
+	}
+
+	#Use hook
+	send_option = {
+		is_valid = {
+			scope:actor = {
+				has_usable_hook = scope:recipient
+			}
+		}
+		flag = hook
+		localization = SCHEME_HOOK
+	}
+	should_use_extra_icon = {
+		scope:actor = { has_usable_hook = scope:recipient }
+	}
+	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
+
+	send_options_exclusive = no
+	
+	can_send_despite_rejection = yes
+	
+	# AI
+	ai_targets = {
+		ai_recipients = vassals
+	}
+	ai_frequency = 12
+
+	ai_potential = {
+		has_realm_law_flag = title_revocation_allowed
+		primary_title.tier > tier_county
+	}
+
+	ai_will_do = {
+		base = -1000
+
+		# We want to avoid tyranny unless we've got a good reason
+		# And even if we can avoid tyranny we don't want to retract just because we can, so this only gets us to -10
+		# Certain characters will retract despite tyranny, if their rationality is sufficiently low
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_revoke_title_reason = scope:recipient
+					AND = {
+						ai_rationality <= very_high_negative_ai_value
+						OR = {
+							has_trait = lunatic
+							has_trait = possessed
+							has_trait = arbitrary
+						}
+					}
+				}
+			}
+
+			add = 990
+		}
+		# Always retract preferred capital if you hold the duchy, or the duchy is uncreated
+		modifier = {
+			exists = scope:actor.primary_title.title_capital_county
+			OR = {
+				scope:actor = {
+					any_held_title = {
+						this = scope:actor.primary_title.title_capital_county.de_jure_liege
+					}
+				}
+				scope:actor.primary_title.title_capital_county.de_jure_liege = {
+					is_title_created = no
+				}
+			}
+			scope:secondary_recipient = {
+				any_sub_realm_county = {
+					this = scope:actor.primary_title.title_capital_county
+				}
+			}
+			NAND = { # Don't retract player vassals tyrannically
+				scope:recipient = {
+					is_ai = no
+				}
+				scope:actor = {
+					NOT = { has_revoke_title_reason = scope:recipient }
+				}
+			}
+			add = 1000
+		}
+		# Always retract preferred capital duchy
+		modifier = {
+			exists = scope:actor.primary_title.title_capital_county
+			scope:secondary_recipient = {
+				any_sub_realm_duchy = {
+					this = scope:actor.primary_title.title_capital_county.de_jure_liege
+				}
+			}
+			NAND = { # Don't retract player vassals tyranically
+				scope:recipient = {
+					is_ai = no
+				}
+				scope:actor = {
+					NOT = { has_revoke_title_reason = scope:recipient }
+				}
+			}
+			add = 1000
+		}
+																									   
+		# The AI over uses this and it causes a ton of tyranny wars and I see no reason why it needs to exist
+		# Retract vassal we're dejure liege of if below domain limit
+		#modifier = {
+		#	scope:actor = {
+		#		vassal_limit_available > 0
+		#	}
+		#	scope:secondary_recipient.primary_title.de_jure_liege.holder = scope:actor
+		#	add = 400
+		#}
+		# Retract non-De Jure vassals from Megadukes (only if a revoke reason is present, so we don't end up in massive tyranny war spirals)
+		modifier = {
+			scope:actor = {
+				has_revoke_title_reason = scope:recipient
+			}
+			scope:recipient = {
+				primary_title.tier = tier_duchy
+				any_sub_realm_county = {
+					count > 30
+				}
+			}
+			NOT = {
+				scope:secondary_recipient.primary_title.de_jure_liege.holder = scope:recipient
+			}
+			add = 400
+		}
+		# Do not revoke titles from certain characters
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_relation_friend = scope:recipient
+					has_relation_best_friend = scope:recipient
+					has_relation_lover = scope:recipient
+					has_relation_soulmate = scope:recipient
+					is_heir_of = scope:recipient
+				}
+			}
+			add = -2000
+		}
+		# Do not revoke titles when the chance of success if exceedingly low
+		modifier = {
+			NOT = {
+				scope:recipient = {
+					is_imprisoned_by = scope:actor
+				}
+			}
+			scope:actor = {
+				OR = {
+					gold < minimum_ai_gold_value_for_tyranny_wars
+					AND = {
+						scope:actor.max_military_strength < scope:recipient.max_military_strength
+						gold < comfortable_ai_gold_value_for_tyranny_wars
+					}
+				}
+			}
+			add = -2000
+		}
+		
+		modifier = { # The AI will only use a Hook if they couldn't otherwise do this
+			scope:hook = yes
+			add = -1
+		}
+
+		modifier = { # The AI shouldn't ruin the player's fun
+			add = -2000
+			scope:recipient = { has_character_flag = is_party_baron }
+		}
+
+		modifier = { # Avoid triggering Tyranny wars mid-war
+			factor = 0
+			scope:actor = {
+				is_at_war = yes
+			}
+			scope:recipient = {
+				NOT = {
+					is_imprisoned_by = scope:actor
+				}
+			}
+		}
+		#MB - Additional modifiers to make AI less likely to revoke titles all willy nilly without just cause
+		# Let's not have the AI take titles from family without just cause
+		modifier = {
+			scope:actor = {
+				OR = {
+					is_close_or_extended_family_of = scope:recipient
+				}
+			}
+			add = -400
+		}
+		#Let's not be a dick to someone that likes us for no reason
+		modifier = {
+			add = -200
+			
+			opinion = {
+				target = scope:recipient
+				value >= high_positive_opinion
+			}
+		}
+	}
+}
