@@ -12,6 +12,7 @@ window = {
 
 	using = Window_Size_Sidebar
 	#using = Window_Background_Sidebar
+	widgetid = "character_window"
 
 	state = {
 		name = _show
@@ -26,6 +27,7 @@ window = {
 		###SMYCP###
 		on_start = "[GetVariableSystem.Set( 'SMYCP_player_court', 'true' )]"
 		###SMYCP###
+		on_start = "[GetVariableSystem.Set( 'COP_character_window_open', 'true' )]"
 	}
 
 	state = {
@@ -35,6 +37,7 @@ window = {
 		position_x = -60
 
 		on_start = "[GetVariableSystem.Clear( 'hide_bottom_left_HUD' )]"
+		on_start = "[GetVariableSystem.Clear( 'COP_character_window_open' )]"
 	}
 
 	# MOD(custom-form-of-address)
@@ -3063,7 +3066,7 @@ window = {
 
 								vbox_character_row_item = {
 									name = "lovers"
-									visible = "[CharacterWindow.GetCharacter.IsAdult]"
+									visible = "[And(Not(GetGlobalVariable('esr_is_loaded').IsSet),CharacterWindow.GetCharacter.IsAdult)]"
 									layoutpolicy_vertical = expanding
 									layoutpolicy_horizontal = expanding
 
@@ -3090,6 +3093,69 @@ window = {
 									}
 
 								}
+								###ESR
+								vbox_character_row_item = {
+									name = "esr_lovers"
+									visible = "[And(GetGlobalVariable('esr_is_loaded').IsSet,CharacterWindow.GetCharacter.IsAdult)]"
+									layoutpolicy_vertical = expanding
+									layoutpolicy_horizontal = expanding
+
+									blockoverride "portrait_datamodel" {
+										datamodel = "[CharacterWindow.GetRelationsOfType( GetRelation( 'lover' ) )]"
+									}
+
+									blockoverride "header_text"
+									{
+										text = "LOVERS_LABEL"
+									}
+
+									blockoverride "remaining_items"
+									{
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'lover' ) ) ), '(int32)4' ) )]"
+										margin = { 167 }
+										text = "[GetNumberAbove_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'lover' ) ) ), '(int32)4' )|=]"
+
+									}
+
+									blockoverride "expand_button_inside" {
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'lover' ) ) ), '(int32)4' )]"
+										onclick = "[CharacterWindow.ToggleExpandedRelation( 'lovers' )]"
+									}
+
+								}
+
+								vbox_character_row_item = {
+									name = "esr_soulmate"
+									visible = "[And(GetGlobalVariable('esr_is_loaded').IsSet,CharacterWindow.GetCharacter.IsAdult)]"
+									#visible = no
+									layoutpolicy_vertical = expanding
+									#layoutpolicy_horizontal = expanding
+
+									blockoverride "portrait_datamodel" {
+										datamodel = "[CharacterWindow.GetRelationsOfType( GetRelation( 'soulmate' ) )]"
+									}
+
+									blockoverride "header_text"
+									{
+										text = "SOULMATE_LABEL"
+									}
+
+									blockoverride "remaining_items"
+									{
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'soulmate' ) ) ), '(int32)1' ) )]"
+										margin = { 167 }
+										text = "[GetNumberAbove_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'soulmate' ) ) ), '(int32)1' )|=]"
+
+									}
+
+									blockoverride "expand_button_inside" {
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'soulmate' ) ) ), '(int32)1' )]"
+										onclick = "[CharacterWindow.ToggleExpandedRelation( 'soulmate' )]"
+									}
+
+								}
+								###esr/	
+								
 
 								vbox_character_row_item = {
 									name = "guardian"
@@ -3214,6 +3280,7 @@ window = {
 							hbox = {
 								vbox_character_row_item = {
 									name = "friends"
+									visible = "[Not(GetGlobalVariable('esr_is_loaded').IsSet)]"								
 									layoutpolicy_vertical = expanding
 									layoutpolicy_horizontal = expanding
 
@@ -3237,7 +3304,68 @@ window = {
 										onclick = "[CharacterWindow.ToggleExpandedRelation( 'friends' )]"
 									}
 								}
+								###ESr
+								vbox_character_row_item = {
+									name = "esr_friends"
+									visible = "[GetGlobalVariable('esr_is_loaded').IsSet]"
+									layoutpolicy_vertical = expanding
+									layoutpolicy_horizontal = expanding
 
+									blockoverride "portrait_datamodel" {
+										datamodel = "[CharacterWindow.GetRelationsOfType( GetRelation( 'friend' ) )]"
+									}
+
+									blockoverride "gridbox_slots"
+									{
+										maxverticalslots = 1
+										maxhorizontalslots = 6
+									}
+
+									blockoverride "header_text"
+									{
+										text = "FRIENDS_LABEL"
+									}
+
+									blockoverride "remaining_items"
+									{
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'friend' ) ) ), '(int32)6' ) )]"
+										text = "[GetNumberAbove_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'friend' ) ) ), '(int32)6' )|=]"
+									}
+
+									blockoverride "expand_button_inside" {
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'friend' ) ) ), '(int32)6' )]"
+										onclick = "[CharacterWindow.ToggleExpandedRelation( 'friends' )]"
+									}
+								}
+
+								vbox_character_row_item = {
+									name = "esr_best friends"
+									visible = "[GetGlobalVariable('esr_is_loaded').IsSet]"
+									layoutpolicy_vertical = expanding
+									#layoutpolicy_horizontal = expanding
+									#flipdirection = yes
+
+									blockoverride "portrait_datamodel" {
+										datamodel = "[CharacterWindow.GetRelationsOfType( GetRelation( 'best_friend' ) )]"
+									}
+
+									blockoverride "header_text"
+									{
+										text = "BEST_FRIEND_LABEL"
+									}
+
+									blockoverride "remaining_items"
+									{
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'best_friend' ) ) ), '(int32)1' ) )]"
+										text = "[GetNumberAbove_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'best_friend' ) ) ), '(int32)1' )|=]"
+									}
+
+									blockoverride "expand_button_inside" {
+										visible = "[GreaterThan_int32( GetDataModelSize( CharacterWindow.GetRelationsOfType( GetRelation( 'best_friend' ) ) ), '(int32)1' )]"
+										onclick = "[CharacterWindow.ToggleExpandedRelation( 'best_friend' )]"
+									}
+								}
+								###esr/	
 								expand = {}
 							}
 						}
@@ -3252,7 +3380,7 @@ window = {
 							hbox = {
 								vbox_character_row_item = {
 									name = "rivals"
-									visible = "[CharacterWindow.GetCharacter.IsAdult]"
+									visible = "[And(Not(GetGlobalVariable('esr_is_loaded').IsSet),CharacterWindow.GetCharacter.IsAdult)]"
 									layoutpolicy_vertical = expanding
 									layoutpolicy_horizontal = expanding
 
@@ -3276,6 +3404,72 @@ window = {
 										onclick = "[CharacterWindow.ToggleExpandedRelation( 'rivals' )]"
 									}
 								}
+								###ESR
+								vbox_character_row_item = {
+									name = "esr_rivals"
+									visible = "[And(GetGlobalVariable('esr_is_loaded').IsSet,CharacterWindow.GetCharacter.IsAdult)]"
+									layoutpolicy_vertical = expanding
+									layoutpolicy_horizontal = expanding
+
+									blockoverride "portrait_datamodel" {
+										datamodel = "[CharacterWindow.GetRelationsOfType( GetRelation( 'rival' ) )]"
+									}
+
+									blockoverride "gridbox_slots"
+									{
+										maxverticalslots = 1
+										maxhorizontalslots = 6
+									}
+
+									blockoverride "header_text"
+									{
+										text = "RIVALS_LABEL"
+									}
+
+									blockoverride "remaining_items"
+									{
+										visible = "[GreaterThan_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'rival' ) )), '(int32)6' ))]"
+										text = "[GetNumberAbove_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'rival' ) )), '(int32)6' )|=]"
+									}
+
+									blockoverride "expand_button_inside" {
+										visible = "[GreaterThan_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'rival' ) )), '(int32)6' )]"
+										onclick = "[CharacterWindow.ToggleExpandedRelation( 'rivals' )]"
+									}
+								}
+
+								vbox_character_row_item = {
+									name = "esr_nemesis"
+									visible = "[And(GetGlobalVariable('esr_is_loaded').IsSet,CharacterWindow.GetCharacter.IsAdult)]"
+									layoutpolicy_vertical = expanding
+									#layoutpolicy_horizontal = expanding
+
+									blockoverride "portrait_datamodel" {
+										datamodel = "[CharacterWindow.GetRelationsOfType( GetRelation( 'nemesis' ) )]"
+									}
+
+									blockoverride "gridbox_slots"
+									{
+										maxverticalslots = 1
+									}
+
+									blockoverride "header_text"
+									{
+										text = "NEMESIS_LABEL"
+									}
+
+									blockoverride "remaining_items"
+									{
+										visible = "[GreaterThan_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'nemesis' ) )), '(int32)1' ))]"
+										text = "[GetNumberAbove_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'nemesis' ) )), '(int32)1' )|=]"
+									}
+
+									blockoverride "expand_button_inside" {
+										visible = "[GreaterThan_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'nemesis' ) )), '(int32)1' )]"
+										onclick = "[CharacterWindow.ToggleExpandedRelation( 'nemesis' )]"
+									}
+								}
+								###esr/	
 
 								vbox_character_row_item = {
 									name = "bullies"
