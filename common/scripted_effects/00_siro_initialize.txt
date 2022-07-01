@@ -1,0 +1,234 @@
+﻿###########################################################
+@CURRENT_VERSION = 4 ##must be changed when you update something
+###########################################################
+## siro_e_initialize = set global variable, database, create trade post, special building
+## siro_e_clear_all = used in the version up process
+## siro_e_special_building
+## siro_e_yearly
+## siro_e_check
+
+siro_e_initialize = {
+	set_global_variable = {
+		name = siro_g_sr_val
+		value = -50
+	}
+	set_global_variable = {
+		name = siro_g_sr_val_c
+		value = 0	## how much value changes in a year.
+	}
+	set_global_variable = {
+		name = siro_g_sr_val_c_keep
+		value = 0	## add siro_g_sr_val_c every year, when it reaches interval, clear.
+	}
+	siro_e_set_db_sr = yes	
+	siro_e_initial_tp_sr = yes
+	
+	siro_e_yearly_global_sr_modifier = yes
+	
+	if = {
+		limit = { has_game_rule = siro_sahara_on }	
+		set_global_variable = {
+			name = siro_g_sh_val
+			value = 0
+		}
+		set_global_variable = {
+			name = siro_g_sh_val_c
+			value = 0
+		}
+		set_global_variable = {
+			name = siro_g_sh_val_c_keep
+			value = 0
+		}
+		
+		siro_e_set_db_sh = yes
+		siro_e_initial_tp_sh = yes
+		
+		siro_e_yearly_global_sh_modifier = yes
+		
+	}		
+	siro_e_special_building = yes
+	set_global_variable = {
+		name = siro_g_initialize_complete
+		value = @CURRENT_VERSION	## current version, must be increased every update
+	}
+}
+
+siro_e_clear_all = {
+	every_county = {
+		if = {
+			limit = {
+				exists = var:siro_l_tr_sr
+			}
+			remove_variable = siro_l_tr_sr
+			remove_variable = siro_l_tp
+			siro_e_remove_block_sr = yes
+		}
+		else_if = {
+			limit = {
+				exists = var:siro_l_tr_sh
+			}
+			remove_variable = siro_l_tr_sh
+			remove_variable = siro_l_tp
+			siro_e_remove_block_sh = yes
+		}
+	}
+	siro_e_sr_remove_modifier = yes
+	clear_global_variable_list = siro_gl_sr
+	if = {
+		limit = { exists = global_var:siro_g_sh_val }			
+		siro_e_sh_remove_modifier = yes
+		clear_global_variable_list = siro_gl_sh
+	}
+}
+
+siro_e_forced_add_special_building = {
+	if = {
+		limit = { is_in_ucsbe_list = no }
+		title_province = {
+			if = {
+				limit = {
+					NOT = { has_building_or_higher = $NAME$ }
+				}
+				if = {
+					limit = { has_special_building_slot = no }
+					add_special_building_slot = $NAME$
+				}
+				if = {
+					limit = {
+						has_free_building_slot = no
+					}
+					add_building_slot = 1
+					add_building = $NAME$
+					add_building_slot = -1
+				}
+				else = {
+					add_building = $NAME$
+				}
+			}
+		}
+	}
+}
+
+siro_e_forced_add_special_slot = {
+	if = {
+		limit = { is_in_ucsbe_list = no }
+		title_province = {
+			if = {
+				limit = { 
+					NAND = { 
+						has_building_or_higher = $NAME$
+						has_special_building_slot = yes
+					}
+				}
+				add_special_building = no	## destroy building slot
+			}
+			add_special_building_slot = $NAME$
+		}
+	}
+}
+
+siro_e_special_building = {
+	title:b_potala = { ## potala
+		siro_e_forced_add_special_building = { NAME = siro_b_potala_palace_01 }
+	}
+	title:b_burhanpur = { ## ajanta
+		siro_e_forced_add_special_building = { NAME = siro_b_ajanta_caves_01 }
+	}
+	title:b_elapura = { ## ellora
+		siro_e_forced_add_special_building = { NAME = siro_b_ellora_caves_01 }
+	}
+	title:b_shazhou = { ## mogao
+		siro_e_forced_add_special_building = { NAME = siro_b_mogao_caves_01 }
+	}
+	title:b_vidisa = { ## sanchi
+		siro_e_forced_add_special_building = { NAME = siro_b_sanchi_stupa_01 }
+	}
+	title:b_igbo-ukwu = { ##osun-osogbo
+		siro_e_forced_add_special_building = { NAME = siro_b_osun-osogbo_sacred_01 }
+	}
+	title:b_senkadagalapura = { ##sigiriya
+		siro_e_forced_add_special_building = { NAME = siro_b_sigiriya_01 }
+	}
+	title:b_tadmur = { ##bel
+		siro_e_forced_add_special_building = { NAME = siro_b_temple_of_bel_01 }
+		if = {
+			limit = { NOT = { exists = global_var:siro_g_bel_religion } }
+			set_global_variable = {
+				name = siro_g_bel_religion
+				value = holder.faith.religion
+			}
+		}
+	}
+	title:b_kara_khoja = { ##karez
+		siro_e_forced_add_special_building = { NAME = siro_b_turpan_karez_01 }
+	}
+	
+	random_ruler = {
+		limit = {
+			is_landed = yes
+			is_ai = yes
+			highest_held_title_tier >= tier_kingdom
+			any_realm_county = { exists = var:siro_l_tr_sr }
+		}
+		save_scope_as = this_ruler
+	}
+	create_character = {
+		age = 16
+		employer = scope:this_ruler
+		culture = culture:jurchen
+		gender_female_chance = 50
+		health = 8
+		fertility = 100
+		random_traits = no
+		dynasty = none
+		intrigue  = max_template_decent_skill
+		trait = stubborn
+		trait = temperate
+		trait = just
+		trait = scarred
+		trait = strategist
+		trait = education_intrigue_4
+		
+		save_scope_as = this_character
+	}
+	scope:this_character = {
+		add_character_flag = immune_to_disease
+		add_hook = {
+			type = fabrication_hook
+			target = scope:this_ruler
+			years = 30
+		}
+	}
+}
+
+siro_e_yearly = {
+	siro_e_yearly_blocked_list_sr = yes
+	siro_e_yearly_revaluate_sr = yes
+	if = {
+		limit = { has_game_rule = siro_sahara_on }
+		siro_e_yearly_blocked_list_sh = yes
+		siro_e_yearly_revaluate_sh = yes
+	}
+}
+
+siro_e_check = {
+	if = {	## trigger if mod hasn't been initialized
+		limit = {
+			OR = {
+				NOT = { exists = global_var:siro_g_initialize_complete }
+				AND = {
+					exists = global_var:siro_g_initialize_complete
+					global_var:siro_g_initialize_complete = {
+						NOT = { compare_value = @CURRENT_VERSION }	## trigger if mod version is changed
+					}
+				}
+			}
+		}
+		siro_e_clear_all = yes
+		siro_e_initialize = yes
+		set_global_variable = {
+			name = siro_g_initialize_complete
+			value = @CURRENT_VERSION	## current version, must be increased every update
+		}
+	}
+}
