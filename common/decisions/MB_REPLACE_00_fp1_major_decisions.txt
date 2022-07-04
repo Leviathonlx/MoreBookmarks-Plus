@@ -1,0 +1,118 @@
+﻿#############################################
+# Elevate the Kingdom of the Isles			#
+# by Ewan Cowhig Croft						#
+#############################################
+
+# This decision is intentionally fairly whimsical, and in no way intended to reflect historical reality or possibility, nor is it in any way affiliated with affiliated with the Isle of Mann Tourism Board.
+elevate_mann_and_the_isles_decision = {
+	picture = "gfx/interface/illustrations/decisions/fp1_decision_forge_jomsvikings.dds"
+	major = yes
+
+	ai_check_interval = 120
+
+	desc = elevate_mann_and_the_isles_decision_desc
+	selection_tooltip = elevate_mann_and_the_isles_decision_tooltip
+
+	is_shown = {
+		#DLC check.
+		has_fp1_dlc_trigger = yes
+		#Standard filter checks.
+		is_landed = yes
+		exists = dynasty
+		OR = {
+			has_government = tribal_government
+			has_government = feudal_government
+			has_government = clan_government
+		}
+		#Must be within the North Germanic cultural sphere.
+		OR = {
+			culture = { has_cultural_pillar = heritage_north_germanic }
+			has_culture = culture:norman
+		}
+		#Must be in the vague region.
+		any_held_title = {
+			tier = tier_county
+			title_province = { geographical_region = world_europe_west_britannia }
+		}
+		#Can't already be a kingdom.
+		highest_held_title_tier <= tier_duchy
+		#Not repeatable.
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_elevated_mann_and_the_isles
+			}
+		}
+		
+	}
+
+	is_valid = {
+		#Must be independent.
+		is_independent_ruler = yes
+		#Has to be around for the ceremony.
+		is_imprisoned = no
+		#Should have the highest prestige level.
+		prestige_level >= max_prestige_level
+		#Completely controls Mann.
+		has_title = title:d_western_isles
+		has_title = title:d_hebrides
+		has_title = title:d_the_isles
+		#Can't already be a kingdom; show this here too so people aren't caught unawares.
+		highest_held_title_tier <= tier_duchy
+		#Must be in/adjacent to the Viking Age; show this here too so people aren't caught unawares.
+		NOT = {
+			culture = { has_cultural_era_or_later = culture_era_high_medieval }
+		}
+		#Must be a proven pirate.
+		has_trait = viking
+	}
+
+	is_valid_showing_failures_only = {
+		is_alive = yes
+		is_in_an_activity = no
+		is_imprisoned = no
+		has_contagious_deadly_disease_trigger = no
+	}
+
+	effect = {
+		save_scope_as = founder
+		# Trigger effects.
+		show_as_tooltip = { elevate_mann_and_the_isles_scripted_effect = yes }
+		trigger_event = { id = fp1_major_decisions.0021 }
+		#Notify other players.
+		every_player = {
+			limit = {
+				capital_province = { geographical_region = world_europe_west_britannia }
+				#Obviously, we exempt scope:founder themselves.
+				NOT = { this = scope:founder }
+			}
+			#Vassal players get a separate event.
+			if = {
+				limit = {
+					any_liege_or_above = { this = scope:founder }
+				}
+				trigger_event = fp1_major_decisions.0022
+			}
+			#Everyone else within range gets a less personal version.
+			else = { trigger_event = fp1_major_decisions.0023 }
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_elevated_mann_and_the_isles
+			}
+		}
+	}
+
+	cost = {
+		prestige = 2000
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
