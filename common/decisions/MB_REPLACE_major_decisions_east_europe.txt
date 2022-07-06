@@ -1,5 +1,144 @@
 ﻿#MODIFIED VANILLA EVENTS
 
+#############################################
+# Found the Capital of the Rus'				#
+# by Ewan Cowhig Croft						#
+#############################################
+
+#MUST be altered for when e_russia doesn't exist due to MGR
+found_capital_of_the_rus_decision = {
+	picture = "gfx/interface/illustrations/decisions/fp1_decision_raise_runestone.dds"
+	major = yes
+
+	ai_check_interval = 120
+
+	desc = found_capital_of_the_rus_decision_desc
+	selection_tooltip = found_capital_of_the_rus_decision_tooltip
+
+	is_shown = {
+		#DLC check.
+		has_fp1_dlc_trigger = yes
+		#Standard filter checks.
+		is_landed = yes
+		exists = dynasty
+		#Must be within the North Germanic cultural sphere.
+		OR = {
+			culture = { has_cultural_pillar = heritage_north_germanic }	
+			has_culture = culture:russian
+			has_culture = culture:norman
+			has_character_modifier = embraced_local_traditions_modifier
+			AND = {
+				exists = dynasty
+				dynasty = {
+					has_dynasty_modifier = settled_norse_dynasty_modifier
+				}
+			}
+		}
+		#Must be in the current de jure title:e_russia: since this decision involves title:e_russia very intimately, we don't want a custom region.
+		any_held_title = {
+			tier = tier_county
+			title_province = { geographical_region = ghw_region_russia } #The GHW Russia region works perfectly fine over using e_russia and then makes it compatible with MGR when you remove ahistorical empires
+		}
+		#Aaaaaaand it's already happened in 1066, albeit with less gameplay benefits.
+		NOT = { game_start_date >= 1066.09.15 }
+		#Year is before 1100, just to keep this from getting weird if no one manages it early.
+		current_date < 1100.1.1
+		#Not repeatable.
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_capital_of_rus
+			}
+		}
+	}
+
+	is_valid = {
+		#Must be independent.
+		is_independent_ruler = yes
+		#Has to be around to organise the construction.
+		is_imprisoned = no
+		#Must have a capital within title:e_russia, as we'll use this as a fallback.
+		capital_county.empire = title:e_russia
+		#Should have a decent prestige level.
+		OR = {
+			prestige_level >= very_high_prestige_level
+			AND = {
+				prestige_level >= high_prestige_level
+				completely_controls = title:c_kiev
+			}
+		}
+		#Repeat the time limit concern just so that the player knows it's a thing.
+		custom_description = {
+			text = found_capital_of_the_rus_decision_before_last_date
+			current_date <= 1100.1.1
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_at_peace_adult = yes
+	}
+
+	effect = {
+		save_scope_as = founder
+		#Nab scope:founder's capital for the initial tooltip; this may be changed in the actual event.
+		scope:founder.capital_county = { save_scope_as = new_rus_capital }
+		show_as_tooltip = { found_capital_of_rus_scripted_effect = yes }
+		trigger_event = { id = fp1_major_decisions.0011 }
+		#Notifying other players is done in scope:founder's event, as scope:founder may change the circumstances of the decision with their option choice.
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_capital_of_rus
+			}
+		}
+	}
+
+	cost = {
+		gold = 100
+		prestige = 500
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 0
+
+		# Weight up for traits.
+		modifier = {
+			add = 25
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 25
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 25
+			has_trait = architect
+		}
+		modifier = {
+			add = 25
+			has_trait = administrator
+		}
+		modifier = {
+			add = 25
+			has_trait = viking
+		}
+
+		# Weight up for game year.
+		modifier = {
+			add = 25
+			current_year >= 920
+		}
+		modifier = {
+			add = 25
+			current_year >= 980
+		}
+	}
+}
+
 unite_the_southern_slavs_decision = {
 	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
 	major = yes
