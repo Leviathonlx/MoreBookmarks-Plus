@@ -1,0 +1,165 @@
+﻿#	Example:
+#
+#	example_trigger = {
+#		is_country_type = default
+#		free_leader_slots > 0
+#	}
+#
+#
+#	In a script file:
+#
+#	trigger = {
+#		example_trigger = yes
+#	}
+#
+
+dragatus_PCB_liberation_war_ai_trigger = {
+	ai_boldness > 0
+	ai_energy > 0
+	ai_vengefulness > 0
+	ai_compassion > 0
+}
+
+
+dragatus_PCB_is_valid_liberation_war_target_trigger = {	
+	any_realm_county = {
+		holder = {
+			#save_temporary_scope_as = dragatus_current_ruler_scope # possibly only works in effects - this is a condition
+			OR = {
+				# stolen spouse/concubines
+				any_courtier = {
+					OR = {
+						# Prisoner Marriage mod compatibility
+						reverse_has_opinion_modifier = {
+							target = scope:attacker
+							modifier = dragatus_rightful_spouse_opinion
+						}
+						# Check for stolen spouses in general.
+						AND = {
+							any_former_spouse = { this = scope:attacker }
+							NOR = {
+								# We're making an educated guess that a former spouse who hates the attacker for divorcing them was not stolen and is just there by chance.
+								has_opinion_modifier = {
+									target = scope:attacker
+									modifier = divorced_me_opinion
+								}
+								# The divorce opinion penalty lasts for 50 years (unmodded), so this should be a fairly safe guess.
+								# But it can produce bugs if a divorced spouse is still alive 50+ years after the divorce.
+								# So we add an age check. The default minimum age for marriage & divorce is 16. Add 50 years for opinion penalty to expire and the result is 66 years.
+								# Former spouses over this age may have been divorced, but opinion penalty expired.
+								age >= 66 
+								# Any former spouses who are lovers or soulmates will qualify for liberation in a separate section.
+							}
+						}
+						# Check for stolen concubines.
+						AND = {
+							any_former_concubinist = { this = scope:attacker }
+							NOR = {
+								# We're making an educated guess that a former concubine who hates the attacker for setting them aside probably isn't a stolen concubine.
+								has_opinion_modifier = {
+									target = scope:attacker
+									modifier = set_me_aside_opinion
+								}
+								# age for concubinage = 16, duration of set aside opinion penalty = 25, 16+25=41
+								# Former concubines over this age may have been set aside, but opinion penalty expired.
+								age >= 41
+								# Any former concubines who are lovers or soulmates will qualify for liberation in a separate section.
+							}
+						}
+					}
+				}
+				# imprisoned stolen spouse/concubines
+				any_prisoner = {
+					liege = prev
+					OR = {
+						# Prisoner Marriage mod compatibility
+						reverse_has_opinion_modifier = {
+							target = scope:attacker
+							modifier = dragatus_rightful_spouse_opinion
+						}
+						# Check for stolen spouses in general.
+						AND = {
+							any_former_spouse = { this = scope:attacker }
+							NOR = {
+								# We're making an educated guess that a former spouse who hates the attacker for divorcing them was not stolen and is just there by chance.
+								has_opinion_modifier = {
+									target = scope:attacker
+									modifier = divorced_me_opinion
+								}
+								# The divorce opinion penalty lasts for 50 years (unmodded), so this should be a fairly safe guess.
+								# But it can produce bugs if a divorced spouse is still alive 50+ years after the divorce.
+								# So we add an age check. The default minimum age for marriage & divorce is 16. Add 50 years for opinion penalty to expire and the result is 66 years.
+								# Former spouses over this age may have been divorced, but opinion penalty expired.
+								age >= 66 
+								# Any former spouses who are lovers or soulmates will qualify for liberation in a separate section.
+							}
+						}
+						# Check for stolen concubines.
+						AND = {
+							any_former_concubinist = { this = scope:attacker }
+							NOR = {
+								# We're making an educated guess that a former concubine who hates the attacker for setting them aside probably isn't a stolen concubine.
+								has_opinion_modifier = {
+									target = scope:attacker
+									modifier = set_me_aside_opinion
+								}
+								# age for concubinage = 16, duration of set aside opinion penalty = 25, 16+25=41
+								# Former concubines over this age may have been set aside, but opinion penalty expired.
+								age >= 41
+								# Any former concubines who are lovers or soulmates will qualify for liberation in a separate section.
+							}
+						}
+					}
+				}
+				# imprisoned family/friends
+				any_prisoner = {
+					OR = {
+						liege = scope:attacker
+						any_vassal = { this = scope:attacker }
+						is_close_or_extended_family_of = scope:attacker
+						has_relation_friend = scope:attacker
+						has_relation_best_friend = scope:attacker
+						has_relation_soulmate = scope:attacker
+						AND = { # non-secret lover
+							has_relation_lover = scope:attacker
+							NOT = { has_secret_relation_lover = scope:attacker }
+						}
+						# We're deliberately not checking every house/dynasty member to reduce impact on game performance.
+						# Players presumably don't care about random dynasts anyway.
+						# The exception is if the random dynast is an heir, so we do check for heirs.
+						is_heir_of = scope:attacker
+					}
+				}
+				# forcefully recruited family/friends
+				any_courtier = {
+					OR = {
+						# forcefully recruited
+						has_opinion_modifier = {
+							target = prev # Hopefully this still works in CK3.
+							modifier = demanded_recruitment
+						}
+						# forcefully made concubine
+						has_opinion_modifier = {
+							target = prev # Hopefully this still works in CK3.
+							modifier = forced_me_concubine_marriage_opinion
+						}
+					}
+					OR = {
+						is_close_or_extended_family_of = scope:attacker
+						has_relation_friend = scope:attacker
+						has_relation_best_friend = scope:attacker
+						has_relation_soulmate = scope:attacker
+						AND = { # non-secret lover
+							has_relation_lover = scope:attacker
+							NOT = { has_secret_relation_lover = scope:attacker }
+						}
+						# We're deliberately not checking every house/dynasty member to reduce impact on game performance.
+						# Players presumably don't care about random dynasts anyway.
+						# The exception is if the random dynast is an heir, so we do check for heirs.
+						is_heir_of = scope:attacker
+					}
+				}
+			}
+		}
+	}
+}
