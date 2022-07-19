@@ -14,9 +14,9 @@
 		#NB - Changed this to allowed_for_character from allowed_for_character_display_regardless. 
 		trigger_if = {
 			limit = { is_ai = no }
-			prestige_level >= medium_prestige_level
+			prestige_level >= low_prestige_level
 		}
-		trigger_else = { prestige_level >= low_prestige_level }
+		trigger_else = { prestige_level >= medium_prestige_level }
 		#END NB
 		 
 		# Ensure that this is only done every now and then.
@@ -32,6 +32,15 @@
         }
     }
     allowed_against_character = {
+		#MB
+		OR = {
+			character_is_land_realm_neighbor = scope:attacker
+			AND = {
+				exists = scope:attacker.liege
+				character_is_land_realm_neighbor = scope:attacker.liege
+			}
+		}
+		#
         primary_title = {
             tier >= tier_county
         }
@@ -50,7 +59,7 @@
 
     cost = {
         prestige = {
-            value = 150
+            value = 250
         }
     }
 
@@ -92,7 +101,7 @@
 	
 	on_white_peace = { 
         scope:attacker = {
-            add_prestige = -150
+            add_prestige = -250
 							
 			 
         }
@@ -108,14 +117,14 @@
 				trigger = { scope:defender = { is_local_player = yes } }
 				desc = trib_on_defeat_desc_defender
 			}
-			desc = trib_on_defeat_desc
+			desc = trib_on_defeat_desc_attacker
 		}
 	}
 
     on_defeat = {
         scope:attacker = {
-            add_prestige = -150
-            pay_long_term_gold = { target = scope:defender gold = 150 }
+            add_prestige = -250
+            pay_long_term_gold = { target = scope:defender gold = 250 }
         }
     }
 
@@ -136,21 +145,44 @@ permament_tributary_war_cb = {
 
     truce_days = 970
 
-    allowed_against_character = {
-	
+	allowed_for_character = {
 		#NB#
 		trigger_if = {
 			limit = { is_ai = no }
-			prestige_level >= medium_prestige_level
+			prestige_level >= low_prestige_level #Fine with the player doing this with less restrictions but don't want the AI doing it a lot
 		}
-		trigger_else = { prestige_level >= low_prestige_level }
+		trigger_else = { prestige_level >= medium_prestige_level }
 		#End NB#
 		
 		# Ensure that this is only done every now and then.
 		is_independent_ruler = yes
 		highest_held_title_tier >= tier_kingdom
 		
-        scope:defender = {
+        #scope:defender = {
+        #    primary_title = {
+        #        tier >= tier_county
+        #    }
+        #    scope:attacker.primary_title.tier >= scope:defender.primary_title.tier 
+        #    NOT = { exists = var:my_suzerain }
+        #    custom_description = {
+        #        text = not_a_tributary
+        #        subject = scope:defender
+        #        NOT = {
+        #            scope:attacker = {
+        #                is_target_in_variable_list = { name = all_tributaries target = scope:defender }
+        #            }
+        #        }
+        #    }            
+        #}
+        NAND = {
+            scope:attacker = {
+                primary_title = {
+                    tier < tier_county
+                }
+                this.primary_title.tier < scope:defender.primary_title.tier  
+                exists = var:my_suzerain
+            }
+			scope:defender = {
             primary_title = {
                 tier >= tier_county
             }
@@ -166,20 +198,40 @@ permament_tributary_war_cb = {
                 }
             }            
         }
-        NAND = {
-            scope:attacker = {
-                primary_title = {
-                    tier < tier_county
-                }
-                this.primary_title.tier < scope:defender.primary_title.tier  
-                exists = var:my_suzerain
-            }
         }
     }
-
+	#
+	allowed_against_character = {
+		#MB
+		OR = {
+			character_is_land_realm_neighbor = scope:attacker
+			AND = {
+				exists = scope:attacker.liege
+				character_is_land_realm_neighbor = scope:attacker.liege
+			}
+		}
+		#
+        primary_title = {
+            tier >= tier_county			 
+        }
+        scope:attacker.primary_title.tier >= scope:defender.primary_title.tier 
+        NOT = { exists = var:my_suzerain }
+        custom_description = {
+            text = not_a_tributary
+            subject = scope:defender
+            NOT = {
+                scope:attacker = {
+                    is_target_in_variable_list = { name = all_tributaries target = scope:defender }
+                }
+																			 
+										
+            }
+        }    
+    }
+	#
     cost = {
         prestige = {
-            value = 150
+            value = 300
         }
     }
 
@@ -193,7 +245,7 @@ permament_tributary_war_cb = {
 				trigger = { scope:defender = { is_local_player = yes } }
 				desc = perma_trib_on_victory_desc_defender
 			}
-			desc = perma_trib_on_victory_desc
+			desc = perma_trib_on_victory_desc_attacker
 		}
 	}
 
@@ -221,7 +273,7 @@ permament_tributary_war_cb = {
 
 	on_white_peace = { 
         scope:attacker = {
-            add_prestige = -150
+            add_prestige = -300
 							
 			 
         }
@@ -243,8 +295,8 @@ permament_tributary_war_cb = {
 
     on_defeat = {
         scope:attacker = {
-            add_prestige = -150
-            pay_long_term_gold = { target = scope:defender gold = 150 }
+            add_prestige = -300
+            pay_long_term_gold = { target = scope:defender gold = 300 } #Buffed this up to a more meaningful number
         }
     }
 	on_invalidated_desc = {
@@ -353,7 +405,7 @@ independence_tributary_war_cb = {
 
     on_defeat = {
         scope:attacker = {
-            add_prestige = -150
+            add_prestige = -300
 							
 			 
             pay_long_term_gold = { target = scope:defender gold = 150 }
