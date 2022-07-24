@@ -375,7 +375,7 @@ call_tributaries_to_war = {
 	}	
 }
 
-#ruler offers tribute to other character
+#Offer to be made a tributary decision
 offer_tribute = {
 	category = interaction_category_diplomacy
 	use_diplomatic_range = yes
@@ -385,6 +385,11 @@ offer_tribute = {
 				is_tributary = yes
 				is_suzerain = yes
 			}
+			tier_difference = { #We don't want a King to be able to offer to be a tributary of a Duke. Also don't want a King offering to become a tributary as a King would be unlikely to do such a thing
+                        target = scope:recipient
+                        value > 1
+                    }
+			is_independent_ruler = yes #We don't want people who are direct vassals of one country offering to become a tributary of an external country		   
 			is_at_war = no
 			NOT = { this = scope:recipient }
 			NOR = {
@@ -394,8 +399,7 @@ offer_tribute = {
                 any_vassal_or_below = {
                     this = scope:recipient
                 }		
-			}
-			is_independent_ruler = yes			
+			}	
 		}
 		scope:recipient = {
 			NOT = {
@@ -914,7 +918,17 @@ offer_tribute = {
 ruler_offer_tribute_to_recipient = {
 	category = interaction_category_diplomacy
 	use_diplomatic_range = yes
+	 #MB#
+	#Let's make it so the AI doesn't spam you to death with this and so the player can't spam it
+	cooldown = { years = 1 }
+	cooldown_against_recipient = { years = 5 }
+	
 	is_shown = {
+		#Let's not let a Duke even see the option to ask a King or Emperor to be a tributary as obviously a King would laugh at a Duke asking such a thing
+		
+		scope:actor.primary_title.tier >= scope:recipient.primary_title.tier
+		
+		#/MB
 		scope:actor = {
 			NOT = {
 				is_tributary = yes
@@ -922,6 +936,8 @@ ruler_offer_tribute_to_recipient = {
 			is_at_war = no
 			NOT = { this = scope:recipient }
 			is_independent_ruler = yes
+			highest_held_title_tier >= tier_duchy #We don't want someone who only holds a county trying to make tributaries
+			#/MB
 		}
 		scope:recipient = {
 			NOT = {
@@ -1170,6 +1186,13 @@ ruler_offer_tribute_to_recipient = {
 			}
 			add = -50
 		}
+		modifier = { #I am a Emperor!
+			desc = offer_vassalization_interaction_aibehavior_amkingtier_tt
+			trigger = {
+				scope:recipient = { highest_held_title_tier = tier_empire }
+			}
+			add = -200 
+			}
 		modifier = { #We just fought against each other.
 			desc = offer_vassalization_interaction_aibehavior_recent_war_tt
 			trigger = {
