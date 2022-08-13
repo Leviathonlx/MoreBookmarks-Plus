@@ -1,0 +1,87 @@
+﻿is_tributary = {
+	exists = var:my_suzerain
+	var:my_suzerain = {
+		OR = {
+			is_target_in_variable_list = { name = non_permanent_tributaries target = prev }
+			is_target_in_variable_list = { name = permanent_tributaries target = prev }
+		}
+	}
+}
+
+is_permanent_tributary = {
+	$SUZERAIN$ = {
+		is_target_in_variable_list = { name = permanent_tributaries target =  $TRIBUTARY$ }
+	}
+}
+
+is_non_permanent_tributary = {
+	$SUZERAIN$ = {
+		is_target_in_variable_list = { name = non_permanent_tributaries target =  $TRIBUTARY$ }
+	}
+}
+
+is_suzerain = {
+	OR = {
+		has_variable_list = non_permanent_tributaries
+		has_variable_list = permanent_tributaries
+	}
+}
+
+has_tributaries = {
+	OR = {
+		variable_list_size = { name = non_permanent_tributaries value > 0 }
+		variable_list_size = { name = permanent_tributaries value > 0 }
+	}
+}
+
+has_permanent_tributaries = {
+	variable_list_size = { name = permanent_tributaries value > 0 }
+}
+
+has_non_permanent_tributaries = {
+	variable_list_size = { name = non_permanent_tributaries value > 0 } #target
+}
+
+can_declare_war_on_tributary = {
+	$SCOPETRIB$ = {
+		AND = {
+			exists = var:can_declare_war_on_trib 
+			var:can_declare_war_on_trib = flag:no
+			exists = var:my_suzerain
+			var:my_suzerain = $SCOPE2$
+		} 
+	}
+}
+
+can_declare_war_on_suzerain = {
+	$SCOPETRIB$ = {
+		AND = {
+			exists = var:my_suzerain
+			var:my_suzerain = $SCOPE2$
+		}	
+	}
+}
+
+casus_belli_block = {
+	trigger_if = {
+		limit = {
+			$SCOPEDEF$ = {
+				AND = {
+					exists = var:can_declare_war_on_trib 
+					exists = var:my_suzerain
+				}
+			}
+		}
+		custom_description = {
+			text = cannot_attack_suzerain
+			NOT = { can_declare_war_on_tributary = { SCOPETRIB = $SCOPEDEF$ SCOPE2 = $SCOPEATK$ } }
+		}
+		custom_description = {
+			text = cannot_attack_tributary
+			NOT = { can_declare_war_on_suzerain = { SCOPETRIB = $SCOPEATK$ SCOPE2 = $SCOPEDEF$ } } 
+		}
+	}
+	trigger_else = {
+		always = yes
+	}
+}
