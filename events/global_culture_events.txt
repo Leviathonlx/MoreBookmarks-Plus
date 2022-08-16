@@ -374,475 +374,475 @@ global_culture.0005 = {
 # by Sean Hughes														#
 # global_culture.0011-0019												#
 #########################################################################
-
-global_culture.0011 = {
-	type = empty
-	hidden = yes
-	
-	immediate = {
-		# Split the Norse culture into Swedish, Danish, and Norwegian
-		culture:norse = { save_scope_as = norse } # Save scope for player notification events.
-		culture:swedish = {
-			# 'Diverge' this culture by copying innovations/traditions.
-			reset_culture_creation_date = yes
-			get_all_innovations_from = scope:norse
-			copy_all_traditions_from = scope:norse
-			if = {
-				limit = { has_cultural_tradition = tradition_malleable_invaders }
-				remove_culture_tradition = tradition_malleable_invaders
-			}
-
-			# Save scope for player notification events.
-			save_scope_as = swedish 
-		}
-		culture:norwegian = {
-			# 'Diverge' this culture by copying innovations/traditions.
-			reset_culture_creation_date = yes
-			get_all_innovations_from = scope:norse
-			copy_all_traditions_from = scope:norse
-			if = {
-				limit = { has_cultural_tradition = tradition_malleable_invaders }
-				remove_culture_tradition = tradition_malleable_invaders
-			}
-
-			# Save scope for player notification events.
-			save_scope_as = norwegian
-		}
-		culture:danish = {
-			# 'Diverge' this culture by copying innovations/traditions.
-			reset_culture_creation_date = yes
-			get_all_innovations_from = scope:norse
-			copy_all_traditions_from = scope:norse
-			if = {
-				limit = { has_cultural_tradition = tradition_malleable_invaders }
-				remove_culture_tradition = tradition_malleable_invaders
-			}
-
-			# Save scope for player notification events.
-			save_scope_as = danish
-		}
-		
-		#MB
-		
-		culture:gutnish = {
-			# 'Diverge' this culture by copying innovations/traditions.
-			reset_culture_creation_date = yes
-			get_all_innovations_from = scope:norse
-			copy_all_traditions_from = scope:norse
-			if = {
-				limit = { has_cultural_tradition = tradition_malleable_invaders }
-				remove_culture_tradition = tradition_malleable_invaders
-			}
-
-			# Save scope for player notification events.
-			save_scope_as = gutnish
-		}
-		
-		culture:geat = {
-			# 'Diverge' this culture by copying innovations/traditions.
-			reset_culture_creation_date = yes
-			get_all_innovations_from = scope:norse
-			copy_all_traditions_from = scope:norse
-			if = {
-				limit = { has_cultural_tradition = tradition_malleable_invaders }
-				remove_culture_tradition = tradition_malleable_invaders
-			}
-
-			# Save scope for player notification events.
-			save_scope_as = geat
-		}
-		
-		culture:icelandic = {
-			# 'Diverge' this culture by copying innovations/traditions.
-			reset_culture_creation_date = yes
-			get_all_innovations_from = scope:norse
-			copy_all_traditions_from = scope:norse
-			if = {
-				limit = { has_cultural_tradition = tradition_malleable_invaders }
-				remove_culture_tradition = tradition_malleable_invaders
-			}
-
-			# Save scope for player notification events.
-			save_scope_as = icelandic
-		}
-		
-		###
-
-		# Compile a list of all norse counties in Scandanavia to convert to the appropriate culture.
-		every_county = {
-			limit = {
-				# All norse counties in Scandanavia will convert to the appropriate culture.
-				culture = culture:norse
-				title_province = {
-					geographical_region = world_europe_north
-				}
-			}
-			add_to_list = norse_counties
-		}
-
-		# Convert the norse counties to the new culture.
-		every_in_list = {
-			list = norse_counties
-			limit = {
-				# Same-culture players get an event informing them of their county's conversion *before* it happens (for their provinces only).
-				NOT = {
-					holder = {
-						OR = {
-							AND = {
-								is_ai = no
-								culture = culture:norse
-							}
-							any_liege_or_above = {
-								is_ai = no
-								culture = culture:norse
-							}
-						}
-					}
-				}
-			}
-						
-			# First, all Norse counties in Denmark become Danish
-			convert_county_and_holder_if_in_region_effect = {
-				OLD_CULTURE = culture:norse
-				NEW_CULTURE = culture:danish
-				REGION = custom_danish
-			}
-
-			# Second, any Norse counties in Norway become Norwegian
-			convert_county_and_holder_if_in_region_effect = {
-				OLD_CULTURE = culture:norse
-				NEW_CULTURE = culture:norwegian
-				REGION = custom_norwegian
-			}
-
-			# Finally, all remaining Norse counties become Swedish
-			convert_county_and_holder_if_in_region_effect = {
-				OLD_CULTURE = culture:norse
-				NEW_CULTURE = culture:swedish
-				REGION = custom_fennoscandia
-			}
-			
-			##MB
-			
-			#
-			convert_county_and_holder_if_in_region_effect = {
-				OLD_CULTURE = culture:norse
-				NEW_CULTURE = culture:gutnish
-				REGION = custom_gutnish
-			}
-			
-			#
-			convert_county_and_holder_if_in_region_effect = {
-				OLD_CULTURE = culture:norse
-				NEW_CULTURE = culture:geat
-				REGION = custom_gothic
-			}
-			
-			#
-			convert_county_and_holder_if_in_region_effect = {
-				OLD_CULTURE = culture:norse
-				NEW_CULTURE = culture:icelandic
-				REGION = custom_iceland
-			}
-		}
-
-		# Send the appropriate notification event to each player.
-		every_player = {
-			if = {
-				limit = {
-					culture = culture:norse
-					capital_province = {
-						geographical_region = world_europe_north
-					}
-				}
-				if = {
-					limit = {
-						NOT = {
-							any_liege_or_above = {
-								is_ai = no
-							}
-						}
-					}
-					trigger_event = global_culture.0012
-				}
-			}
-			else_if = {		#Notify norse players who have adventured outside of Scandinavia
-				limit = {
-					culture = culture:norse
-					is_ai = no
-				}
-				trigger_event = global_culture.0015
-			}
-			else = {
-				if = {
-					limit = {
-						is_ai = no
-						save_temporary_scope_as = player
-						any_in_list = {
-							list = norse_counties
-							holder = {
-								is_within_diplo_range = { CHARACTER = scope:player }
-							}
-						}
-					}
-					trigger_event = global_culture.0015
-				}
-			}
-		}
-	}
-}
-
-# If a player is strong enough, they can resist the culture flip for their sub-realm only.
-global_culture.0012 = {
-	type = character_event
-	title = global_culture.0012.t
-	desc = global_culture.0012.desc
-	theme = culture_change
-	left_portrait = root
-
-	immediate = {
-		# Determine what the player's target culture is (based off of religion and capital region)
-		if = {
-			limit = {
-				capital_province = {
-					geographical_region = custom_danish
-				}
-			}
-			culture:danish = { save_scope_as = my_new_culture }
-		}
-		else_if = {
-			limit = {
-				capital_province = {
-					geographical_region = custom_norwegian
-				}
-			}
-			culture:norwegian = { save_scope_as = my_new_culture }
-		}
-		else_if = {
-			limit = {
-				capital_province = {
-					geographical_region = custom_fennoscandia
-				}
-			}
-			culture:swedish = { save_scope_as = my_new_culture }
-		}
-		
-		##MB
-		
-		else_if = {
-			limit = {
-				capital_province = {
-					geographical_region = custom_gutnish
-				}
-			}
-			culture:gutnish = { save_scope_as = my_new_culture }
-		}
-		
-		else_if = {
-			limit = {
-				capital_province = {
-					geographical_region = custom_gothic
-				}
-			}
-			culture:geat = { save_scope_as = my_new_culture }
-		}
-		
-		else_if = {
-			limit = {
-				capital_province = {
-					geographical_region = custom_iceland
-				}
-			}
-			culture:icelandic = { save_scope_as = my_new_culture }
-		}
-
-		culture = { save_scope_as = old_culture }
-	}
-
-	# Option 1 (Almost always the only option): Accept the culture conversion.
-	option = {
-		name = global_culture.0012.a
-		if = {
-			limit = {
-				capital_province = {
-					geographical_region = custom_fennoscandia
-				}
-			}
-			convert_player_realm_from_old_culture_to_new_effect = {
-				OLD_CULTURE = culture:norse
-				NEW_CULTURE = scope:my_new_culture
-			}
-		}
-		else_if = { # Some of my realm is in Scandinavia but I am not
-			limit = {
-				any_sub_realm_county = {
-					culture = culture:norse
-					title_province = {
-						geographical_region = custom_fennoscandia
-					}
-				}
-			}
-			every_county_in_region = {
-				region = custom_fennoscandia
-				if = {
-					limit = {
-						title_province = { geographical_region = custom_danish }
-						culture = culture:norse
-					}
-					set_county_culture = culture:danish
-					if = {
-						limit = {
-							holder = { capital_county = prev }
-						}
-						holder = { set_culture = culture:danish }
-					}
-				}
-				else_if = {
-					limit = {
-						title_province = { geographical_region = custom_norwegian }
-						culture = culture:norse
-					}
-					set_county_culture = culture:norwegian
-					if = {
-						limit = {
-							holder = { capital_county = prev }
-						}
-						holder = { set_culture = culture:norwegian }
-					}
-				}
-				else_if = {
-					limit = {
-						culture = culture:norse
-					}
-					set_county_culture = culture:swedish
-					if = {
-						limit = {
-							holder = { capital_county = prev }
-						}
-						holder = { set_culture = culture:swedish }
-					}
-				}
-				
-				##MB
-				
-				else_if = {
-					limit = {
-						culture = culture:norse
-					}
-					set_county_culture = culture:icelandic
-					if = {
-						limit = {
-							holder = { capital_county = prev }
-						}
-						holder = { set_culture = culture:icelandic }
-					}
-				}
-				else_if = {
-					limit = {
-						culture = culture:norse
-					}
-					set_county_culture = culture:geat
-					if = {
-						limit = {
-							holder = { capital_county = prev }
-						}
-						holder = { set_culture = culture:geat }
-					}
-				}
-				
-				else_if = {
-					limit = {
-						culture = culture:norse
-					}
-					set_county_culture = culture:custom_gutnish
-					if = {
-						limit = {
-							holder = { capital_county = prev }
-						}
-						holder = { set_culture = culture:custom_gutnish }
-					}
-				}
-			}
-		}
-	}
-
-	# Option 2: I am strong enough to keep our old culture intact!
-	option = {
-		name = global_culture.0012.b
-
-		trigger = {
-			custom_description = {
-				text = controls_enough_culture_counties
-				any_in_list = {
-					list = norse_counties
-					percent >= 0.8
-
-					OR = {
-						holder = root
-						holder = {
-							any_liege_or_above = {
-								this = root
-							}
-						}
-					}
-				}
-			}
-		}
-
-		show_as_unavailable = {
-			custom_description = {
-				text = controls_enough_culture_counties	
-				any_in_list = {
-					list = norse_counties
-					percent < 0.8
-
-					OR = {
-						holder = root
-						holder = {
-							any_liege_or_above = {
-								this = root
-							}
-						}
-					}
-				}
-			}
-		}
-
-		custom_tooltip = global_culture.custom.keep_culture
-	}
-}
-
-# As this is purely an informative event for players, it doesn't actually have any gameplay effects.
-global_culture.0015 = {
-	type = character_event
-	title = global_culture.0015.t
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = {
-					culture = culture:norse
-				}
-				desc = global_culture.0015.desc_norse
-			}
-			desc = global_culture.0015.desc
-		}
-	}
-	theme = culture_change
-
-	option = {
-		trigger = {
-			NOT = { culture = culture:norse }
-		}
-		name = global_culture.0015.a
-	}
-
-	option = {
-		trigger = {
-			culture = culture:norse
-		}
-		name = global_culture.0015.b
-	}
-}
+#
+#global_culture.0011 = {
+#	type = empty
+#	hidden = yes
+#	
+#	immediate = {
+#		# Split the Norse culture into Swedish, Danish, and Norwegian
+#		culture:norse = { save_scope_as = norse } # Save scope for player notification events.
+#		culture:swedish = {
+#			# 'Diverge' this culture by copying innovations/traditions.
+#			reset_culture_creation_date = yes
+#			get_all_innovations_from = scope:norse
+#			copy_all_traditions_from = scope:norse
+#			if = {
+#				limit = { has_cultural_tradition = tradition_malleable_invaders }
+#				remove_culture_tradition = tradition_malleable_invaders
+#			}
+#
+#			# Save scope for player notification events.
+#			save_scope_as = swedish 
+#		}
+#		culture:norwegian = {
+#			# 'Diverge' this culture by copying innovations/traditions.
+#			reset_culture_creation_date = yes
+#			get_all_innovations_from = scope:norse
+#			copy_all_traditions_from = scope:norse
+#			if = {
+#				limit = { has_cultural_tradition = tradition_malleable_invaders }
+#				remove_culture_tradition = tradition_malleable_invaders
+#			}
+#
+#			# Save scope for player notification events.
+#			save_scope_as = norwegian
+#		}
+#		culture:danish = {
+#			# 'Diverge' this culture by copying innovations/traditions.
+#			reset_culture_creation_date = yes
+#			get_all_innovations_from = scope:norse
+#			copy_all_traditions_from = scope:norse
+#			if = {
+#				limit = { has_cultural_tradition = tradition_malleable_invaders }
+#				remove_culture_tradition = tradition_malleable_invaders
+#			}
+#
+#			# Save scope for player notification events.
+#			save_scope_as = danish
+#		}
+#		
+#		#MB
+#		
+#		culture:gutnish = {
+#			# 'Diverge' this culture by copying innovations/traditions.
+#			reset_culture_creation_date = yes
+#			get_all_innovations_from = scope:norse
+#			copy_all_traditions_from = scope:norse
+#			if = {
+#				limit = { has_cultural_tradition = tradition_malleable_invaders }
+#				remove_culture_tradition = tradition_malleable_invaders
+#			}
+#
+#			# Save scope for player notification events.
+#			save_scope_as = gutnish
+#		}
+#		
+#		culture:geat = {
+#			# 'Diverge' this culture by copying innovations/traditions.
+#			reset_culture_creation_date = yes
+#			get_all_innovations_from = scope:norse
+#			copy_all_traditions_from = scope:norse
+#			if = {
+#				limit = { has_cultural_tradition = tradition_malleable_invaders }
+#				remove_culture_tradition = tradition_malleable_invaders
+#			}
+#
+#			# Save scope for player notification events.
+#			save_scope_as = geat
+#		}
+#		
+#		culture:icelandic = {
+#			# 'Diverge' this culture by copying innovations/traditions.
+#			reset_culture_creation_date = yes
+#			get_all_innovations_from = scope:norse
+#			copy_all_traditions_from = scope:norse
+#			if = {
+#				limit = { has_cultural_tradition = tradition_malleable_invaders }
+#				remove_culture_tradition = tradition_malleable_invaders
+#			}
+#
+#			# Save scope for player notification events.
+#			save_scope_as = icelandic
+#		}
+#		
+#		###
+#
+#		# Compile a list of all norse counties in Scandanavia to convert to the appropriate culture.
+#		every_county = {
+#			limit = {
+#				# All norse counties in Scandanavia will convert to the appropriate culture.
+#				culture = culture:norse
+#				title_province = {
+#					geographical_region = world_europe_north
+#				}
+#			}
+#			add_to_list = norse_counties
+#		}
+#
+#		# Convert the norse counties to the new culture.
+#		every_in_list = {
+#			list = norse_counties
+#			limit = {
+#				# Same-culture players get an event informing them of their county's conversion *before* it happens (for their provinces only).
+#				NOT = {
+#					holder = {
+#						OR = {
+#							AND = {
+#								is_ai = no
+#								culture = culture:norse
+#							}
+#							any_liege_or_above = {
+#								is_ai = no
+#								culture = culture:norse
+#							}
+#						}
+#					}
+#				}
+#			}
+#						
+#			# First, all Norse counties in Denmark become Danish
+#			convert_county_and_holder_if_in_region_effect = {
+#				OLD_CULTURE = culture:norse
+#				NEW_CULTURE = culture:danish
+#				REGION = custom_danish
+#			}
+#
+#			# Second, any Norse counties in Norway become Norwegian
+#			convert_county_and_holder_if_in_region_effect = {
+#				OLD_CULTURE = culture:norse
+#				NEW_CULTURE = culture:norwegian
+#				REGION = custom_norwegian
+#			}
+#
+#			# Finally, all remaining Norse counties become Swedish
+#			convert_county_and_holder_if_in_region_effect = {
+#				OLD_CULTURE = culture:norse
+#				NEW_CULTURE = culture:swedish
+#				REGION = custom_fennoscandia
+#			}
+#			
+#			##MB
+#			
+#			#
+#			convert_county_and_holder_if_in_region_effect = {
+#				OLD_CULTURE = culture:norse
+#				NEW_CULTURE = culture:gutnish
+#				REGION = custom_gutnish
+#			}
+#			
+#			#
+#			convert_county_and_holder_if_in_region_effect = {
+#				OLD_CULTURE = culture:norse
+#				NEW_CULTURE = culture:geat
+#				REGION = custom_gothic
+#			}
+#			
+#			#
+#			convert_county_and_holder_if_in_region_effect = {
+#				OLD_CULTURE = culture:norse
+#				NEW_CULTURE = culture:icelandic
+#				REGION = custom_iceland
+#			}
+#		}
+#
+#		# Send the appropriate notification event to each player.
+#		every_player = {
+#			if = {
+#				limit = {
+#					culture = culture:norse
+#					capital_province = {
+#						geographical_region = world_europe_north
+#					}
+#				}
+#				if = {
+#					limit = {
+#						NOT = {
+#							any_liege_or_above = {
+#								is_ai = no
+#							}
+#						}
+#					}
+#					trigger_event = global_culture.0012
+#				}
+#			}
+#			else_if = {		#Notify norse players who have adventured outside of Scandinavia
+#				limit = {
+#					culture = culture:norse
+#					is_ai = no
+#				}
+#				trigger_event = global_culture.0015
+#			}
+#			else = {
+#				if = {
+#					limit = {
+#						is_ai = no
+#						save_temporary_scope_as = player
+#						any_in_list = {
+#							list = norse_counties
+#							holder = {
+#								is_within_diplo_range = { CHARACTER = scope:player }
+#							}
+#						}
+#					}
+#					trigger_event = global_culture.0015
+#				}
+#			}
+#		}
+#	}
+#}
+#
+## If a player is strong enough, they can resist the culture flip for their sub-realm only.
+#global_culture.0012 = {
+#	type = character_event
+#	title = global_culture.0012.t
+#	desc = global_culture.0012.desc
+#	theme = culture_change
+#	left_portrait = root
+#
+#	immediate = {
+#		# Determine what the player's target culture is (based off of religion and capital region)
+#		if = {
+#			limit = {
+#				capital_province = {
+#					geographical_region = custom_danish
+#				}
+#			}
+#			culture:danish = { save_scope_as = my_new_culture }
+#		}
+#		else_if = {
+#			limit = {
+#				capital_province = {
+#					geographical_region = custom_norwegian
+#				}
+#			}
+#			culture:norwegian = { save_scope_as = my_new_culture }
+#		}
+#		else_if = {
+#			limit = {
+#				capital_province = {
+#					geographical_region = custom_fennoscandia
+#				}
+#			}
+#			culture:swedish = { save_scope_as = my_new_culture }
+#		}
+#		
+#		##MB
+#		
+#		else_if = {
+#			limit = {
+#				capital_province = {
+#					geographical_region = custom_gutnish
+#				}
+#			}
+#			culture:gutnish = { save_scope_as = my_new_culture }
+#		}
+#		
+#		else_if = {
+#			limit = {
+#				capital_province = {
+#					geographical_region = custom_gothic
+#				}
+#			}
+#			culture:geat = { save_scope_as = my_new_culture }
+#		}
+#		
+#		else_if = {
+#			limit = {
+#				capital_province = {
+#					geographical_region = custom_iceland
+#				}
+#			}
+#			culture:icelandic = { save_scope_as = my_new_culture }
+#		}
+#
+#		culture = { save_scope_as = old_culture }
+#	}
+#
+#	# Option 1 (Almost always the only option): Accept the culture conversion.
+#	option = {
+#		name = global_culture.0012.a
+#		if = {
+#			limit = {
+#				capital_province = {
+#					geographical_region = custom_fennoscandia
+#				}
+#			}
+#			convert_player_realm_from_old_culture_to_new_effect = {
+#				OLD_CULTURE = culture:norse
+#				NEW_CULTURE = scope:my_new_culture
+#			}
+#		}
+#		else_if = { # Some of my realm is in Scandinavia but I am not
+#			limit = {
+#				any_sub_realm_county = {
+#					culture = culture:norse
+#					title_province = {
+#						geographical_region = custom_fennoscandia
+#					}
+#				}
+#			}
+#			every_county_in_region = {
+#				region = custom_fennoscandia
+#				if = {
+#					limit = {
+#						title_province = { geographical_region = custom_danish }
+#						culture = culture:norse
+#					}
+#					set_county_culture = culture:danish
+#					if = {
+#						limit = {
+#							holder = { capital_county = prev }
+#						}
+#						holder = { set_culture = culture:danish }
+#					}
+#				}
+#				else_if = {
+#					limit = {
+#						title_province = { geographical_region = custom_norwegian }
+#						culture = culture:norse
+#					}
+#					set_county_culture = culture:norwegian
+#					if = {
+#						limit = {
+#							holder = { capital_county = prev }
+#						}
+#						holder = { set_culture = culture:norwegian }
+#					}
+#				}
+#				else_if = {
+#					limit = {
+#						culture = culture:norse
+#					}
+#					set_county_culture = culture:swedish
+#					if = {
+#						limit = {
+#							holder = { capital_county = prev }
+#						}
+#						holder = { set_culture = culture:swedish }
+#					}
+#				}
+#				
+#				##MB
+#				
+#				else_if = {
+#					limit = {
+#						culture = culture:norse
+#					}
+#					set_county_culture = culture:icelandic
+#					if = {
+#						limit = {
+#							holder = { capital_county = prev }
+#						}
+#						holder = { set_culture = culture:icelandic }
+#					}
+#				}
+#				else_if = {
+#					limit = {
+#						culture = culture:norse
+#					}
+#					set_county_culture = culture:geat
+#					if = {
+#						limit = {
+#							holder = { capital_county = prev }
+#						}
+#						holder = { set_culture = culture:geat }
+#					}
+#				}
+#				
+#				else_if = {
+#					limit = {
+#						culture = culture:norse
+#					}
+#					set_county_culture = culture:custom_gutnish
+#					if = {
+#						limit = {
+#							holder = { capital_county = prev }
+#						}
+#						holder = { set_culture = culture:custom_gutnish }
+#					}
+#				}
+#			}
+#		}
+#	}
+#
+#	# Option 2: I am strong enough to keep our old culture intact!
+#	option = {
+#		name = global_culture.0012.b
+#
+#		trigger = {
+#			custom_description = {
+#				text = controls_enough_culture_counties
+#				any_in_list = {
+#					list = norse_counties
+#					percent >= 0.8
+#
+#					OR = {
+#						holder = root
+#						holder = {
+#							any_liege_or_above = {
+#								this = root
+#							}
+#						}
+#					}
+#				}
+#			}
+#		}
+#
+#		show_as_unavailable = {
+#			custom_description = {
+#				text = controls_enough_culture_counties	
+#				any_in_list = {
+#					list = norse_counties
+#					percent < 0.8
+#
+#					OR = {
+#						holder = root
+#						holder = {
+#							any_liege_or_above = {
+#								this = root
+#							}
+#						}
+#					}
+#				}
+#			}
+#		}
+#
+#		custom_tooltip = global_culture.custom.keep_culture
+#	}
+#}
+#
+## As this is purely an informative event for players, it doesn't actually have any gameplay effects.
+#global_culture.0015 = {
+#	type = character_event
+#	title = global_culture.0015.t
+#	desc = {
+#		first_valid = {
+#			triggered_desc = {
+#				trigger = {
+#					culture = culture:norse
+#				}
+#				desc = global_culture.0015.desc_norse
+#			}
+#			desc = global_culture.0015.desc
+#		}
+#	}
+#	theme = culture_change
+#
+#	option = {
+#		trigger = {
+#			NOT = { culture = culture:norse }
+#		}
+#		name = global_culture.0015.a
+#	}
+#
+#	option = {
+#		trigger = {
+#			culture = culture:norse
+#		}
+#		name = global_culture.0015.b
+#	}
+#}
 
 #########################################################################
 # Converting Anglo-Saxon into Scottish									#
