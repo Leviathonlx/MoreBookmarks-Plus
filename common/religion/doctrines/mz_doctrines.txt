@@ -132,8 +132,10 @@
 
 doctrine_mz_relationships = {
 	group = "marriage"	
+	
 	doctrine_mz_monogamy = {
 		piety_cost = {
+			value = 0
 			if = {
 				limit = { has_doctrine = doctrine_mz_monogamy }
 				value = 0
@@ -142,25 +144,44 @@ doctrine_mz_relationships = {
 				limit = { has_doctrine = tenet_polyamory }
 				value = faith_tenet_cost_high
 			}
-			else = { value = 0 }
 		}
 		character_modifier = {
 			spouse_opinion = 10
 		}
 	}
+
 	tenet_polyamory = {
+		icon = core_tenet_followers
 		piety_cost = {
-			value = faith_tenet_cost_high
 			if = {
-				limit = { has_doctrine = tenet_polyamory }
-				value = 0
+				limit = {
+					religion_tag = hinduism_religion
+				}
+				value = faith_tenet_cost_low
 			}
 			else_if = {
-				limit = { has_doctrine = doctrine_mz_monogamy }
+				limit = {
+					OR = {
+						religion_tag = christianity_religion
+						religion_tag = judaism_religion
+						religion_tag = islam_religion
+						religion_tag = buddhism_religion
+						religion_tag = jainism_religion
+					}
+				}
 				value = faith_tenet_cost_high
 			}
-			else = { value = 0 }
+			else = {
+				value = faith_tenet_cost_mid
+			}
+
+			# Multiplier for keeping same tenet
+			if = {
+				limit = { has_doctrine = tenet_polyamory }
+				multiply = faith_unchanged_doctrine_cost_mult
+			}
 		}
+
 		can_pick = {
 			custom_description = {
 				text = ADULTERY_MUST_BE_FULLY_ACCEPTED
@@ -172,6 +193,7 @@ doctrine_mz_relationships = {
 				}
 			}
 		}
+
 		parameters = {
 			no_unfaithfulness_penalty_active = yes
 		}
@@ -242,7 +264,6 @@ doctrine_mz_syncretism = {
 				has_doctrine = pagan_hostility_doctrine
 			}
 		}
-		
 		can_pick = {
 			custom_description = {
 				text = incompatible_tenet_gnosticism_trigger
@@ -250,8 +271,16 @@ doctrine_mz_syncretism = {
 					flag:tenet_gnosticism = { is_in_list = selected_doctrines }
 				}
 			}
+			custom_description = {
+				text = incompatible_tenet_other_syncretism_trigger
+				NOR = {
+					flag:tenet_unreformed_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_christian_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_islamic_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_jewish_syncretism = { is_in_list = selected_doctrines }
+				}
+			}
 		}
-
 		parameters = {
 			hostility_override_eastern_hostility_doctrine = 1
 			#For loc:
@@ -314,7 +343,6 @@ doctrine_mz_syncretism = {
 	}
 
 	tenet_christian_syncretism = {
-
 		piety_cost = {
 			if = {
 				limit = {
@@ -339,11 +367,24 @@ doctrine_mz_syncretism = {
 		is_shown = {
 			NOT = { religion_tag = christianity_religion }
 		}
+		can_pick = {
+			custom_description = {
+				text = incompatible_tenet_other_syncretism_trigger
+				NOR = {
+					flag:tenet_eastern_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_unreformed_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_islamic_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_jewish_syncretism = { is_in_list = selected_doctrines }
+				}
+			}
+		}
 
 		parameters = {
 			hostility_override_special_doctrine_is_christian_faith = 2
 			#For loc:
 			is_christian_faith_bilateral_loc_override = 2
+			# This parameter is empty; the syncretic religious trigger checks against the doctrine, as that's much clearer in tooltips and allows us to use a unified syncretic trigger per-religion rather than having bitty situational triggers.
+			can_use_christian_artefacts = yes
 			christian_syncretic_actor_opinion_active = yes
 			opinion_of_christian_syncretic_recipient_opinion_active = 30 #Sync this to syncretic_mutual_opinion_bonus_value
 		}
@@ -355,7 +396,6 @@ doctrine_mz_syncretism = {
 	}
 
 	tenet_islamic_syncretism = {
-
 		piety_cost = {
 			if = {
 				limit = {
@@ -380,9 +420,22 @@ doctrine_mz_syncretism = {
 		is_shown = {
 			NOT = { religion_tag = islam_religion }
 		}
+		can_pick = {
+			custom_description = {
+				text = incompatible_tenet_other_syncretism_trigger
+				NOR = {
+					flag:tenet_eastern_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_unreformed_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_christian_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_jewish_syncretism = { is_in_list = selected_doctrines }
+				}
+			}
+		}
 
 		parameters = {
 			hostility_override_special_doctrine_is_islamic_faith = 2
+			# This parameter is empty; the syncretic religious trigger checks against the doctrine, as that's much clearer in tooltips and allows us to use a unified syncretic trigger per-religion rather than having bitty situational triggers.
+			can_use_islamic_artefacts = yes
 			islamic_syncretic_actor_opinion_active = yes
 			opinion_of_islamic_syncretic_recipient_opinion_active = 30 #Sync this to syncretic_mutual_opinion_bonus_value
 		}
@@ -394,7 +447,6 @@ doctrine_mz_syncretism = {
 	}
 
 	tenet_jewish_syncretism = {
-
 		piety_cost = {
 			if = {
 				limit = {
@@ -420,9 +472,22 @@ doctrine_mz_syncretism = {
 		is_shown = {
 			NOT = { religion_tag = judaism_religion }
 		}
+		can_pick = {
+			custom_description = {
+				text = incompatible_tenet_other_syncretism_trigger
+				NOR = {
+					flag:tenet_eastern_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_unreformed_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_christian_syncretism = { is_in_list = selected_doctrines }
+					flag:tenet_islamic_syncretism = { is_in_list = selected_doctrines }
+				}
+			}
+		}
 
 		parameters = {
 			hostility_override_special_doctrine_is_jewish_faith = 2
+			# This parameter is empty; the syncretic religious trigger checks against the doctrine, as that's much clearer in tooltips and allows us to use a unified syncretic trigger per-religion rather than having bitty situational triggers.
+			can_use_jewish_artefacts = yes
 			jewish_syncretic_actor_opinion_active = yes
 			opinion_of_jewish_syncretic_recipient_opinion_active = 30 #Sync this to syncretic_mutual_opinion_bonus_value
 		}
@@ -438,6 +503,7 @@ nudity_doctrine = {
 	group = "crimes"	
 	doctrine_mz_no_nudity = {
 		piety_cost = {
+			value = 0
 			if = {
 				limit = { has_doctrine = doctrine_mz_no_nudity }
 				value = 0
@@ -450,7 +516,6 @@ nudity_doctrine = {
 				limit = { has_doctrine = doctrine_mz_full_nudity }
 				value = 200
 			}
-			else = { value = 0 }
 		}
 		parameters = {
 			mz_no_nudity_active = yes
@@ -458,6 +523,7 @@ nudity_doctrine = {
 	}
 	special_doctrine_naked_priests = {
 		piety_cost = {
+			value = 0
 			if = {
 				limit = { has_doctrine = special_doctrine_naked_priests }
 				value = 0
@@ -470,7 +536,6 @@ nudity_doctrine = {
 				limit = { has_doctrine = doctrine_mz_no_nudity }
 				value = 100
 			}
-			else = { value = 0 }
 		}
 		parameters = {
 			naked_priests_active = yes
@@ -478,6 +543,7 @@ nudity_doctrine = {
 	}
 	doctrine_mz_full_nudity = {
 		piety_cost = {
+			value = 0
 			if = {
 				limit = { has_doctrine = doctrine_mz_full_nudity }
 				value = 0
@@ -490,7 +556,6 @@ nudity_doctrine = {
 				limit = { has_doctrine = doctrine_mz_no_nudity }
 				value = 200
 			}
-			else = { value = 0 }
 		}
 		parameters = {
 			naked_adherents_active = yes
