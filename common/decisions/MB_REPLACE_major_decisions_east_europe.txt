@@ -1,144 +1,5 @@
 ﻿#MODIFIED VANILLA EVENTS
 
-#############################################
-# Found the Capital of the Rus'				#
-# by Ewan Cowhig Croft						#
-#############################################
-
-#MUST be altered for when e_russia doesn't exist due to MGR
-found_capital_of_the_rus_decision = {
-	picture = "gfx/interface/illustrations/decisions/fp1_decision_raise_runestone.dds"
-	major = yes
-
-	ai_check_interval = 120
-
-	desc = found_capital_of_the_rus_decision_desc
-	selection_tooltip = found_capital_of_the_rus_decision_tooltip
-
-	is_shown = {
-		#DLC check.
-		has_fp1_dlc_trigger = yes
-		#Standard filter checks.
-		is_landed = yes
-		exists = dynasty
-		#Must be within the North Germanic cultural sphere.
-		OR = {
-			culture = { has_cultural_pillar = heritage_north_germanic }	
-			has_culture = culture:russian
-			has_culture = culture:norman
-			has_character_modifier = embraced_local_traditions_modifier
-			AND = {
-				exists = dynasty
-				dynasty = {
-					has_dynasty_modifier = settled_norse_dynasty_modifier
-				}
-			}
-		}
-		#Must be in the current de jure title:e_russia: since this decision involves title:e_russia very intimately, we don't want a custom region.
-		any_held_title = {
-			tier = tier_county
-			title_province = { geographical_region = ghw_region_russia } #The GHW Russia region works perfectly fine over using e_russia and then makes it compatible with MGR when you remove ahistorical empires
-		}
-		#Aaaaaaand it's already happened in 1066, albeit with less gameplay benefits.
-		NOT = { game_start_date >= 1066.09.15 }
-		#Year is before 1100, just to keep this from getting weird if no one manages it early.
-		current_date < 1100.1.1
-		#Not repeatable.
-		NOT = {
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_founded_capital_of_rus
-			}
-		}
-	}
-
-	is_valid = {
-		#Must be independent.
-		is_independent_ruler = yes
-		#Has to be around to organise the construction.
-		is_imprisoned = no
-		#Must have a capital within title:e_russia, as we'll use this as a fallback.
-		capital_county.empire = title:e_russia
-		#Should have a decent prestige level.
-		OR = {
-			prestige_level >= very_high_prestige_level
-			AND = {
-				prestige_level >= high_prestige_level
-				completely_controls = title:c_kiev
-			}
-		}
-		#Repeat the time limit concern just so that the player knows it's a thing.
-		custom_description = {
-			text = found_capital_of_the_rus_decision_before_last_date
-			current_date <= 1100.1.1
-		}
-	}
-
-	is_valid_showing_failures_only = {
-		is_available_at_peace_adult = yes
-	}
-
-	effect = {
-		save_scope_as = founder
-		#Nab scope:founder's capital for the initial tooltip; this may be changed in the actual event.
-		scope:founder.capital_county = { save_scope_as = new_rus_capital }
-		show_as_tooltip = { found_capital_of_rus_scripted_effect = yes }
-		trigger_event = { id = fp1_major_decisions.0011 }
-		#Notifying other players is done in scope:founder's event, as scope:founder may change the circumstances of the decision with their option choice.
-		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_founded_capital_of_rus
-			}
-		}
-	}
-
-	cost = {
-		gold = 100
-		prestige = 500
-	}
-
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 0
-
-		# Weight up for traits.
-		modifier = {
-			add = 25
-			has_trait = ambitious
-		}
-		modifier = {
-			add = 25
-			has_trait = arrogant
-		}
-		modifier = {
-			add = 25
-			has_trait = architect
-		}
-		modifier = {
-			add = 25
-			has_trait = administrator
-		}
-		modifier = {
-			add = 25
-			has_trait = viking
-		}
-
-		# Weight up for game year.
-		modifier = {
-			add = 25
-			current_year >= 920
-		}
-		modifier = {
-			add = 25
-			current_year >= 980
-		}
-	}
-}
-
 unite_the_southern_slavs_decision = {
 	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
 	major = yes
@@ -252,7 +113,7 @@ promote_hungarian_settlement_decision = {
   			text = promote_hungarian_settlement_decision_ecumenical_christian
 			faith = { #Denomination of Faith must not be a heresy and must have some degree of control over its core regions.
 				religion = religion:christianity_religion
-				has_doctrine = special_doctrine_rome_communion	
+				has_doctrine = special_doctrine_ecumenical_christian	
 			}
 		}
 		
@@ -417,6 +278,117 @@ found_kingdom_of_bosnia_decision = {
 		base = 100
 	}
 }
+
+#################################
+# Found the Kingdom of Livonia	#
+# by James Beaumont				#
+#################################
+found_kingdom_of_livonia_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_destiny_goal.dds"
+	major = yes
+
+	ai_check_interval = 120
+
+	desc = found_kingdom_of_livonia_decision_desc
+	selection_tooltip = found_kingdom_of_livonia_decision_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		is_landed = yes
+		exists = dynasty
+		OR = {
+			#Must be a Latvian or Christian in Livonia
+			AND = {
+				NOT = {
+					culture = culture:estonian #Estonians already have their Kingdom.
+				}
+				OR = {
+					#Considers themselves to be a "Balt"
+					root.culture = { has_cultural_pillar = heritage_baltic }
+					root.faith = {
+						religion_tag = baltic_religion
+					}
+					#Is a Crusader founding the Kingdom
+					root.faith = {
+						NOT = { religion_tag = baltic_religion }
+						NOT = { has_doctrine_parameter = unreformed }
+					}
+				}
+				capital_province = {
+					geographical_region = ghw_region_baltic
+				}
+			}
+			#Or just be Latvian.
+			culture = culture:latgalian
+		}
+		NOT = {	#You can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_livonia
+			}
+		}
+		highest_held_title_tier <= tier_duchy
+	}
+
+	is_valid = {
+		OR = { #Independent or vassal of an Emperor
+			is_independent_ruler = yes
+			top_liege.primary_title.tier >= tier_empire
+		}
+		prestige_level >= medium_prestige_level
+
+		#You must control the kingdom's heartlands.
+		has_title = title:d_latgalians
+		has_title = title:d_courland
+		has_title = title:d_livonia
+		has_title = title:d_zemigalia
+		has_title = title:d_lettigale
+		completely_controls_region = custom_latvia
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	effect = {
+		save_scope_as = founder
+		show_as_tooltip = { found_kingdom_of_livonia_decision_scripted_effect = yes }
+		trigger_event = { id = east_europe.0200 }
+		#Notify other players.
+		every_player = {
+			limit = {
+				NOT = { this = scope:founder }
+				top_liege = {
+					OR = {
+						this = scope:founder
+						any_neighboring_and_across_water_top_liege_realm_owner = { this = scope:founder }
+					}
+				}
+			}
+			trigger_event = east_europe.0201
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_livonia
+			}
+		}
+	}
+
+	cost = {
+		gold = major_gold_value
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+########
 
 historical_orthodox_rus_conversion_decision = {
 	
