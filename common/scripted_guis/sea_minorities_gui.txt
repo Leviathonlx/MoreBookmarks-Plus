@@ -1,0 +1,75 @@
+﻿custom_map_mode_initialize = {
+    effect = {
+        set_global_variable = {
+            name = custom_map_mode
+            value = flag:none
+        }
+        siro_e_map_barony = yes
+    }
+    is_valid = {
+        has_global_variable = custom_map_mode
+        NOT = { global_var:custom_map_mode = flag:none  }
+    }
+}
+
+minorities_map = {
+    effect = {
+        if = {
+            limit = {
+                OR = {
+                    NOT = { has_global_variable = custom_map_mode }
+                    NOT = { global_var:custom_map_mode = flag:minorities_map }
+                }
+            }
+            set_global_variable = {
+                name = custom_map_mode_changing
+                value = 1
+            }
+            set_global_variable = {
+                name = custom_map_mode
+                value = flag:minorities_map
+            }
+            every_barony = {
+                if = {
+                    limit = {
+                        county = {
+                            county_has_minority_faith_trigger = yes
+                            county_has_minority_culture_trigger = no
+                        }
+                    }
+                    set_color_from_title = title:d_sea_minorities_map_faith
+                }
+                else_if = {
+                    limit = {
+                        county = {
+                            county_has_minority_faith_trigger = no
+                            county_has_minority_culture_trigger = yes
+                        }
+                    }
+                    set_color_from_title = title:d_sea_minorities_map_culture
+                }
+                else_if = {
+                    limit = {
+                        county = {
+                            county_has_minority_faith_trigger = yes
+                            county_has_minority_culture_trigger = yes
+                        }
+                    }
+                    set_color_from_title = title:d_sea_minorities_map_culture_faith
+                }
+                else = {
+                    set_color_from_title = title:d_siro_map_base
+                }
+            }
+            remove_global_variable = custom_map_mode_changing
+        }
+        remove_global_variable = custom_map_mode
+    }
+    is_shown = {
+        has_global_variable = custom_map_mode
+        global_var:custom_map_mode = flag:minorities_map
+    }
+    is_valid = {
+        NOT = { exists = global_var:custom_map_mode_changing }
+    }
+}

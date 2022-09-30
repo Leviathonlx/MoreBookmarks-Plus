@@ -1,0 +1,780 @@
+﻿
+namespace = minorities
+
+scripted_effect expel_religious_minorities_effect = {
+	# Lose or gain piety
+	if = {
+		limit = { faith = { has_doctrine = doctrine_pluralism_fundamentalist } }
+		add_piety = major_piety_gain
+	}
+	else_if = {
+		limit = { faith = { has_doctrine = doctrine_pluralism_pluralistic } }
+		add_piety = major_piety_loss
+	}
+
+	stress_impact = {
+		# Lose
+		wrathful = minor_stress_impact_loss
+		vengeful = minor_stress_impact_loss
+		greedy = minor_stress_impact_loss
+		zealous = minor_stress_impact_loss
+		callous = minor_stress_impact_loss
+
+		# Gain
+		compassionate = medium_stress_impact_gain
+		just = medium_stress_impact_gain
+		content = medium_stress_impact_gain
+		generous = medium_stress_impact_gain
+		forgiving = medium_stress_impact_gain
+	}
+
+	# Lose character opinion
+	custom_tooltip = EXPELLED_FAITH_OPINION_EFFECT
+	hidden_effect = {
+		every_vassal_or_below = {
+			limit = { faith = scope:expelled_faith }
+
+			add_opinion = {
+				modifier = expelled_my_faith_opinion
+				target = root
+			}
+			every_courtier_or_guest = {
+				limit = { faith = scope:expelled_faith }
+
+				add_opinion = {
+					modifier = expelled_my_faith_opinion
+					target = root
+				}
+			}
+		}
+	}
+
+	# Lose county opinion
+	every_held_title = {
+		limit = {
+			tier = tier_county
+			faith = scope:expelled_faith
+		}
+		add_county_modifier = ruler_expelled_minority_modifier
+	}
+
+	every_sub_realm_county = {
+		limit = {
+			county_is_religiously_protected_trigger = no
+			county_has_specific_minority_faith_trigger = { FAITH = scope:expelled_faith }
+		}
+		save_scope_as = source_county
+
+		if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = faith_minorities_small
+					target = scope:expelled_faith
+				}
+			}
+			add_to_temporary_list = small_minority_counties_seized_from
+			custom_tooltip = minorities.1000.expel_minority_tt
+			add_county_modifier = {
+				modifier = small_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = faith_minorities_small
+				target = scope:expelled_faith
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_faith = { save_scope_as = minority_faith }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_faith_minority_effect = { FAITH = scope:expelled_faith }
+							scope:expelled_faith = { save_scope_as = minority_faith }
+							notify_recipient_of_faith_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = faith_minorities_large
+					target = scope:expelled_faith
+				}
+			}
+			add_to_temporary_list = large_minority_counties_seized_from
+			custom_tooltip = minorities.1000.expel_minority_tt
+			add_county_modifier = {
+				modifier = large_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = faith_minorities_large
+				target = scope:expelled_faith
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_faith = { save_scope_as = minority_faith }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_faith_minority_effect = { FAITH = scope:expelled_faith }
+							notify_recipient_of_faith_migration_effect = yes
+						}
+					}
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_faith_minority_effect = { FAITH = scope:expelled_faith }
+							notify_recipient_of_faith_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+	add_gold = {
+		every_in_list = {
+			list = small_minority_counties_seized_from
+			add = this.development_level
+		}
+		every_in_list = {
+			list = large_minority_counties_seized_from
+			add = {
+				value = this.development_level
+				multiply = 2
+			}
+		}
+	}
+}
+
+scripted_effect expel_cultural_minorities_effect = {
+	# Lose cultural acceptance
+	root.primary_title = {
+		save_scope_as = expulsion_realm
+	}
+	scope:expelled_culture = {
+		change_cultural_acceptance = {
+			target = root.culture
+			value = -10
+			desc = cultural_acceptance_loss_expulsion
+		}
+	}
+
+	stress_impact = {
+		# Lose
+		wrathful = minor_stress_impact_loss
+		vengeful = minor_stress_impact_loss
+		greedy = minor_stress_impact_loss
+		zealous = minor_stress_impact_loss
+		callous = minor_stress_impact_loss
+
+		# Gain
+		compassionate = medium_stress_impact_gain
+		just = medium_stress_impact_gain
+		content = medium_stress_impact_gain
+		generous = medium_stress_impact_gain
+		forgiving = medium_stress_impact_gain
+	}
+
+	# Lose opinion
+	custom_tooltip = EXPELLED_CULTURE_OPINION_EFFECT
+	hidden_effect = {
+		every_vassal_or_below = {
+			limit = { culture = scope:expelled_culture }
+
+			add_opinion = {
+				modifier = expelled_my_culture_opinion
+				target = root
+			}
+			every_courtier_or_guest = {
+				limit = { culture = scope:expelled_culture }
+
+				add_opinion = {
+					modifier = expelled_my_culture_opinion
+					target = root
+				}
+			}
+		}
+	}
+
+	# Lose county opinion
+	every_held_title = {
+		limit = {
+			tier = tier_county
+			culture = scope:expelled_culture
+		}
+		add_county_modifier = ruler_expelled_minority_modifier
+	}
+
+	every_sub_realm_county = {
+		limit = {
+			county_has_specific_minority_culture_trigger = { CULTURE = scope:expelled_culture }
+		}
+		save_scope_as = source_county
+
+		if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = culture_minorities_small
+					target = scope:expelled_culture
+				}
+			}
+			add_to_temporary_list = small_minority_counties_seized_from
+			custom_tooltip = minorities.0000.expel_minority_tt
+			add_county_modifier = {
+				modifier = small_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = culture_minorities_small
+				target = scope:expelled_culture
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_culture = { save_scope_as = minority_culture }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_culture_minority_effect = { CULTURE = scope:expelled_culture }
+							scope:expelled_culture = { save_scope_as = minority_culture }
+							notify_recipient_of_culture_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = culture_minorities_large
+					target = scope:expelled_culture
+				}
+			}
+			add_to_temporary_list = large_minority_counties_seized_from
+			custom_tooltip = minorities.0000.expel_minority_tt
+			add_county_modifier = {
+				modifier = large_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = culture_minorities_large
+				target = scope:expelled_culture
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_culture = { save_scope_as = minority_culture }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_culture_minority_effect = { CULTURE = scope:expelled_culture }
+							notify_recipient_of_culture_migration_effect = yes
+						}
+					}
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_culture_minority_effect = { CULTURE = scope:expelled_culture }
+							notify_recipient_of_culture_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+	add_gold = {
+		every_in_list = {
+			list = small_minority_counties_seized_from
+			add = this.development_level
+		}
+		every_in_list = {
+			list = large_minority_counties_seized_from
+			add = {
+				value = this.development_level
+				multiply = 2
+			}
+		}
+	}
+}
+
+scripted_effect setup_expel_religious_minorities_effect = {
+	every_sub_realm_county = {
+		limit = {
+			county_is_religiously_protected_trigger = no
+			county_has_astray_or_worse_minority_faith_trigger = { FAITH = root.faith }
+		}
+
+		every_in_list = {
+			variable = faith_minorities_large
+			limit = {
+				root.faith = {
+					faith_hostility_level = {
+						target = prev
+						value >= faith_astray_level
+					}
+				}
+			}
+			add_to_list = county_minorities
+		}
+		every_in_list = {
+			variable = faith_minorities_small
+			limit = {
+				root.faith = {
+					faith_hostility_level = {
+						target = prev
+						value >= faith_astray_level
+					}
+				}
+			}
+			add_to_list = county_minorities
+		}
+
+		every_in_list = {
+			list = county_minorities
+			limit = {
+				NOT = {
+					is_in_list = listed_minorities
+				}
+			}
+
+			if = {
+				limit = { NOT = { exists = scope:minority_1 } }
+				save_scope_as = minority_1
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_2 } }
+				save_scope_as = minority_2
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_3 } }
+				save_scope_as = minority_3
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_4 } }
+				save_scope_as = minority_4
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_5 } }
+				save_scope_as = minority_5
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_6 } }
+				save_scope_as = minority_6
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_7 } }
+				save_scope_as = minority_7
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_8 } }
+				save_scope_as = minority_8
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_9 } }
+				save_scope_as = minority_9
+				add_to_temporary_list = listed_minorities
+			}
+		}
+	}
+}
+
+scripted_effect setup_expel_cultural_minorities_effect = {
+	every_sub_realm_county = {
+		limit = {
+			county_has_different_heritage_minority_culture_trigger = { CULTURE = root.culture }
+		}
+
+		every_in_list = {
+			variable = culture_minorities_large
+			limit = {
+				root.culture = {
+					NOT = { has_same_culture_heritage = prev }
+				}
+			}
+			add_to_list = county_minorities
+		}
+		every_in_list = {
+			variable = culture_minorities_small
+			limit = {
+				root.culture = {
+					NOT = { has_same_culture_heritage = prev }
+				}
+			}
+			add_to_list = county_minorities
+		}
+
+		every_in_list = {
+			list = county_minorities
+			limit = {
+				NOT = {
+					is_in_list = listed_minorities
+				}
+			}
+
+			if = {
+				limit = { NOT = { exists = scope:minority_1 } }
+				save_scope_as = minority_1
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_2 } }
+				save_scope_as = minority_2
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_3 } }
+				save_scope_as = minority_3
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_4 } }
+				save_scope_as = minority_4
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_5 } }
+				save_scope_as = minority_5
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_6 } }
+				save_scope_as = minority_6
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_7 } }
+				save_scope_as = minority_7
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_8 } }
+				save_scope_as = minority_8
+				add_to_temporary_list = listed_minorities
+			}
+			else_if = {
+				limit = { NOT = { exists = scope:minority_9 } }
+				save_scope_as = minority_9
+				add_to_temporary_list = listed_minorities
+			}
+		}
+	}
+}
+
+# Expel Cultural Minorities
+# First selection event
+minorities.0001 = {
+	type = character_event
+	title = minorities.0001.t
+	desc = minorities.0001.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dread
+
+	immediate = {
+		if = {
+			limit = { NOT = { exists = scope:minority_1 } }
+			setup_expel_cultural_minorities_effect = yes
+		}
+	}
+
+	option = {
+		trigger = { exists = scope:minority_1 }
+		name = minorities.0001.1
+
+		scope:minority_1 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_2 }
+		name = minorities.0001.2
+
+		scope:minority_2 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_3 }
+		name = minorities.0001.3
+
+		scope:minority_3 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+
+	option = {
+		trigger = { exists = scope:minority_4 }
+		name = minorities.0001.next
+		trigger_event = minorities.0002
+	}
+	option = {
+		name = minorities.0001.cancel
+		remove_variable = expelled_or_purged_peasants
+	}
+}
+
+minorities.0002 = {
+	type = character_event
+	title = minorities.0002.t
+	desc = minorities.0002.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dread
+
+	option = {
+		trigger = { exists = scope:minority_4 }
+		name = minorities.0002.4
+
+		scope:minority_4 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_5 }
+		name = minorities.0002.5
+
+		scope:minority_5 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_6 }
+		name = minorities.0002.6
+
+		scope:minority_6 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+
+	option = {
+		trigger = { exists = scope:minority_7 }
+		name = minorities.0001.next
+		trigger_event = minorities.0003
+	}
+	option = {
+		trigger = { NOT = { exists = scope:minority_7 } }
+		name = minorities.0001.back
+		trigger_event = minorities.0001
+	}
+	option = {
+		name = minorities.0002.cancel
+		remove_variable = expelled_or_purged_peasants
+	}
+}
+
+minorities.0003 = {
+	type = character_event
+	title = minorities.0003.t
+	desc = minorities.0003.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dread
+
+
+	option = {
+		trigger = { exists = scope:minority_7 }
+		name = minorities.0003.7
+
+		scope:minority_7 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_8 }
+		name = minorities.0003.8
+
+		scope:minority_8 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_9 }
+		name = minorities.0003.9
+
+		scope:minority_9 = { save_scope_as = expelled_culture }
+		expel_cultural_minorities_effect = yes
+	}
+
+	option = {
+		name = minorities.0001.next
+		trigger_event = minorities.0001
+	}
+	option = {
+		name = minorities.0003.cancel
+		remove_variable = expelled_or_purged_peasants
+	}
+}
+
+# Expel Religious Minorities
+# First selection event
+minorities.1001 = {
+	type = character_event
+	title = minorities.1001.t
+	desc = minorities.1001.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dread
+
+	immediate = {
+		if = {
+			limit = { NOT = { exists = scope:minority_1 } }
+			setup_expel_religious_minorities_effect = yes
+		}
+	}
+
+	option = {
+		trigger = { exists = scope:minority_1 }
+		name = minorities.1001.1
+
+		scope:minority_1 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_2 }
+		name = minorities.1001.2
+
+		scope:minority_2 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_3 }
+		name = minorities.1001.3
+
+		scope:minority_3 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+
+	option = {
+		trigger = { exists = scope:minority_4 }
+		name = minorities.1001.next
+		trigger_event = minorities.1002
+	}
+	option = {
+		name = minorities.1001.cancel
+		remove_variable = expelled_or_purged_peasants
+	}
+}
+
+minorities.1002 = {
+	type = character_event
+	title = minorities.1002.t
+	desc = minorities.1002.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dread
+
+	option = {
+		trigger = { exists = scope:minority_4 }
+		name = minorities.1002.4
+
+		scope:minority_4 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_5 }
+		name = minorities.1002.5
+
+		scope:minority_5 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_6 }
+		name = minorities.1002.6
+
+		scope:minority_6 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+
+	option = {
+		trigger = { exists = scope:minority_7 }
+		name = minorities.1001.next
+		trigger_event = minorities.1003
+	}
+	option = {
+		trigger = { NOT = { exists = scope:minority_7 } }
+		name = minorities.1001.back
+		trigger_event = minorities.1001
+	}
+	option = {
+		name = minorities.1002.cancel
+		remove_variable = expelled_or_purged_peasants
+	}
+}
+
+minorities.1003 = {
+	type = character_event
+	title = minorities.1003.t
+	desc = minorities.1003.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dread
+
+
+	option = {
+		trigger = { exists = scope:minority_7 }
+		name = minorities.1003.7
+
+		scope:minority_7 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_8 }
+		name = minorities.1003.8
+
+		scope:minority_8 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+	option = {
+		trigger = { exists = scope:minority_9 }
+		name = minorities.1003.9
+
+		scope:minority_9 = { save_scope_as = expelled_faith }
+		expel_religious_minorities_effect = yes
+	}
+
+	option = {
+		name = minorities.1001.next
+		trigger_event = minorities.1001
+	}
+	option = {
+		name = minorities.1003.cancel
+		remove_variable = expelled_or_purged_peasants
+	}
+}
