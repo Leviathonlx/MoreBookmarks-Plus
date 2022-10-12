@@ -257,15 +257,16 @@ call_tributaries_to_war = {
 			is_at_war = yes
 		}
 		scope:actor = {
-			this = scope:recipient
-			custom_description = {
-				text = trib_type_allows_call_to_arms
-				any_in_list = {
-					variable = all_tributaries
-					exists = var:can_call_to_war_suzerain
-					var:can_call_to_war_suzerain = yes
-				}
-			}				
+			has_list = all_tributaries
+			any_in_list = {
+				variable = all_tributaries
+				exists = var:can_call_to_war_suzerain
+				var:can_call_to_war_suzerain = flag:yes
+			}			
+		}
+		scope:recipient = {
+			var:my_suzerain = scope:actor
+			var:can_call_to_war_suzerain = flag:yes
 		}
 	}
 
@@ -274,29 +275,24 @@ call_tributaries_to_war = {
 	}
 
 	on_accept = {
-		every_in_list = {
-			variable = all_tributaries
-			limit = {
-				exists = var:can_call_to_war_suzerain
-				var:can_call_to_war_suzerain = flag:yes
-			}
+		scope:recipient = {
 			save_temporary_scope_as = temp_trib_war
-			scope:actor = {
-				random_character_war = {
-					save_temporary_scope_as = temp_war
+		}
+		scope:actor = {
+			random_character_war = {
+				save_temporary_scope_as = temp_war
+			}
+			if = {
+				limit = {
+					is_attacker_in_war = scope:temp_war
 				}
-				if = {
-					limit = {
-						is_attacker_in_war = scope:tmp_war
-					}
-					scope:tmp_war = {
-						add_attacker = scope:temp_trib_war
-					}
+				scope:temp_war = {
+					add_attacker = scope:temp_trib_war
 				}
-				else = {
-					scope:tmp_war = {
-						add_defender = scope:temp_trib_war
-					}
+			}
+			else = {
+				scope:temp_war = {
+					add_defender = scope:temp_trib_war
 				}
 			}
 		}

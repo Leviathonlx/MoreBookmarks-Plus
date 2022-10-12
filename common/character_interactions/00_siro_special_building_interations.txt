@@ -1,0 +1,272 @@
+﻿
+#########################
+# Host Honored Guest
+# by Sean Hughes
+#########################
+
+siro_ellora_host_honored_guest_interaction = {
+	category = interaction_category_friendly
+
+	desc = host_honored_guest_interaction_desc
+	
+	ai_targets = {
+		ai_recipients = vassals
+	}
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+	ai_frequency = 60
+
+	cooldown = { years = 1 }
+
+	is_shown = {
+		NOT = {
+			scope:recipient = scope:actor
+		}
+		scope:actor = {
+			is_landed = yes
+			is_adult = yes
+			faith = {
+				NOT = { has_doctrine_parameter = host_honored_guests_active }
+			}
+			title:b_devagiri = {
+				holder = scope:actor
+				title_province = {
+					has_building = siro_b_ellora_caves_01
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		# Target faith is Hostile.
+		custom_description = {
+			text = host_honored_guest_is_hostile
+			object = scope:recipient
+			NOT = {		
+				scope:recipient = {
+					faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value = faith_hostile_level
+						}
+					}
+				}
+			}
+		}
+		# Target faith is Evil.
+		custom_description = {
+			text = host_honored_guest_is_evil
+			object = scope:recipient
+			NOT = {		
+				scope:recipient = {
+					faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value = faith_evil_level
+						}
+					}
+				}
+			}
+		}
+		# Target is sick
+		custom_description = {
+			text = host_honored_guest_is_unwell
+			object = scope:recipient
+			scope:recipient = {
+				is_healthy = yes
+			}
+		}
+		# Target is commanding an army
+		custom_description = {
+			text = host_honored_guest_is_commanding
+			object = scope:recipient
+			scope:recipient = {
+				is_commanding_army = no
+			}
+		}
+		# Target is imprisoned
+		custom_description = {
+			text = host_honored_guest_is_imprisoned
+			object = scope:recipient
+			scope:recipient = {
+				is_imprisoned = no
+			}
+		}
+		# At war with target
+		custom_description = {
+			text = host_honored_guest_is_at_war
+			object = scope:recipient
+			scope:recipient = {
+				NOT = { is_at_war_with = scope:actor }
+			}
+		}
+		# Is my courtier
+		custom_description = {
+			text = host_honored_guest_is_my_courtier
+			object = scope:recipient
+			scope:recipient = {
+				NOT = { is_courtier_of = scope:actor }
+			}
+		}
+	}
+
+	auto_accept = yes
+	force_notification = yes
+	notification_text = host_honored_guest_interaction.notification
+	#answer_accept_key = host_honored_guest_interaction.response
+
+	on_accept = {
+		scope:actor = {
+			stress_impact = {
+				cynical = minor_stress_impact_gain
+				shy = minor_stress_impact_gain
+			}
+		}
+		scope:recipient = {
+			hidden_effect = {
+				send_interface_toast = {	
+					title = host_honored_guest_interaction_recipient.notification
+					left_icon = scope:actor
+				}
+			}
+			# Spend piety based on recipient's tier.
+			if = {
+				limit = {
+					highest_held_title_tier <= tier_county
+				}
+				scope:actor = {
+					add_piety = minor_piety_loss
+				}
+			}
+			else_if = {
+				limit = {
+					highest_held_title_tier = tier_duchy
+				}
+				scope:actor = {
+					add_piety = medium_piety_loss
+				}
+			}
+			else_if = {
+				limit = {
+					highest_held_title_tier = tier_kingdom
+				}
+				scope:actor = {
+					add_piety = major_piety_loss
+				}
+			}
+			else_if = {
+				limit = {
+					highest_held_title_tier = tier_empire
+				}
+				scope:actor = {
+					add_piety = massive_piety_loss
+				}
+			}
+
+			# Increase opinion of recipient.
+			add_opinion = {
+				modifier = pleased_opinion
+				target = scope:actor
+				opinion = {
+					value = 20
+
+					# Zealous characters more likely to appreciate the religious ceremony (if of your faith)
+					if = {
+						limit = {
+							has_trait = zealous
+							faith = scope:actor.faith
+						}
+						add = 10
+					}
+					# Cynical characters, or characters who do not believe in the hospitality ritual, are less likely to be appreciative.
+					else_if = {
+						limit = {
+							OR = {
+								has_trait = cynical
+								NOT = {
+									faith = {
+										has_doctrine_parameter = host_honored_guests_active
+									}
+								}
+							}
+						}
+						subtract = 10
+					}
+
+					# But arrogant characters like it more regardless.
+					if = {
+						limit = {
+							has_trait = arrogant
+						}
+						add = 10
+					}
+				}
+			}
+		}
+	}
+	
+	ai_potential = {
+		piety >= major_piety_value
+	}
+
+	ai_will_do = {
+		base = 0
+
+		modifier = {
+			add = 100
+			scope:recipient = {
+				OR = {
+					is_powerful_vassal_of = scope:actor
+					liege = root
+				}
+				opinion = {
+					target = scope:actor
+					value = {-15 0 }
+				}
+			}
+		}
+
+		modifier = {
+			add = 75
+			scope:recipient = {
+				OR = {
+					is_powerful_vassal_of = scope:actor
+					liege = root
+				}
+				opinion = {
+					target = scope:actor
+					value = { 0 20 }
+				}
+			}
+		}
+
+		modifier = {
+			add = 40
+			scope:recipient = {
+				OR = {
+					is_powerful_vassal_of = scope:actor
+					liege = root
+				}
+				opinion = {
+					target = scope:actor
+					value = { 20 60 }
+				}
+			}
+		}
+
+		modifier = {
+			add = 10
+			scope:recipient = {
+				OR = {
+					is_powerful_vassal_of = scope:actor
+					liege = root
+				}
+				opinion = {
+					target = scope:actor
+					value = { 60 100 }
+				}
+			}
+		}			
+	}	
+}

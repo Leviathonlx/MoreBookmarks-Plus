@@ -1,0 +1,126 @@
+﻿#Call Tributaries to war
+
+#Needs localization still
+
+call_tributaries_to_war = {
+	category = interaction_category_diplomacy
+	use_diplomatic_range = no
+	is_shown = {
+		scope:actor = {
+			is_suzerain = yes
+			is_at_war = yes
+		}
+		scope:actor = {
+			has_list = all_tributaries
+			any_in_list = {
+				variable = all_tributaries
+				exists = var:can_call_to_war_suzerain
+				var:can_call_to_war_suzerain = flag:yes
+			}			
+		}
+		scope:recipient = {
+			var:my_suzerain = scope:actor
+			var:can_call_to_war_suzerain = flag:yes
+		}
+	}
+
+	auto_accept = {
+		always = yes
+	}
+
+	on_accept = {
+		scope:recipient = {
+			save_temporary_scope_as = temp_trib_war
+		}
+		scope:actor = {
+			random_character_war = {
+				save_temporary_scope_as = temp_war
+			}
+			if = {
+				limit = {
+					is_attacker_in_war = scope:temp_war
+				}
+				scope:temp_war = {
+					add_attacker = scope:temp_trib_war
+				}
+			}
+			else = {
+				scope:temp_war = {
+					add_defender = scope:temp_trib_war
+				}
+			}
+		}
+	}
+
+	ai_target_quick_trigger = {							# Quick triggers for the ai_targets
+		adult = yes										# The target needs to be adult
+		prison = no 									# Target must be in prison
+	}
+
+	# Score above 0 means the AI will call this ally. Note that DESIRED_WAR_SIDE_STRENGTH still applies and can prevent calling the ally
+	ai_will_do = {
+		base = 100
+		
+		modifier = { # If the player is at war, do not bother them with offensive calls
+			scope:target.casus_belli.primary_attacker = scope:actor
+			scope:recipient = {
+				is_ai = no
+				any_character_war = {
+					primary_defender = scope:recipient
+				}
+			}
+			factor = 0
+		}
+		
+		modifier = { # Don't call players in against their heirs (they wouldn't accept the reverse situation... don't be a hypocrite)
+			exists = scope:recipient.player_heir
+			scope:recipient = {			
+				is_ai = no
+			}
+			trigger_if = {
+				limit = { scope:target.casus_belli.primary_defender = scope:actor }
+				scope:target.casus_belli.primary_attacker = scope:recipient.player_heir
+			}
+			trigger_else = {
+				scope:target.casus_belli.primary_defender = scope:recipient.player_heir
+			}
+			factor = 0
+		}
+		
+		modifier = { # Same with spouses
+			scope:recipient = {			
+				is_ai = no
+			}
+			trigger_if = {
+				limit = { scope:target.casus_belli.primary_defender = scope:actor }
+				any_spouse = {
+					this = scope:target.casus_belli.primary_attacker
+				}
+			}
+			trigger_else = {
+				any_spouse = {
+					this = scope:target.casus_belli.primary_defender
+				}
+			}
+			factor = 0
+		}
+		
+		modifier = { # Don't call brand-new allies into old wars, at least until some time has elapsed.
+			has_variable = delay_calling_recent_ally
+			var:delay_calling_recent_ally = scope:recipient
+			scope:target = {
+				war_days >= 30
+			}
+			factor = 0
+
+		}
+
+		modifier = { # If the recipient is allied to both the attacker and the defender, the attacker shouldn't call
+			scope:target.casus_belli.primary_attacker = scope:actor
+			scope:target.casus_belli.primary_defender = {
+				is_allied_to = scope:recipient
+			}
+			factor = 0
+		}
+	}	
+}

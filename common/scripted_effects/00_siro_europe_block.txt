@@ -1,0 +1,240 @@
+﻿## siro_e_block_what_eu = what county should be blocked?
+## siro_e_block_effect_eu = block effect for county
+## siro_e_yearly_blocked_list_eu = yearly(quarterly) effect for blocked county
+## 	siro_e_add_interval_eu = block penalty is expanded
+## siro_e_remove_block_eu = used in the version up process
+## siro_e_map_block_eu = for custom map mode
+
+@PENALTY_01_MONTHS = 15
+@PENALTY_02_MONTHS = 21
+@PENALTY_03_MONTHS = 27
+@PENALTY_04_MONTHS = 33
+@PENALTY_05_MONTHS = 39
+@PENALTY_06_MONTHS = 45
+@PENALTY_01 = siro_m_eu_blocked_01
+@PENALTY_02 = siro_m_eu_blocked_02
+@PENALTY_03 = siro_m_eu_blocked_03
+@PENALTY_04 = siro_m_eu_blocked_04
+@PENALTY_05 = siro_m_eu_blocked_05
+@PENALTY_INTERVAL = siro_v_eu_penalty_interval
+@TR_VAL_TRUE = siro_v_tr_val_true_for_block_eu	## total trade value of county building	## it contain potala effect
+@TR_VAL_C = siro_g_eu_val_c  ## factor to changing trade route modifier or not
+@TR_GL = siro_gl_eu  ## global list for trade route script
+@BK_GL = siro_gl_bk_eu  ## global list for blocked trade route script
+## l_bk = total trade value penalty from county
+
+siro_e_yearly_blocked_list_eu = {	
+	every_in_global_list = {
+		variable = @BK_GL
+		if = {
+			limit = { exists = var:siro_l_bk }
+			if = {
+				limit = {					
+					NOR = {
+						has_county_modifier = @PENALTY_01
+						has_county_modifier = @PENALTY_02
+						has_county_modifier = @PENALTY_03
+						has_county_modifier = @PENALTY_04
+						has_county_modifier = @PENALTY_05
+					}
+				}
+				change_global_variable = {
+					name = @TR_VAL_C
+					add = var:siro_l_bk
+				}
+				remove_list_global_variable = {
+					name = @BK_GL
+					target = this
+				}
+				remove_variable = siro_l_bk
+				siro_e_map_block_eu = yes
+			}
+			else_if = {
+				limit = { holder = { NOT = { completely_controls = prev } } }
+				siro_e_block_effect_eu = yes
+			}
+		}
+	}
+}
+
+siro_e_add_interval_eu = {			
+	change_variable = {
+		name = siro_l_bk
+		add = @PENALTY_INTERVAL
+	}
+	change_global_variable = {
+		name = @TR_VAL_C
+		subtract = @PENALTY_INTERVAL
+	}
+}
+
+siro_e_remove_block_eu = {		
+	remove_variable = siro_l_bk
+	remove_county_modifier = @PENALTY_01
+	remove_county_modifier = @PENALTY_02
+	remove_county_modifier = @PENALTY_03
+	remove_county_modifier = @PENALTY_04
+	remove_county_modifier = @PENALTY_05
+}
+
+siro_e_block_effect_eu = {
+	if = {
+		limit = { exists = var:siro_l_bk }
+		if = {
+			limit = {
+				has_county_modifier = @PENALTY_01
+			}
+			remove_county_modifier = @PENALTY_01
+			add_county_modifier = { 
+				modifier = @PENALTY_02
+				months = @PENALTY_02_MONTHS
+			}
+			siro_e_add_interval_eu = yes
+		}
+		else_if = {
+			limit = {
+				has_county_modifier = @PENALTY_02
+			}
+			remove_county_modifier = @PENALTY_02
+			add_county_modifier = { 
+				modifier = @PENALTY_03
+				months = @PENALTY_03_MONTHS
+			}	
+			siro_e_add_interval_eu = yes
+		}
+		else_if = {
+			limit = {
+				has_county_modifier = @PENALTY_03
+			}
+			remove_county_modifier = @PENALTY_03
+			add_county_modifier = { 
+				modifier = @PENALTY_04
+				months = @PENALTY_04_MONTHS
+			}			
+			siro_e_add_interval_eu = yes
+		}
+		else_if = {
+			limit = {
+				has_county_modifier = @PENALTY_04
+			}
+			remove_county_modifier = @PENALTY_04
+			add_county_modifier = { 
+				modifier = @PENALTY_05
+				months = @PENALTY_05_MONTHS
+			}			
+			siro_e_add_interval_eu = yes
+		}
+		else_if = {
+			limit = {
+				has_county_modifier = @PENALTY_05
+			}
+			add_county_modifier = { 
+				modifier = @PENALTY_05
+				months = @PENALTY_06_MONTHS
+			}
+		}
+		else = {
+			add_county_modifier = { 
+				modifier = @PENALTY_01
+				months = @PENALTY_01_MONTHS
+			}		
+			change_global_variable = {
+				name = @TR_VAL_C
+				add = {
+					add = var:siro_l_bk
+					subtract = @PENALTY_INTERVAL
+				}
+			}	
+			set_variable = {
+				name = siro_l_bk
+				value = {
+					add = @PENALTY_INTERVAL
+					add = @TR_VAL_TRUE
+				}
+			}
+		}
+	}
+	else = { ## has no l_bk
+		add_county_modifier = { 
+			modifier = @PENALTY_01
+			months = @PENALTY_01_MONTHS
+		}			
+		change_global_variable = {
+			name = @TR_VAL_C
+			subtract = {
+				add = @PENALTY_INTERVAL
+				add = @TR_VAL_TRUE
+			}
+		}
+		set_variable = {
+			name = siro_l_bk
+			value = {
+				add = @PENALTY_INTERVAL
+				add = @TR_VAL_TRUE
+			}
+		}
+	}
+	add_to_global_variable_list = {
+		name = @BK_GL
+		target = this
+	}
+	siro_e_map_block_eu = yes
+}
+
+siro_e_block_what_eu = {
+	add_to_list = blocked_county		
+	save_temporary_scope_as = occupied_county
+##	if = {
+##		limit = { exists = var:siro_l_ir }
+##		every_in_global_list = {
+##			variable = @TR_GL
+##			limit = {
+##				squared_distance = {
+##					target = scope:occupied_county.title_province
+##					value < scope:occupied_county.var:siro_l_ir
+##				}
+##			}
+##			add_to_list = blocked_county		
+##		}
+##	}
+##	else = {
+		every_neighboring_county = {	
+			limit = { exists = var:siro_l_tr_eu }
+			add_to_list = blocked_county	
+			
+			every_neighboring_county = {	
+				limit = { exists = var:siro_l_tr_eu }		
+				add_to_list = blocked_county	
+			}
+		}
+##	}
+	every_in_list = {
+		list = blocked_county
+		siro_e_block_effect_eu = yes
+		remove_from_list = blocked_county
+	}
+}
+
+siro_e_map_block_eu = {
+	if = {		
+		limit = { global_var:custom_map_mode = flag:siro_trade_map }
+		if = {
+			limit = {
+				exists = var:siro_l_tp
+			}
+			siro_e_map_tp = yes
+		}
+		else_if = {
+			limit = {
+				exists = var:siro_l_bk
+			}
+			siro_e_map_bk = yes
+		}
+		else_if = {
+			limit = {
+				exists = var:siro_l_tr_eu
+			}
+			every_county_province = { barony = { set_color_from_title = title:d_siro_map_eu_tr_01 } }
+		}
+	}
+}
