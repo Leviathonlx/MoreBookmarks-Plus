@@ -1,5 +1,4 @@
-﻿#RESREPUBLICA
-family_respect = {
+﻿family_respect = {
 	value = 0
 	add = house_head.age
 	multiply = house_head.age
@@ -79,13 +78,9 @@ forty_percent_respect = {
 	multiply = 0.4
 }
 
-family_votes = {
+clean_family_votes = {
 	value = family_respect
 	divide = var:titular_republic.title_all_family_respect_divided_by_total_votes
-}
-
-clean_family_votes = {
-	value = family_votes
 	round = yes
 }
 
@@ -98,7 +93,7 @@ total_current_votes = {
 	value = var:senators_count
 	every_in_list = {
 		variable = republic_families_list
-		add = var:house_senators
+		subtract = var:house_senators
 	}
 }
 
@@ -106,85 +101,81 @@ all_votes_yea = {
 	value = 0
 	every_in_list = {
 		variable = republic_families_list
-		limit = { has_variable = house_votes_yea }
-		add = var:house_senators
+		limit = { exists = var:house_votes_yea }
+		if = { limit = { house_head = { republic_has_senate_form = yes } exists = var:house_senators } add = var:house_senators }
+		if = { limit = { house_head = { republic_has_council_form = yes } exists = var:republic_councillor } add = 1 }
+		if = { limit = { house_head = { republic_has_bicameral_form = yes } } add = 2 }
+		if = { limit = { house_head = { republic_has_elected_ruler_form = yes } } add = 1 }
 	}
 }
 
 all_votes_yea_plus_yours = {
-	value = 0
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_yea }
-		add = var:house_senators
-	}
-	every_in_list = {
-		variable = republic_families_list
-		limit = { NOT = { has_variable = house_votes_yea has_variable = house_votes_nay } }
-		add = var:house_senators
-	}
+	value = house.var:titular_republic.all_votes_yea
+	add = total_family_power
 }
 
 all_votes_nay = {
 	value = 0
 	every_in_list = {
 		variable = republic_families_list
-		limit = { has_variable = house_votes_nay }
-		add = var:house_senators
+		limit = { exists = var:house_votes_nay }
+		if = { limit = { house_head = { republic_has_senate_form = yes } exists = var:house_senators } add = var:house_senators }
+		if = { limit = { house_head = { republic_has_council_form = yes } exists = var:republic_councillor } add = 1 }
+		if = { limit = { house_head = { republic_has_bicameral_form = yes } } add = 2 }
+		if = { limit = { house_head = { republic_has_elected_ruler_form = yes } } add = 1 }
 	}
 }
 
 all_votes_nay_plus_yours = {
+	value = house.var:titular_republic.all_votes_nay
+	add = total_family_power
+}
+
+all_votes_yea_dragging_over = {
 	value = 0
 	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_nay }
-		add = var:house_senators
+		variable = blackmailing_house_heads
+		limit = { NOT = { exists = var:house_votes_yea } }
+		if = { limit = { house_head = { republic_has_senate_form = yes } exists = var:house_senators } add = var:house_senators }
+		if = { limit = { house_head = { republic_has_council_form = yes } exists = var:republic_councillor } add = 1 }
+		if = { limit = { house_head = { republic_has_bicameral_form = yes } } add = 2 }
+		if = { limit = { house_head = { republic_has_elected_ruler_form = yes } } add = 1 }
 	}
+}
+
+all_votes_nay_dragging_over = {
+	value = 0
 	every_in_list = {
-		variable = republic_families_list
-		limit = { NOT = { has_variable = house_votes_yea has_variable = house_votes_nay } }
-		add = var:house_senators
+		variable = blackmailing_house_heads
+		limit = { NOT = { exists = var:house_votes_nay } }
+		if = { limit = { house_head = { republic_has_senate_form = yes } exists = var:house_senators } add = var:house_senators }
+		if = { limit = { house_head = { republic_has_council_form = yes } exists = var:republic_councillor } add = 1 }
+		if = { limit = { house_head = { republic_has_bicameral_form = yes } } add = 2 }
+		if = { limit = { house_head = { republic_has_elected_ruler_form = yes } } add = 1 }
 	}
+}
+
+total_votes_in_republic = {
+	value = 0
+	var:republic_owner = {
+		if = { limit = { republic_has_council_form = yes } add = 5 }
+		if = { limit = { republic_has_bicameral_form = yes } var:republic_head = { every_in_list = { variable = republic_families_list add = 2 } } }
+		if = { limit = { republic_has_elected_ruler_form = yes } var:republic_head = { every_in_list = { variable = republic_families_list add = 1 } } }
+		if = { limit = { republic_has_senate_form = yes } add = var:republic_head.var:senators_count }
+	}
+}
+
+total_family_power = {
+	value = 0
+	if = { limit = { republic_has_senate_form = yes house = { exists = var:house_senators } } add = house.var:house_senators }
+	if = { limit = { republic_has_council_form = yes house = { exists = var:republic_councillor } } add = 1 }
+	if = { limit = { republic_has_bicameral_form = yes } add = 2 }
+	if = { limit = { republic_has_elected_ruler_form = yes } add = 1 }
 }
 
 double_military_strength = {
 	add = max_military_strength
 	multiply = 2
-}
-
-councillors_voting_aye = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_yea }
-		add = 1
-	}
-}
-
-councillors_voting_aye_plus_yours = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_yea }
-		add = 1
-	}
-	add = 1
-}
-
-councillors_voting_nay = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_nay }
-		add = 1
-	}
-}
-
-councillors_voting_nay_plus_yours = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_nay }
-		add = 1
-	}
-	add = 1
 }
 
 nobility_appeasement_yearly_change = {
@@ -229,186 +220,11 @@ amount_over_or_under_popular_appeasement = {
 	if = { limit = { var:popular_appeasement < 100 } add = var:popular_appeasement multiply = -1 }
 }
 
-houses_voting_aye = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_yea }
-		add = 1
-	}
-}
-
-houses_voting_aye_plus_yours = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_yea }
-		add = 1
-	}
-	add = 1
-}
-
-houses_voting_nay = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_nay }
-		add = 1
-	}
-}
-
-houses_voting_nay_plus_yours = {
-	every_in_list = {
-		variable = republic_families_list
-		limit = { has_variable = house_votes_nay }
-		add = 1
-	}
-	add = 1
-}
-
-all_votes_yea_dragging_over = {
-	value = 0
-	every_in_list = {
-		variable = blackmailing_house_heads
-		limit = { NOT = { has_variable = house_votes_yea } }
-		add = var:house_senators
-	}
-}
-
-all_votes_nay_dragging_over = {
-	value = 0
-	every_in_list = {
-		variable = blackmailing_house_heads
-		limit = { NOT = { has_variable = house_votes_nay } }
-		add = var:house_senators
-	}
-}
-
-councillors_yea_dragging_over = {
-	value = 0
-	every_in_list = {
-		variable = blackmailing_house_heads
-		limit = { NOT = { has_variable = house_votes_yea } exists = var:republic_councillor }
-		add = 1
-	}
-}
-
-councillors_nay_dragging_over = {
-	value = 0
-	every_in_list = {
-		variable = blackmailing_house_heads
-		limit = { NOT = { has_variable = house_votes_nay } exists = var:republic_councillor }
-		add = 1
-	}
-}
-
-houses_yea_dragging_over = {
-	value = 0
-	every_in_list = {
-		variable = blackmailing_house_heads
-		limit = { NOT = { has_variable = house_votes_yea } }
-		add = 1
-	}
-}
-
-houses_nay_dragging_over = {
-	value = 0
-	every_in_list = {
-		variable = blackmailing_house_heads
-		limit = { NOT = { has_variable = house_votes_nay } }
-		add = 1
-	}
-}
-
 republic_families_size_need = {
 	value = 0
 	if = { limit = { has_variable_list = republic_families_list list_size = { name = republic_families_list value < 5 } } every_in_list = { variable = republic_families_list add = 1 } }
 	subtract = 5
 	multiply = -1
-}
-
-light_ships_unclaimed = {
-	value = 0
-	if = { limit = { exists = var:light_ships } add = var:light_ships }
-	if = { limit = { exists = var:fleet_1_light_ships } subtract = var:fleet_1_light_ships }
-	if = { limit = { exists = var:fleet_2_light_ships } subtract = var:fleet_2_light_ships }
-	if = { limit = { exists = var:fleet_3_light_ships } subtract = var:fleet_3_light_ships }
-	if = { limit = { exists = var:fleet_4_light_ships } subtract = var:fleet_4_light_ships }
-	if = { limit = { exists = var:fleet_5_light_ships } subtract = var:fleet_5_light_ships }
-	if = { limit = { exists = var:fleet_6_light_ships } subtract = var:fleet_6_light_ships }
-	if = { limit = { exists = var:fleet_7_light_ships } subtract = var:fleet_7_light_ships }
-	if = { limit = { exists = var:fleet_8_light_ships } subtract = var:fleet_8_light_ships }
-	if = { limit = { exists = var:fleet_9_light_ships } subtract = var:fleet_9_light_ships }
-	if = { limit = { exists = var:fleet_10_light_ships } subtract = var:fleet_10_light_ships }
-}
-
-medium_ships_unclaimed = {
-	value = 0
-	if = { limit = { exists = var:medium_ships } add = var:medium_ships }
-	if = { limit = { exists = var:fleet_1_medium_ships } subtract = var:fleet_1_medium_ships }
-	if = { limit = { exists = var:fleet_2_medium_ships } subtract = var:fleet_2_medium_ships }
-	if = { limit = { exists = var:fleet_3_medium_ships } subtract = var:fleet_3_medium_ships }
-	if = { limit = { exists = var:fleet_4_medium_ships } subtract = var:fleet_4_medium_ships }
-	if = { limit = { exists = var:fleet_5_medium_ships } subtract = var:fleet_5_medium_ships }
-	if = { limit = { exists = var:fleet_6_medium_ships } subtract = var:fleet_6_medium_ships }
-	if = { limit = { exists = var:fleet_7_medium_ships } subtract = var:fleet_7_medium_ships }
-	if = { limit = { exists = var:fleet_8_medium_ships } subtract = var:fleet_8_medium_ships }
-	if = { limit = { exists = var:fleet_9_medium_ships } subtract = var:fleet_9_medium_ships }
-	if = { limit = { exists = var:fleet_10_medium_ships } subtract = var:fleet_10_medium_ships }
-}
-
-heavy_ships_unclaimed = {
-	value = 0
-	if = { limit = { exists = var:heavy_ships } add = var:heavy_ships }
-	if = { limit = { exists = var:fleet_1_heavy_ships } subtract = var:fleet_1_heavy_ships }
-	if = { limit = { exists = var:fleet_2_heavy_ships } subtract = var:fleet_2_heavy_ships }
-	if = { limit = { exists = var:fleet_3_heavy_ships } subtract = var:fleet_3_heavy_ships }
-	if = { limit = { exists = var:fleet_4_heavy_ships } subtract = var:fleet_4_heavy_ships }
-	if = { limit = { exists = var:fleet_5_heavy_ships } subtract = var:fleet_5_heavy_ships }
-	if = { limit = { exists = var:fleet_6_heavy_ships } subtract = var:fleet_6_heavy_ships }
-	if = { limit = { exists = var:fleet_7_heavy_ships } subtract = var:fleet_7_heavy_ships }
-	if = { limit = { exists = var:fleet_8_heavy_ships } subtract = var:fleet_8_heavy_ships }
-	if = { limit = { exists = var:fleet_9_heavy_ships } subtract = var:fleet_9_heavy_ships }
-	if = { limit = { exists = var:fleet_10_heavy_ships } subtract = var:fleet_10_heavy_ships }
-}
-
-picked_for_election_candidate = {
-	value = 0
-	add = martial
-	add = stewardship
-	add = diplomacy
-	add = learning
-	add = intrigue
-	add = {
-		value = num_virtuous_traits
-		multiply = 2
-	}
-	subtract = {
-		value = num_sinful_traits
-		multiply = 2
-	}
-	if = { limit = { has_trait = intellect_good_1 } add = 10 }
-	if = { limit = { has_trait = intellect_good_2 } add = 20 }
-	if = { limit = { has_trait = intellect_good_3 } add = 30 }
-	if = { limit = { has_trait = intellect_bad_1 } subtract = 10 }
-	if = { limit = { has_trait = intellect_bad_2 } subtract = 20 }
-	if = { limit = { has_trait = intellect_bad_3 } subtract = 30 }
-	if = {
-		limit = { age > 40 }
-		subtract = {
-			value = age
-			divide = 2
-		}
-	}
-	if = {
-		limit = { age <= 40 age >= 16 }
-		add = {
-			value = age
-			divide = 2
-		}
-	}
-	if = { limit = { age < 16 } subtract = 100 }
-	if = { limit = { liege_or_court_owner = { has_realm_law = male_only_law } is_female = yes } subtract = 200 }
-	if = { limit = { liege_or_court_owner = { has_realm_law = male_preference_law } is_female = yes } subtract = 100 }
-	if = { limit = { liege_or_court_owner = { has_realm_law = female_only_law } is_female = no } subtract = 200 }
-	if = { limit = { liege_or_court_owner = { has_realm_law = female_preference_law } is_female = no } subtract = 100 }
 }
 
 all_votes_electee_one = {
@@ -464,11 +280,19 @@ votes_of_county = {
 
 pay_for_favor = {
 	value = 200
+	add = gold_value_bribery_effect
 	if = { limit = { scope:target_recipient = { has_trait = content } } subtract = 75 }
 	if = { limit = { scope:target_recipient = { has_trait = ambitious } } add = 75 }
 	if = { limit = { scope:target_recipient = { has_trait = greedy } } multiply = 1.5 }
 	if = { limit = { scope:target_recipient = { has_trait = generous } } divide = 1.5 }
 	multiply = 1.6
+}
+
+gold_value_bribery_effect = {
+	value = scope:target_recipient.gold
+	subtract = 50
+	multiply = .4
+	min = 0
 }
 
 negative_pay_for_favor = {
@@ -612,7 +436,7 @@ worth_in_bicameral_republic_2 = {
 reforms_votes_value = {
 	value = 0
 	if = {
-		limit = { exists = var:senate_government_republic }
+		limit = { var:republic_government_type = 0 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } }
@@ -625,7 +449,7 @@ reforms_votes_value = {
 		}
 	}
 	if = {
-		limit = { exists = var:council_government_republic }
+		limit = { var:republic_government_type = 1 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } exists = var:republic_councillor }
@@ -638,7 +462,7 @@ reforms_votes_value = {
 		}
 	}
 	if = {
-		limit = { exists = var:elected_ruler_republic }
+		limit = { var:republic_government_type = 2 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } }
@@ -651,7 +475,7 @@ reforms_votes_value = {
 		}
 	}
 	if = {
-		limit = { exists = var:bicameral_government_republic }
+		limit = { var:republic_government_type = 3 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } }
@@ -668,7 +492,7 @@ reforms_votes_value = {
 reforms_votes_value_in_favor = {
 	value = 0
 	if = {
-		limit = { exists = var:senate_government_republic }
+		limit = { var:republic_government_type = 0 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } }
@@ -676,7 +500,7 @@ reforms_votes_value_in_favor = {
 		}
 	}
 	if = {
-		limit = { exists = var:council_government_republic }
+		limit = { var:republic_government_type = 1 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } exists = var:republic_councillor }
@@ -684,7 +508,7 @@ reforms_votes_value_in_favor = {
 		}
 	}
 	if = {
-		limit = { exists = var:elected_ruler_republic }
+		limit = { var:republic_government_type = 2 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } }
@@ -692,7 +516,7 @@ reforms_votes_value_in_favor = {
 		}
 	}
 	if = {
-		limit = { exists = var:bicameral_government_republic }
+		limit = { var:republic_government_type = 3 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_for_reform } }
@@ -704,7 +528,7 @@ reforms_votes_value_in_favor = {
 reforms_votes_value_against = {
 	value = 0
 	if = {
-		limit = { exists = var:senate_government_republic }
+		limit = { var:republic_government_type = 0 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_against_reform } }
@@ -712,7 +536,7 @@ reforms_votes_value_against = {
 		}
 	}
 	if = {
-		limit = { exists = var:council_government_republic }
+		limit = { var:republic_government_type = 1 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_against_reform } exists = var:republic_councillor }
@@ -720,7 +544,7 @@ reforms_votes_value_against = {
 		}
 	}
 	if = {
-		limit = { exists = var:elected_ruler_republic }
+		limit = { var:republic_government_type = 2 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_against_reform } }
@@ -728,7 +552,7 @@ reforms_votes_value_against = {
 		}
 	}
 	if = {
-		limit = { exists = var:bicameral_government_republic }
+		limit = { var:republic_government_type = 3 }
 		every_in_list = {
 			variable = republic_families_list
 			limit = { house_head = { exists = var:votes_against_reform } }
@@ -741,7 +565,7 @@ reforms_votes_value_in_favor_you_added = {
 	value = 0
 	house.var:titular_republic = {
 		if = {
-			limit = { exists = var:senate_government_republic }
+			limit = { var:republic_government_type = 0 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_for_reform } }
@@ -749,7 +573,7 @@ reforms_votes_value_in_favor_you_added = {
 			}
 		}
 		if = {
-			limit = { exists = var:council_government_republic }
+			limit = { var:republic_government_type = 1 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_for_reform } exists = var:republic_councillor }
@@ -757,7 +581,7 @@ reforms_votes_value_in_favor_you_added = {
 			}
 		}
 		if = {
-			limit = { exists = var:elected_ruler_republic }
+			limit = { var:republic_government_type = 2 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_for_reform } }
@@ -765,7 +589,7 @@ reforms_votes_value_in_favor_you_added = {
 			}
 		}
 		if = {
-			limit = { exists = var:bicameral_government_republic }
+			limit = { var:republic_government_type = 3 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_for_reform } }
@@ -773,17 +597,17 @@ reforms_votes_value_in_favor_you_added = {
 			}
 		}
 	}
-	if = { limit = { house.var:titular_republic = { exists = var:senate_government_republic } } house = { add = var:house_senators } }
-	if = { limit = { house.var:titular_republic = { exists = var:council_government_republic } house = { exists = var:republic_councillor } } add = 1 }
-	if = { limit = { house.var:titular_republic = { exists = var:elected_ruler_republic } } add = 1 }
-	if = { limit = { house.var:titular_republic = { exists = var:bicameral_government_republic } } add = 2 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 0 } } house = { add = var:house_senators } }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 1 } house = { exists = var:republic_councillor } } add = 1 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 2 } } add = 1 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 3 } } add = 2 }
 }
 
 reforms_votes_value_against_you_added = {
 	value = 0
 	house.var:titular_republic = {
 		if = {
-			limit = { exists = var:senate_government_republic }
+			limit = { var:republic_government_type = 0 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_against_reform } }
@@ -791,7 +615,7 @@ reforms_votes_value_against_you_added = {
 			}
 		}
 		if = {
-			limit = { exists = var:council_government_republic }
+			limit = { var:republic_government_type = 1 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_against_reform } exists = var:republic_councillor }
@@ -799,7 +623,7 @@ reforms_votes_value_against_you_added = {
 			}
 		}
 		if = {
-			limit = { exists = var:elected_ruler_republic }
+			limit = { var:republic_government_type = 2 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_against_reform } }
@@ -807,7 +631,7 @@ reforms_votes_value_against_you_added = {
 			}
 		}
 		if = {
-			limit = { exists = var:bicameral_government_republic }
+			limit = { var:republic_government_type = 3 }
 			every_in_list = {
 				variable = republic_families_list
 				limit = { house_head = { exists = var:votes_against_reform } }
@@ -815,18 +639,18 @@ reforms_votes_value_against_you_added = {
 			}
 		}
 	}
-	if = { limit = { house.var:titular_republic = { exists = var:senate_government_republic } } house = { add = var:house_senators } }
-	if = { limit = { house.var:titular_republic = { exists = var:council_government_republic } house = { exists = var:republic_councillor } } add = 1 }
-	if = { limit = { house.var:titular_republic = { exists = var:elected_ruler_republic } } add = 1 }
-	if = { limit = { house.var:titular_republic = { exists = var:bicameral_government_republic } } add = 2 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 0 } } house = { add = var:house_senators } }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 1 } house = { exists = var:republic_councillor } } add = 1 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 2 } } add = 1 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 3 } } add = 2 }
 }
 
 your_vote_value = {
 	value = 0
-	if = { limit = { house.var:titular_republic = { exists = var:senate_government_republic } } house = { add = var:house_senators } }
-	if = { limit = { house.var:titular_republic = { exists = var:council_government_republic } house = { exists = var:republic_councillor } } add = 1 }
-	if = { limit = { house.var:titular_republic = { exists = var:elected_ruler_republic } } add = 1 }
-	if = { limit = { house.var:titular_republic = { exists = var:bicameral_government_republic } } add = 2 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 0 } } house = { add = var:house_senators } }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 1 } house = { exists = var:republic_councillor } } add = 1 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 2 } } add = 1 }
+	if = { limit = { house.var:titular_republic = { var:republic_government_type = 3 } } add = 2 }
 }
 
 reforms_votes_value_in_favor_you_added_blackmail = {
@@ -835,10 +659,10 @@ reforms_votes_value_in_favor_you_added_blackmail = {
 		variable = blackmailing_house_heads
 		limit = { house_head = { NAND = { exists = var:votes_for_reform has_variable = votes_for_reform } } }
 		house_head = {
-			if = { limit = { house.var:titular_republic = { exists = var:senate_government_republic } } house = { add = var:house_senators } }
-			if = { limit = { house.var:titular_republic = { exists = var:council_government_republic } house = { exists = var:republic_councillor } } add = 1 }
-			if = { limit = { house.var:titular_republic = { exists = var:elected_ruler_republic } } add = 1 }
-			if = { limit = { house.var:titular_republic = { exists = var:bicameral_government_republic } } add = 2 }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 0 } } house = { add = var:house_senators } }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 1 } house = { exists = var:republic_councillor } } add = 1 }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 2 } } add = 1 }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 3 } } add = 2 }
 		}
 	}
 }
@@ -849,10 +673,10 @@ reforms_votes_value_against_you_added_blackmail = {
 		variable = blackmailing_house_heads
 		limit = { house_head = { NAND = { exists = var:votes_against_reform has_variable = votes_against_reform } } }
 		house_head = {
-			if = { limit = { house.var:titular_republic = { exists = var:senate_government_republic } } house = { add = var:house_senators } }
-			if = { limit = { house.var:titular_republic = { exists = var:council_government_republic } house = { exists = var:republic_councillor } } add = 1 }
-			if = { limit = { house.var:titular_republic = { exists = var:elected_ruler_republic } } add = 1 }
-			if = { limit = { house.var:titular_republic = { exists = var:bicameral_government_republic } } add = 2 }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 0 } } house = { add = var:house_senators } }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 1 } house = { exists = var:republic_councillor } } add = 1 }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 2 } } add = 1 }
+			if = { limit = { house.var:titular_republic = { var:republic_government_type = 3 } } add = 2 }
 		}
 	}
 }

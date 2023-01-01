@@ -1,0 +1,113 @@
+﻿##### TODO: Make interface with tributaries.6 event chain
+summon_tributaries_to_war = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+
+	ai_check_interval = 1
+
+	desc = summon_tributaries_to_war_desc
+
+	is_shown = {
+		is_suzerain = yes
+		is_at_war = yes
+		
+		#Need to have a tributary that's not part of your wars that *could* be part of your wars
+		any_in_list = {
+			variable = all_tributaries
+			this.var:can_call_to_war_suzerain = flag:yes
+			save_temporary_scope_as = temp_trib_war
+			
+			root = {
+				any_character_war = {
+					save_temporary_scope_as = temp_war
+					NOT = { scope:temp_trib_war = { is_participant_in_war = scope:temp_war } }
+				}
+			}
+		}
+	}
+	
+	is_valid = {}
+
+	is_valid_showing_failures_only = {}
+
+	cost = {}
+
+	effect = {
+		every_in_list = {
+			variable = all_tributaries
+			limit = {
+				exists = var:can_call_to_war_suzerain
+				var:can_call_to_war_suzerain = flag:yes
+			}
+			save_temporary_scope_as = temp_trib_war
+			
+			root = {
+				every_character_war = {
+					save_temporary_scope_as = temp_war
+					
+					if = {
+						limit = { NOT = { scope:temp_trib_war = { is_participant_in_war = scope:temp_war } } }
+						if = {
+							limit = { root = { is_attacker_in_war = scope:temp_war } }
+							scope:temp_war = { add_attacker = scope:temp_trib_war }
+						}
+						else = { scope:temp_war = { add_defender = scope:temp_trib_war } }
+					}
+				}
+			}
+		}
+	}
+	
+	ai_potential = { always = yes }
+	
+	ai_will_do = { base = 1000 } #AI will do so immediately!
+}
+
+##### TODO: Make interface with tributaries.13 event chain
+summon_suzerain_to_war = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+
+	ai_check_interval = 1
+
+	desc = summon_suzerain_to_war_desc
+
+	is_shown = {
+		is_tributary = yes
+		is_at_war = yes
+		
+		#Suzerain must not be part of your current war
+		exists = root.var:my_suzerain
+		exists = var:can_call_to_war_tributary
+		var:can_call_to_war_tributary = yes
+		any_character_war = {
+			save_temporary_scope_as = temp_war
+			NOT = { root.var:my_suzerain = { is_participant_in_war = scope:temp_war } }
+		}
+	}
+	
+	is_valid = {}
+
+	is_valid_showing_failures_only = {}
+
+	cost = {}
+
+	effect = {
+		every_character_war = {
+			save_temporary_scope_as = temp_war
+			
+			if = {
+				limit = { NOT = { root.var:my_suzerain = { is_participant_in_war = scope:temp_war } } }
+				if = {
+					limit = { root = { is_attacker_in_war = scope:temp_war } }
+					scope:temp_war = { add_attacker = root.var:my_suzerain }
+				}
+				else = { scope:temp_war = { add_defender = root.var:my_suzerain } }
+			}
+		}
+	}
+	
+	ai_potential = { always = yes }
+	
+	ai_will_do = { base = 1000 } #AI will do so immediately!
+}

@@ -1,82 +1,4 @@
-﻿#ResRepublica#
-appoint_republic_electee_interaction = {
-	category = interaction_category_friendly
-	common_interaction = yes
-	interface_priority = 60
-	desc = appoint_republic_electee_interaction_desc
-	
-	auto_accept = yes
-	ai_will_do = {
-		base = 0
-		modifier = {
-			add = 20
-			scope:recipient = {
-				AND = {
-					age < 60
-					has_trait = intellect_good_1
-				}
-			}
-		}
-		modifier = {
-			add = 30
-			scope:recipient = {
-				AND = {
-					age < 60
-					has_trait = intellect_good_2
-				}
-			}
-		}
-		modifier = {
-			add = 50
-			scope:recipient = {
-				AND = {
-					age < 60
-					has_trait = intellect_good_3
-				}
-			}
-		}
-	}
-	ai_frequency = 60
-	
-	is_shown = {
-		scope:actor = {
-			is_ai = no
-			is_house_head = yes
-			house = {
-				has_variable_list = election_candidates
-			}
-			house = scope:recipient.house
-		}
-	}
-	
-	can_send = {
-		scope:actor = {
-			is_ai = no
-		}
-	}
-	
-	
-	
-	is_valid_showing_failures_only = {
-		scope:actor = {
-			NOT = { has_trait = incapable }
-		}
-	}
-	
-	on_accept = {
-		scope:actor = {
-			house = {
-				clear_variable_list = election_candidates
-				add_to_variable_list = {
-					name = election_candidates
-					target = scope:recipient
-				}
-			}
-		}
-	}
-}
-
-request_war_interaction = {
+﻿request_war_interaction = {
 	category = interaction_category_diplomacy
 	common_interaction = yes
 	interface_priority = 70
@@ -89,61 +11,22 @@ request_war_interaction = {
 		}
 		scope:recipient = {
 			is_landed = yes
+			is_independent_ruler = yes
 		}
 		scope:actor = {
 			NOT = {
 				is_at_war_with = scope:recipient
-			}
-			is_independent_ruler = yes
-			holds_valid_merchant_republic = yes
-			OR = {
-				republic_has_senate_form = yes
-				republic_has_council_form = yes
-				republic_has_bicameral_form = yes
-			}
-			primary_title = {
-				OR = {
-					exists = var:senate_vote_war_declaration
-					exists = var:council_approval_war_declaration
-					exists = var:both_houses_vote_war_declaration
-					exists = var:upper_house_vote_war_declaration
-					exists = var:lower_house_vote_war_declaration
-				}
-				OR = {
-					has_variable = senate_vote_war_declaration
-					has_variable = council_approval_war_declaration
-					has_variable = both_houses_vote_war_declaration
-					has_variable = upper_house_vote_war_declaration
-					has_variable = lower_house_vote_war_declaration
-				}
-				NOT = {
-					any_in_list = {
-						variable = valid_war_targets_list
-						this = scope:recipient
-					}
-					any_in_list = {
-						variable = proposed_laws_list
-						this = flag:proposed_war
-					}
-					has_variable = current_dictatorship
-				}
+				house.var:titular_republic.var:war_declaration_law = 0
+				exists = house.var:titular_republic.var:current_dictatorship
+				house.var:titular_republic = { any_in_list = { variable = valid_war_targets_list this = scope:recipient } }
 			}
 		}
 		
 	}
 	
 	on_accept = {
-		scope:actor = {
-			primary_title = {
-				add_to_variable_list = {
-					name = proposed_laws_list
-					target = flag:proposed_war
-				}
-				set_variable = {
-					name = proposed_war_target
-					value = scope:recipient
-				}
-			}
+		scope:actor.house.var:titular_republic = {
+			vote_on_type = { TYPE = war }
 		}
 	}
 	
@@ -158,65 +41,29 @@ request_title_grants_interaction = {
 	desc = request_title_grants_interaction_desc
 
 	is_shown = {
+
+		
 		scope:recipient = {
+			has_government = republic_government
 			OR = {
 				target_is_liege_or_above = scope:actor
 				is_pool_guest_of = scope:actor
 			}
 		}
 		scope:actor = {
+			has_government = republic_government
 			NOT = {
 				is_at_war_with = scope:recipient
-			}
-			is_independent_ruler = yes
-			OR = {
-				republic_has_senate_form = yes
-				republic_has_bicameral_form = yes
-				republic_has_council_form = yes
-			}
-			primary_title = {
-				OR = {
-					exists = var:senate_vote_title_granting
-					exists = var:council_approval_title_granting
-					exists = var:both_houses_vote_title_powers
-					exists = var:upper_house_vote_title_powers
-					exists = var:lower_house_vote_title_powers
-				}
-				OR = {
-					has_variable = senate_vote_title_granting
-					has_variable = council_approval_title_granting
-					has_variable = both_houses_vote_title_powers
-					has_variable = upper_house_vote_title_powers
-					has_variable = lower_house_vote_title_powers
-				}
-				NOT = {
-					any_in_list = {
-						variable = valid_grant_targets_list
-						this = scope:recipient
-					}
-					any_in_list = {
-						variable = proposed_laws_list
-						this = flag:proposed_grants
-					}
-					has_variable = current_dictatorship
-				}
+				house.var:titular_republic.var:title_powers_law = 0
+				exists = house.var:titular_republic.var:current_dictatorship
+				house.var:titular_republic = { any_in_list = { variable = valid_grant_targets_list this = scope:recipient } }
 			}
 		}
-		
 	}
 	
 	on_accept = {
-		scope:actor = {
-			primary_title = {
-				add_to_variable_list = {
-					name = proposed_laws_list
-					target = flag:proposed_grants
-				}
-				set_variable = {
-					name = proposed_grant_target
-					value = scope:recipient
-				}
-			}
+		scope:actor.house.var:titular_republic = {
+			vote_on_type = { TYPE = grant }
 		}
 	}
 	
@@ -248,38 +95,12 @@ request_title_revocation_interaction = {
 			}
 		}
 		scope:actor = {
-			OR = {
-				republic_has_senate_form = yes
-				republic_has_council_form = yes
-				republic_has_bicameral_form = yes
-			}
-			is_independent_ruler = yes
-			primary_title = {
-				OR = {
-					exists = var:senate_vote_title_revocation
-					exists = var:council_approval_title_revocation
-					exists = var:both_houses_vote_title_powers
-					exists = var:upper_house_vote_title_powers
-					exists = var:lower_house_vote_title_powers
-				}
-				OR = {
-					has_variable = senate_vote_title_revocation
-					has_variable = council_approval_title_revocation
-					has_variable = both_houses_vote_title_powers
-					has_variable = upper_house_vote_title_powers
-					has_variable = lower_house_vote_title_powers
-				}
-				NOT = {
-					any_in_list = {
-						variable = valid_revocation_targets_list
-						this = scope:recipient
-					}
-					any_in_list = {
-						variable = proposed_laws_list
-						this = flag:proposed_revocation
-					}
-					has_variable = current_dictatorship
-				}
+			has_government = republic_government
+			NOT = {
+				is_at_war_with = scope:recipient
+				house.var:titular_republic.var:title_powers_law = 0
+				exists = house.var:titular_republic.var:current_dictatorship
+				house.var:titular_republic = { any_in_list = { variable = valid_revocation_targets_list this = scope:recipient } }
 			}
 		}
 		
@@ -336,17 +157,8 @@ request_title_revocation_interaction = {
 	}
 	
 	on_accept = {
-		scope:actor = {
-			primary_title = {
-				add_to_variable_list = {
-					name = proposed_laws_list
-					target = flag:proposed_revocation
-				}
-				set_variable = {
-					name = proposed_revoke_target
-					value = scope:recipient
-				}
-			}
+		scope:actor.house.var:titular_republic = {
+			vote_on_type = { TYPE = revocation }
 		}
 	}
 	
@@ -366,30 +178,12 @@ request_imprisonment_interaction = {
 			basic_allowed_to_imprison_character_trigger = {
 				CHARACTER = scope:recipient
 			}
-			scope:actor = {
-				has_imprisonment_reason = scope:recipient
-			}
-			is_independent_ruler = yes
-			OR = {
-				republic_has_senate_form = yes
-				republic_has_council_form = yes
-			}
-			primary_title = {
-				OR = {
-					exists = var:senate_vote_imprisonment_rights
-					exists = var:council_approval_imprisonment_rights
-				}
-				NOT = {
-					any_in_list = {
-						variable = valid_prison_targets_list
-						this = scope:recipient
-					}
-					any_in_list = {
-						variable = proposed_laws_list
-						this = flag:proposed_imprisonment
-					}
-					has_variable = current_dictatorship
-				}
+			has_imprisonment_reason = scope:recipient
+			NOT = {
+				is_at_war_with = scope:recipient
+				house.var:titular_republic.var:imprisonment_rights_law = 0
+				exists = house.var:titular_republic.var:current_dictatorship
+				house.var:titular_republic = { any_in_list = { variable = valid_prison_targets_list this = scope:recipient } }
 			}
 		}
 		# Scope:recipient can't be visiting elsewhere.
@@ -429,17 +223,8 @@ request_imprisonment_interaction = {
 	}
 	
 	on_accept = {
-		scope:actor = {
-			primary_title = {
-				add_to_variable_list = {
-					name = proposed_laws_list
-					target = flag:proposed_imprisonment
-				}
-				set_variable = {
-					name = proposed_prison_target
-					value = scope:recipient
-				}
-			}
+		scope:actor.house.var:titular_republic = {
+			vote_on_type = { TYPE = prison }
 		}
 	}
 	
@@ -460,23 +245,11 @@ request_council_appointment_interaction = {
 				republic_has_senate_form = yes
 				republic_has_council_form = yes
 			}
-			is_independent_ruler = yes
-			primary_title = {
-				OR = {
-					exists = var:senate_vote_council_appointment
-					exists = var:council_approval_council_appointment
-				}
-				NOT = {
-					any_in_list = {
-						variable = valid_council_targets_list
-						this = scope:recipient
-					}
-					any_in_list = {
-						variable = proposed_laws_list
-						this = flag:proposed_council
-					}
-					has_variable = current_dictatorship
-				}
+			NOT = {
+				is_at_war_with = scope:recipient
+				house.var:titular_republic.var:council_appointment_law = 0
+				exists = house.var:titular_republic.var:current_dictatorship
+				house.var:titular_republic = { any_in_list = { variable = valid_council_targets_list this = scope:recipient } }
 			}
 		}
 		scope:recipient = {
@@ -497,17 +270,8 @@ request_council_appointment_interaction = {
 	}
 	
 	on_accept = {
-		scope:actor = {
-			primary_title = {
-				add_to_variable_list = {
-					name = proposed_laws_list
-					target = flag:proposed_council
-				}
-				set_variable = {
-					name = proposed_councilor
-					value = scope:recipient
-				}
-			}
+		scope:actor.house.var:titular_republic = {
+			vote_on_type = { TYPE = council }
 		}
 	}
 	
@@ -537,6 +301,7 @@ hook_house_to_vote_with_you = {
 				exists = var:titular_republic
 				var:titular_republic = {
 					save_temporary_scope_as = test_republic_1
+					NOT = { any_in_list = { variable = valid_grant_targets_list this = scope:recipient } }
 				}
 			}
 			is_house_head = yes
