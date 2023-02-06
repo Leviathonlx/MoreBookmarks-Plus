@@ -4,8 +4,7 @@
 @holding_illustration_mediterranean = "gfx/interface/illustrations/holding_types/castle_mediterranean.dds"
 @holding_illustration_norse = "gfx/interface/illustrations/holding_types/fp1_castle_norse.dds"
 @holding_illustration_iberian= "gfx/interface/illustrations/holding_types/fp2_castle_iberian.dds"
-@holding_illustration_russian = "gfx/interface/illustrations/holding_types/castle_russian.dds"
-@holding_illustration_celtic = "gfx/interface/illustrations/holding_types/castle_celtic.dds"
+
 castle_01 = { # Town
 	construction_time = slow_construction_time
 	
@@ -47,16 +46,6 @@ castle_01 = { # Town
 		}
 		illustration = @holding_illustration_western
 		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 0 } }
-		graphical_regions = { graphical_india }
-	}
-	
-	### SEA ###
-	asset = {
-		type = pdxmesh
-		name = "building_sea_castle_01_mesh"
-		illustration = @holding_illustration_india
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/indian_castle" soundparameter = { "Tier" = 0 } }
-		graphical_cultures = { sea_building_gfx }
 		graphical_regions = { graphical_india }
 	}
 	
@@ -159,15 +148,6 @@ castle_01 = { # Town
 		graphical_regions = { graphical_india }
 	}
 	
-	### CELTIC ###
-	asset = {
-		type = pdxmesh
-		name = "building_celtic_hillfort_01_mesh"
-		illustration = @holding_illustration_celtic
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 0 } }
-		graphical_cultures = { celtic_building_gfx }
-	}
-	
 	### FP1 Norse ###
 	asset = {
 		type = pdxmesh
@@ -222,22 +202,16 @@ castle_01 = { # Town
 		graphical_cultures = { iberian_building_gfx }
 		graphical_regions = { graphical_mediterranean }
 	}
-	
-	
-	### Slavic ###
-	asset = {
-		type = pdxmesh
-		names = {
-			"slavic_castle_01_mesh"
-		}
-		illustration = @holding_illustration_russian 
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 0 } }
-		graphical_cultures = { slavic_building_gfx }
-	}
 
 	can_construct_potential = {
 		building_requirement_tribal = no
 		barony_cannot_construct_holding = no
+		if = {
+			limit = {
+				has_game_rule = setting_yes_sow_included
+			}
+			valid_expansion_target = yes
+		}
 	}
 	
 	can_construct = {
@@ -249,6 +223,7 @@ castle_01 = { # Town
 	can_construct_showing_failures_only = {
 		building_requirement_tribal_holding_in_county = no
 	}
+	
 	cost_gold = main_building_tier_1_cost
 	
 	levy = normal_building_levy_tier_2
@@ -294,6 +269,23 @@ castle_01 = { # Town
 		defender_holding_advantage = 2
 	}
 	
+	
+	
+	on_complete = {
+		hidden_effect = {
+			if = {
+				limit = { has_game_rule = setting_yes_sow_included }
+				if = {
+					limit = { NOT = { county.title_province = this } }
+					demd_initialize_new_holding = yes
+				}
+				else = {
+					reset_regular_building_vars = yes
+				}
+			}
+		}		
+	}
+	
 	flag = castle
 	next_building = castle_02
 
@@ -307,7 +299,16 @@ castle_01 = { # Town
 				has_government = theocracy_government
 			}
 		}
-
+		modifier = {
+			factor = 5
+			has_game_rule = setting_yes_sow_included
+			scope:holder = {
+				OR = {
+					has_government = feudal_government
+					has_government = clan_government
+				}
+			}
+		}
 		modifier = {
 			add = 50
 			county = {
@@ -396,16 +397,6 @@ castle_02 = { # City
 		graphical_regions = { graphical_india }
 	}
 	
-	### SEA ###
-	asset = {
-		type = pdxmesh
-		name = "building_sea_castle_02_mesh"
-		illustration = @holding_illustration_india
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/indian_castle" soundparameter = { "Tier" = 1 } }
-		graphical_cultures = { sea_building_gfx }
-		graphical_regions = { graphical_india }
-	}
-	
 	
 	### INDIAN ###
 	asset = {
@@ -472,15 +463,6 @@ castle_02 = { # City
 		graphical_cultures = { mediterranean_building_gfx }
 		graphical_regions = { graphical_india }
 	}
-
-	### CELTIC ###
-	asset = {
-		type = pdxmesh
-		name = "building_celtic_hillfort_02_mesh"
-		illustration = @holding_illustration_celtic
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 1 } }
-		graphical_cultures = { celtic_building_gfx }
-	}
 	
 	### FP1 Norse ###
 	asset = {
@@ -541,17 +523,6 @@ castle_02 = { # City
 		graphical_regions = { graphical_mediterranean }
 	}
 	
-	### Slavic ###
-	asset = {
-		type = pdxmesh
-		names = {
-			"slavic_castle_02_mesh"
-		}
-		illustration = @holding_illustration_russian
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 1 } }
-		graphical_cultures = { slavic_building_gfx }
-	}
-	
 	
 	can_construct_potential = {
 		building_requirement_tribal = no
@@ -609,6 +580,14 @@ castle_02 = { # City
 	
 	flag = castle
 	next_building = castle_03
+	
+	on_complete = {
+		if = {
+			limit = { has_game_rule = setting_yes_sow_included }
+			apply_province_garrison = yes
+			apply_province_levy = yes		
+		}
+	}
 	
 	ai_value = {
 		base = 9
@@ -700,16 +679,6 @@ castle_03 = { # Great City
 		graphical_regions = { graphical_india }
 	}
 	
-	### SEA ###
-	asset = {
-		type = pdxmesh
-		name = "building_sea_castle_03_mesh"
-		illustration = @holding_illustration_india
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/indian_castle" soundparameter = { "Tier" = 2 } }
-		graphical_cultures = { sea_building_gfx }
-		graphical_regions = { graphical_india }
-	}
-	
 	### INDIAN ###
 	asset = {
 		type = pdxmesh
@@ -776,15 +745,6 @@ castle_03 = { # Great City
 		graphical_regions = { graphical_india }
 	}
 
-	### CELTIC ###
-	asset = {
-		type = pdxmesh
-		name = "building_celtic_hillfort_03_mesh"
-		illustration = @holding_illustration_celtic
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 2 } }
-		graphical_cultures = { celtic_building_gfx }
-	}
-
 	### FP1 Norse ###
 	asset = {
 		type = pdxmesh
@@ -842,17 +802,6 @@ castle_03 = { # Great City
 		soundeffect = { soundeffect = "event:/DLC/FP2/SFX/Ambience/Urban/iberian_castle" soundparameter = { "Tier" = 2 } }
 		graphical_cultures = { iberian_building_gfx }
 		graphical_regions = { graphical_mediterranean }
-	}
-	
-	### Slavic ###
-	asset = {
-		type = pdxmesh
-		names = {
-			"slavic_castle_03_mesh"
-		}
-		illustration = @holding_illustration_russian
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 2 } }
-		graphical_cultures = { slavic_building_gfx }
 	}
 
 	can_construct_potential = {
@@ -914,6 +863,14 @@ castle_03 = { # Great City
 	
 	flag = castle
 	next_building = castle_04
+	
+	on_complete = {
+		if = {
+			limit = { has_game_rule = setting_yes_sow_included }
+			apply_province_garrison = yes
+			apply_province_levy = yes		
+		}
+	}
 	
 	ai_value = {
 		base = 8
@@ -1005,16 +962,6 @@ castle_04 = { # Metropolis I
 		graphical_regions = { graphical_india }
 	}
 	
-	### SEA ###
-	asset = {
-		type = pdxmesh
-		name = "building_sea_castle_04_mesh"
-		illustration = @holding_illustration_india
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/indian_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { sea_building_gfx }
-		graphical_regions = { graphical_india }
-	}
-	
 	### INDIAN ###
 	asset = {
 		type = pdxmesh
@@ -1080,15 +1027,6 @@ castle_04 = { # Metropolis I
 		graphical_cultures = { mediterranean_building_gfx }
 		graphical_regions = { graphical_india }
 	}
-	
-	### CELTIC ###
-	asset = {
-		type = pdxmesh
-		name = "building_celtic_hillfort_04_mesh"
-		illustration = @holding_illustration_celtic
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { celtic_building_gfx }
-	}
 
 	### FP1 Norse ###	
 	asset = {
@@ -1149,17 +1087,6 @@ castle_04 = { # Metropolis I
 		graphical_regions = { graphical_mediterranean }
 	}
 	
-	### Slavic ###
-	asset = {
-		type = pdxmesh
-		names = {
-			"slavic_castle_04_mesh"
-		}
-		illustration = @holding_illustration_russian
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { slavic_building_gfx }
-	}
-	
 	can_construct_potential = {
 		building_requirement_tribal = no
 	}
@@ -1218,6 +1145,14 @@ castle_04 = { # Metropolis I
 	next_building = castle_05
 
 	type_icon = "icon_building_ramparts.dds"
+	
+	on_complete = {
+		if = {
+			limit = { has_game_rule = setting_yes_sow_included }
+			apply_province_garrison = yes
+			apply_province_levy = yes		
+		}
+	}
 	
 	ai_value = {
 		base = 7
@@ -1309,15 +1244,6 @@ castle_05 = { # Metropolis II
 		graphical_regions = { graphical_india }
 	}
 	
-	### SEA ###
-	asset = {
-		type = pdxmesh
-		name = "building_sea_castle_04_mesh"
-		illustration = @holding_illustration_india
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/indian_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { sea_building_gfx }
-		graphical_regions = { graphical_india }
-	}
 	
 	### INDIAN ###
 	asset = {
@@ -1384,15 +1310,6 @@ castle_05 = { # Metropolis II
 		graphical_cultures = { mediterranean_building_gfx }
 		graphical_regions = { graphical_india }
 	}
-
-	### CELTIC ###
-	asset = {
-		type = pdxmesh
-		name = "building_celtic_hillfort_04_mesh"
-		illustration = @holding_illustration_celtic
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { celtic_building_gfx }
-	}
 	
 	### FP1 Norse ###	
 	asset = {
@@ -1451,17 +1368,6 @@ castle_05 = { # Metropolis II
 		soundeffect = { soundeffect = "event:/DLC/FP2/SFX/Ambience/Urban/iberian_castle" soundparameter = { "Tier" = 3 } }
 		graphical_cultures = { iberian_building_gfx }
 		graphical_regions = { graphical_mediterranean }
-	}
-	
-	### Slavic ###
-	asset = {
-		type = pdxmesh
-		names = {
-			"slavic_castle_04_mesh"
-		}
-		illustration = @holding_illustration_russian
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { slavic_building_gfx }
 	}
 
 	can_construct_potential = {
@@ -1524,6 +1430,15 @@ castle_05 = { # Metropolis II
 	
 	flag = castle
 	next_building = castle_06
+	
+	on_complete = {
+		if = {
+			limit = { has_game_rule = setting_yes_sow_included }
+			apply_province_garrison = yes
+			apply_province_levy = yes		
+		}
+	}
+	
 	ai_value = {
 		base = 5		
 		modifier = {
@@ -1604,16 +1519,6 @@ castle_06 = { # Metropolis III
 		graphical_regions = { graphical_india }
 	}
 	
-	### SEA ###
-	asset = {
-		type = pdxmesh
-		name = "building_sea_castle_04_mesh"
-		illustration = @holding_illustration_india
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/indian_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { sea_building_gfx }
-		graphical_regions = { graphical_india }
-	}
-	
 	### INDIAN ###
 	asset = {
 		type = pdxmesh
@@ -1679,15 +1584,6 @@ castle_06 = { # Metropolis III
 		graphical_cultures = { mediterranean_building_gfx }
 		graphical_regions = { graphical_india }
 	}
-
-	### CELTIC ###
-	asset = {
-		type = pdxmesh
-		name = "building_celtic_hillfort_04_mesh"
-		illustration = @holding_illustration_celtic
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { celtic_building_gfx }
-	}
 	
 	### FP1 Norse ###	
 	asset = {
@@ -1747,17 +1643,6 @@ castle_06 = { # Metropolis III
 		graphical_cultures = { iberian_building_gfx }
 		graphical_regions = { graphical_mediterranean }
 	}
-	
-	### Slavic ###
-	asset = {
-		type = pdxmesh
-		names = {
-			"slavic_castle_04_mesh"
-		}
-		illustration = @holding_illustration_russian
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { slavic_building_gfx }
-	}
 
 	can_construct_potential = {
 		building_requirement_tribal = no
@@ -1816,6 +1701,15 @@ castle_06 = { # Metropolis III
 	
 	flag = castle
 	next_building = castle_07
+	
+	on_complete = {
+		if = {
+			limit = { has_game_rule = setting_yes_sow_included }
+			apply_province_garrison = yes
+			apply_province_levy = yes		
+		}
+	}
+		
 	ai_value = {
 		base = 5		
 		modifier = {
@@ -1896,16 +1790,6 @@ castle_07 = { # Megalopolis
 		graphical_regions = { graphical_india }
 	}
 	
-	### SEA ###
-	asset = {
-		type = pdxmesh
-		name = "building_sea_castle_04_mesh"
-		illustration = @holding_illustration_india
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/indian_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { sea_building_gfx }
-		graphical_regions = { graphical_india }
-	}
-	
 	### INDIAN ###
 	asset = {
 		type = pdxmesh
@@ -1971,15 +1855,6 @@ castle_07 = { # Megalopolis
 		graphical_cultures = { mediterranean_building_gfx }
 		graphical_regions = { graphical_india }
 	}
-
-	### CELTIC ###
-	asset = {
-		type = pdxmesh
-		name = "building_celtic_hillfort_04_mesh"
-		illustration = @holding_illustration_celtic
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { celtic_building_gfx }
-	}
 	
 	### FP1 Norse ###	
 	asset = {
@@ -2038,17 +1913,6 @@ castle_07 = { # Megalopolis
 		soundeffect = { soundeffect = "event:/DLC/FP2/SFX/Ambience/Urban/iberian_castle" soundparameter = { "Tier" = 3 } }
 		graphical_cultures = { iberian_building_gfx }
 		graphical_regions = { graphical_mediterranean }
-	}
-	
-	### Slavic ###
-	asset = {
-		type = pdxmesh
-		names = {
-			"slavic_castle_04_mesh"
-		}
-		illustration = @holding_illustration_russian
-		soundeffect = { soundeffect = "event:/SFX/Ambience/3DMapEmitters/Holdings/Castle/western_castle" soundparameter = { "Tier" = 3 } }
-		graphical_cultures = { slavic_building_gfx }
 	}
 	
 	can_construct_potential = {
@@ -2110,6 +1974,15 @@ castle_07 = { # Megalopolis
 	}
 	
 	flag = castle
+	
+	on_complete = {
+		if = {
+			limit = { has_game_rule = setting_yes_sow_included }
+			apply_province_garrison = yes
+			apply_province_levy = yes		
+		}
+	}
+	
 	ai_value = {
 		base = 4		
 		modifier = {
