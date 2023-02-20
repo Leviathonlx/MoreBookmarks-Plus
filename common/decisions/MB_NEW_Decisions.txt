@@ -725,3 +725,113 @@ convert_whole_realm_to_feudalism_decision = { #by Linnéa Thimrén
 		base = 100
 	}
 }
+
+unite_the_georgian_thrones_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+	ai_check_interval = 60
+	desc = unite_the_georgian_thrones_decision_desc
+
+	is_shown = {
+		OR = {
+			has_primary_title = title:k_imereti
+			has_primary_title = title:k_iberia
+		}
+		game_start_date >= 1250.1.1
+		OR = {
+			calc_true_if = { #At least 2 of the titles has de jure land
+				amount >= 2
+				title:k_imereti = { any_in_de_jure_hierarchy = { tier = tier_county } }
+				title:k_iberia = { any_in_de_jure_hierarchy = { tier = tier_county } }
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:unite_the_georgian_thrones_decision
+			}
+		}
+		highest_held_title_tier < tier_empire				 
+	}
+
+	is_valid = {
+		OR = {
+			has_primary_title = title:k_imereti
+			has_primary_title = title:k_iberia
+		}
+		trigger_if = {
+			limit = { title:k_imereti = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
+			completely_controls = title:k_imereti
+			has_title = title:k_imereti
+		}
+		trigger_if = {
+			limit = { title:k_iberia = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
+			completely_controls = title:k_iberia
+			has_title = title:k_iberia
+		}
+		custom_description = {
+   			text = unite_the_georgian_thrones_decision_primary
+			OR = {
+				has_primary_title = title:k_imereti
+				has_primary_title = title:k_iberia
+			}
+		}
+		#Must not be too early
+		culture = { has_cultural_era_or_later = culture_era_high_medieval }
+		OR = { 
+			has_realm_law = crown_authority_2
+			has_realm_law = crown_authority_3
+		}
+	}
+
+	effect = {
+		save_scope_as = georgia_uniter
+
+		show_as_tooltip = { unite_the_georgian_thrones_decision_effects = yes } #Actually applied in mb_events.0001 - prestige, laws, title changes
+		
+		#Copy title history based on whoever does the uniting. If Imereti is who unites keep their capital as the new capital of Georgia
+		
+		if = {
+			limit = {
+				has_primary_title = title:k_imereti
+			}
+			title:k_georgia = {
+				copy_title_history = title:k_imereti
+				set_capital_county = title:k_imereti.title_capital_county
+			}
+		}
+		if = {
+			limit = {
+				has_primary_title = title:k_iberia
+			}
+			title:k_georgia = {
+				copy_title_history = title:k_iberia
+			}
+		}
+		
+		#Events
+		trigger_event = mb_events.0001
+
+		#Can only be done once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:unite_the_georgian_thrones_decision
+		}
+		set_global_variable = {
+			name = unite_the_georgian_thrones_decision
+			value = scope:georgia_uniter
+		}
+		set_global_variable = {
+			name = unite_the_georgian_thrones_decision_title
+			value = scope:georgia_uniter.primary_title
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}

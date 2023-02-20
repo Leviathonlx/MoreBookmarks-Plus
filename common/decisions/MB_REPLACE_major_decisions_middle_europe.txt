@@ -64,6 +64,204 @@ found_kingdom_decision = {
 	}
 }
 
+#Creating Switzerland "Kingdom"
+form_switzerland_kingdom_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+
+	desc = form_switzerland_kingdom_decision_desc
+	selection_tooltip = form_switzerland_kingdom_decision_tooltip
+	major = yes
+
+	ai_check_interval = 1
+
+	is_shown = {
+		is_landed = yes
+		current_date >= 1250.1.1
+		NOT = { exists = title:k_switzerland.holder }
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_switzerland_kingdom
+			}
+		}
+		highest_held_title_tier <= tier_kingdom
+		OR = {
+			is_independent_ruler = no
+			top_liege.primary_title.tier >= tier_empire
+		}
+		OR = {
+			culture = { has_cultural_pillar = heritage_central_germanic }
+			culture = { has_cultural_pillar = heritage_frankish }
+			culture = { has_cultural_pillar = heritage_latin }
+		}
+		any_sub_realm_county = {
+			OR = {
+				title_province = { geographical_region = custom_core_switzerland }
+				this = title:c_geneva
+				this = title:c_aosta
+			}
+		}
+	}
+
+	is_valid = {
+		#Must have imperial immediacy.
+		liege = top_liege
+		prestige_level >= 3
+		#And the core of the Old Confederacy.
+		OR = {
+			completely_controls_region = custom_core_switzerland
+			AND = {
+				sub_realm_size >= 5
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		is_independent_ruler = no
+		is_at_war = no
+	}
+
+	cost = {
+		gold = 250
+	}
+
+	effect = {
+		show_as_tooltip = {
+			form_switzerland_scripted_effect = yes
+		}
+		trigger_event = {
+			id = middle_europe_decisions.0001
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_switzerland_kingdom
+			}
+			set_global_variable = {
+				name = flag_formed_switzerland_kingdom
+				value = root
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+#Creating Austrian Archduchy
+form_austria_kingdom_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+
+	desc = form_austria_kingdom_decision_desc
+	selection_tooltip = form_austria_kingdom_decision_tooltip
+	major = yes
+	ai_goal = yes
+
+	is_shown = {
+		current_date >= 1200.1.1				  
+		is_landed = yes
+		NOT = { exists = title:k_austria.holder }
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_austria_kingdom
+			}
+		}
+		#No kings or emperors...
+		highest_held_title_tier <= tier_kingdom
+		OR = {
+			is_independent_ruler = no																
+			top_liege.primary_title.tier >= tier_empire
+		}
+		#Must hold land within the relevant areas directly.
+		any_held_title = {
+			tier = tier_county
+			OR = {
+				title_province = { geographical_region = custom_core_austria }
+				title_province = { geographical_region = custom_stretch_austria }
+			}
+		}
+	}
+
+	is_valid = {
+		#Must enjoy imperial immediacy.
+		liege = title:e_hre.holder
+		#Must be suitably prestigious.
+		prestige_level >= high_prestige_level
+		#Must control core Austria
+		completely_controls_region = custom_core_austria
+		#Must not be of the ruling dynasty
+		custom_description = {
+			text = "form_austria_hre_dynasty_trigger"
+			NOT = { dynasty = title:e_hre.holder.dynasty }
+		}
+		#Must have a hook on the emperor
+		has_strong_usable_hook = title:e_hre.holder
+		#Must not be too early
+		OR = { 
+			has_realm_law = crown_authority_2
+			has_realm_law = crown_authority_3
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+		faith = top_liege.faith	#Must share the faith of your emperor.
+	}
+
+	cost = {
+		gold = 1000
+	}
+
+	effect = {
+		show_as_tooltip = {
+			form_austria_scripted_effect = yes
+		}
+		trigger_event = {
+			id = middle_europe_decisions.0003
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_austria_kingdom
+			}
+			set_global_variable = {
+				name = flag_formed_austria_kingdom
+				value = root
+			}
+		}
+	}
+	
+	ai_potential = {
+		prestige_level >= high_prestige_level
+	}
+
+	ai_will_do = {
+		base = 0
+
+		#Only worth considering if you actually have your capital in Austria.		
+		modifier = {
+			add = 20
+			capital_county.title_province = { geographical_region = custom_core_austria }
+		}
+
+		#More brazen characters are more likely to have a bash.
+		ai_value_modifier = {
+			ai_boldness = 0.75
+			ai_greed = 0.25
+		}
+	}
+}
+
 #############################
 # Refound HRE 				#
 # by Ewan Cowhig Croft		#
@@ -151,6 +349,7 @@ restore_holy_roman_empire_decision = {
 			}
 			root = { has_strong_usable_hook = faith.religious_head }	#Or you have a strong hook on them that you can actually use.
 			root = { has_weak_hook = faith.religious_head }	#Or a regular hook, to be fair, provided you meet the other criteria.
+			root = { is_ai = yes }			 
 		}
 	}
 
@@ -472,203 +671,6 @@ historical_catholic_westslav_conversion_decision = {
 		modifier = {
 			factor = 0
 			current_date < 966
-		}
-	}
-}
-
-#Creating Switzerland "Kingdom"
-form_switzerland_kingdom_decision = {
-	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
-
-	desc = form_switzerland_kingdom_decision_desc
-	selection_tooltip = form_switzerland_kingdom_decision_tooltip
-	major = yes
-
-	ai_check_interval = 1
-
-	is_shown = {
-		is_landed = yes
-		current_date >= 1250.1.1
-		NOT = { exists = title:k_switzerland.holder }
-		NOT = {  #Can only do it once.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_formed_switzerland_kingdom
-			}
-		}
-		highest_held_title_tier <= tier_kingdom
-		OR = {
-			is_independent_ruler = no
-			top_liege.primary_title.tier >= tier_empire
-		}
-		OR = {
-			culture = { has_cultural_pillar = heritage_central_germanic }
-			culture = { has_cultural_pillar = heritage_frankish }
-			culture = { has_cultural_pillar = heritage_latin }
-		}
-		any_sub_realm_county = {
-			OR = {
-				title_province = { geographical_region = custom_core_switzerland }
-				this = title:c_geneva
-				this = title:c_aosta
-			}
-		}
-	}
-
-	is_valid = {
-		#Must have imperial immediacy.
-		liege = top_liege
-		prestige_level >= 3
-		#And the core of the Old Confederacy.
-		OR = {
-			completely_controls_region = custom_core_switzerland
-			AND = {
-				sub_realm_size >= 5
-			}
-		}
-	}
-
-	is_valid_showing_failures_only = {
-		is_capable_adult = yes
-		is_imprisoned = no
-		is_independent_ruler = no
-		is_at_war = no
-	}
-
-	cost = {
-		gold = 250
-	}
-
-	effect = {
-		show_as_tooltip = {
-			form_switzerland_scripted_effect = yes
-		}
-		trigger_event = {
-			id = middle_europe_decisions.0001
-		}
-		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_formed_switzerland_kingdom
-			}
-			set_global_variable = {
-				name = flag_formed_switzerland_kingdom
-				value = root
-			}
-		}
-	}
-	
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 100
-	}
-}
-
-#Creating Austrian Archduchy
-form_austria_kingdom_decision = {
-	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
-
-	desc = form_austria_kingdom_decision_desc
-	selection_tooltip = form_austria_kingdom_decision_tooltip
-	major = yes
-	ai_goal = yes
-
-	is_shown = {
-		current_date >= 1200.1.1				  
-		is_landed = yes
-		NOT = { exists = title:k_austria.holder }
-		NOT = {  #Can only do it once.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_formed_austria_kingdom
-			}
-		}
-		#No kings or emperors...
-		highest_held_title_tier <= tier_duchy
-		is_independent_ruler = no
-		#Must be within the HRE, else the bid & flavour make no sense.
-		top_liege = { has_title = title:e_hre }
-		#Must hold land within the relevant areas directly.
-		any_held_title = {
-			tier = tier_county
-			OR = {
-				title_province = { geographical_region = custom_core_austria }
-				title_province = { geographical_region = custom_stretch_austria }
-			}
-		}
-	}
-
-	is_valid = {
-		#Must enjoy imperial immediacy.
-		liege = title:e_hre.holder
-		#Must be suitably prestigious.
-		prestige_level >= high_prestige_level
-		#Must control core Austria
-		completely_controls_region = custom_core_austria
-		#Must not be of the ruling dynasty
-		custom_description = {
-			text = "form_austria_hre_dynasty_trigger"
-			NOT = { dynasty = title:e_hre.holder.dynasty }
-		}
-		#Must have a hook on the emperor
-		has_strong_usable_hook = title:e_hre.holder
-		#Must not be too early
-		OR = { 
-			has_realm_law = crown_authority_2
-			has_realm_law = crown_authority_3
-		}
-	}
-
-	is_valid_showing_failures_only = {
-		is_capable_adult = yes
-		is_imprisoned = no
-		is_at_war = no
-		faith = top_liege.faith	#Must share the faith of your emperor.
-	}
-
-	cost = {
-		gold = 1000
-	}
-
-	effect = {
-		show_as_tooltip = {
-			form_austria_scripted_effect = yes
-		}
-		trigger_event = {
-			id = middle_europe_decisions.0003
-		}
-		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_formed_austria_kingdom
-			}
-			set_global_variable = {
-				name = flag_formed_austria_kingdom
-				value = root
-			}
-		}
-	}
-	
-	ai_potential = {
-		prestige_level >= high_prestige_level
-	}
-
-	ai_will_do = {
-		base = 0
-
-		#Only worth considering if you actually have your capital in Austria.		
-		modifier = {
-			add = 20
-			capital_county.title_province = { geographical_region = custom_core_austria }
-		}
-
-		#More brazen characters are more likely to have a bash.
-		ai_value_modifier = {
-			ai_boldness = 0.75
-			ai_greed = 0.25
 		}
 	}
 }
