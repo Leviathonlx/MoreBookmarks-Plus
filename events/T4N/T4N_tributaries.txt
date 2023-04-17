@@ -113,83 +113,117 @@ tributaries.4 = {
 #on_monthly_tribute
 #Root is suzerain
 tributaries.5 = {
-	type = character_event
-	hidden = yes
+    type = character_event
+    hidden = yes
 
-	immediate = {
-		#reset everything to 0
-		set_variable = {
-			name = cash_display
-			value = 0
-		}
-		set_variable = {
-			name = prestige_display
-			value = 0
-		}
-		set_variable = {
-			name = piety_display
-			value = 0
-		}
-		if = {
-			limit = {
-				has_non_permanent_tributaries = yes
-			}
-			every_in_list = {
-				variable = non_permanent_tributaries
-				pay_long_term_gold = { target = prev gold = { value = monthly_character_income  multiply = var:tribute_gold_percent }}
-				add_prestige = var:monthly_prestige_tributary
-				add_piety = var:monthly_piety_tributary
-				root = {
-					add_prestige = prev.var:monthly_prestige_suzerain
-					add_piety = prev.var:monthly_piety_suzerain
-					change_variable = {
-						name = cash_display
-						add = { value = prev.monthly_character_income multiply = prev.var:tribute_gold_percent }
-					}
-					change_variable = {
-						name = prestige_display
-						add = prev.var:monthly_prestige_suzerain
-					}
-					change_variable = {
-						name = piety_display
-						add = prev.var:monthly_piety_suzerain
-					}
-				}
-				
-			}
-		}
-		if = {
-			limit = {
-				has_permanent_tributaries = yes
-			}
-			every_in_list = {
-				variable = permanent_tributaries
-
-				pay_long_term_gold = { target = prev gold = { value = monthly_character_income  multiply = var:tribute_gold_percent }}
-				add_prestige = var:monthly_prestige_tributary
-				add_piety = var:monthly_piety_tributary
-				root = {
-					add_prestige = prev.var:monthly_prestige_suzerain
-					add_piety = prev.var:monthly_piety_suzerain
-					change_variable = {
-						name = cash_display
-						add = { value = prev.monthly_character_income multiply = prev.var:tribute_gold_percent }
-					}
-					change_variable = {
-						name = prestige_display
-						add = prev.var:monthly_prestige_suzerain
-					}
-					change_variable = {
-						name = piety_display
-						add = prev.var:monthly_piety_suzerain
-					}
-				}
-
-			}
-		}
-	}
+    immediate = {
+        if = {
+            limit = {
+                has_permanent_tributaries = yes
+            }
+            save_scope_as = suzerain
+            every_in_list = {
+                variable = permanent_tributaries
+                trigger_event = { id = tributaries.50 }
+            }
+        }
+    }
 }
 
+tributaries.50 = {
+    type = character_event
+    title = tributary_event_send_tribute
+    desc = tributary_event_send_tribute_desc
+    theme = vassal
+
+    right_portrait = {
+        character = root
+    }
+    left_portrait = {
+        character = scope:suzerain
+        animation = personality_honorable
+    }
+
+    option = {
+        name = tributary_send_gold
+        save_scope_as = tributary
+
+        scope:suzerain = {
+            send_interface_message = {
+                title = tributary_send_tribute.sent_gold
+                type = event_tribute_paid
+                desc = tributary_send_tribute.sent_gold_desc
+                left_icon = root
+
+                root = {
+                    pay_long_term_gold = {
+                        target = scope:suzerain
+                        gold = {
+                            value = yearly_character_income
+                            multiply = var:tribute_gold_percent
+                            multiply = 3
+                        }
+                    }
+                }
+            }
+        }
+        ai_chance = { base = 100 }
+    }
+    option = {
+        name = tributary_send_prestige
+        add_prestige = medium_prestige_loss
+        scope:suzerain = { add_prestige = medium_prestige_gain }
+        ai_chance = { base = 0 }
+    }
+    option = {
+        name = tributary_refuse_tribute
+        save_scope_as = tributary
+
+        scope:suzerain = {
+            add_opinion = {
+                modifier = insult_opinion
+                opinion = -50
+                target = root
+            }
+            trigger_event = { id = tributaries.51 } # Suzerain may declare war
+        }
+        custom_tooltip = tributary_refuse_tribute.tt
+        ai_chance = { base = 0 }
+    }
+}
+
+tributaries.51 = {
+    type = letter_event
+    opening = {
+        desc = tributaries.51_opening
+    }
+    desc = tributaries.51_desc
+    sender = scope:tributary
+
+    option = {
+        name = tributaries.51.a
+        ai_chance = { base = 66 }
+    }
+    option = {
+        name = tributaries.51.b
+        ai_chance = { base = 33 }
+        start_war = {
+            casus_belli = tributary_punitive_war_cb
+            target = scope:tributary
+        }
+
+        hidden_effect = {
+            send_interface_toast = {
+                title = declare_war_interaction_notification
+
+                left_icon = scope:actor
+                right_icon = scope:not_trib
+
+                custom_tooltip = declare_war_interaction_notification_tooltip
+            }
+        }
+    }
+}
 #Suzerain is called to permanent tributary war
 #on_war_started
 #Root is suzerain
