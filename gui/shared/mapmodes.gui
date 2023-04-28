@@ -587,29 +587,59 @@
 
 				visible = "[CanChangeMapMode]"
 
-				icon_button_mapmode = {
-					name = "sea_tributary_map_button"
+				widget = {
+					name = "map_mode_tributary"
 					size = { 32 32 }
 					parentanchor = vcenter
-					enabled = "[And(Not(IsObserver), GetScriptedGui('sea_tributary_map').IsValid(GuiScope.End))]"
 
-					blockoverride "mm_button"
-					{
-						onclick = "[SetMapMode('debug_character_pools')]"
-						onclick = "[GetScriptedGui('sea_tributary_map').Execute(GuiScope.End)]"
-						down = "[And( GetScriptedGui('sea_tributary_map').IsShown(GuiScope.End), IsMapMode('debug_character_pools') )]"
+			        icon = {
+			            size = { 100% 100% }
+			            texture = "gfx/interface/component_masks/mask_circle.dds"
+
+			            block = "mm_glow"
+			            {
+			                visible = "[IsMapMode('tributaries_map_mode')]"
+			            }
+
+			            glow = {
+			                color = { 0.93 0.65 0.45 1.0 }
+			                glow_radius = 6
+
+			                glow_generation_rules= {
+			                    glow_alpha_mask = 0
+			                    glow_blur_passes = 15
+			                    glow_texture_downscale = 5.5f
+			                    glow_ignore_inside_pixels = yes
+			                }
+			            }
+
+			            using = Animation_Glow_Pulse
+			        }
+
+			        button_round = {
 						tooltip = "SEA_TRIBUTARY_MAP_TOOLTIP"
-					}
-					blockoverride "mm_icon"
-					{
-						down = "[And( GetScriptedGui('sea_tributary_map').IsShown(GuiScope.End), IsMapMode('debug_character_pools') )]"
-						texture = "gfx/interface/icons/flat_icons/mapmode_tributaries.dds"
-					}
+			            size = { 100% 100% }
+			            using = tooltip_nw
 
-					blockoverride "mm_glow"
-					{
-						visible = "[And( GetScriptedGui('sea_tributary_map').IsShown(GuiScope.End), IsMapMode('debug_character_pools') )]"
-					}
+			            datacontext = "[GetScriptedGui('sea_tributary_map_effect')]"
+
+						onclick = "[SetMapMode('tributaries_map_mode')]"
+						onclick = "[GetScriptedGui('sea_tributary_map_effect').Execute(GuiScope.End)]"
+						down = "[And( GetScriptedGui('sea_tributary_map_effect').IsShown(GuiScope.End), IsMapMode('tributaries_map_mode') )]"
+						enabled = "[GetScriptedGui('sea_tributary_map_effect').IsValid(GuiScope.End)]"
+
+			            block "mm_button" {}
+
+			            button_icon = {
+			                parentanchor = center
+			                alwaystransparent = yes
+			                down = "[IsMapMode('tributaries_map_mode')]"
+				            texture = "gfx/interface/icons/flat_icons/mapmode_tributaries.dds"
+
+			                block "mm_icon" {}
+			            }
+			        }
+
 				}
 
 				icon_button_mapmode = {
@@ -689,6 +719,7 @@
 
 		flowcontainer = {
 			visible = "[GetVariableSystem.Exists( 'mapmodes_expand' )]"
+			visible_at_creation = no
 			parentanchor = top|right
 			widgetanchor = bottom|right
 			position = { -0 25 }
@@ -727,7 +758,24 @@
 					margin_bottom = 5
 					max_width = 110
 				}
+				
+				button_tertiary = {
+					name = "minorities_map"
+					visible = "[CanChangeMapMode]"
+					parentanchor = hcenter
 
+					size = { 110 25 }
+					onclick = "[SetMapMode('debug_character_pools')]"
+					onclick = "[GetScriptedGui('minorities_map').Execute(GuiScope.End)]"
+					down = "[And( GetScriptedGui('minorities_map').IsShown(GuiScope.End), IsMapMode('debug_character_pools') )]"
+					enabled = "[And(Not(IsObserver), GetScriptedGui('minorities_map').IsValid(GuiScope.End))]"
+
+					text = "MINORITIES_MAP_NAME"
+
+					tooltip = "MINORITIES_MAP_TOOLTIP"
+					using = tooltip_ws
+				}
+				
 				button_tertiary = {
 					name = "siro_special_slot_map"
 					visible = "[CanChangeMapMode]"
@@ -958,10 +1006,11 @@
 			vbox = {
 				layoutpolicy_horizontal = expanding
 				text_single = {
-					raw_text = "Map Mode"
+					text = MAP_MODE
 				}
 				text_single = {
 					text = "[GetCurrentMapMode.GetName]"
+					default_format = "#high"
 				}
 			}
 

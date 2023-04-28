@@ -348,11 +348,13 @@ tradition_confucian_philosophy = {
 	}
 	can_pick = {
 		has_cultural_pillar = heritage_chinese
+		NOT = { any_in_list = { list = traits this = flag:tradition_sinicized_culture } }
 	}
 
 	parameters = {
 		innovation_from_learning_traits = yes
 		vassals_more_likely_accept_punishments = yes
+		unlock_bureaucracy_param = yes
 	}
 	character_modifier = {
 		monthly_learning_lifestyle_xp_gain_mult = 0.1
@@ -688,7 +690,7 @@ tradition_balbals = {
 
 	# Runestones are available in a slightly reduced form in the base title, so we let you access this tradition regardless of whether you have FP1 or not.
 	is_shown = {
-		has_cultural_pillar = heritage_north_germanic
+		has_cultural_parameter = heritage_group_altaic
 	}
 	can_pick = {
 		custom_tooltip = {
@@ -764,23 +766,25 @@ tradition_balbals = {
 }
 
 tradition_steppe_confederations = {
-	category = societal
+	category = realm
 
 	layers = {
 		0 = diplo
-		1 = mena
+		1 = western
 		4 = diplomat.dds
 	}
 
+	is_shown = {
+		has_cultural_parameter = heritage_group_altaic
+	}
 	parameters = {
-		diplomacy_education_better_outcomes = yes
-		charming_trait_more_common = yes
+		has_steppe_alliances = yes
+		extra_language_cap_2 = yes
 	}
 	character_modifier = {
-		monthly_court_grandeur_change_mult = 0.15
-		owned_personal_scheme_success_chance_add = 10
-		enemy_hostile_scheme_success_chance_add = 10
+		learn_language_scheme_power_mult = 0.25
 	}
+
 	cost = {
 		prestige = {
 			add = {
@@ -788,63 +792,117 @@ tradition_steppe_confederations = {
 				desc = BASE
 				format = "BASE_VALUE_FORMAT"
 			}
+
+			multiply = tradition_replacement_cost_if_relevant
+		}
+	}
+
+	ai_will_do = { value = 100 }
+}
+
+tradition_sinicized_culture = {
+	category = regional
+
+	layers = {
+		0 = learning
+		1 = indian
+		4 = philosopher.dds
+	}
+
+	is_shown = {
+		NOT = { has_cultural_pillar = heritage_chinese }
+		OR = {
+			has_cultural_tradition = tradition_sinicized_culture
+			any_parent_culture = { has_cultural_pillar = heritage_chinese }
+			any_culture_county = {
+				any_neighbor_county = { culture = { has_cultural_pillar = heritage_chinese } }
+			}
+		}
+	}
+
+	can_pick = {
+		NOT = { any_in_list = { list = traits this = flag:tradition_confucian_philosophy } }
+		NOT = { has_cultural_pillar = heritage_chinese }
+	}
+
+	parameters = {
+		unlock_bureaucracy_param = yes
+		# Makes your culture count as part of the Chinese heritage group, thanks CCU!
+		heritage_group_chinese = yes
+		heritage_family_east_asian = yes
+	}
+	
+	cost = {
+		prestige = {
+			add = {
+				value = tradition_double_base_cost
+				desc = BASE
+				format = "BASE_VALUE_FORMAT"
+			}
 			if = {
 				limit = {
 					NOR = {
 						any_in_list = { list = traits this = flag:ethos_communal }
-						any_in_list = { list = traits this = flag:ethos_egalitarian }
-						any_in_list = { list = traits this = flag:ethos_stoic }
+						any_in_list = { list = traits this = flag:ethos_courtly }
+						any_in_list = { list = traits this = flag:ethos_bureaucratic }
 					}
 				}
 				add = {
 					value = tradition_incompatible_ethos_penalty
-					desc = not_communal_egalitarian_or_stoic_desc
+					desc = not_communal_courtly_or_bureaucratic_desc
 				}
 			}
 			if = {
 				limit = {
-					trigger_if = {
-						limit = {
-							scope:character = {
-								is_ai = no
-							}
+					OR = {
+						culture_head = { has_court_language = language_chinese }
+						any_in_list = {
+							list = traits
+							this = flag:language_chinese
 						}
-						NOT = {
-							any_ruler = {
-								count >= 5
-								culture = prev
-								primary_title.tier >= tier_county
-								has_trait = education_diplomacy_4
-							}
-						}
-					}
-					trigger_else = {
-						always = no
 					}
 				}
-				add = {
-					value = tradition_unfulfilled_criteria_penalty
-					desc = rulers_with_diplomacy_edu_desc
+				subtract = {
+					value = 1000
+					desc = SINOPHONE
+				}
+			}
+			if = {
+				# This is much cheaper for cultures that already have an easy time hybridizing
+				limit = {
+					has_cultural_parameter = cheaper_to_hybridize
+				}
+				multiply = {
+					value = 0.5
+					desc = CULTURAL_FLEXIBILITY
+				}
+			}
+			if = {
+				# ...And pricier for those that have a hard time.
+				limit = {
+					has_cultural_parameter = harder_to_hybridize
+				}
+				multiply = {
+					value = 2
+					desc = CULTURAL_INFLEXIBILITY
 				}
 			}
 
 			multiply = tradition_replacement_cost_if_relevant
 		}
 	}
+
 	ai_will_do = {
 		value = 100
 		if = {
 			limit = {
-				OR = {
-					any_in_list = { list = traits this = flag:tradition_eye_for_an_eye }
-					any_in_list = { list = traits this = flag:tradition_zealous_people }
-					any_in_list = { list = traits this = flag:tradition_forbearing }
-					any_in_list = { list = traits this = flag:tradition_equitable }
-					any_in_list = { list = traits this = flag:tradition_charitable }
-					any_in_list = { list = traits this = flag:tradition_modest }
+				NOR = {
+					any_in_list = { list = traits this = flag:ethos_communal }
+					any_in_list = { list = traits this = flag:ethos_courtly }
+					any_in_list = { list = traits this = flag:ethos_bureaucratic }
 				}
 			}
-			multiply = 0.1
+			multiply = 0
 		}
 	}
 }
