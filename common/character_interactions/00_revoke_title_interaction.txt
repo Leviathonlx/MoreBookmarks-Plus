@@ -59,6 +59,8 @@ revoke_title_interaction = {
 	}
 	
 	is_valid_showing_failures_only = {
+		title_revocation_standard_valid_showing_failures_only_trigger = yes
+		# Plus make sure there's a legal right to revoke.										   
 		scope:actor = {
 		   NOR =  {
 				is_at_war_with = scope:recipient
@@ -75,7 +77,7 @@ revoke_title_interaction = {
 				}
 			}
 			trigger_if = {
-				limit = { has_government = tribal_government }
+				limit = { government_has_flag = government_is_tribal }
 				custom_description = {
 					text = "has_law_allowing_title_revocation_tribal"
 					has_realm_law_flag = title_revocation_allowed
@@ -83,31 +85,38 @@ revoke_title_interaction = {
 			}
 			trigger_if = {
 				limit = {
-					NOT = { has_government = tribal_government }
+					NOT = { government_has_flag = government_is_tribal }
 				}
 				custom_description = {
 					text = "has_law_allowing_title_revocation_crown"
 					has_realm_law_flag = title_revocation_allowed
 				}
 			}
-			trigger_if = {
-				limit = {
-					scope:recipient = {
-						vassal_contract_has_flag = vassal_contract_cannot_revoke_titles
-					}
+		}
+		trigger_if = {
+			limit = {
+				scope:recipient = {
+					vassal_contract_has_flag = vassal_contract_cannot_revoke_titles
+	  
 				}
-				custom_description = {
-					text = vassal_contract_forbids_revocation
-					scope:recipient = {
-						NOT = { vassal_contract_has_flag = vassal_contract_cannot_revoke_titles }
-					}
+			}
+			custom_description = {
+				text = vassal_contract_forbids_revocation
+				scope:recipient = {
+					NOT = { vassal_contract_has_flag = vassal_contract_cannot_revoke_titles }
+	  
 				}
 			}
 		}
+		# And uhh... the sensible check.
 		scope:recipient = {
 			is_vassal_of = scope:actor
 			is_busy_in_events_localised = yes
 			NOT = { has_strong_hook = scope:actor }
+		}
+		custom_tooltip = {
+			text = cannot_take_overt_hostile_actions_against_diarch.tt
+			NOT = { scope:recipient ?= scope:actor.diarch }
 		}
 	}
 
@@ -142,19 +151,7 @@ revoke_title_interaction = {
 	}
 		
 	can_be_picked_title = {
-		scope:target = {
-			is_contested = no
-			NOT = {
-				recent_history = {
-					type = granted
-					years = 1
-				}
-			}
-			custom_description = {
-				text = "character_interactions_not_rel_head_title"
-				is_head_of_faith = no
-			}
-		}
+		scope:target = { title_revocation_standard_can_pick_title_trigger = yes }
 	}
 
 	#Use hook
@@ -173,6 +170,11 @@ revoke_title_interaction = {
 	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
 
 	send_options_exclusive = no
+
+	cost = {
+		# Usually, this action is free, but during certain diarchies, we want it to cost.
+		prestige = liege_diarchy_surcharge_interaction_revoke_title_interaction_value
+	}
 
 	on_send = {
 		scope:actor = {
@@ -494,7 +496,7 @@ revoke_title_interaction = {
 
 	ai_potential = {
 		has_realm_law_flag = title_revocation_allowed
-		primary_title.tier > tier_county
+		primary_title.tier >= tier_county
 	}
 
 	ai_will_do = {
@@ -599,27 +601,27 @@ revoke_title_interaction = {
 				scope:landed_title.title_province = { has_holding_type = castle_holding } # Everyone is valid for castles
 				AND = {
 					scope:actor = {
-						has_government = tribal_government
+						government_has_flag = government_is_tribal
 					}
 					scope:landed_title.title_province = { has_holding_type = tribal_holding }
 				}
 				AND = {
 					scope:actor = {
-						has_government = republic_government
+						government_has_flag = government_is_republic
 					}
 					scope:landed_title.title_province = { has_holding_type = city_holding }
 				}
 				AND = {
 					scope:actor = {
-						has_government = res_republic_government
-					}
-					scope:landed_title.title_province = { has_holding_type = city_holding }
-				}
-				AND = {
-					scope:actor = {
+											  
+	  
+																			
+	 
+		   
+					
 						OR = {
-							has_government = clan_government
-							has_government = theocracy_government
+							government_has_flag = government_is_clan
+							government_has_flag = government_is_theocracy
 						}
 					}
 					scope:landed_title.title_province = { has_holding_type = church_holding }
@@ -719,13 +721,13 @@ revoke_title_interaction = {
 				scope:landed_title.title_province = { has_holding_type = castle_holding }
 				AND = {
 					OR = {
-						scope:actor = { has_government = clan_government }
-						scope:actor = { has_government = theocracy_government }
+						scope:actor = { government_has_flag = government_is_clan }
+						scope:actor = { government_has_flag = government_is_theocracy }
 					}
 					scope:landed_title.title_province = { has_holding_type = church_holding }
 				}
 				AND = {
-					scope:actor = { has_government = republic_government }
+					scope:actor = { government_has_flag = government_is_republic }
 					scope:landed_title.title_province = { has_holding_type = city_holding }
 				}
 			}
@@ -823,18 +825,34 @@ revoke_title_interaction = {
 			scope:actor = {
 				is_at_war = yes
 			}
-			scope:recipient = {
-				NOR = {
-					scope:recipient = {
-						is_imprisoned_by = scope:actor
-					}
-					scope:recipient = {
-						highest_held_title_tier = tier_barony
-					}
+			NOR = {
+		   
+				scope:recipient = {
+					is_imprisoned_by = scope:actor
+				}
+				scope:recipient = {
+					highest_held_title_tier = tier_barony
+	  
 				}
 			}
-			 
+	
 		}
+		
+		modifier = { # Avoid triggering Tyranny wars mid-grand activity
+			factor = 0
+			scope:actor = {
+				has_ongoing_grand_activity_trigger = yes
+			}
+			NOR = {
+				scope:recipient = {
+					is_imprisoned_by = scope:actor
+				}
+				scope:recipient = {
+					highest_held_title_tier = tier_barony
+				}
+			}
+		}
+		
 		#MB - Additional modifiers to make AI less likely to revoke titles all willy nilly without just cause
 		# Let's not have the AI take titles from family without just cause
 		modifier = {

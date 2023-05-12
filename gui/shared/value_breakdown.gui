@@ -588,6 +588,225 @@ types Breakdowns
 				}
 			}
 		}
+	}
 
+	type diarch_score_breakdown_tooltip = widget {
+		name = "diarch_score_breakdown_tooltip"
+		using = GeneralTooltipSetup
+		alwaystransparent = no
+
+		using = DefaultTooltipBackground
+		vbox = {
+			set_parent_size_to_minimum = yes
+			margin = { 16 8 }
+			minimumsize = { 300 80 }
+
+			block "breakdown_datacontext" {}
+
+			# Header
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				minimumsize = { 100% 50 }
+
+				background = {
+					name = "header"
+					texture = "gfx/interface/component_tiles/tile_title_big_top_01.dds"
+					spriteType = Corneredstretched
+					margin = { 15 0 }
+					texture_density = 2
+
+					modify_texture = {
+						name = "mask"
+						texture = "gfx/interface/component_masks/mask_title_big_top.dds"
+						spriteType = Corneredstretched
+						spriteborder = { 160 0 }
+						blend_mode = alphamultiply
+						alpha = 0.5
+					}
+				}
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					block "header_additions" {}
+
+					vbox = {
+						name = "fancy_header"
+						layoutpolicy_horizontal = expanding
+						alwaystransparent = no
+
+						text_single = {
+							layoutpolicy_horizontal = expanding
+							autoresize = yes
+							name = "title"
+
+							fontsize_min = 14
+							using = Font_Size_Medium
+							fonttintcolor = "[TooltipInfo.GetTintColor]"
+
+							block "header_text" {}
+						}
+					}
+				}
+
+				expand = {}
+			}
+
+			# Breakdown
+			vbox = {
+				name = "aptitude_breakdown"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin = { 0 8 }
+
+				# The Breakdown
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					datamodel = "[ValueBreakdown.GetSubValues]"
+					alwaystransparent = no
+					margin = { 16 4 }
+
+					item = {
+						hbox = {
+							name = "value_breakdown"
+							spacing = 5
+
+							layoutpolicy_horizontal = expanding
+
+							text_single = {
+								name = "name"
+								layoutpolicy_horizontal = expanding
+								text = "[ValueBreakdown.GetName]"
+								fonttintcolor = "[TooltipInfo.GetTintColor]"
+								margin_right = 10
+							}
+
+							text_single = {
+								visible = "[And(ValueBreakdown.HasTooltip, ValueBreakdown.ShouldShowValue)]"
+								name = "value_with_tooltip"
+								text = "[ValueBreakdown.GetValue|L]"
+								align = right
+								fonttintcolor = "[TooltipInfo.GetTintColor]"
+
+								using = tooltip_below
+
+								tooltipwidget = {
+									recursive = yes
+
+									widget_value_breakdown_tooltip = {}
+								}
+							}
+
+							text_single = {
+								visible = "[And( Not(ValueBreakdown.HasTooltip), ValueBreakdown.ShouldShowValue )]"
+								name = "value_with_no_tooltip"
+								text = "[ValueBreakdown.GetValue]"
+								align = right
+								fonttintcolor = "[TooltipInfo.GetTintColor]"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	type cost_breakdown_vbox = vbox
+	{
+		margin = { 10 0 }
+
+		background = {
+			visible = "[Not( CostBreakdown.CanAffordCosts( GetPlayer ) )]"
+			using = Status_Bad
+			margin_top = 5
+		}
+
+		hbox = {
+			name = "costs"
+			visible = "[CostBreakdown.HasAnyCost]"
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			spacing = 5
+
+			block "heading"
+			{
+				text_single = {
+					name = "cost_heading"
+					align = nobaseline
+					
+					block "heading_text"
+					{
+						text = "COST_HEADING"
+					}
+				}
+			}
+
+			hbox = {
+				name = "piety_cost"
+				visible = "[CostBreakdown.HasCost( 'piety' )]"
+				datacontext = "[CostBreakdown.AccessBreakdownTooltip( 'piety' )]"
+				tooltipwidget = { widget_value_breakdown_tooltip = {} }
+
+				spacing = 2
+
+				icon = {
+					name = "icon_piety"
+					size = { 30 30 }
+					texture = "[GetPlayer.GetPietyLevelTexture]"
+				}
+
+				text_single = {
+					name = "piety"
+					text = "[CostBreakdown.GetCost( 'piety' )|0]"
+					align = nobaseline
+					default_format = "#high"
+				}
+			}
+
+			text_single = {
+				name = "prestige"
+
+				datacontext = "[CostBreakdown.AccessBreakdownTooltip( 'prestige' )]"
+				visible = "[CostBreakdown.HasCost( 'prestige' )]"
+
+				raw_text = "@prestige_icon![CostBreakdown.GetCost( 'prestige' )|0]"
+				align = nobaseline
+				default_format = "#high"
+
+				tooltipwidget = { widget_value_breakdown_tooltip = {} }
+			}
+
+			text_single = {
+				name = "renown"
+
+				datacontext = "[CostBreakdown.AccessBreakdownTooltip( 'renown' )]"
+				visible = "[CostBreakdown.HasCost( 'renown' )]"
+
+				raw_text = "@dynasty_prestige_icon![CostBreakdown.GetCost( 'renown' )|0]"
+				align = nobaseline
+				default_format = "#high"
+
+				tooltipwidget = { widget_value_breakdown_tooltip = {} }
+			}
+
+			text_single = {
+				name = "gold"
+				datacontext = "[CostBreakdown.AccessBreakdownTooltip( 'gold' )]"
+				visible = "[CostBreakdown.HasCost( 'gold' )]"
+
+				raw_text = "@gold_icon![CostBreakdown.GetCost( 'gold' )|0]"
+				align = nobaseline
+				default_format = "#high"
+
+				tooltipwidget = { widget_value_breakdown_tooltip = {} }
+			}
+		}
+
+		text_single  = {
+			visible = "[Not( CostBreakdown.HasAnyCost )]"
+			text = "NO_COST_HEADING"
+			using = Font_Size_Medium
+			align = nobaseline
+		}
 	}
 }
