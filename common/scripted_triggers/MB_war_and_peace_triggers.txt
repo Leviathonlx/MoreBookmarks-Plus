@@ -1,0 +1,82 @@
+﻿
+
+can_be_knight_trigger = {
+	
+	NOT = { has_trait = pregnant } 
+	NOT = { has_trait = infirm } #Kinda odd/silly vanilla lets infirm people be knights and lead armies
+	
+	trigger_if = {
+		limit = {
+			$ARMY_OWNER$.culture = {
+				has_cultural_parameter = minimum_prowess_for_knights
+			}
+		}
+		prowess >= 12
+	}
+	can_be_warrior_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	trigger_if = {
+		limit = {
+			OR = {
+				has_trait = devoted
+				is_clergy = yes
+			}
+		}
+		OR = {
+			faith = { has_doctrine_parameter = clergy_can_fight }
+			culture = { has_cultural_parameter = culture_clergy_can_fight }
+			AND = {
+				$ARMY_OWNER$.culture = {
+					has_cultural_parameter = high_prowess_ignores_knight_restrictions
+				}
+				prowess >= 10
+			}
+		}
+	}
+	OR = {
+		AND = {
+			$ARMY_OWNER$.culture = {
+				has_cultural_parameter = high_prowess_ignores_knight_restrictions
+			}
+			prowess >= 10
+		}
+		has_trait = order_member # Order Members will fight for their faith even if their faith says no
+		NOT = {
+			has_trait = blind
+		}
+	}
+	is_ai = yes
+}
+
+can_be_commander_basic_trigger = {
+	is_alive = yes
+	is_adult = yes
+
+	NOT = { has_trait = pregnant } 
+	NOT = { has_trait = infirm } 
+	age >= 20 #Fine with not making knights be older as there are historical examples of people being knighted at 16 (though very rare) but less so for the person actually leading the army
+	
+	NOR = {
+		has_trait = incapable
+		AND = {
+			OR = {
+				has_trait = devoted
+				is_clergy = yes
+			}
+			NOR = {
+				has_trait = order_member # Order Members will fight for their faith even if their faith says no
+				faith = { has_doctrine_parameter = clergy_can_fight }
+				culture = { has_cultural_parameter = culture_clergy_can_fight }
+			}
+		}
+	}
+
+	OR = { # You can always lead your own armies
+		this = $ARMY_OWNER$
+		can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	}
+
+	trigger_if = {
+		limit = { $ARMY_OWNER$ = { is_ai = yes } }
+		is_ai = yes
+	}
+}
