@@ -75,12 +75,17 @@ make_tributary = {
 
 define_tributary = {
 	# Setup suzerain variables
-	$SUZERAIN$ = {
+
+	$SUZERAIN2$ = {
+		save_scope_as = new_suzerain2
 		if = {
 			limit = {
 				NOT = { has_variable = suzerain }
 			}
-			set_variable = suzerain
+			set_variable = {
+				name = suzerain
+				value = flag:yes
+			}
 		}
 
 		switch = {
@@ -107,7 +112,10 @@ define_tributary = {
 
 	$TRIBUTARY$ = {
 		# Store suzerain scope
-		set_variable = { name = my_suzerain value = $SUZERAIN$ }
+		set_variable = { 
+			name = my_suzerain 
+			value = scope:new_suzerain2
+		}
 
 		# Store tributary type
 		# Useful for localisation and similar customisation
@@ -164,32 +172,30 @@ define_tributary = {
 		set_variable = {
 			name = can_call_to_war_tributary
 			value = $CAN_CALL_TO_WAR_TRIBUTARY_FLAG$
-		}
-		
-		#### TODO: REMOVE IF TYPICAL DOESN'T WANT THIS STUFF
-		#primary_title = { set_color_from_title = prev.var:my_suzerain.primary_title }
+		}		
 	}
 
 	#calulate income
-	$SUZERAIN$ = {
+	$SUZERAIN2$ = {
 		if = {
 			limit = {
 				exists = var:cash_display #if it exists then every other also must exist 
 			}
 			every_in_list = {
 				variable = all_tributaries
+				save_scope_as = temp_tributary_scope
 				prev = {
 					change_variable = {
 						name = cash_display
-						add = { value = prev.monthly_character_income multiply = prev.var:tribute_gold_percent }
+						add = { value = scope:temp_tributary_scope.monthly_character_income multiply = scope:temp_tributary_scope.var:tribute_gold_percent }
 					}
 					change_variable = {
 						name = prestige_display
-						add = prev.var:monthly_prestige_suzerain
+						add = scope:temp_tributary_scope.var:monthly_prestige_suzerain
 					}
 					change_variable = {
 						name = piety_display
-						add = prev.var:monthly_piety_suzerain
+						add = scope:temp_tributary_scope.var:monthly_piety_suzerain
 					}
 				}
 			}
@@ -197,18 +203,19 @@ define_tributary = {
 		else = {
 			every_in_list = {
 				variable = all_tributaries
+				save_scope_as = temp_tributary_scope
 				prev = {
 					set_variable = {
 						name = cash_display
-						value = { value = prev.monthly_character_income multiply = prev.var:tribute_gold_percent }
+						value = { value = scope:temp_tributary_scope.monthly_character_income multiply = scope:temp_tributary_scope.var:tribute_gold_percent }
 					}
 					set_variable = {
 						name = prestige_display
-						value = prev.var:monthly_prestige_suzerain
+						value = scope:temp_tributary_scope.var:monthly_prestige_suzerain
 					}
 					set_variable = {
 						name = piety_display
-						value = prev.var:monthly_piety_suzerain
+						value = scope:temp_tributary_scope.var:monthly_piety_suzerain
 					}
 				}
 			}
@@ -226,7 +233,7 @@ pass_tributary_type_to_heir = {
 					TYPE = tributary_karling
 					TRIBUTARY = $TRIBUTARY$
 					SUZERAIN = $NEW_RULER$
-				}
+				}				
 			}
 			flag:china_tributary = {
 				make_tributary = {
@@ -236,11 +243,10 @@ pass_tributary_type_to_heir = {
 				}	
 			}
 			flag:permanent_tributary = {
-				make_tributary = {
-					TYPE = tributary_permanent
+				tributary_permanent = {
 					TRIBUTARY = $TRIBUTARY$
 					SUZERAIN = $NEW_RULER$
-				}
+				}	
 			}
 		}
 	}
@@ -257,17 +263,17 @@ ruler_offer_tribute_to_recipient_effect = {
 				TYPE = tributary_non_permanent
 				TRIBUTARY = scope:recipient
 				SUZERAIN = scope:actor
-			}
-		}
+			}				
+		}	
 		if = {
 			limit = {
 				scope:non_permanent_trib = yes
-			}
+			}	
 			make_tributary = {
 				TYPE = tributary_permanent
 				TRIBUTARY = scope:recipient
 				SUZERAIN = scope:actor
-			}
+			}					
 		}
 	}
 }
@@ -282,7 +288,7 @@ offer_tribute_effect = {
 				TYPE = tributary_non_permanent
 				TRIBUTARY = scope:recipient
 				SUZERAIN = scope:actor
-			}
+			}				
 		}	
 		if = {
 			limit = {
@@ -292,7 +298,7 @@ offer_tribute_effect = {
 				TYPE = tributary_permanent
 				TRIBUTARY = scope:recipient
 				SUZERAIN = scope:actor
-			}
+			}					
 		}
 	}
 }
@@ -336,10 +342,7 @@ unset_tributary = {
 		#can call to war Suzerain
 		#can call to war Tributary flags
 		remove_variable = can_declare_war_on_trib
-		remove_variable = can_call_to_war_suzerain
-		remove_variable = can_call_to_war_tributary
-		
-		#### TODO: REMOVE IF TYPICAL DOESN'T WANT THIS STUFF
-		#primary_title = { reset_color_effect = yes }
+		remove_variable = can_call_to_war_suzerain	
+		remove_variable = can_call_to_war_tributary	
 	}
 }

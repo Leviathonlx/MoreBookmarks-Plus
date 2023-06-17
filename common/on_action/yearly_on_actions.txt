@@ -443,6 +443,68 @@ yearly_global_pulse = {
 				}
 			}
 		}
+		
+		# Rabbinicism becomes Monogamous
+		if = {
+			limit = {
+				# Rabbi Gershom bans polygamy sometime in the 11th century
+				current_date > "1000.01.01"
+				# Make sure this hasn't happened already
+				faith:rabbinism = {
+					has_doctrine = doctrine_polygamy
+					NOT = {
+						has_variable = rabbinicism_accepted_monogamy
+						has_variable = rabbinicism_rejected_monogamy
+					}
+				}
+			}
+			religion:judaism_religion = {
+				every_faith = {
+					limit = {
+						has_doctrine = doctrine_polygamy
+						has_doctrine = temple_authority_rabbinic_doctrine
+					}
+					if = {
+						limit = {
+							exists = religious_head
+						}
+						if = {
+							limit = {
+								religious_head = { is_independent_ruler = no }
+								religious_head.top_liege.faith = this
+							}
+							religious_head.top_liege = { trigger_event = jewish_events.0001 }
+						}
+						else_if = {
+							limit = {
+								religious_head = { is_independent_ruler = no }
+								religious_head.liege.faith = this
+							}
+							religious_head.liege = { trigger_event = jewish_events.0001 }
+						}
+						else = {
+							religious_head = { trigger_event = jewish_events.0001 }
+						}
+					}
+					else_if = {
+						limit = {
+							any_player = { # Checking players is more performant than checking faith characters and limiting it to players
+								faith = prev
+							}
+						}
+						random_player = {
+							limit = { faith = prev }
+							trigger_event = jewish_events.0001
+						}
+					}
+					else = {
+						random_faith_character = {
+							trigger_event = jewish_events.0001
+						}
+					}
+				}
+			}
+		}
 	}
 	on_actions = {
 		inspiration_maintenance_global_pulse
@@ -780,6 +842,7 @@ five_year_everyone_pulse = {
 					is_married = no
 					is_lowborn = no
 					can_marry_trigger = yes
+					is_concubine = no 
 				}
 				
 				if = {
