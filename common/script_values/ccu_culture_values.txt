@@ -1,0 +1,480 @@
+﻿
+# Score for a given court language
+# Referenced by code!
+# Only used by the AI
+# Numbers get truncated; 10.3 and 10.4 is the same score
+# root = ruler
+# scope:target = ruler to copy language from
+# scope:my_language_counties = counties in the AI's realm with a culture with their native language
+# scope:their_language_counties = counties in the AI's realm with a culture with the target court language
+# scope:total_counties = counties in the AI's realm
+# scope:courts_with_language = how many royal courts use the same court language? Includes the target
+# scope:checking_native_language = are we scoring our own language?
+# See also the can_adopt_court_language scripted rule
+court_language_ai_score = {
+	add = scope:their_language_counties
+
+	# Bit of relative score for percentage too
+	add = {
+		value = scope:their_language_counties
+		multiply = 10
+		divide = scope:total_counties
+	}
+	if = {
+		limit = { scope:checking_native_language = no }
+		subtract = scope:my_language_counties
+	}
+
+	#Adjust for Court Grandeur.
+	#World religions primarily cares about other courts that share their faith.
+	add = {
+		value = 0
+		if = {	#Islamic rulers cares about islamic courts
+			limit = {
+				faith.religion = religion:islam_religion
+				scope:target.faith.religion = religion:islam_religion
+			}
+			add = {
+				value = scope:target.court_grandeur_current
+				if = { #Reduce further if not same faith
+					limit = {
+						NOT = { faith = scope:target.faith }
+					}
+					divide = 2
+				}
+			}
+		}
+		else_if = {	#Christian cares about other Christians - especially of the same faith
+			limit = {
+				faith.religion = religion:christianity_religion
+				scope:target.faith.religion = religion:christianity_religion
+			}
+			add = {
+				value = scope:target.court_grandeur_current
+				if = { #Reduce further if not same faith
+					limit = {
+						NOT = { faith = scope:target.faith }
+					}
+					divide = 3
+				}
+			}
+		}
+		else_if = {	#Eastern Faiths
+			limit = {
+				OR = {
+					faith.religion = religion:hinduism_religion
+					faith.religion = religion:buddhism_religion
+					faith.religion = religion:jainism_religion
+				}
+				OR = {
+					scope:target.faith.religion = religion:hinduism_religion
+					scope:target.faith.religion = religion:buddhism_religion
+					scope:target.faith.religion = religion:jainism_religion
+				}
+			}
+			add = {
+				value = scope:target.court_grandeur_current
+				if = { #Reduce further if not same Religion
+					limit = {
+						NOT = { faith.religion = scope:target.faith.religion }
+					}
+					divide = 2
+				}
+			}
+		}
+		else_if = { #Abrahamic religion matching vs non co-religionist - CGV Ignored
+			limit = {
+				OR = {
+					faith.religion = religion:islam_religion
+					faith.religion = religion:christianity_religion
+				}
+				NOT = { faith.religion = scope:target.faith.religion }
+			}
+			#Add nothing
+		}
+		else_if = { #Eastern religion matching vs non Eastern religion - CGV Ignored
+			limit = {
+				OR = {
+					faith.religion = religion:hinduism_religion
+					faith.religion = religion:buddhism_religion
+					faith.religion = religion:jainism_religion
+				}
+				NOR = {
+					scope:target.faith.religion = religion:hinduism_religion
+					scope:target.faith.religion = religion:buddhism_religion
+					scope:target.faith.religion = religion:jainism_religion
+				}
+			}
+			#Add nothing
+		}
+		else = { #Everyone else just cares about the Grandeur directly
+			add = scope:target.court_grandeur_current
+		}
+	}
+
+
+	#Increase from number of other courts using the Language (1.5 per court).
+	add = {
+		value = scope:courts_with_language
+		multiply = 1.5
+	}
+
+	#Arbitrary Geographical Bias - if our courts are not in the same region the score is divided by 2.
+	divide = {
+		value = 1
+		if = {
+			limit = {
+				OR = {
+					#Europe:
+					AND = {
+						capital_province = { geographical_region = world_europe_west_britannia }
+						NOT = { scope:target.capital_province = { geographical_region = world_europe_west_britannia } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_europe_west_germania }
+						NOT = { scope:target.capital_province = { geographical_region = world_europe_west_germania } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_europe_west_francia }
+						NOT = { scope:target.capital_province = { geographical_region = world_europe_west_francia } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_europe_west_iberia }
+						NOT = { scope:target.capital_province = { geographical_region = world_europe_west_iberia } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_europe_north }
+						NOT = { scope:target.capital_province = { geographical_region = world_europe_north } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_europe_south_east }
+						NOT = { scope:target.capital_province = { geographical_region = world_europe_south_east } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_europe_south_italy }
+						NOT = { scope:target.capital_province = { geographical_region = world_europe_south_italy } }
+					}
+					#South Asia:
+					AND = {
+						capital_province = { geographical_region = world_india_rajastan }
+						scope:target.capital_province = { geographical_region = world_india_rajastan }
+					}
+					AND = {
+						capital_province = { geographical_region = world_india_bengal }
+						NOT = { scope:target.capital_province = { geographical_region = world_india_bengal } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_india_deccan }
+						NOT = { scope:target.capital_province = { geographical_region = world_india_deccan } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_burma }
+						NOT = { scope:target.capital_province = { geographical_region = world_burma } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_himalaya }
+						NOT = { scope:target.capital_province = { geographical_region = world_himalaya } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_middle_east }
+						NOT = { scope:target.capital_province = { geographical_region = world_middle_east } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_middle_east_persia }
+						NOT = { scope:target.capital_province = { geographical_region = world_middle_east_persia } }
+					}
+					#Africa
+					AND = {
+						capital_province = { geographical_region = world_africa_north }
+						NOT = { scope:target.capital_province = { geographical_region = world_africa_north } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_africa_west }
+						NOT = { scope:target.capital_province = { geographical_region = world_africa_west } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_africa_east }
+						NOT = { scope:target.capital_province = { geographical_region = world_africa_east } }
+					}
+					#Central Asia
+					AND = {
+						capital_province = { geographical_region = world_steppe_west }
+						NOT = { scope:target.capital_province = { geographical_region = world_steppe_west } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_steppe_east }
+						NOT = { scope:target.capital_province = { geographical_region = world_steppe_east } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_tibet }
+						NOT = { scope:target.capital_province = { geographical_region = world_tibet } }
+					}
+				}
+			}
+			add = 1
+		}
+	}
+
+	# Prefer the status quo slightly. Needs to be last
+	if = {
+		limit = {
+			scope:checking_native_language = yes
+			has_court_language_of_culture = culture
+		}
+		multiply = 1.5
+	}
+	else_if = {
+		limit = {
+			scope:checking_native_language = no
+			has_same_court_language = scope:target
+		}
+		multiply = 1.5
+	}
+	
+	# CCU: Prefer not to switch from native language to very different languages
+	if = {
+		limit = {
+			scope:checking_native_language = yes
+			NOT = { culture = { has_same_language_family_as = { TARGET = scope:target.culture } } }
+		}
+		multiply = 0.6
+	}
+	else_if = {
+		limit = {
+			scope:checking_native_language = yes
+			NOT = { culture = { has_same_language_group_as = { TARGET = scope:target.culture } } }
+		}
+		multiply = 0.8
+	}
+	if = {
+		limit = {
+			scope:checking_native_language = yes
+			culture = { is_in_language_union_with = { TARGET = scope:target.culture } }
+		}
+		multiply = 1.2
+	}
+}
+
+# What cultural acceptance should two cultures start with?
+# root = culture 1
+# scope:culture = culture 2
+starting_culture_acceptance = {
+	# Cultures start with the baseline as their default acceptance
+	value = culture_acceptance_baseline
+
+	# Historical one-time increases to Cultural Acceptance (added on top of the baseline)
+	# Note: List the cultures in the same order as they appear in script in common\culture\cultures.
+	if = {
+		limit = { current_date >= 1060.1.1 } # Changes for the 1066 bookmark
+		if = {
+			limit = { # The Ghaznavids have ruled over Afghan land for a few generations - Let's help them keep it
+				this = culture:afghan
+				scope:culture = culture:turkish
+			}
+			add = 25
+		}
+		if = {
+			limit = { # The Ghaznavids have ruled over Punjabi land for some time - We don't want them to revolt too quickly
+				this = culture:punjabi
+				scope:culture = culture:turkish
+			}
+			add = 20
+		}
+	}
+}
+
+# What cultural acceptance should two cultures drift down towards if above?
+# root = culture 1
+# scope:culture = culture 2
+# this is calculated late in startup after history setup
+culture_acceptance_baseline = {
+	value = 0
+	if = {
+		limit = { # To stop errors in observe mode
+			exists = root
+			exists = scope:culture
+
+			# Set up some scopes we'll need
+			trigger_if = {
+				limit = {
+					culture_number_of_counties > 0
+				}
+				calc_culture_dominant_religion = { save_temporary_scope_as = our_religion }
+				calc_culture_dominant_faith = { save_temporary_scope_as = our_faith }
+			}
+			scope:culture = {
+				trigger_if = {
+					limit = {
+						culture_number_of_counties > 0
+					}
+					calc_culture_dominant_religion = { save_temporary_scope_as = their_religion }
+					calc_culture_dominant_faith = { save_temporary_scope_as = their_faith }
+				}
+			}
+		}
+		# Increase base acceptance for sharing the same heritage
+		if = {
+			limit = {
+				has_same_culture_heritage = scope:culture
+			}
+			add = {
+				value = 20 # please update CULTURE_PILLAR_TOOLTIP_HERITAGE_EFFECT if this number changes
+				desc = ACCEPTANCE_BASELINE_HERITAGE
+			}
+		}
+		# Increase base acceptance for sharing same language
+		if = {
+			limit = {
+				has_same_culture_language = scope:culture
+			}
+			add = {
+				value = 10 # please update CULTURE_PILLAR_TOOLTIP_LANGUAGE_EFFECT if this number changes
+				desc = ACCEPTANCE_BASELINE_LANGUAGE
+			}
+		}
+		# Increase base acceptance for sharing the same ethos if cultures are present within the same geographical area
+		if = {
+			limit = {
+				has_same_culture_ethos = scope:culture
+				OR = {
+					cultures_share_relevant_region_trigger = yes
+					#In case cultures are bordering each other in two different regions
+					any_culture_county = {
+						any_neighboring_county = {
+							culture = scope:culture
+						}
+					}
+				}
+			}
+			add = {
+				value = 10
+				desc = ACCEPTANCE_BASELINE_ETHOS
+			}
+		}
+		# General Faith acceptance modifiers
+		if = { # Same Religion
+			limit = {
+				exists = scope:our_religion
+				exists = scope:their_religion
+				scope:our_religion = scope:their_religion
+				root = {
+					any_culture_county = {
+						percent >= 0.5
+						religion = scope:our_religion
+					}
+				}
+				scope:culture = {
+					any_culture_county = {
+						percent >= 0.5
+						religion = scope:our_religion
+					}
+				}
+			}
+			add = {
+				value = 5
+				desc = ACCEPTANCE_BASELINE_RELIGION
+			}
+		}
+		if = { # Same exact Faith
+			limit = {
+				exists = scope:our_faith
+				exists = scope:their_faith
+				scope:our_faith = scope:their_faith
+				root = {
+					any_culture_county = {
+						percent >= 0.5
+						faith = scope:our_faith
+					}
+				}
+				scope:culture = {
+					any_culture_county = {
+						percent >= 0.5
+						faith = scope:our_faith
+					}
+				}
+			}
+			add = {
+				value = 10
+				desc = ACCEPTANCE_BASELINE_FAITH
+			}
+		}
+		if = { # Eastern faiths
+			limit = {
+				exists = scope:our_religion
+				exists = scope:their_religion
+				scope:our_religion = {
+					is_in_family = rf_eastern
+				}
+				scope:their_religion = {
+					is_in_family = rf_eastern
+				}
+
+				any_culture_county = {
+					percent >= 0.5
+					title_province = {
+						religion = {
+							is_in_family = rf_eastern
+						}
+					}
+				}
+				scope:culture = {
+					any_culture_county = {
+						percent >= 0.5
+						title_province = {
+							religion = {
+								is_in_family = rf_eastern
+							}
+						}
+					}
+				}
+			}
+			add = {
+				value = 5
+				desc = ACCEPTANCE_BASELINE_EASTERN_RELIGION
+			}
+		}
+		if = { # Pluralistic close faiths
+			limit = {
+				exists = scope:our_faith
+				exists = scope:their_faith
+				scope:our_faith = {
+					has_doctrine = doctrine_pluralism_pluralistic
+				}
+				scope:their_faith = {
+					has_doctrine = doctrine_pluralism_pluralistic
+				}
+				any_culture_county = {
+					percent >= 0.5
+					title_province = {
+						faith = {
+							has_doctrine = doctrine_pluralism_pluralistic
+						}
+					}
+				}
+				scope:culture = {
+					any_culture_county = {
+						percent >= 0.5
+						title_province = {
+							faith = {
+								has_doctrine = doctrine_pluralism_pluralistic
+							}
+						}
+					}
+				}
+				OR = {
+					cultures_share_relevant_region_trigger = yes
+					#In case cultures are bordering each other in two different regions
+					any_culture_county = {
+						any_neighboring_county = {
+							culture = scope:culture
+						}
+					}
+				}
+			}
+			add = {
+				value = 10
+				desc = ACCEPTANCE_BASELINE_CLOSE_PLURALISTS
+			}
+		}
+	}
+}
