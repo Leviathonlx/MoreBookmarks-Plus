@@ -1,0 +1,114 @@
+﻿#Communion & Denominations
+catholic_communion_nestorian_scripted_effect = {
+	root.faith = {
+		change_fervor = {
+			value = 5
+			desc = fervor_gain_changed_communion
+		}
+		remove_doctrine = special_doctrine_independent_communion
+		add_doctrine = special_doctrine_catholic_communion
+		remove_doctrine = christology_doctrine_nestorian
+		add_doctrine = christology_doctrine_diophysite
+	}
+
+	every_player = {
+		limit = {
+			NOT = { this = root }
+			OR = {
+				faith = root.faith
+				faith = faith:catholic
+			}
+		}
+		trigger_event = change_communion.0002
+	}
+
+	every_ruler = {
+		limit = {
+			faith.religion = root.faith.religion
+			NOT = { faith = root.faith }
+			NOT = { faith = faith:catholic }
+		}
+		trigger_event = change_communion.0003
+	}
+
+	every_player = {
+		limit = {
+			NOT = { faith.religion = root.faith.religion }
+		}
+		trigger_event = change_communion.0003
+	}
+
+	faith:catholic = {
+		change_fervor = {
+			value = 20
+			desc = fervor_gain_nestorians
+		}
+	}
+}
+
+restore_african_church_scripted_effect = {
+
+}
+
+new_mend_great_schism_scripted_effect = {
+	root.faith = {
+		if = { #If from obscure branch of Christianity, make it official.
+			limit = {
+				root.faith = { NOT = { has_doctrine = special_doctrine_ecumenical_christian } }
+			}
+			add_doctrine = special_doctrine_ecumenical_christian
+		}
+		change_fervor = {
+			value = 25
+			desc = fervor_gain_mended_schism
+		}
+	}
+	every_player = { #Notify all players of the same Faith.
+		limit = {
+			NOT = { this = root }
+			faith = root.faith.religion
+		}
+		trigger_event = change_communion.1002
+	}
+
+	every_player = { #Then notify all infidel players that might be around.
+		limit = {
+			OR = {
+				AND = { #Either filthy heretics...
+					faith.religion = root.faith.religion
+					faith = { NOT = { has_doctrine = special_doctrine_ecumenical_christian } }
+				}
+				NOT = { faith.religion = root.faith.religion } #...Or Heathens.
+			}
+		}
+		trigger_event = change_communion.1001
+	}
+	religion:christianity_religion = {
+		every_faith = { #All main branches of Christianity that were considered Ecumenical are now heresies.
+			custom = every_ecumenical_christian_faith.tt
+			limit = {
+				this.religion = root.faith.religion
+				has_doctrine = special_doctrine_ecumenical_christian
+				NOT = { this = root.faith }
+			}
+			remove_doctrine = special_doctrine_ecumenical_christian
+			change_fervor = {
+				value = -25
+				desc = fervor_loss_mended_schism
+			}
+		}
+	}
+
+	set_nickname_effect = { NICKNAME = nick_the_ecumenist }
+}
+
+roman_patriarchate_scripted_effect = {
+	if = {
+		every_faith = {
+			limit = {
+				religious_head = k_papacy
+				NOT = { this = root.faith }
+			}
+		}
+	}
+}

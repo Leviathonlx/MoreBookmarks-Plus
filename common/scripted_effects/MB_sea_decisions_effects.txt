@@ -1,0 +1,352 @@
+﻿
+# Override Vanilla
+
+#####
+
+convert_whole_realm_to_feudalism_effect = {
+
+	## What do we convert to?
+
+	# IF independent, take gov depending on doctrines
+	# If not independent, depends on liege
+		# IF liege is feudal, become feudal
+		# If liege is clan, become clan
+		# If liege is neither, depends on doctrines
+
+	## Not independent, take liege's gov
+	if = {
+		limit = {
+			is_independent_ruler = no
+		}
+		if = {
+			limit = {
+				liege = { has_government = clan_government }
+			}
+			change_government = clan_government
+		}
+		else_if = {
+			limit = {
+				liege = { has_government = feudal_government }
+			}
+			change_government = feudal_government
+		}
+		else_if = {
+			limit = {
+				liege = { has_government = mandala_government }
+			}
+			change_government = mandala_government
+		}
+		# Liege is tribal so take gov depending on faith doctrines
+		else = {
+			if = {
+				limit = {
+					faith = { has_doctrine = doctrine_right_to_rule_divine }
+				}
+				change_government = feudal_government
+			}
+			## doctrine_right_to_rule_rajadharma
+			else_if = {
+				limit = {
+					faith = { has_doctrine = doctrine_right_to_rule_rajadharma }
+				}
+				change_government = mandala_government
+			}
+			## doctrine_right_to_rule_material
+			else = {
+				change_government = clan_government
+			}
+		}
+	}
+	## Independent, take gov depending on faith doctrines
+	else = {
+		if = {
+			limit = {
+				faith = { has_doctrine = doctrine_right_to_rule_divine }
+			}
+			change_government = feudal_government
+		}
+		## doctrine_right_to_rule_rajadharma
+		else_if = {
+			limit = {
+				faith = { has_doctrine = doctrine_right_to_rule_rajadharma }
+			}
+			change_government = mandala_government
+		}
+		## doctrine_right_to_rule_material
+		else = {
+			change_government = clan_government
+		}
+	}
+
+	##General
+	#custom_tooltip = all_holding_will_change
+
+	capital_county = {
+		title_province = {
+			if = {
+				limit = { has_holding_type = tribal_holding }
+				set_holding_type = castle_holding
+				add_province_modifier = {
+					modifier = converted_to_feudal_county_modifier
+					years = 10
+				}
+			}
+		}
+	}
+
+
+	##Sort out new laws.
+	hidden_effect = {
+
+		#Nuke tribal authorities.
+		if = {
+			limit = { has_realm_law = tribal_authority_0 }
+			remove_realm_law = tribal_authority_0
+		}
+		if = {
+			limit = { has_realm_law = tribal_authority_1 }
+			remove_realm_law = tribal_authority_1
+		}
+		if = {
+			limit = { has_realm_law = tribal_authority_2 }
+			remove_realm_law = tribal_authority_2
+		}
+		if = {
+			limit = { has_realm_law = tribal_authority_3 }
+			remove_realm_law = tribal_authority_3
+		}
+		#Start off crown authorities.
+		if = {
+			limit = {
+				has_government = mandala_government
+				NOT = { has_realm_law = mandala_authority_0 }
+			}
+			add_realm_law_skip_effects = mandala_authority_0
+		}
+		else_if = {
+			limit = {
+				NOT = { has_realm_law = crown_authority_0 }
+			}
+			add_realm_law_skip_effects = crown_authority_0
+		}
+	}
+
+	#VASSAL EFFECTS
+	#Also convert every vassal.
+	hidden_effect = {
+		#Liege has taken clan, so become clan.
+		if = {
+			limit = {
+				has_government = clan_government
+			}
+			every_vassal = {
+				limit = { has_government = tribal_government }
+				change_government = clan_government
+				#Nuke tribal authorities.
+				if = {
+					limit = { has_realm_law = tribal_authority_0 }
+					remove_realm_law = tribal_authority_0
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_1 }
+					remove_realm_law = tribal_authority_1
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_2 }
+					remove_realm_law = tribal_authority_2
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_3 }
+					remove_realm_law = tribal_authority_3
+				}
+				if = {
+					limit = {
+						NOT = { has_realm_law = crown_authority_0 }
+					}
+					add_realm_law_skip_effects = crown_authority_0
+				}
+			}
+		}
+		#Liege has taken mandala, so become mandala.
+		if = {
+			limit = {
+				has_government = mandala_government
+			}
+			every_vassal = {
+				limit = { has_government = tribal_government }
+				change_government = mandala_government
+				#Nuke tribal authorities.
+				if = {
+					limit = { has_realm_law = tribal_authority_0 }
+					remove_realm_law = tribal_authority_0
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_1 }
+					remove_realm_law = tribal_authority_1
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_2 }
+					remove_realm_law = tribal_authority_2
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_3 }
+					remove_realm_law = tribal_authority_3
+				}
+				if = {
+					limit = {
+						NOT = { has_realm_law = mandala_authority_0 }
+					}
+					add_realm_law_skip_effects = mandala_authority_0
+				}
+			}
+		}
+		#Liege is not clan, become feudal.
+		else = {
+			every_vassal = {
+				limit = { has_government = tribal_government }
+				change_government = feudal_government
+				#Nuke tribal authorities.
+				if = {
+					limit = { has_realm_law = tribal_authority_0 }
+					remove_realm_law = tribal_authority_0
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_1 }
+					remove_realm_law = tribal_authority_1
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_2 }
+					remove_realm_law = tribal_authority_2
+				}
+				if = {
+					limit = { has_realm_law = tribal_authority_3 }
+					remove_realm_law = tribal_authority_3
+				}
+				if = {
+					limit = {
+						NOT = { has_realm_law = crown_authority_0 }
+					}
+					add_realm_law_skip_effects = crown_authority_0
+				}
+			}
+		}
+
+		every_vassal = {			
+			capital_county = {
+				every_county_province = {
+					barony = {
+						if = {
+							limit = { has_holding_type = tribal_holding }
+							set_holding_type = castle_holding
+							add_province_modifier = {
+								modifier = converted_to_feudal_county_modifier
+								years = 10
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+#####
+
+adopt_bureaucracy_effect = {
+
+	##Sort out new laws.
+	if = {
+		limit = {
+			OR = {
+				has_government = tribal_government
+				has_government = nomadic_government
+			}
+		}
+		capital_county = {
+			every_county_province = {
+				if = {
+					limit = { has_holding_type = tribal_holding }
+					set_holding_type = castle_holding
+					add_province_modifier = {
+						modifier = converted_to_feudal_county_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		change_government = chinese_government
+		#Start off crown authorities.
+		if = {
+			limit = {highest_held_title_tier = tier_empire}
+			add_realm_law_skip_effects = bureaucratic_authority_0
+		}
+		else = {
+			add_realm_law_skip_effects = bureaucratic_vassal_authority_0
+		}		
+		custom_tooltip = all_holding_will_change
+		hidden_effect = {
+			#Nuke tribal authorities.
+			if = {
+				limit = { has_realm_law = tribal_authority_0 }
+				remove_realm_law = tribal_authority_0
+			}
+			if = {
+				limit = { has_realm_law = tribal_authority_1 }
+				remove_realm_law = tribal_authority_1
+			}
+			if = {
+				limit = { has_realm_law = tribal_authority_2 }
+				remove_realm_law = tribal_authority_2
+			}
+			if = {
+				limit = { has_realm_law = tribal_authority_3 }
+				remove_realm_law = tribal_authority_3
+			}
+		}
+	}
+
+	#VASSAL EFFECTS
+	#Also convert every vassal.
+	hidden_effect = {
+		#Liege has taken clan, so become clan.
+		every_vassal = {
+			limit = {
+				OR = {
+					has_government = tribal_government
+					has_government = nomadic_government
+				}
+			}
+			#Nuke tribal authorities.
+			if = {
+				limit = { has_realm_law = tribal_authority_0 }
+				remove_realm_law = tribal_authority_0
+			}
+			if = {
+				limit = { has_realm_law = tribal_authority_1 }
+				remove_realm_law = tribal_authority_1
+			}
+			if = {
+				limit = { has_realm_law = tribal_authority_2 }
+				remove_realm_law = tribal_authority_2
+			}
+			if = {
+				limit = { has_realm_law = tribal_authority_3 }
+				remove_realm_law = tribal_authority_3
+			}
+			capital_county = {
+				every_county_province = {
+					if = {
+						limit = { has_holding_type = tribal_holding }
+						set_holding_type = castle_holding
+						add_province_modifier = {
+							modifier = converted_to_feudal_county_modifier
+							years = 10
+						}
+					}
+				}
+			}
+			change_government = chinese_government
+			add_realm_law_skip_effects = bureaucratic_authority_0
+		}
+	}
+}
