@@ -34,15 +34,17 @@
 	}
 
 	is_valid_showing_failures_only = {
-		NOT = { scope:actor = { is_at_war_with = scope:recipient } }
+		vassal_retraction_standard_valid_showing_failures_only_trigger = yes
+		# Make sure this exactly matches "can_be_picked" section below
 		scope:recipient = {
 			custom_description = {
 				text = "basic_vassal_to_retract"
 				any_vassal = {
-					highest_held_title_tier > tier_barony # Make sure this exactly matches `can_be_picked` below
+					highest_held_title_tier > tier_barony
 				}
 			}
 		}
+		# Plus make sure there's a legal right to retract.
 		scope:actor = {
 			trigger_if = {
 				limit = { government_has_flag = government_is_tribal }
@@ -66,7 +68,13 @@
 			limit = { exists = scope:secondary_recipient }
 			scope:secondary_recipient = { is_busy_in_events_localised = yes }
 		}
-		scope:recipient = { NOT = { has_strong_hook = scope:actor } }
+		scope:recipient = {
+			NOT = { has_strong_hook = scope:actor }
+		}
+		custom_tooltip = {
+			text = cannot_take_overt_hostile_actions_against_diarch.tt
+			NOT = { scope:recipient ?= scope:actor.diarch }
+		}
 	}
 
 	can_send = {
@@ -80,6 +88,11 @@
 	
 	can_be_picked = {
 		highest_held_title_tier > tier_barony
+	}
+
+	cost = {
+		# Usually, this action is free, but during certain diarchies, we want it to cost.
+		prestige = liege_diarchy_surcharge_interaction_retract_vassal_interaction_value
 	}
 
 	on_send = {

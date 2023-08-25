@@ -149,6 +149,7 @@ form_portugal_decision_effects = {
 						has_primary_title = title:d_coimbra
 						has_primary_title = title:d_beja
 						has_primary_title = title:d_algarve
+						has_primary_title = title:d_ribatejo
 						primary_title = {
 							OR = {
 								de_jure_liege = title:k_portugal
@@ -162,6 +163,8 @@ form_portugal_decision_effects = {
 								de_jure_liege.de_jure_liege = title:d_beja
 								de_jure_liege = title:d_algarve
 								de_jure_liege.de_jure_liege = title:d_algarve
+								de_jure_liege = title:d_ribatejo
+								de_jure_liege.de_jure_liege = title:d_ribatejo
 							}
 						}
 					}
@@ -176,6 +179,7 @@ form_portugal_decision_effects = {
 						has_primary_title = title:d_coimbra
 						has_primary_title = title:d_beja
 						has_primary_title = title:d_algarve
+						has_primary_title = title:d_ribatejo
 						primary_title = {
 							OR = {
 								de_jure_liege = title:k_portugal
@@ -189,6 +193,8 @@ form_portugal_decision_effects = {
 								de_jure_liege.de_jure_liege = title:d_beja
 								de_jure_liege = title:d_algarve
 								de_jure_liege.de_jure_liege = title:d_algarve
+								de_jure_liege = title:d_ribatejo
+								de_jure_liege.de_jure_liege = title:d_ribatejo
 							}
 						}
 					}
@@ -204,38 +210,63 @@ form_portugal_decision_effects = {
 			}
 		}
 
-		#Flip Counties
-		every_county_in_region = {
-			region = portuguese_areas
-			random = {
-				chance = 80
-				set_county_culture = culture:portuguese
-				set_county_faith = root.faith
-			}
-		}
-		set_culture = culture:portuguese
+
+		#Covert self & court to portuguese culture
 		if = {
-			limit = { any_spouse = { is_landed = no } }
-			every_spouse = {
-				limit = {
-					is_landed = no
-				}
+			limit = { NOT = { has_culture = culture:portuguese } }
+		
+			every_courtier = {
+				limit = { has_same_culture_as = scope:portugal_former }
+				add_to_list = convert_list
+			}
+			#transfer over innovations from previous culture. 
+			culture:portuguese = {
+				hidden_effect = { reset_culture_creation_date = yes }
+				get_all_innovations_from = scope:portugal_former.culture
+			}
+			set_culture = culture:portuguese
+		
+			every_in_list = {
+				list = convert_list
+				custom = portguese_convert_list #This says "every subject in the realm" even though vassals and their courts only covert later, through event
 				set_culture = culture:portuguese
-				set_character_faith_with_conversion = root.faith
 			}
 		}
-		every_close_family_member = {
-			limit = { is_landed = no }
-			custom = all_unlanded_family_members
-			set_culture = culture:portuguese
-			set_character_faith_with_conversion = root.faith
+	
+	
+		# Convert Iberian counties to Portugese culture
+		every_sub_realm_county = {
+			limit = {
+				tier = tier_county
+				culture = { has_cultural_pillar = heritage_iberian }
+				OR = {
+					de_jure_liege = title:d_porto
+					de_jure_liege = title:d_coimbra
+					de_jure_liege = title:d_beja
+					de_jure_liege = title:d_algarve
+				}
+			}
+			custom = portugese_convert_iberian_counties
+			set_county_culture = culture:portuguese
 		}
-		culture:portuguese = {
-			add_random_innovation = culture_group_military
-			add_random_innovation = culture_group_civic
-			reset_culture_creation_date = yes
-			get_all_innovations_from = scope:portugal_former.culture
+		every_sub_realm_county = {
+			limit = {
+				tier = tier_county
+				NOT = { culture = { has_cultural_pillar = heritage_iberian } }
+				OR = {
+					de_jure_liege = title:d_porto
+					de_jure_liege = title:d_coimbra
+					de_jure_liege = title:d_beja
+					de_jure_liege = title:d_algarve
+				}
+			}
+			custom = portugese_convert_non_iberian_counties
+			random = {
+				chance = 50
+				set_county_culture = culture:portuguese
+			}
 		}
+		
 		if = { #Usurp if not held personally.
 			limit = {
 				NOT = { this = title:c_porto.holder }
@@ -288,6 +319,12 @@ form_portugal_decision_effects = {
 		}
 	}
 
+	#Innovations
+	culture:portuguese = {
+		add_random_innovation = culture_group_military
+		add_random_innovation = culture_group_civic
+	}
+	
 	#Prestige
 	add_prestige = major_prestige_gain	
 }
