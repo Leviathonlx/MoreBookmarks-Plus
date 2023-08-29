@@ -32,6 +32,7 @@ on_game_start_after_lobby = {
 		#
         ## Chinese gov setup
         sea_historical_chinese_vassal_contracts
+		add_right_to_rule_doctrines_on_game_start
 		BAP_ce_innovations_setup = yes
 		
     }
@@ -2711,6 +2712,109 @@ holy_site_fix = {
     }
 }
 
+add_right_to_rule_doctrines_on_game_start = {
+    effect = {
+        every_religion_global = {
+            ## Christian religions except insular get Divine Right
+            if = {
+                limit = { this = religion:christianity_religion }
+                every_faith = {
+                    limit = {
+                        NOR = {
+                            has_doctrine = doctrine_right_to_rule_material
+                            has_doctrine = doctrine_right_to_rule_divine
+                        }
+                    }
+
+                    if = {
+                        limit = { this = faith:insular_celtic }
+                        add_doctrine = doctrine_right_to_rule_material
+                    }
+                    else = {
+                        add_doctrine = doctrine_right_to_rule_divine
+                    }
+                }
+            }
+            ## Judaism and Zoroastrianism get Divine Right
+            else_if = {
+                limit = {
+                    OR = {
+                        this = religion:judaism_religion
+                        this = religion:zoroastrianism_religion
+                    }
+                }
+                every_faith = {
+                    limit = {
+                        NOR = {
+                            has_doctrine = doctrine_right_to_rule_material
+                            has_doctrine = doctrine_right_to_rule_divine
+                        }
+                    }
+
+                    add_doctrine = doctrine_right_to_rule_divine
+                }
+            }
+            else_if = {
+                limit = {
+                    OR = {
+                        this = religion:taoism_religion
+                    }
+                }
+                every_faith = {
+                    limit = {
+                        NOR = {
+                            has_doctrine = doctrine_right_to_rule_material
+                            has_doctrine = doctrine_right_to_rule_divine
+                        }
+                    }
+
+                    add_doctrine = doctrine_right_to_rule_divine
+                }
+            }
+            else_if = {
+                limit = {
+                    OR = {
+                        this = religion:hinduism_religion
+                        this = religion:jainism_religion
+                        this = religion:buddhism_religion
+                    }
+                }
+                every_faith = {
+                    limit = {
+                        NOR = {
+                            has_doctrine = doctrine_right_to_rule_material
+                            has_doctrine = doctrine_right_to_rule_divine
+                            has_doctrine = doctrine_right_to_rule_rajadharma
+                        }
+                    }
+
+                    if = {
+                        limit = { this = faith:mahayana }
+                        add_doctrine = doctrine_right_to_rule_divine
+                    }
+                    else = {
+                        add_doctrine = doctrine_right_to_rule_rajadharma
+                    }
+                }
+            }
+            ## Everyone else gets Material Right
+            else = {
+                every_faith = {
+                    limit = {
+                        NOT = { has_doctrine = unreformed_faith_doctrine }
+                        NOR = {
+                            has_doctrine = doctrine_right_to_rule_material
+                            has_doctrine = doctrine_right_to_rule_divine
+                        }
+                    }
+
+                    add_doctrine = doctrine_right_to_rule_material
+                }
+            }
+        }
+    }
+}
+
 sea_historical_chinese_vassal_contracts = {
     effect = {
         title:e_celestia_china.holder = {
@@ -2769,96 +2873,96 @@ sea_historical_chinese_vassal_contracts = {
             }
         }
 
-        # Give all bureaucratic rulers vassals
-        every_ruler = {
-            if = {
-                limit = {
-                    highest_held_title_tier > tier_county
-                    has_government = chinese_government
-                }
-
-                save_scope_as = liege
-
-                every_held_title = {
-                    limit = {
-                        tier = tier_county
-                        NOT = { this = scope:liege.capital_county }
-                        NOT = { this = title:c_luoyang_china }
-                    }
-
-                    save_scope_as = title
-
-                    if = {
-                        limit = {
-                            title_province = { has_holding_type = tribal_holding }
-                        }
-
-                        create_character = {
-                            faith = scope:title.faith
-                            culture = scope:title.culture
-                            gender = male
-                            dynasty = generate
-                            location = scope:title.title_province
-                            save_scope_as = new_character
-                        }
-
-                        create_title_and_vassal_change = {
-                            type = granted
-                            save_scope_as = change
-                            add_claim_on_loss = no
-                        }
-                        scope:title = {
-                            change_title_holder = {
-                                holder = scope:new_character
-                                change = scope:change
-                            }
-                        }
-                        resolve_title_and_vassal_change = scope:change
-
-                        hidden_effect = {
-                            scope:new_character = {
-                                change_government = tribal_government
-                                if = {
-                                    limit = { NOT = { has_realm_law = tribal_authority_0 } }
-                                    add_realm_law_skip_effects = tribal_authority_0
-                                }
-                            }
-                        }
-                    }
-                    else = {
-                        create_character = {
-                            template = pool_sea_game_start_stewardship
-                            faith = scope:liege.faith
-                            culture = scope:liege.culture
-                            gender = male
-                            dynasty = generate
-                            location = scope:title.title_province
-                            save_scope_as = new_character
-                        }
-
-                        create_title_and_vassal_change = {
-                            type = granted
-                            save_scope_as = change
-                            add_claim_on_loss = no
-                        }
-                        scope:title = {
-                            change_title_holder = {
-                                holder = scope:new_character
-                                change = scope:change
-                            }
-                        }
-                        resolve_title_and_vassal_change = scope:change
-
-                        hidden_effect = {
-                            scope:new_character = {
-                                change_government = chinese_government
-                                # add_realm_law_skip_effects = crown_authority_0
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        ## Give all bureaucratic rulers vassals
+        #every_ruler = {
+        #    if = {
+        #        limit = {
+        #            highest_held_title_tier > tier_county
+        #            has_government = chinese_government
+        #        }
+		#
+        #        save_scope_as = liege
+		#
+        #        every_held_title = {
+        #            limit = {
+        #                tier = tier_county
+        #                NOT = { this = scope:liege.capital_county }
+        #                NOT = { this = title:c_luoyang_china }
+        #            }
+		#
+        #            save_scope_as = title
+		#
+        #            if = {
+        #                limit = {
+        #                    title_province = { has_holding_type = tribal_holding }
+        #                }
+		#
+        #                create_character = {
+        #                    faith = scope:title.faith
+        #                    culture = scope:title.culture
+        #                    gender = male
+        #                    dynasty = generate
+        #                    location = scope:title.title_province
+        #                    save_scope_as = new_character
+        #                }
+		#
+        #                create_title_and_vassal_change = {
+        #                    type = granted
+        #                    save_scope_as = change
+        #                    add_claim_on_loss = no
+        #                }
+        #                scope:title = {
+        #                    change_title_holder = {
+        #                        holder = scope:new_character
+        #                        change = scope:change
+        #                    }
+        #                }
+        #                resolve_title_and_vassal_change = scope:change
+		#
+        #                hidden_effect = {
+        #                    scope:new_character = {
+        #                        change_government = tribal_government
+        #                        if = {
+        #                            limit = { NOT = { has_realm_law = tribal_authority_0 } }
+        #                            add_realm_law_skip_effects = tribal_authority_0
+        #                        }
+        #                    }
+        #                }
+        #            }
+        #            else = {
+        #                create_character = {
+        #                    template = pool_sea_game_start_stewardship
+        #                    faith = scope:liege.faith
+        #                    culture = scope:liege.culture
+        #                    gender = male
+        #                    dynasty = generate
+        #                    location = scope:title.title_province
+        #                    save_scope_as = new_character
+        #                }
+		#
+        #                create_title_and_vassal_change = {
+        #                    type = granted
+        #                    save_scope_as = change
+        #                    add_claim_on_loss = no
+        #                }
+        #                scope:title = {
+        #                    change_title_holder = {
+        #                        holder = scope:new_character
+        #                        change = scope:change
+        #                    }
+        #                }
+        #                resolve_title_and_vassal_change = scope:change
+		#
+        #                hidden_effect = {
+        #                    scope:new_character = {
+        #                        change_government = chinese_government
+        #                        # add_realm_law_skip_effects = crown_authority_0
+        #                    }
+        #                }
+        #            }
+        #        }
+        #    }
+        #}
     }
 }
 
