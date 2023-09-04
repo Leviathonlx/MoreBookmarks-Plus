@@ -1,4 +1,156 @@
 ﻿
+
+#############################################
+# Secure the High Kingdom of the North Sea	#
+# by Ewan Cowhig Croft						#
+#############################################
+
+secure_high_kingdom_north_sea_decision = {
+	picture = "gfx/interface/illustrations/decisions/fp1_decision_raise_runestone.dds"
+	major = yes
+
+	ai_check_interval = 120
+
+	desc = secure_high_kingdom_north_sea_decision_desc
+	selection_tooltip = secure_high_kingdom_north_sea_decision_tooltip
+
+	is_shown = {
+		#DLC check.
+		has_fp1_dlc_trigger = yes
+		#Standard filter checks.
+		is_landed = yes
+		exists = dynasty
+		OR = {
+			government_has_flag = government_is_tribal
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_clan
+		}
+		#Must be within the North/West Germanic cultural sphere.
+		OR = {
+			culture = { has_cultural_pillar = heritage_north_germanic }
+			culture = { has_cultural_pillar = heritage_west_germanic }
+		}
+		#Must be in the vague region.
+		any_held_title = {
+			tier = tier_county
+			title_province = {
+				OR = {
+					geographical_region = world_europe_west_britannia
+					geographical_region = world_europe_west_germania
+					geographical_region = world_europe_north
+				}
+			}
+		}
+		#Can't already be an empire.
+		highest_held_title_tier <= tier_kingdom
+		#Not repeatable.
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_secured_high_kingdom_north_sea
+			}
+		}
+		#Eliminate edge-cases where we've lost all territory in one of the component kingdoms.
+		title:k_england = { is_titular = no }
+		title:k_denmark = { is_titular = no }
+		title:k_norway = { is_titular = no }
+	}
+
+	is_valid = {
+		#Must be independent.
+		is_independent_ruler = yes
+		#Should have a decent prestige level.
+		prestige_level >= high_prestige_level
+		#Completely controls the core regions of their kingdoms.
+		completely_controls_region = dlc_fp1_region_core_north_sea
+		#Has ruled each kingdom for a very long time.
+		has_title = title:k_norway
+		has_title = title:k_england
+		has_title = title:k_denmark
+		title:k_norway = { title_held_years >= 30 }
+		OR = {
+			#Overall England or at least one of the major Saxon Kingdoms if it isn't unified
+			title:k_england = { title_held_years >= 30 }
+			title:k_northumberland = { title_held_years >= 30 }
+			title:k_wessex = { title_held_years >= 30 }
+			title:k_mercia = { title_held_years >= 30 }
+		}
+		
+		title:k_denmark = { title_held_years >= 30 }
+		#Just confirm that becoming an empire will prevent you from achieving this one.
+		highest_held_title_tier < tier_empire
+		#Must be in/adjacent to the Viking Age.
+		NOT = {
+			culture = { has_cultural_era_or_later = culture_era_high_medieval }
+		}
+		# If the Danelaw is still in existence, this must be resolved first.
+		trigger_if = {
+			limit = {
+				title:k_danelaw = { is_titular = no }
+			}
+			custom_description = {
+				text = secure_high_kingdom_north_sea_decision_solve_danelaw
+				always = no
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_alive = yes
+		not = { exists = involved_activity }
+		#Has to be around for the ceremony.
+		is_imprisoned = no
+		has_contagious_deadly_disease_trigger = no
+	}
+
+	effect = {
+		save_scope_as = founder
+		show_as_tooltip = { secure_high_kingdom_north_sea_scripted_effect = yes }
+		trigger_event = { id = fp1_major_decisions.0001 }
+		#Notify other players.
+		every_player = {
+			limit = {
+				capital_province = {
+					OR = {
+						geographical_region = world_europe_west
+						geographical_region = world_europe_north
+					}
+				}
+				#Obviously, we exempt scope:founder themselves.
+				NOT = { this = scope:founder }
+			}
+			#Vassal players get a separate event.
+			if = {
+				limit = {
+					any_liege_or_above = { this = scope:founder }
+				}
+				trigger_event = fp1_major_decisions.0002
+			}
+			#Everyone else within range gets a less personal version.
+			else = { trigger_event = fp1_major_decisions.0003 }
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_secured_high_kingdom_north_sea
+			}
+		}
+	}
+
+	cost = {
+		gold = 200
+		prestige = 1000
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
 #############################################
 # Found the Capital of the Rus'				#
 # by Ewan Cowhig Croft						#

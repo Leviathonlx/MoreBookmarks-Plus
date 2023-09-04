@@ -443,3 +443,272 @@ independence_tributary_war_cb = {
     }
 
 }
+
+tributary_punitive_war_cb = {
+    group = event
+    ai_only_against_neighbors = yes
+
+    should_invalidate = {
+    }
+
+    on_invalidated_desc = {
+    }
+
+    on_invalidated = {
+    }
+
+    on_declaration = {
+        on_declared_war = yes
+    }
+
+    on_victory_desc = {
+        desc = tributary_punitive_war_cb_victory_desc
+    }
+
+    on_victory = {
+        scope:attacker = { show_pow_release_message_effect = yes }
+        scope:attacker = {
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_gain }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_gain }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_gain }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_gain }
+            }
+        }
+        scope:defender = {
+
+            pay_short_term_gold = {
+                gold = 3
+                target = scope:attacker
+                yearly_income = yes
+            }
+
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_loss }
+            }
+
+            capital_county = {
+                add_county_modifier = { #Prevent the county from being sacked again, by anyone, for quite a while.
+                    modifier = recently_sacked_modifier
+                    years = 20
+                }
+                change_county_control = -10
+                change_development_progress = major_development_progress_loss   #Always deduct progress.
+                if = {  #If they don't have enough progress made, burn a level of development.
+                    limit = { development_towards_level_increase < major_development_progress_gain }
+                    change_development_level = -1
+                }
+            }
+        }
+
+        # Prestige for the attacker's war allies
+        add_from_contribution_attackers = {
+            prestige = {
+                value = major_prestige_value
+            }
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Prestige for the defender's war allies
+        add_from_contribution_defenders = {
+            prestige = {
+                value = major_prestige_value
+            }
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Truce
+        add_truce_attacker_victory_effect = yes
+    }
+
+    on_white_peace_desc = {
+        first_valid = {
+            triggered_desc = {
+                trigger = { scope:defender = { is_local_player = yes } }
+                desc = tributary_punitive_war_cb_white_peace_desc_defender
+            }
+            desc = tributary_punitive_war_cb_white_peace_desc
+        }
+    }
+
+    on_white_peace = {
+        scope:attacker = { show_pow_release_message_effect = yes }
+        # Prestige loss for the attacker
+        scope:attacker = {
+            add_prestige = {
+                value = minor_prestige_value
+                multiply = -1.0
+            }
+            stress_impact = {
+                ambitious = medium_stress_impact_gain
+                arrogant = medium_stress_impact_gain
+            }
+        }
+
+        # Prestige for the attacker's war allies
+        add_from_contribution_attackers = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Prestige for the defender's war allies
+        add_from_contribution_defenders = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        scope:defender = {
+            stress_impact = {
+                arrogant = medium_stress_impact_gain
+            }
+        }
+
+        add_truce_white_peace_effect = yes
+    }
+
+    on_defeat_desc = {
+        desc = tributary_punitive_war_cb_defeat_desc
+    }
+
+    on_defeat = {
+        scope:attacker = { show_pow_release_message_effect = yes }
+
+        # Prestige loss for the attacker
+        scope:attacker = {
+            pay_short_term_gold = {
+                gold = 3
+                target = scope:defender
+                yearly_income = yes
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_loss }
+            }
+        }
+
+        # Prestige for Defender
+        scope:defender = {
+            if = {
+                limit = { primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_gain }
+            }
+            if = {
+                limit = { primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_gain }
+            }
+            if = {
+                limit = { primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_gain }
+            }
+            if = {
+                limit = { primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_gain }
+            }
+
+        }
+
+        # Prestige for the attacker's war allies
+        add_from_contribution_attackers = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Prestige for the defender's war allies
+        add_from_contribution_defenders = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        add_truce_attacker_defeat_effect = yes
+
+        scope:attacker = {
+            save_temporary_scope_as = loser
+        }
+        on_lost_aggression_war_discontent_loss = yes
+    }
+
+    on_primary_attacker_death = inherit
+    on_primary_defender_death = inherit
+
+    attacker_allies_inherit = yes
+    defender_allies_inherit = yes
+
+    war_name = "TRIBUTARY_PUNITIVE_WAR_CB_NAME"
+    war_name_base = "TRIBUTARY_PUNITIVE_WAR_WAR_NAME_BASE"
+    cb_name = "TRIBUTARY_PUNITIVE_WAR_CB_NAME"
+    interface_priority = 80
+
+    ticking_war_score_targets_entire_realm = yes
+    attacker_ticking_warscore = 0
+    attacker_wargoal_percentage = 0.01
+    attacker_score_from_occupation_scale = 50
+    defender_score_from_occupation_scale = 50
+    attacker_score_from_battles_scale = 200
+    defender_score_from_battles_scale = 200
+
+    max_attacker_score_from_battles = 200
+    max_defender_score_from_battles = 200
+
+    max_ai_diplo_distance_to_title = 500
+
+    ai_score_mult = {
+        value = 1
+        # Holy War are limited to connected neighbour to limit big empire expansions over weak realms.
+        add = {
+            if = {
+                limit = {  religious_war_vassals_constraints = yes }
+                add = -1000
+            }
+        }
+    }
+}
+
+# seizes 3 years' income from the defender and frees the captives. Forced concubinage ends and marriages are annulled (with characters in the same realm). Prisoners are released. Freed characters will move to your court unless they are (still) the concubine or spouse of a landed character. Additionally, all freed characters will have a positive opinion modifier toward you as their saviour.
+# release_captives
