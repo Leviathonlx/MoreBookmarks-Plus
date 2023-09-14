@@ -37,6 +37,12 @@ select_local_animal_effect = {
 						scope:animal_location = { hunt_animal_deer_antelope_trigger = yes }
 						NOT = { exists = scope:dangerous_local_game }
 						NOT = { exists = scope:prowling_local_game }
+						scope:animal_location = {
+							OR = {
+								hunt_animal_deer_trigger = yes
+								hunt_animal_antelope_trigger = yes
+							}
+						}
 					}
 					hunt_activity_deer_game_effect = { PROVINCE = scope:animal_location }
 				}
@@ -100,6 +106,13 @@ select_local_animal_effect = {
 				10 = { # Wolf, Hyena, Lynx
 					trigger = {
 						NOT = { exists = scope:harmless_local_game }
+						scope:animal_location = {							
+							OR = {
+								hunt_animal_wolf_trigger = yes
+								hunt_animal_hyena_trigger = yes
+								hunt_animal_lynx_trigger = yes
+							}
+						}
 					}
 					random_list = {
 						10 = { # Wolf
@@ -132,7 +145,7 @@ select_local_animal_effect = {
 						}
 					}
 				}
-				0.5 = { # Hare
+				1 = { # Hare
 					trigger = {
 						NOT = { exists = scope:dangerous_local_game }
 						NOT = { exists = scope:prowling_local_game }
@@ -164,6 +177,13 @@ select_local_animal_effect = {
 						scope:animal_location = { hunt_animal_big_cat_trigger = yes }
 						NOT = { exists = scope:small_local_game }
 						NOT = { exists = scope:harmless_local_game }
+						scope:animal_location = {
+							OR = {
+								hunt_animal_lion_trigger = yes
+								hunt_animal_tiger_trigger = yes
+								hunt_animal_leopard_trigger = yes
+							}
+						}
 					}
 					random_list = {
 						5 = { # Lion
@@ -208,7 +228,7 @@ select_local_animal_effect = {
 						}
 					}
 				}
-				0.1 = { # Unicorn
+				1 = { # Unicorn
 					# they're nowhere
 					trigger = {
 						NOT = { exists = scope:small_local_game }
@@ -225,7 +245,7 @@ select_local_animal_effect = {
 						years = 3
 					}
 				}
-				0.1 = { # Dragon
+				1 = { # Dragon
 					trigger = {
 						NOT = { exists = scope:small_local_game }
 						NOT = { exists = scope:harmless_local_game }
@@ -244,6 +264,12 @@ select_local_animal_effect = {
 				}
 			}
 		}
+	}
+	if = {
+		limit = { NOT = { has_variable = animal_type } }
+		debug_log = "UNOP: select_local_animal_effect did not set an the variable 'animal_type' fallback on boar"
+		debug_log_scopes = yes
+		set_variable = { name = animal_type value = flag:boar years = 3 }		
 	}
 }
 
@@ -353,7 +379,13 @@ hunt_activity_standard_game_effect = {
 		}
 		30 = { # Deer/Antelope
 			trigger = {
-				$PROVINCE$ = { hunt_animal_deer_antelope_trigger = yes }
+				$PROVINCE$ = { 
+					hunt_animal_deer_antelope_trigger = yes
+					OR = {
+						hunt_animal_deer_trigger = yes
+						hunt_animal_antelope_trigger = yes
+					}
+				}
 			}
 			# Master of Hunt aptitude affects chance of managed game
 			hunt_activity_master_aptitude_positive_modifier = { LIEGE = root }
@@ -398,9 +430,25 @@ hunt_activity_standard_game_effect = {
 			set_variable = { name = animal_type value = flag:hare }
 		}
 	}
+	
+	if = {
+		limit = { NOT = { exists = var:animal_type } }
+		if = {
+			limit = { exists = scope:big_local_game }
+			debug_log = "Unop: hunt_activity_standard_game_effect did not set an animal_type ! fallback on boar (big game)"
+			debug_log_scopes = yes
+			set_variable = { name = animal_type value = flag:boar years = 3 }
+		}
+		else = {
+			debug_log = "Unop: hunt_activity_standard_game_effect did not set an animal_type ! fallback on hare"
+			debug_log_scopes = yes		
+			set_variable = { name = animal_type value = flag:hare years = 3 }
+		}
+	}
 }
 
 hunt_activity_deer_game_effect = {
+	save_scope_as = root_char_scope #Unop: As "root" directly can be either a "story cycle", an "activity" or a "character"
 	random_list = {
 		5 = { # Deer - Europe, Middle East, India, Steppe
 			trigger = {
@@ -421,7 +469,7 @@ hunt_activity_deer_game_effect = {
 					# Increase larger deer chance with management buildings
 					hunt_activity_game_building_modifier = { PROVINCE = $PROVINCE$ }
 					# Master of Hunt aptitude affects chance of managed game
-					hunt_activity_master_aptitude_positive_modifier = { LIEGE = root }
+					hunt_activity_master_aptitude_positive_modifier = { LIEGE = scope:root_char_scope }
 					if = {
 						limit = {
 							$PROVINCE$ = {
@@ -450,7 +498,7 @@ hunt_activity_deer_game_effect = {
 					# Increase larger deer chance with management buildings
 					hunt_activity_game_building_modifier = { PROVINCE = $PROVINCE$ }
 					# Master of Hunt aptitude affects chance of managed game
-					hunt_activity_master_aptitude_positive_modifier = { LIEGE = root }
+					hunt_activity_master_aptitude_positive_modifier = { LIEGE = scope:root_char_scope }
 					if = {
 						limit = {
 							$PROVINCE$ = {
@@ -488,7 +536,7 @@ hunt_activity_deer_game_effect = {
 					# Increase larger deer chance with management buildings
 					hunt_activity_game_building_modifier = { PROVINCE = $PROVINCE$ }
 					# Master of Hunt aptitude affects chance of managed game
-					hunt_activity_master_aptitude_positive_modifier = { LIEGE = root }
+					hunt_activity_master_aptitude_positive_modifier = { LIEGE = scope:root_char_scope }
 					if = {
 						limit = {
 							$PROVINCE$ = { hunt_animal_steppe_trigger = yes }
@@ -507,7 +555,9 @@ hunt_activity_deer_game_effect = {
 hunt_activity_dangerous_game_effect = {
 	random_list = {
 		15 = { # Wolf/Hyena/Lynx - Common
+			desc = unop_wolf_hyena_lynx
 			modifier = {
+				#exists = scope:small_local_game #Unop shouldn't this be small that prevent wolf tier from being selected ?
 				exists = scope:big_local_game
 				factor = 0
 			}
@@ -526,18 +576,21 @@ hunt_activity_dangerous_game_effect = {
 							}
 						}
 					}
+					desc = animal_type_wolf
 					set_variable = { name = animal_type value = flag:wolf years = 3 }
 				}
 				20 = { # Hyena
 					trigger = {
 						$PROVINCE$ = { hunt_animal_hyena_trigger = yes }
 					}
+					desc = animal_type_hyena
 					set_variable = { name = animal_type value = flag:hyena years = 3 }
 				}
 				5 = { # Lynx
 					trigger = {
 						$PROVINCE$ = { hunt_animal_lynx_trigger = yes }
 					}
+					desc = animal_type_lynx
 					set_variable = { name = animal_type value = flag:lynx years = 3 }
 				}
 			}
@@ -545,7 +598,13 @@ hunt_activity_dangerous_game_effect = {
 		5 = { # Lion/Tiger/Leopard - Occasional (outside Europe)
 			trigger = {
 				$PROVINCE$ = { hunt_animal_big_cat_trigger = yes }
+				OR = {
+					$PROVINCE$ = { hunt_animal_lion_trigger = yes }
+					$PROVINCE$ = { hunt_animal_tiger_trigger = yes }
+					$PROVINCE$ = { hunt_animal_leopard_trigger = yes }
+				}
 			}
+			desc = unop_lion_tiger_leopard
 			modifier = {
 				exists = scope:small_local_game
 				factor = 0
@@ -555,6 +614,7 @@ hunt_activity_dangerous_game_effect = {
 					trigger = {
 						$PROVINCE$ = { hunt_animal_lion_trigger = yes }
 					}
+					desc = animal_type_lion
 					modifier = {
 						factor = 5							
 						$PROVINCE$ = {
@@ -570,6 +630,7 @@ hunt_activity_dangerous_game_effect = {
 					trigger = {
 						$PROVINCE$ = { hunt_animal_tiger_trigger = yes }
 					}
+					desc = animal_type_tiger
 					modifier = {
 						factor = 5							
 						$PROVINCE$ = { terrain = jungle }
@@ -580,6 +641,7 @@ hunt_activity_dangerous_game_effect = {
 					trigger = {
 						$PROVINCE$ = { hunt_animal_leopard_trigger = yes }
 					}
+					desc = animal_type_leopard
 					modifier = {
 						factor = 0.5							
 						$PROVINCE$ = {
@@ -597,6 +659,7 @@ hunt_activity_dangerous_game_effect = {
 			trigger = {
 				$PROVINCE$ = { hunt_animal_bear_trigger = yes }
 			}
+			desc = animal_type_bear
 			modifier = {
 				exists = scope:small_local_game
 				factor = 0
@@ -607,6 +670,7 @@ hunt_activity_dangerous_game_effect = {
 			trigger = {
 				$PROVINCE$ = { hunt_animal_boar_trigger = yes }
 			}
+			desc = animal_type_boar
 			# they're everywhere, but Muslims and Jews wouldn't hunt them 
 			modifier = {
 				factor = 0
@@ -617,13 +681,20 @@ hunt_activity_dangerous_game_effect = {
 					}
 				}
 			}
+			modifier = {
+				exists = scope:small_local_game
+				factor = 0
+			}
 			set_variable = { name = animal_type value = flag:boar years = 3 }
 		}
 	}
+
 	if = {
 		limit = { NOT = { exists = var:animal_type } }
+		debug_log = "Unop: hunt_activity_dangerous_game_effect did not set an animal_type ! fallback on wolf"
+		debug_log_scopes = yes
 		set_variable = { name = animal_type value = flag:wolf years = 3 }
-	}  
+	}
 }
 
 hunt_activity_falconry_game_effect = {
@@ -764,6 +835,13 @@ hunt_activity_falconry_game_effect = {
 				}
 			}
 		}
+	}
+
+	if = {
+		limit = { NOT = { exists = var:animal_type } }
+		debug_log = "Unop: hunt_activity_falconry_game_effect did not set an animal_type ! fallback on duck"
+		debug_log_scopes = yes		
+		set_variable = { name = animal_type value = flag:duck years = 3 }
 	}
 }
 
@@ -906,11 +984,11 @@ hunt_activity_success_change_effect = {
 			}
 			set_variable = { name = hunt_success_chance_event value = 0 }
 		}
-		else = {
-			change_variable = {
-				name = hunt_success_chance_event
-				add = hunt_activity_success_$CHANGE$_value
-			}
+		  
+		change_variable = {
+			name = hunt_success_chance_event
+			add = hunt_activity_success_$CHANGE$_value
+	
 		}
 		set_variable = {
 			name = hunt_success_chance
@@ -1018,7 +1096,10 @@ hunt_individual_guest_awards_effect = {
 			}
 			trigger_if = {
 				limit = { is_clergy = yes }
-				faith = { has_doctrine_parameter = clergy_can_fight }
+				OR = {
+					faith = { has_doctrine_parameter = clergy_can_fight }
+					culture = { has_cultural_parameter = culture_clergy_can_fight }
+				}
 			}
 		}
 		if = {
@@ -1060,7 +1141,7 @@ hunt_individual_guest_awards_effect = {
 			add_trait_xp = {
 				trait = tourney_participant
 				track = horse
-				value = { 1 3 }
+				value = tournament_hastiludes_xp_gain_miniscule_value
 			}
 		}
 		if = {
@@ -1073,7 +1154,7 @@ hunt_individual_guest_awards_effect = {
 			add_trait_xp = {
 				trait = tourney_participant
 				track = bow
-				value = { 1 3 }
+				value = tournament_hastiludes_xp_gain_miniscule_value
 			}
 		}
 	}
@@ -1759,13 +1840,20 @@ hunt_animal_bow_kill_effect = {
 		add_trait_xp = {
 			trait = tourney_participant
 			track = bow
-			value = { 1 3 }
+			value = tournament_hastiludes_xp_gain_miniscule_value
 		}
 		hunter_progress_point_gain_effect = { CHANGE = 1 RANDOM_CHANGE = 1 } #Gives Hunter Lifestyle XP
 	}
 	else = {
 		hunter_progress_point_gain_effect = { CHANGE = 2 RANDOM_CHANGE = 1 } #Gives Hunter Lifestyle XP
 	}
+
+	if = {
+		limit = { NOT = { exists = scope:activity } }
+		debug_log = "UNOP: hunt_animal_bow_kill_effect activity no longer exists !?"
+		debug_log_scopes = yes
+	}
+
 	# Determine who could be wounded
 	scope:activity ?= {
 		random_attending_character = {
@@ -1778,7 +1866,7 @@ hunt_animal_bow_kill_effect = {
 		limit = {
 			scope:hunt_kill_death_chance = flag:no
 			exists = scope:hunt_ending
-			scope:activity = {
+			scope:activity ?= {
 				hunt_story_trigger = { STORY = chase }
 			}
 		}
@@ -1860,13 +1948,13 @@ hunt_animal_bow_kill_effect = {
 							title = hunt_kill_failure_melee_group
 							left_icon = scope:animal_slayer
 							right_icon = scope:injury_target
-							scope:activity = {
+							scope:activity ?= {
 								add_activity_log_entry = {
 									key = hunt_bow_log
 									score = 75
 									tags = { kill }
 									character = scope:animal_slayer
-									target = scope:injury_target
+									#target = scope:injury_target
 
 									# Effect
 									scope:animal_slayer = {
@@ -1874,10 +1962,24 @@ hunt_animal_bow_kill_effect = {
 										# Complete activity intent if relevant
 										hunt_complete_slay_beast_intent_effect = yes
 									}
-									if = {
-										limit = { exists = scope:injury_target }
+								}
+								if = {
+									limit = { exists = scope:injury_target }
+									add_activity_log_entry = {
+										key = hunt_melee_group_wounded_log
+										score = 75
+										tags = { kill }
+										character = scope:injury_target
+
+										# Effect
 										scope:injury_target = {
-											hunt_wound_apply_effect = { SEVERE = no }
+											if = { # Big animal injure big
+												limit = { hunt_animal_type_dangerous_trigger = { VAR = $VAR$ } }
+												hunt_wound_apply_effect = { SEVERE = yes }
+											}
+											else = { # Smol animal injure smol
+												hunt_wound_apply_effect = { SEVERE = no }
+											}
 										}
 									}
 								}
@@ -1920,7 +2022,7 @@ hunt_animal_bow_kill_effect = {
 			}
 		}
 	}
-	scope:activity = {
+	scope:activity ?= {
 		every_attending_character = {
 			limit = { is_ai = no }
 			trigger_event = hunt.1200
@@ -2364,8 +2466,9 @@ hunt_activity_sighting_master_effect = {
 					factor = 0
 					# Exclude clergy who don't fight
 					is_clergy = yes
-					NOT = {
+					NOR = {
 						faith = { has_doctrine_parameter = clergy_can_fight }
+						culture = { has_cultural_parameter = culture_clergy_can_fight }
 					}
 				}
 				modifier = {
@@ -2630,7 +2733,18 @@ hunt_wound_apply_effect = {
 		limit = { has_trait = wounded_2 }
 		add_trait_force_tooltip = wounded_2
 	}
-	else = { add_trait_force_tooltip = wounded_3 }
+	else_if = {
+		limit = { has_trait = wounded_3 }
+		add_trait_force_tooltip = wounded_3
+	}
+	else = {
+		#Unop: There is currently an issue where the activity log is showing this outcome instead of one of the previous...
+		if = {
+			limit = { NOT = { has_trait = wounded } }
+			add_trait_force_tooltip = wounded_1
+		}
+	}
+											   
 	add_character_flag = {
 		flag = recent_hunt_wound
 		weeks = 1
@@ -2869,7 +2983,7 @@ hunt_physician_treatment_effect = {
 				desc = hunt.4014.c.success
 				scope:host = {
 					send_interface_toast = {
-						title = hunt.4014.c.failure
+						title = hunt.4014.c.success
 						left_icon = scope:patient
 						right_icon = scope:physician
 						scope:patient = {
@@ -3332,10 +3446,12 @@ hunt_gift_trophy_opinion_effect = {
 			hunt_dharmic_pacificist_trigger = yes
 			NOT = { $RECIPIENT$ = scope:host }
 		}
-		reverse_add_opinion = {
-			target = scope:host
-			modifier = hunt_dharmic_mercy_opinion
-			opinion = -10
+		$RECIPIENT$ = {
+			reverse_add_opinion = {
+				target = scope:host
+				modifier = hunt_dharmic_mercy_opinion
+				opinion = -10
+			}
 		}
 	}
 	else_if = {
@@ -3344,11 +3460,13 @@ hunt_gift_trophy_opinion_effect = {
 				has_activity_option = { category = special_type option = hunt_type_legendary }
 			}
 		}
-		activity_improve_relations_intent_effect = {
-			CHARACTER = scope:host
-			REASON = friend_gave_hunt_trophy_reason
-			OPINION = 20
-			MODIFIER = hunt_gifted_trophy_opinion
+		scope:host = {
+			activity_improve_relations_intent_effect = {
+				CHARACTER = $RECIPIENT$
+				REASON = friend_gave_hunt_trophy_reason
+				OPINION = 20
+				MODIFIER = hunt_gifted_trophy_opinion
+			}
 		}
 	}
 	else_if = {
@@ -3364,11 +3482,13 @@ hunt_gift_trophy_opinion_effect = {
 				hunt_animal_type_predator_trigger = { VAR = scope:activity.var:animal_type }
 			}
 		}
-		activity_improve_relations_intent_effect = {
-			CHARACTER = scope:host
-			REASON = friend_gave_hunt_trophy_reason
-			OPINION = 5
-			MODIFIER = hunt_gifted_trophy_opinion
+		scope:host = {
+			activity_improve_relations_intent_effect = {
+				CHARACTER = $RECIPIENT$
+				REASON = friend_gave_hunt_trophy_reason
+				OPINION = 5
+				MODIFIER = hunt_gifted_trophy_opinion
+			}
 		}
 	}
 	else_if = {
@@ -3378,19 +3498,23 @@ hunt_gift_trophy_opinion_effect = {
 				hunt_activity_large_game_trigger = { VAR = var:animal_type }
 			}
 		}
-		activity_improve_relations_intent_effect = {
-			CHARACTER = scope:host
-			REASON = friend_gave_hunt_trophy_reason
-			OPINION = 15
-			MODIFIER = hunt_gifted_trophy_opinion
+		scope:host = {
+			activity_improve_relations_intent_effect = {
+				CHARACTER = $RECIPIENT$
+				REASON = friend_gave_hunt_trophy_reason
+				OPINION = 15
+				MODIFIER = hunt_gifted_trophy_opinion
+			}
 		}
 	}
 	else = {
-		activity_improve_relations_intent_effect = {
-			CHARACTER = scope:host
-			REASON = friend_gave_hunt_trophy_reason
-			OPINION = 10
-			MODIFIER = hunt_gifted_trophy_opinion
+		scope:host = {
+			activity_improve_relations_intent_effect = {
+				CHARACTER = $RECIPIENT$
+				REASON = friend_gave_hunt_trophy_reason
+				OPINION = 10
+				MODIFIER = hunt_gifted_trophy_opinion
+			}
 		}
 	}
 }
@@ -3398,10 +3522,10 @@ hunt_gift_trophy_opinion_effect = {
 hunt_complete_remove_sightings_effect = { # Remove sightings	
 	scope:activity = {
 		if = {
-			limit = {									  
+			limit = {
 				activity_location.county.var:sighting_owner ?= scope:host
-	 
-	
+  
+ 
 				OR = {
 					# Standard/dangerous
 					AND = {
@@ -3409,25 +3533,25 @@ hunt_complete_remove_sightings_effect = { # Remove sightings
 						activity_location.county = {
 							OR = {
 								has_county_modifier = hunt_sighting_standard_modifier
-									 
-	 
-	
+		  
+  
+ 
 								has_county_modifier = hunt_sighting_dangerous_modifier
 							}
 						}
 					}
 					# Falconry
-			 
+	
 					AND = {
 						has_activity_option = { category = special_type option = hunt_type_falconry }
-								
+		
 						activity_location.county = { has_county_modifier = hunt_sighting_falconry_modifier }
 					}
 				}
 			}
 			# Remove sighting and trackers
 			activity_location.county = { hunt_remove_sighting_effect = yes }
-															   
+				  
 		}
 		else_if = {
 			limit = {
@@ -3436,9 +3560,9 @@ hunt_complete_remove_sightings_effect = { # Remove sightings
 			}
 			# Create new sighting
 			activity_location.county = {
-						   
+		 
 				hunt_create_sighting_effect = {
-			  
+	 
 					TYPE = legendary
 					ANIMAL = scope:activity.var:animal_type
 					OWNER = scope:host
@@ -3745,9 +3869,10 @@ hunt_create_trophy_effect = {
 							hunt_activity_deer_game_trigger = { VAR = var:animal_type }
 							exists = scope:activity.var:female_quarry
 						}
-						NOT = {
-							has_activity_option = { category = special_type option = hunt_type_falconry }
-						}
+						# This is already check above, leftover code ?
+						#NOT = {
+						#	has_activity_option = { category = special_type option = hunt_type_falconry }
+						#}
 					}
 				}
 				create_artifact_animal_trinket_effect = {
@@ -3779,6 +3904,10 @@ hunt_create_trophy_effect = {
 					target = scope:newly_created_artifact
 				}
 			}
+		}
+		else = {
+			#debug_log = "UNOP: hunt_create_trophy_effect no trophy created"
+			#unop_log_hunt_activity_effect = yes
 		}
 	}
 }
