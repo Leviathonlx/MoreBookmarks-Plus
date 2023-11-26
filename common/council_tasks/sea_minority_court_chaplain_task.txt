@@ -183,6 +183,47 @@ task_conversion = {
 			}
 		}
 
+		# Faster conversion of Persian counties with the FP3 Promote Persian Scripture decision
+		if = {
+			limit = {
+				scope:councillor.liege = { 
+					has_character_modifier = fp3_promoted_persian_scripture_modifier 
+					is_ai = no #this is so that we don't get AI converting and homogenizing Persia too quickly
+				}
+				scope:county.culture = { has_cultural_pillar = heritage_iranian } 
+			}
+			multiply = {
+				value = promote_persian_scripture_conversion_modifier_value
+				desc = fp3_promote_persian_scripture_task_desc
+			}
+		}
+
+		# FP3 faster conversion struggle ending rewards
+		if = {
+			limit = {
+				exists = global_var:fp3_struggle_ending_assertion_school
+				switch = {
+					trigger = global_var:fp3_struggle_ending_assertion_school
+					flag:sunni = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_sunni_doctrine }
+					}
+					flag:shia = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_sunni_doctrine }
+					}
+					flag:muhakkima = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_muhakkima_doctrine }
+					}
+					flag:zandaqa = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_zandaqa_doctrine }
+					}
+				}
+			}
+			multiply = {
+				value = fp3_struggle_ending_conversion_modifier_value
+				desc = fp3_struggle_ending_conversion_modifier_desc
+			}
+		}
+
 		# Conversion speed game rules
 		if = {
 			limit = {
@@ -318,6 +359,21 @@ task_conversion = {
 								vassal_contract_has_flag = religiously_protected
 							}
 						}
+					}
+				}
+			}
+			trigger_if = {
+				limit = {	
+					AND = {
+						has_variable = cannot_be_converted_by_value
+						var:cannot_be_converted_by_value = scope:councillor_liege		
+					}
+				}
+				custom_tooltip = {
+					text = promised_to_not_convert_county	
+					NOR = {
+						has_variable = cannot_be_converted_by_value
+						var:cannot_be_converted_by_value = scope:councillor_liege	
 					}
 				}
 			}
@@ -524,6 +580,22 @@ task_conversion = {
 		}
 	}
 
+	on_start_task_county = {
+		# Message for vassals
+		scope:county = { save_scope_as = set_county }
+		trigger_event = {
+			id = court_chaplain_task.8000
+			days = 2 # To ensure it fires after the halted message
+		}
+	}
+
+	on_cancel_task_county = {
+		# Message for vassals
+		trigger_event = {
+			id = court_chaplain_task.8001
+			days = 1 # To ensure it does not fire at the same time as the finish message (both cancel and finish are fired on_finish_task_county)
+		}
+	}					 
 	on_finish_task_county = {
 		scope:councillor_liege = {
 			if = {

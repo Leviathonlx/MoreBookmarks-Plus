@@ -119,6 +119,9 @@ travel_danger_events.6000 = { #Animal attack
 				}
 			}
 		}
+		current_travel_plan = {
+			any_entourage_character = { count >= 1 }
+		}
 	}
 	cooldown = { months = 1 }
 
@@ -153,6 +156,7 @@ travel_danger_events.6000 = { #Animal attack
 			#Save travel leader
 			if = {
 				limit = {
+					exists = travel_leader	   
 					NOT = { travel_leader ?= scope:beast_victim }
 				}
 				travel_leader ?= { save_scope_as = travel_leader }
@@ -417,12 +421,26 @@ travel_danger_events.6010 = { #Siege
 					type = raid
 				}
 			}
-			NOT = {
-				any_army_in_location = { army_owner = root }
+		  
+			any_army_in_location = {
+				NOT = { army_owner = root }
+				exists = army_commander
+				OR = {
+					is_army_in_siege = yes
+					is_army_in_raid = yes
+				}
+			}
+			any_army_in_location = {
+				OR = {
+					is_army_in_siege = yes
+					is_army_in_raid = yes
+				}
+				exists = army_commander
+				save_temporary_scope_as = battle_army_1_temp
 			}
 		}
 	}
-	
+
 	weight_multiplier = {
 		base = 1
 	}
@@ -433,10 +451,13 @@ travel_danger_events.6010 = { #Siege
 			province_owner = { save_scope_as = siege_victim }
 			ordered_army_in_location = {
 				limit = {
+					NOT = { army_owner = root }
+					exists = army_commander
 					OR = {
 						is_army_in_siege = yes
 						is_army_in_raid = yes
 					}
+					exists = army_commander
 				}
 				order_by = army_size
 				save_scope_as = siege_army
@@ -691,13 +712,15 @@ travel_danger_events.6010 = { #Siege
 					}
 				}
 				else = { remove_short_term_gold = minor_gold_value }
-				if = {
-					limit = { any_entourage_character = { limit = { is_adult = yes } } }
-					random = {
-						chance = 50
-						custom_tooltip = travel_danger_events.6010.c.wound
-						hidden_effect = {
-							current_travel_plan = {
+				current_travel_plan = {
+					if = {
+						limit = {
+							any_entourage_character = { is_adult = yes }
+						}
+						random = {
+							chance = 50
+							custom_tooltip = travel_danger_events.6010.c.wound
+							hidden_effect = {
 								random_entourage_character = {
 									limit = { is_adult = yes }
 									weight = {
@@ -714,12 +737,14 @@ travel_danger_events.6010 = { #Siege
 									}
 									save_scope_as = woundee
 								}
-							}
-							send_interface_toast = {
-								title = travel_danger_events.6010.c.wound
-								left_icon = scope:woundee
-								scope:woundee = {
-									increase_wounds_effect = { REASON = battle }
+								root = {
+									send_interface_toast = {
+										title = travel_danger_events.6010.c.wound
+										left_icon = scope:woundee
+										scope:woundee = {
+											increase_wounds_effect = { REASON = battle }
+										}
+									}
 								}
 							}
 						}
@@ -880,14 +905,26 @@ travel_danger_events.6011 = { #Battal
 			NOT = {
 				any_army_in_location = { army_owner = root }
 			}
-			# Removes an occasional hoard of run-time errors.
-			any_army_in_location = { 
-				count >= 2
+													
+			any_army_in_location = {
+				is_army_in_combat = yes
 				exists = army_commander
+				save_temporary_scope_as = battle_army_1_temp
+			}
+			any_army_in_location = {
+				NOT = { this = scope:battle_army_1_temp }
+				is_army_in_combat = yes
+				exists = army_commander
+				army_owner ?= {
+					OR = {
+						is_at_war_with = scope:battle_army_1_temp.army_owner
+						any_hostile_raider = { this = scope:battle_army_1_temp.army_owner }
+					}
+				}
 			}
 		}
 	}
-	
+
 	weight_multiplier = {
 		base = 1
 	}
@@ -896,7 +933,10 @@ travel_danger_events.6011 = { #Battal
 		mp_delay_travel_plan = { DAYS = 90 }
 		location = {
 			ordered_army_in_location = {
-				limit = { is_army_in_combat = yes }
+				limit = { 
+					is_army_in_combat = yes
+					exists = army_commander
+				}
 				order_by = army_size
 				save_scope_as = battle_army_1
 				army_owner = { save_scope_as = battle_owner_1 }
@@ -905,6 +945,7 @@ travel_danger_events.6011 = { #Battal
 			ordered_army_in_location = {
 				limit = {
 					is_army_in_combat = yes
+					exists = army_commander
 					army_owner ?= {
 						OR = {
 							is_at_war_with = scope:battle_owner_1
@@ -1376,12 +1417,16 @@ travel_danger_events.6012 = { #Army
 					type = battle
 				}
 			}
+			any_army_in_location = {
+				exists = army_owner
+				exists = army_commander
+			}
 			NOT = {
 				any_army_in_location = { army_owner = root }
 			}
 		}
 	}
-	
+
 	weight_multiplier = {
 		base = 1
 	}
@@ -1390,6 +1435,10 @@ travel_danger_events.6012 = { #Army
 		mp_delay_travel_plan = { DAYS = 90 }
 		location = {
 			ordered_army_in_location = {
+				limit = {
+					NOT = { army_owner = root }
+					exists = army_commander
+				}
 				order_by = army_size
 				save_scope_as = army
 				army_owner = { save_scope_as = army_owner }
@@ -1610,33 +1659,44 @@ travel_danger_events.6012 = { #Army
 					}
 				}
 				else = { remove_short_term_gold = minor_gold_value }
-				random = {
-					chance = 50
-					custom_tooltip = travel_danger_events.6010.c.wound
-					hidden_effect = {
-						current_travel_plan = {
-							random_entourage_character = {
-								limit = { is_adult = yes }
-								weight = {
-									base = 1
-									modifier = { add = prowess }
-									modifier = {
-										add = 10
-										has_court_position = bodyguard_court_position
-									}
-									modifier = {
-										add = 10
-										is_knight_of = root
-									}
-								}
-								save_scope_as = woundee
+				if = {
+					limit = {
+						current_travel_plan = { 
+							any_entourage_character = {
+								is_adult = yes
 							}
 						}
-						send_interface_toast = {
-							title = travel_danger_events.6010.c.wound
-							left_icon = scope:woundee
-							scope:woundee = {
-								increase_wounds_effect = { REASON = battle }
+					}
+					random = {
+						chance = 50
+						custom_tooltip = travel_danger_events.6010.c.wound
+						hidden_effect = {
+							current_travel_plan = {
+								random_entourage_character = {
+									limit = { is_adult = yes }
+									weight = {
+										base = 1
+										modifier = { add = prowess }
+										modifier = {
+											add = 10
+											has_court_position = bodyguard_court_position
+										}
+										modifier = {
+											add = 10
+											is_knight_of = root
+										}
+									}
+									save_scope_as = woundee
+								}
+							   
+							}
+	   
+							send_interface_toast = {
+								title = travel_danger_events.6010.c.wound
+								left_icon = scope:woundee
+								scope:woundee = {
+									increase_wounds_effect = { REASON = battle }
+								}
 							}
 						}
 					}
@@ -1763,6 +1823,7 @@ travel_danger_events.6013 = { #Occupation
 		is_location_valid_for_travel_event_on_land = yes
 		location = {
 			exists = province_owner
+			province_owner != barony.barony_controller
 			travel_danger_type = {
 				travel_plan = root.current_travel_plan
 				type = occupation
@@ -1771,6 +1832,7 @@ travel_danger_events.6013 = { #Occupation
 				barony.barony_controller ?= root
 				any_army_in_location = { army_owner = root }
 			}
+			any_army_in_location = { exists = army_commander }
 		}
 	}
 	
@@ -2946,6 +3008,11 @@ travel_danger_events.6040 = { #Disease
 		current_travel_plan.days_travelled >= 15
 		is_adult = yes
 		is_healthy = yes
+		 NOR = {
+			has_trait = ill
+			has_trait = leper
+			has_trait = cancer
+		}
 		location = {
 			exists = province_owner
 			OR = {

@@ -507,6 +507,7 @@ scripted_trigger hold_court_1011_valid_neighbour_claimant_trigger = {
 	basic_is_available_ai = yes
 	has_court_event_flag = no
 	NOT = { is_courtier_of = root }
+	is_hostage = no			
 }
 
 # Claimant asks for your help in pushing their claim RIGHT NOW!!!
@@ -3019,7 +3020,7 @@ hold_court.3060 = {
 				court_event_character_flag_effect = yes
 			}
 		}
-		else = {
+		else_if = {
 			random_courtier = { 
 				limit = {  
 					hold_court_3060_replacement_candidate_trigger = yes
@@ -5993,6 +5994,30 @@ hold_court.4300 = {
 # 4400
 ##################################################
 
+scripted_trigger hold_court_4400_weapons_vassal_trigger = {
+	is_ai = yes
+	has_court_event_flag = no
+	OR = {
+		has_trait = reckless
+		number_of_commander_traits > 0
+		has_trait = wrathful
+		has_trait = lifestyle_blademaster
+		has_trait = paranoid
+		has_trait = sadistic
+	}
+}
+
+scripted_trigger hold_court_4400_safety_vassal_trigger = {
+	is_ai = yes
+	has_court_event_flag = no
+	OR = {
+		has_trait = craven
+		has_trait = just
+		has_trait = calm
+		has_trait = trusting
+		has_trait = compassionate
+	}
+}			
 # Vassals debate on open carry of weapons in towns
 hold_court.4400 = {
 	type = court_event
@@ -8442,7 +8467,7 @@ hold_court.4900 = {
 		stress_impact = {
 			humble = major_stress_gain
 		}
-		root.dynasty = { add_dynasty_prestige = medium_dynasty_prestige_gain }
+		root.dynasty ?= { add_dynasty_prestige = root.dynasty.medium_dynasty_prestige_gain }
 		hidden_effect = {
 			scope:suspicious_genealogist = {
 				death = {
@@ -8487,7 +8512,7 @@ hold_court.4900 = {
 				dynasty_prestige_level >= high_dynasty_prestige_level
 			}
 		}
-		root.dynasty = { add_dynasty_prestige = medium_dynasty_prestige_gain }
+		root.dynasty ?= { add_dynasty_prestige = root.dynasty.medium_dynasty_prestige_gain }
 		stress_impact = {
 			humble = major_stress_gain
 		}
@@ -8510,7 +8535,7 @@ hold_court.4900 = {
 				dynasty_prestige_level < low_dynasty_prestige_level 
 			}
 		}
-		root.dynasty = { add_dynasty_prestige = medium_dynasty_prestige_gain }
+		root.dynasty ?= { add_dynasty_prestige = root.dynasty.medium_dynasty_prestige_gain }
 		hidden_effect = {
 			scope:suspicious_genealogist = {
 				death = {
@@ -10439,6 +10464,7 @@ scripted_trigger hold_court_6000_valid_inspector_trigger = {
 		has_trait = education_stewardship_2
 		has_trait = education_stewardship_3
 		has_trait = education_stewardship_4
+		has_trait = education_stewardship_5							 
 		has_trait = administrator
 	}
 	NOR = {
@@ -12026,6 +12052,7 @@ hold_court.6040 = {
 					scope:antiquarian = {
 						OR = {
 							has_trait = education_learning_4
+							has_trait = education_learning_5		   
 							has_trait = intellect_good_3
 							has_trait = scholar
 							learning > 20
@@ -12091,6 +12118,7 @@ hold_court.6040 = {
 					factor = 0
 					OR = {
 						has_trait = education_learning_4
+						has_trait = education_learning_5			  
 						has_trait = intellect_good_3
 						has_trait = scholar
 						learning > 20
@@ -17236,7 +17264,7 @@ hold_court.6150 = {
 		name = hold_court.6150.c
 		scope:6150_preacher = {
 			death = {
-				death_reason = death_burned
+				death_reason = death_burned_witch
 				killer = root
 			}
 		}
@@ -23230,8 +23258,13 @@ hold_court.7030 = {
 				target = root
 				opinion = 35
 			}
-			set_relation_potential_friend = root
+			progress_towards_friend_effect = {
+				REASON = friend_gave_gold
+				CHARACTER = root
+				OPINION = default_friend_opinion
+			}
 		}
+
 
 		hidden_effect = {
 			if = { #Pockets the gold
@@ -34064,7 +34097,10 @@ scripted_trigger hold_court_8160_valid_hostile_scheme_trigger = {
 
 # Is the character a valid advocate of the victim?
 scripted_trigger hold_court_8160_valid_concerned_trigger = {
-	NOT = { this = root }
+	NOR = { 
+		this = root 
+		this = scope:accused
+	}
 	is_available_ai_adult = yes
 	top_liege = prev.top_liege # victim
 	NOT = {
@@ -42039,7 +42075,7 @@ hold_court.8240 = {
 							is_landed = yes 
 						} 
 					}
-					set_employer = scope:vassal_jealous
+					scope:vassal_jealous = { add_courtier = scope:yearn_target } 
 				}
 				else = {
 					if = {

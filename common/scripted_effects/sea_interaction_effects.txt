@@ -1,0 +1,298 @@
+﻿
+mandala_call_vassal_interaction_effect = {
+	scope:target = {
+		hidden_effect = {
+			set_called_to = scope:recipient
+		}
+		if = {
+			limit = {
+				is_attacker = scope:actor
+			}
+			add_attacker = scope:recipient
+		}
+		else = {
+			add_defender = scope:recipient
+		}
+	}
+}
+
+sell_prisoner_into_slavery_effect = {
+
+	$PRISONER$ = {
+		save_scope_as = victim
+	}
+
+	$JAILOR$ = {
+		save_scope_as = jailor
+		save_scope_as = imprisoner #Save this scope to show correct tyranny tooltip
+	}
+
+	show_as_tooltip = {
+		$PRISONER$ = {
+			custom_tooltip = SOLD_INTO_SLAVERY
+		}
+	}
+
+	scope:jailor = {
+		add_gold = 5
+
+		if = {
+			limit = { #Killing infidels is relaxing
+				has_trait = zealous
+				NOT = { scope:jailor.faith = scope:victim.faith }
+			}
+			stress_impact = {
+				zealous = minor_stress_impact_loss
+			}
+		}
+		if = {
+			limit = {
+				has_relation_rival = scope:victim
+			}
+			add_prestige = minor_prestige_gain
+			if = {
+				limit = {
+					NOR = {
+						has_trait = vengeful
+						has_trait = forgiving
+					}
+				}
+				add_stress = medium_stress_loss
+			}
+			else = {
+				stress_impact = {
+					vengeful = major_stress_impact_loss
+					forgiving = 0 #No stress reduction
+				}
+			}
+		}
+
+		#Kinslaying
+		add_kinslayer_trait_or_nothing_effect = { VICTIM = scope:victim }
+
+		#Tyranny
+		if = {
+			limit = {
+				exists = scope:victim.liege
+				NOT = { scope:victim.liege = scope:jailor }
+			}
+			scope:victim.liege = {
+				add_opinion = {
+					target = prev
+					modifier = enslaved_my_countryman_modifier
+				}
+			}
+		}
+	}
+
+	enslave_opinion_effect = { PRISONER = scope:victim JAILOR = scope:jailor }
+
+	hidden_effect = {
+		$PRISONER$ = {
+			death = {
+				death_reason = death_enslaved
+				killer = $JAILOR$
+			}
+		}
+	}
+}
+
+enslave_opinion_effect = {
+	$PRISONER$ = {
+		# Victim's family & spouse hates executioner
+		every_close_family_member = {
+			limit = { NOT = { this = $JAILOR$ } }
+			add_to_temporary_list = victim_family_list
+		}
+		every_spouse = {
+			limit = {
+				NOR = {
+					this = $JAILOR$
+					is_in_list = victim_family_list
+				}
+			}
+			add_to_temporary_list = victim_family_list
+		}
+
+		if = {
+			limit = {
+				any_in_list = {
+					list = victim_family_list
+					count > 0
+				}
+			}
+			every_in_list = {
+				list = victim_family_list
+				custom = all_close_family_and_spouses
+				add_opinion = {
+					target = $JAILOR$
+					modifier = enslaved_close_family_crime
+				}
+			}
+		}
+
+		# Victim's friends and lovers
+		every_relation = {
+			type = friend
+			limit = {
+				NOR = {
+					this = $PRISONER$
+					is_in_list = victim_family_list
+				}
+			}
+			add_to_list = victim_close_relations_list
+		}
+		every_relation = {
+			type = lover
+			limit = {
+				NOR = {
+					this = $PRISONER$
+					is_in_list = victim_family_list
+					is_in_list = victim_close_relations_list
+				}
+			}
+			add_to_list = victim_close_relations_list
+		}
+		if = {
+			limit = {
+				any_in_list = {
+					list = victim_close_relations_list
+					always = yes
+				}
+			}
+			every_in_list = {
+				list = victim_close_relations_list
+				custom = all_friends_and_lovers
+				add_opinion = {
+					target = $JAILOR$
+					modifier = enslaved_close_relation_opinion
+				}
+			}
+		}
+	}
+}
+
+# execute_opinion_effect
+headhunted_opinion_effect = {
+	$VICTIM$ = {
+		# Victim's family & spouse hates executioner
+		every_close_family_member = {
+			limit = { NOT = { this = $KILLER$ } }
+			add_to_temporary_list = victim_family_list
+		}
+		every_spouse = {
+			limit = {
+				NOR = {
+					this = $KILLER$
+					is_in_list = victim_family_list
+				}
+			}
+			add_to_temporary_list = victim_family_list
+		}
+
+		if = {
+			limit = {
+				any_in_list = {
+					list = victim_family_list
+					count > 0
+				}
+			}
+			if = {
+				limit = {
+					$KILLER$ = {
+						has_execute_reason = $VICTIM$
+					}
+				}
+				every_in_list = {
+					list = victim_family_list
+					custom = all_close_family_and_spouses
+					add_opinion = {
+						target = $KILLER$
+						modifier = headhunted_close_family
+					}
+				}
+			}
+			else = {
+				every_in_list = {
+					list = victim_family_list
+					custom = all_close_family_and_spouses
+					add_opinion = {
+						target = $KILLER$
+						modifier = headhunted_close_family_crime
+					}
+				}
+			}
+		}
+
+		# Victim's dynasty hates executioner
+		if = {
+			limit = {
+				exists = dynasty
+				exists = $KILLER$.dynasty
+				NOT = { dynasty = $KILLER$.dynasty }
+				NOT = {
+					$KILLER$ = {
+						has_execute_reason = $VICTIM$
+					}
+				}
+			}
+			dynasty = {
+				every_dynasty_member = {
+					limit = {
+						NOR = {
+							this = $VICTIM$
+							is_in_list = victim_family_list
+						}
+					}
+					custom = all_dynasty_members
+					add_to_temporary_list = victim_dynasty_list
+					add_opinion = {
+						target = $KILLER$
+						modifier = headhunted_dynasty_member
+					}
+				}
+			}
+		}
+
+		# Victim's friends and lovers
+		every_relation = {
+			type = friend
+			limit = {
+				NOR = {
+					this = $VICTIM$
+					is_in_list = victim_family_list
+					is_in_list = victim_dynasty_list
+				}
+			}
+			add_to_list = victim_close_relations_list
+		}
+		every_relation = {
+			type = lover
+			limit = {
+				NOR = {
+					this = $VICTIM$
+					is_in_list = victim_family_list
+					is_in_list = victim_dynasty_list
+					is_in_list = victim_close_relations_list
+				}
+			}
+			add_to_list = victim_close_relations_list
+		}
+		if = {
+			limit = {
+				any_in_list = {
+					list = victim_close_relations_list
+					always = yes
+				}
+			}
+			every_in_list = {
+				list = victim_close_relations_list
+				custom = all_friends_and_lovers
+				add_opinion = {
+					target = $KILLER$
+					modifier = headhunted_close_relation_opinion
+				}
+			}
+		}
+	}
+}

@@ -476,11 +476,45 @@ widget = {
 		}
 
 		vbox = {
+		
 			alwaystransparent = no
 			filter_mouse = all
-			margin_top = 15
-			margin_bottom = 20
 			visible = "[Not(IsGameViewOpen('barbershop'))]"
+			margin = { 5 10 }
+
+			Background = {
+				visible = "[And(Not(IsRightWindowOpen) , Not(IsGameViewOpen('barbershop')) )]"
+				texture = "gfx/interface/skinned/hud_maintab_bg_middle.dds"
+				spriteType = CorneredTiled
+				texture_density =  2
+				margin = { 0 -50 }
+			}
+
+			Background = {
+				visible = "[And(Not(IsRightWindowOpen) , Not(IsGameViewOpen('barbershop')) )]"
+				spriteType = CorneredStretched
+				spriteborder_top = 100
+				parentanchor = top|right
+				texture_density = 2
+				size = { 50 100 }
+				texture = "gfx/interface/skinned/hud_maintab_bg_top.dds"
+			}
+
+			Background = {
+				visible = "[And(Not(IsRightWindowOpen) , Not(IsGameViewOpen('barbershop')) )]"
+				spriteType = CorneredStretched
+				spriteborder_bottom = 100
+				parentanchor = top|right
+				texture_density = 2
+				size = { 50 100 }
+				texture = "gfx/interface/skinned/hud_maintab_bg_bottom.dds"
+			}
+			
+			#alwaystransparent = no
+			#filter_mouse = all
+			#margin_top = 15
+			#margin_bottom = 20
+			#visible = "[Not(IsGameViewOpen('barbershop'))]"
 
 			vbox = {
 				widget_hud_main_tab = {
@@ -841,6 +875,103 @@ widget = {
 					}						
 					}
 				}
+				widget_hud_main_tab = {
+					name = "tab_tax_jurisdiction"
+					datacontext = "[GetPlayer]"
+					enabled = "[Character.HasTaxSlots]"
+					visible = "[GetPlayer.GetGovernment.IsType( 'clan_government' )]"
+					
+					blockoverride "maintab_button"
+					{
+						texture = "gfx/interface/skinned/hud_maintab/maintab_tax_jurisdictions.dds"
+
+						onclick = "[ToggleGameViewData('manage_tax_slots', GetPlayer.GetID)]"
+						down = "[IsGameViewOpen('manage_tax_slots')]"
+
+						using = tooltip_ws
+						tooltipwidget = {
+							tax_jurisdictions_button_tooltip = {}
+						}
+
+						icon = {
+							size = { 100% 100% }
+							visible = "[GreaterThan_int32( GetPlayer.GetUnassignedVassalsCount, '(int32)0' )]"
+						  
+							texture = "gfx/interface/skinned/hud_maintab/maintab_tax_jurisdictions.dds"
+
+							glow = {
+								glow_radius = 8
+								using = Glow_Standard
+								using = Color_Red
+							}
+							state = {
+								name = a
+								next = b
+								alpha = 0.3
+								trigger_on_create = yes
+								duration = 1.2
+								using = Animation_Curve_Default
+							}
+
+							state = {
+								name = b
+								next = a
+								alpha = 0.5
+								duration = 0.6
+								using = Animation_Curve_Default
+							}
+						}
+
+						icon = {
+							visible = "[GreaterThan_int32( GetPlayer.GetUnassignedVassalsCount, '(int32)0' )]"
+							size = { 25 25 }
+							position = { -5 5}
+							texture = "gfx/interface/icons/symbols/icon_warning.dds"
+
+							icon = {
+								size = { 100% 100% }
+								alwaystransparent = yes
+								texture = "gfx/interface/icons/symbols/icon_warning.dds"
+
+								modify_texture = {
+									texture = "gfx/interface/icons/focuses/hud_icon_mask.dds"
+									blend_mode = alphamultiply
+								}
+
+								modify_texture = {
+									texture = "gfx/interface/colors/red.dds"
+									blend_mode = colordodge
+								}
+
+								state = {
+									name = a
+									next = b
+									alpha = 0
+									trigger_on_create = yes
+									duration = 1.2
+									using = Animation_Curve_Default
+								}
+
+								state = {
+									name = b
+									next = a
+									alpha = 0.8
+									duration = 0.6
+									using = Animation_Curve_Default
+								}
+							}
+						}
+					}
+				}
+				## Caliph window
+
+				button = {
+					onclick = "[GetVariableSystem.Toggle('caliph_window')]"
+					texture = "gfx/interface/icons/faith/united_islam.dds"
+					visible = "[And(EqualTo_string(GetPlayer.GetFaith.GetReligion.GetNameNoTooltip, Localize('islam_religion')), EqualTo_string(GetPlayer.GetGovernment.GetName, GetGovernment('caliphate_government').GetName))]"
+					size = {45 45}
+					tooltip = "Caliphate Managment"
+				}	
 			}
 		}
 
@@ -3103,6 +3234,30 @@ widget = {
 					}
 				}
 			}
+			flowcontainer = {
+				name = "chinese_hud"
+				parentanchor = vcenter
+				ignoreinvisible = yes
+			
+				flowcontainer = {
+					ignoreinvisible = yes
+					visible = "[Not(IsObserver)]"
+			
+					button = {
+						name = "oe_hud_widget_china_office"
+						datacontext = "[GetScriptedGui('is_china_government')]"
+						visible = "[And( Not(IsObserver), ScriptedGui.IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End) )]"
+						# visible = "[Not(IsRightWindowOpen)]"
+						texture = "gfx/interface/icons/china_symbol_frame.dds"
+						onclick = "[GetVariableSystem.Toggle( 'china_office_toggle' )]"
+						onclick = "[ToggleGameViewData('council_window', GetPlayer.GetID)]"
+						onclick = "[AccessCouncilWindow.SetLiegeCouncil]"
+						onclick = "[AccessCouncilWindow.Close]"
+						size = { 60 60 }
+						tooltip = "CHINESE_HUD_TOOLTIP"
+					}
+				}
+			}		
 		}
 
 		## Map Modes
@@ -5195,7 +5350,7 @@ types HUD
 						tooltip = "[Character.GetDomainLimitTooltip]"
 						using = tooltip_ne
 
-						onclick = "[ToggleGameView('my_realm')]"
+						onclick = "[ToggleGameViewData('my_realm', 'domain')]"
 
 						background = {
 							visible = "[GreaterThan_int32( Character.GetDomainSize, Character.GetDomainLimit )]"
@@ -5370,6 +5525,61 @@ types HUD
 
 			position = { -36 50 }
 			alpha = 0
+		}
+	}
+
+	type tax_jurisdictions_button_tooltip = widget {
+		alwaystransparent = no
+		datacontext = "[GetPlayer]"
+
+		vbox = {
+			using = Background_Tooltip
+			spacing = 10
+			margin = { 20 10 }
+			parentanchor = right|vcenter
+			text_single = {
+				text = "TAX_JURISDICTIONS_BUTTON"
+				layoutpolicy_horizontal = expanding
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				visible = "[GreaterThan_int32( Character.GetUnassignedVassalsCount, '(int32)0' )]"
+
+				icon = {
+					size = { 25 25 }
+					texture = "gfx/interface/icons/symbols/icon_warning.dds"
+				}
+
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					margin_left = 10
+
+					text_single = {
+						visible = "[GreaterThan_int32( Character.GetTaxSlotsWithoutTaxCollectorCount, '(int32)0' )]"
+						layoutpolicy_horizontal = expanding
+						text = "TAX_SLOT_OVERVIEW_WINDOW_TAX_SLOTS_WARNING"
+						default_format = "#N"
+						max_width = 320
+					}
+
+					text_single = {
+						layoutpolicy_horizontal = expanding
+						text = "TAX_SLOT_OVERVIEW_WINDOW_UNASSIGNED_VASSALS_WARNING"
+						default_format = "#N"
+						max_width = 320
+					}
+
+					text_single = {
+						visible = "[Not( Character.HasTaxSlots )]"
+						layoutpolicy_horizontal = expanding
+						text = "NO_TAX_SLOT_AVAILABLE"
+						default_format = "#N"
+						max_width = 320
+					}
+				}
+			}
+			expand = {}
 		}
 	}
 }

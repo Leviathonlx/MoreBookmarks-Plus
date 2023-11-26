@@ -337,6 +337,44 @@ imprison_interaction = {
 			}
 			scope:actor = { remove_character_flag = flag_hostile_actions_disabled_delay }
 		}
+		# If we're a clan this interaction affects unity
+		if = { # If you don't have an imprisonment reason, and the target is landed, you lose more unity
+			limit = {
+				NOT = { scope:actor = { has_imprisonment_reason = scope:recipient } }
+				scope:recipient = { is_landed = yes }
+			}
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = major_unity_loss
+				DESC = clan_unity_imprison.desc
+				REVERSE_NON_HOUSE_TARGET = no
+			}
+		}
+		else_if = { # If you don't have an imprisonment reason, and the target is unlanded, you lose slightly less unity
+			limit = {
+				NOT = {
+					scope:actor = { has_imprisonment_reason = scope:recipient }
+					scope:recipient = { is_landed = yes }
+				}
+			}
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = medium_unity_loss
+				DESC = clan_unity_imprison.desc
+				REVERSE_NON_HOUSE_TARGET = no
+			}
+		}
+		else = { # If you have a valid reason, you lose only a tiny bit of unity (criminal or not, they are still family)
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = minor_unity_loss
+				DESC = clan_unity_imprison.desc
+				REVERSE_NON_HOUSE_TARGET = no
+			}
+		}										  
 	}
 		
 	on_decline = {
@@ -568,6 +606,46 @@ imprison_interaction = {
 			}
 			scope:actor = { remove_character_flag = flag_hostile_actions_disabled_delay }
 		}
+		# If we're a clan this interaction affects unity
+		if = { # If you don't have an imprisonment reason, and the target is landed, you lose more unity
+			limit = {
+				NOT = {
+					scope:actor = { has_imprisonment_reason = scope:recipient }
+				}
+				scope:recipient = { is_landed = yes }
+			}
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = major_unity_loss
+				DESC = clan_unity_imprison.desc
+				REVERSE_NON_HOUSE_TARGET = no
+			}
+		}
+		else_if = { # If you don't have an imprisonment reason, and the target is unlanded, you lose slightly less unity
+			limit = {
+				NOT = {
+					scope:actor = { has_imprisonment_reason = scope:recipient }
+					scope:recipient = { is_landed = yes }
+				}
+			}
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = medium_unity_loss
+				DESC = clan_unity_imprison.desc
+				REVERSE_NON_HOUSE_TARGET = no
+			}
+		}
+		else = { # If you have a valid reason, you lose only a tiny bit of unity (criminal or not, they are still family)
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = miniscule_unity_loss
+				DESC = clan_unity_imprison.desc
+				REVERSE_NON_HOUSE_TARGET = no
+			}
+		}										  
 	}
 
 	auto_accept = no
@@ -862,6 +940,9 @@ imprison_interaction = {
 			desc = THUG_REASON_HIGH
 			add = accolade_imprisonment_chance_value_high
 		}
+		evaluate_action_decreasing_house_unity = {
+			VALUE = 100
+		}									
 	}
 
 	# AI
@@ -1112,8 +1193,11 @@ imprison_interaction = {
 
 		# Agenda impact
 		modifier = {
-			any_character_struggle = {
-				involvement = involved
+			scope:recipient = {
+				is_important_or_vip_struggle_character = yes
+				any_character_struggle = {
+					involvement = involved
+				}
 			}
 			add = {
 				value = 0
@@ -1140,5 +1224,83 @@ imprison_interaction = {
 				}
 			}
 		}
-	}	
+		modifier = {
+			scope:recipient = {
+				has_trait = fp3_struggle_supporter
+				any_character_struggle = {
+					involvement = involved
+				}
+			}
+			add = {
+				value = 0
+				if = {
+					limit = {
+						scope:actor = {
+							any_character_struggle = {
+								phase_has_catalyst = catalyst_imprison_supporter
+							}
+							has_trait = fp3_struggle_detractor
+						}
+					}
+					add = 200
+				}
+				else_if = {
+					limit = {
+						scope:actor = {
+							any_character_struggle = {
+								phase_has_catalyst = catalyst_imprison_supporter
+							}
+						}
+					}
+					add = -100
+				}
+			}
+		}
+		modifier = {
+			scope:recipient = {
+				has_trait = fp3_struggle_detractor
+				any_character_struggle = {
+					involvement = involved
+				}
+			}
+			add = {
+				value = 0
+				if = {
+					limit = {
+						scope:actor = {
+							any_character_struggle = {
+								phase_has_catalyst = catalyst_imprison_detractor
+							}
+							has_trait = fp3_struggle_supporter
+						}
+					}
+					add = 200
+				}
+				else_if = {
+					limit = {
+						scope:actor = {
+							any_character_struggle = {
+								phase_has_catalyst = catalyst_imprison_detractor
+							}
+						}
+					}
+					add = -100
+				}
+			}
+		}
+
+		modifier = { # Avoid triggering Tyranny wars mid-grand activity
+			factor = 0
+			scope:actor = {
+				has_ongoing_grand_activity_trigger = yes
+			}
+			scope:recipient = {
+				highest_held_title_tier >= tier_county
+			}
+		}
+		
+		evaluate_action_decreasing_house_unity = {
+			VALUE = 100
+		}
+	}
 }

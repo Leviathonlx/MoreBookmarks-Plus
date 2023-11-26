@@ -6,7 +6,7 @@ types DynastyTreeView
 
 		widget = {
 			name = "background"
-			visible = "[And( Not( Or( DynastyTreeItem.IsFromOtherDynasty, DynastyTreeItem.GetCharacter.GetHouse.IsFoundingHouse )), ObjectsEqual( DynastyTreeItem.GetCharacter.Self, DynastyTreeItem.GetCharacter.GetHouse.GetFounder.Self ))]"
+			visible = "[Or(And(Not(GetGlobalVariable('EDT_is_loaded').IsSet), DynastyTreeItem.IsCadetBranchFounder), And(GetGlobalVariable('EDT_is_loaded').IsSet, And( Not( Or( DynastyTreeItem.IsFromOtherDynasty, DynastyTreeItem.GetCharacter.GetHouse.IsFoundingHouse )), ObjectsEqual( DynastyTreeItem.GetCharacter.Self, DynastyTreeItem.GetCharacter.GetHouse.GetFounder.Self ))))]"
 			size = { 100% 100% }
 			alwaystransparent = yes
 
@@ -330,7 +330,7 @@ types DynastyTreeView
 						elide = right
 
 						align = center
-						text = "[DynastyTreeItem.GetCharacter.GetShortUINameNotMeNoTooltip]"
+						text = "DynastyTreeItemUniUIGetShortUINameNotMeNoTooltip"
 						default_format = "#high"
 						fontsize = 20
 						fontsize_min = 10
@@ -348,7 +348,7 @@ types DynastyTreeView
 
 					coa_house_small = {
 						parentanchor = hcenter
-						visible = "[And( Not( Or( DynastyTreeItem.IsFromOtherDynasty, DynastyTreeItem.GetCharacter.GetHouse.IsFoundingHouse )), ObjectsEqual( DynastyTreeItem.GetCharacter.Self, DynastyTreeItem.GetCharacter.GetHouse.GetFounder.Self ))]"
+						visible = "[Or(And(Not(GetGlobalVariable('EDT_is_loaded').IsSet), DynastyTreeItem.IsCadetBranchFounder), And(GetGlobalVariable('EDT_is_loaded').IsSet, And( Not( Or( DynastyTreeItem.IsFromOtherDynasty, DynastyTreeItem.GetCharacter.GetHouse.IsFoundingHouse )), ObjectsEqual( DynastyTreeItem.GetCharacter.Self, DynastyTreeItem.GetCharacter.GetHouse.GetFounder.Self ))))]"
 						datacontext = "[DynastyTreeItem.GetCharacter.GetHouse]"
 					}
 
@@ -413,7 +413,7 @@ types DynastyTreeView
 		name = "edt_house_tree_item"
 		layoutpolicy_vertical = expanding
 
-		visible = "[And(DynastyHouse.HasBeenFounded, Or(ObjectsEqual( DynastyHouse.GetFounder.GetFather.GetHouse, Character.GetHouse ), ObjectsEqual( DynastyHouse.GetFounder.GetMother.GetHouse, Character.GetHouse )))]"
+		visible = "[Or(And(Not(GetGlobalVariable('EDT_is_loaded').IsSet), DynastyTreeItem.IsCadetBranchFounder), And(GetGlobalVariable('EDT_is_loaded').IsSet, And( Not( Or( DynastyTreeItem.IsFromOtherDynasty, DynastyTreeItem.GetCharacter.GetHouse.IsFoundingHouse )), ObjectsEqual( DynastyTreeItem.GetCharacter.Self, DynastyTreeItem.GetCharacter.GetHouse.GetFounder.Self ))))]"
 
 		block "parents" {}
 
@@ -538,18 +538,18 @@ types DynastyTreeView
 			visible = "[Not( ObjectsEqual( DynastyHouse.GetFounder.Self, DynastyHouse.GetHeadOfHouse.Self ))]"
 
 			button_standard = {
-				onclick = "[OpenGameViewData( 'dynasty_tree_view', DynastyHouse.GetFounder.GetID )]"
+				onclick = "[OpenDynastyTreeViewFromCharacter( DynastyHouse.GetFounder.GetID )]"
 
-				text = "[DynastyHouse.GetFounder.GetShortUINameNotMeNoTooltip]"
+				text = "DynastyTreeUniUIFounderGetShortUINameNotMeNoTooltip"
 
 				size = { 145 30 }
 			}
 
 			button_standard ={
 				visible = "[DynastyHouse.HasHeadOfHouse]"
-				onclick = "[OpenGameViewData( 'dynasty_tree_view', DynastyHouse.GetHeadOfHouse.GetID )]"
+				onclick = "[OpenDynastyTreeViewFromCharacter( DynastyHouse.GetHeadOfHouse.GetID )]"
 
-				text = "[DynastyHouse.GetHeadOfHouse.GetShortUINameNotMeNoTooltip]"
+				text = "DynastyTreeUniUIHeadGetShortUINameNotMeNoTooltip"
 
 				size = { 145 30 }
 			}
@@ -557,8 +557,8 @@ types DynastyTreeView
 
 		button_standard = {
 			visible = "[ObjectsEqual( DynastyHouse.GetFounder.Self, DynastyHouse.GetHeadOfHouse.Self )]"
-			onclick = "[OpenGameViewData( 'dynasty_tree_view', DynastyHouse.GetFounder.GetID )]"
-			text = "[DynastyHouse.GetFounder.GetShortUINameNotMeNoTooltip]"
+			onclick = "[OpenDynastyTreeViewFromCharacter( DynastyHouse.GetFounder.GetID )]"
+			text = "DynastyTreeUniUIFounderGetShortUINameNotMeNoTooltip"
 			size = { 145 70 }
 		}
 
@@ -832,6 +832,7 @@ window = {
 	}
 
 	button = {
+		visible = "[GetGlobalVariable('EDT_is_loaded').IsSet]"
 		onclick = "[GetVariableSystem.Toggle( 'edt_gui_houselist_hidden' )]"
 		position = { 33 20 }
 		size = { 40 40 }
@@ -844,7 +845,7 @@ window = {
 	}
 
 	margin_widget = {
-		visible = "[And( Not( GetVariableSystem.Exists('edt_gui_houselist_hidden')), DynastyTreeView.GetDynasty.MakeScope.GetVariable('edt_selected_house').IsSet )]"
+		visible = "[And(GetGlobalVariable('EDT_is_loaded').IsSet, And( Not( GetVariableSystem.Exists('edt_gui_houselist_hidden')), DynastyTreeView.GetDynasty.MakeScope.GetVariable('edt_selected_house').IsSet ))]"
 		parentanchor = top|left
 		widgetanchor = top|left
 		margin = { 33 20 }
@@ -987,7 +988,7 @@ window = {
 
 
 	margin_widget = {
-		visible = "[Not( Or( GetVariableSystem.Exists('edt_gui_houselist_hidden'), DynastyTreeView.GetDynasty.MakeScope.GetVariable('edt_selected_house').IsSet ))]"
+		visible = "[And(GetGlobalVariable('EDT_is_loaded').IsSet, Not( Or( GetVariableSystem.Exists('edt_gui_houselist_hidden'), DynastyTreeView.GetDynasty.MakeScope.GetVariable('edt_selected_house').IsSet )))]"
 		parentanchor = top|left
 		widgetanchor = top|left
 		margin = { 33 20 }

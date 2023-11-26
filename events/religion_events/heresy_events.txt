@@ -34,11 +34,11 @@ heresy.0001 = {
 
 	immediate = {
 		#Look for a valid Duke of this Faith to be our heresiarch.
-		random_ruler = {
+		random_faith_ruler = {
 			#Prefer Dukes with only 1 or 2 Duchies.
 			limit = {
 				is_valid_heresiarch = yes
-				highest_held_title_tier = 3
+				highest_held_title_tier = tier_duchy
 				any_held_title = {
 					tier = tier_duchy
 					count < 3 #Limit the influence of Mega-Dukes
@@ -47,7 +47,7 @@ heresy.0001 = {
 			#Then accept any valid Duke.
 			alternative_limit = {
 				is_valid_heresiarch = yes
-				highest_held_title_tier = 3
+				highest_held_title_tier = tier_duchy
 			}
 			#If no Dukes exist, accept a Count.
 			alternative_limit = {
@@ -448,6 +448,47 @@ heresy.0001 = {
 							}
 						}
 					}
+					# FP3 - Khurramism more likely in Iran
+					modifier = {
+						factor = regional_heresy_factor
+						this = faith:khurramism
+						scope:heretic_capital = {
+							title_province = {						
+								geographical_region = world_middle_east_persia									
+							}
+						}
+					}
+					# FP3 - Behafaridism more likely in Iran
+					modifier = {
+						factor = regional_heresy_factor
+						this = faith:zurvanism #Behafaridism
+						scope:heretic_capital = {
+							title_province = {						
+								geographical_region = world_middle_east_persia
+							}
+						}
+					}
+					# FP3 - The "arch heresy", aka Mazdakism more likely in Iran
+					modifier = {
+						factor = regional_heresy_factor
+						this = faith:mazdakism
+						scope:heretic_capital = {
+							title_province = {						
+								geographical_region = world_middle_east_persia
+							}
+						}
+					}
+					# FP3 - Manicheanism more likely in Iran
+					modifier = {
+						factor = regional_heresy_factor
+						this = faith:manichean
+						scope:heretic_capital = {
+							title_province = {						
+								geographical_region = world_middle_east_persia
+							}
+						}
+					}
+					
 					# Fraticelli more likely in Italy and Armenia
 					modifier = {
 						factor = regional_heresy_factor
@@ -683,7 +724,7 @@ heresy.0001 = {
 					# Tewahedos only in African heritage provinces
 					modifier = {
 						factor = 0
-						this = faith:same_language_group_choice_factor
+						this = faith:ethiopian_orthodox
 						scope:heretic_capital = {
 							NOR = {
 								culture = { has_cultural_pillar = heritage_somalian }
@@ -1032,11 +1073,11 @@ heresy.0005 = {
 
 	immediate = {
 		#Look for a valid Duke of this Faith to be our heresiarch.
-		random_ruler = {
+		random_faith_ruler = {
 			#Prefer Dukes with only 1 or 2 Duchies.
 			limit = {
 				faith = root
-				highest_held_title_tier = 3
+				highest_held_title_tier = tier_duchy
 				any_held_title = {
 					tier = tier_duchy
 					count < 3 #Limit the influence of Mega-Dukes
@@ -1050,7 +1091,7 @@ heresy.0005 = {
 			#Then accept any valid Duke.
 			alternative_limit = {
 				faith = root
-				highest_held_title_tier = 3
+				highest_held_title_tier = tier_duchy
 				is_capable_adult_ai = yes
 				is_landed = yes
 				exists = capital_county
@@ -1060,7 +1101,7 @@ heresy.0005 = {
 			#If no Dukes exist, accept a Count.
 			alternative_limit = {
 				faith = root
-				highest_held_title_tier = 2
+				highest_held_title_tier = tier_county
 				is_capable_adult_ai = yes
 				is_landed = yes
 				exists = capital_county
@@ -1644,74 +1685,80 @@ heresy.0011 = {
 
 	immediate = {
 		clear_saved_scope = convert_ruler
-		random_ruler = {
-			limit = {
-				highest_held_title_tier > 1 #No Barons, they're inconsequential.
-				faith = scope:origin_faith
-				highest_held_title_tier < 4 #No AI Kings/Emperors, they're too powerful.
-				is_landed = yes
-				exists = capital_county
-				is_capable_adult_ai = yes
-				no_heretical_hof_faith_0011_trigger = yes
-				recently_converted_faith_trigger = no # As amusing as it may be, rulers shouldn't 'flip-flop' between Faiths, so we need to enforce a cooldown on heresy conversions.
-			}
+		scope:origin_faith = {
+			random_faith_ruler = {
+				limit = {
+					highest_held_title_tier > tier_barony #No Barons, they're inconsequential.
+							  
+					highest_held_title_tier < tier_kingdom #No AI Kings/Emperors, they're too powerful.
+					is_landed = yes
+					exists = capital_county
+					is_capable_adult_ai = yes
+					no_heretical_hof_faith_0011_trigger = yes
+					recently_converted_faith_trigger = no # As amusing as it may be, rulers shouldn't 'flip-flop' between Faiths, so we need to enforce a cooldown on heresy conversions.
+				}
 
-			weight = {
-				base = 1000 # 100% weight
+				weight = {
+					base = 1000 # 100% weight
 
-				#Rulers of counties close to the Heresiarch's are more likely to join their Heresy.
-				modifier = {
-					add = -900 # 10% weight
-					capital_county = {
-						squared_distance = {
-							target = scope:heretic_capital
-							value > squared_distance_small
+					#Rulers of counties close to the Heresiarch's are more likely to join their Heresy.
+					modifier = {
+						add = -900 # 10% weight
+						capital_county = {
+							squared_distance = {
+								target = scope:heretic_capital
+								value > squared_distance_small
+							}
 						}
 					}
-				}
-				modifier = {
-					add = -90 # 1% weight
-					capital_county = {
-						squared_distance = {
-							target = scope:heretic_capital
-							value > squared_distance_medium
+					modifier = {
+						add = -90 # 1% weight
+						capital_county = {
+							squared_distance = {
+								target = scope:heretic_capital
+								value > squared_distance_medium
+							}
 						}
 					}
-				}
-				modifier = {
-					add = -10 # 0% weight (fallback only)
-					capital_county = {
-						squared_distance = {
-							target = scope:heretic_capital
-							value > squared_distance_large
-						}	
+	 
+					modifier = {
+						add = -10 # 0% weight (fallback only)
+						capital_county = {
+							squared_distance = {
+								target = scope:heretic_capital
+								value > squared_distance_large
+							}	
+						}
+					}
+
+					#Rulers of the same(or similar) culture are more likely to join Heresies.
+					modifier = {
+						factor = 3
+						culture = { has_same_culture_heritage = scope:heretic_ruler.culture }
+					}
+					modifier = {
+						factor = 4
+						has_same_culture_as = scope:heretic_ruler
+					}
+
+					#Counts are less likely to join a heresy than a Duke (though it's still possible if they're nearby)
+					modifier = {
+						factor = 0.25
+						highest_held_title_tier = 2
 					}
 				}
 
-				#Rulers of the same(or similar) culture are more likely to join Heresies.
-				modifier = {
-					factor = 3
-					culture = { has_same_culture_heritage = scope:heretic_ruler.culture }
+				save_scope_as = convert_ruler
+				primary_title = {
+					save_scope_as = convert_title
+																		  
 				}
-				modifier = {
-					factor = 4
-					has_same_culture_as = scope:heretic_ruler
+				capital_county = {
+					save_scope_as = convert_capital
+											  
 				}
-
-				#Counts are less likely to join a heresy than a Duke (though it's still possible if they're nearby)
-				modifier = {
-					factor = 0.25
-					highest_held_title_tier = 2
-				}
-			}
-
-			save_scope_as = convert_ruler
-			primary_title = {
-				save_scope_as = convert_title
-			}
-			capital_county = {
-				save_scope_as = convert_capital
-			}
+			}				   
+	
 		}
 
 		if = {
@@ -1730,7 +1777,7 @@ heresy.0011 = {
 				if = {
 					limit = {
 						scope:heretic_ruler = {
-							highest_held_title_tier >= 3
+							highest_held_title_tier >= tier_duchy
 						}
 					}
 					#If we're a Duke, consume more heresy power.
@@ -1774,7 +1821,7 @@ heresy.0011 = {
 								faith = scope:heretic_faith
 							}
 							scope:convert_ruler = {
-								highest_held_title_tier >= 3
+								highest_held_title_tier >= tier_duchy
 							}
 						}
 						#If we're physically close to the character, we also get notified.
