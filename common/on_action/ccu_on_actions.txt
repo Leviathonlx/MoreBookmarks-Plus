@@ -2,61 +2,35 @@
 	on_actions = { ccu_startup }
 }
 
-on_game_start_after_lobby = {
-	on_actions = { 
-		delay = { days = 1 }
-		ccu_startup_debug 
-	}
-}
-
-ccu_startup = {	
-	effect = { every_culture_global = { ccu_initialize_culture = yes } }
+ccu_startup = {
+	effect = { every_culture_global = { ccu_initialize_culture_effect = yes } }
 }
 
 on_culture_created = {
 	on_actions = { ccu_culture_created }
 }
 
-ccu_culture_created = {	
-	effect = { 
-		# Primary option. Faster to get the variable from the parent culture than to run the full initialization.
-		every_parent_culture = {
-			limit = { has_same_culture_language = prev }
-			prev = { 
-				set_variable = { name = language_group value = prev.var:language_group } 
-				set_variable = { name = language_family value = prev.var:language_family }
-				set_variable = { name = language_union value = prev.var:language_union }
-			}			
-		}
-		every_parent_culture = {
-			limit = { has_same_culture_heritage = prev }
-			prev = { 
-				set_variable = { name = heritage_group value = prev.var:heritage_group } 
-				set_variable = { name = heritage_family value = prev.var:heritage_family }
-			}			
-		}
-		
-		# Failsafe in case the heritage or language of the divergent culture doesn't match either parent
-		# I didn't think that was possible but it was observed to happen in-game
-		if = {
-			limit = { NOT = { has_variable = heritage_group } }
-			ccu_initialize_heritage_group = yes
-			ccu_initialize_heritage_family = yes
-		}
-		if = { 
-			limit = { NOT = { has_variable = language_group } }
-			ccu_initialize_language_group = yes
-			ccu_initialize_language_family = yes
-			ccu_initialize_language_union = yes
-		}
+ccu_culture_created = {
+	effect = {
+		ccu_culture_created_or_changed_effect = yes
 	}
 }
 
+## Debug code
+#To call, use "effect = { trigger_event = { on_action = ccu_startup_debug } }" in console
 ccu_startup_debug = {
 	effect = {
 		every_culture_global = {
 			if = {
-				limit = { NOT = { has_variable = heritage_group } }
+				limit = {
+					OR = {
+						NOT = { has_variable_list = heritage_group }
+						AND = {
+							has_variable_list = heritage_group
+							variable_list_size = { name = heritage_group value = 0 }
+						}
+					}
+				}
 				save_scope_as = problem_culture
 				every_player = {
 					send_interface_message = {
@@ -67,7 +41,15 @@ ccu_startup_debug = {
 				}
 			}
 			else_if = {
-				limit = { NOT = { has_variable = heritage_family } }
+				limit = {
+					OR = {
+						NOT = { has_variable_list = heritage_family }
+						AND = {
+							has_variable_list = heritage_family
+							variable_list_size = { name = heritage_family value = 0 }
+						}
+					}
+				}
 				save_scope_as = problem_culture
 				every_player = {
 					send_interface_message = {
@@ -85,6 +67,17 @@ ccu_startup_debug = {
 						type = event_steward_task_bad
 						title = ccu_debug_culture_language_group
 						desc = ccu_debug_culture_language_group_desc
+					}
+				}
+			}
+			if = {
+				limit = { NOT = { has_variable = language_branch } }
+				save_scope_as = problem_culture
+				every_player = {
+					send_interface_message = {
+						type = event_steward_task_bad
+						title = ccu_debug_culture_language_branch
+						desc = ccu_debug_culture_language_branch_desc
 					}
 				}
 			}
@@ -110,6 +103,17 @@ ccu_startup_debug = {
 					}
 				}
 			}
+			# else_if = {
+			# 	limit = { NOT = { has_variable = language_creole } }
+			# 	save_scope_as = problem_culture
+			# 	every_player = {
+			# 		send_interface_message = {
+			# 			type = event_steward_task_bad
+			# 			title = ccu_debug_culture_language_creole
+			# 			desc = ccu_debug_culture_language_creole_desc
+			# 		}
+			# 	}
+			# }
 		}
 	}
 }

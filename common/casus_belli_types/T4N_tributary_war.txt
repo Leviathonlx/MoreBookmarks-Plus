@@ -21,7 +21,7 @@
 				has_game_rule = MB_tributaries_off
 			}
 			
-		#NB - Changed this to allowed_for_character from allowed_for_character_display_regardless. 
+		##NB - Changed this to allowed_for_character from allowed_for_character_display_regardless. 
 		trigger_if = {
 			limit = { is_ai = no }
 			prestige_level >= low_prestige_level
@@ -38,7 +38,9 @@
                 tier < tier_county
             }
             scope:attacker.primary_title.tier < scope:defender.primary_title.tier  
-            exists = var:my_suzerain
+            var:my_suzerain ?= {
+                NOT = { this = scope:defender }
+            }
         }
     }
     allowed_against_character = {
@@ -50,7 +52,7 @@
 				character_is_land_realm_neighbor = scope:attacker.liege
 			}
 		}
-		#
+		
         primary_title = {
             tier >= tier_county
         }
@@ -61,10 +63,15 @@
             subject = scope:defender
             NOT = {
                 scope:attacker = {
-                    is_target_in_variable_list = { name = all_tributaries target = scope:defender }
+                    var:my_suzerain ?= {
+                        NOT = { this = scope:defender }
+                    }
                 }
             }
         } 
+		scope:attacker = {
+				NOT = { exists = var:my_suzerain }
+        }
     }
 
     cost = {
@@ -202,13 +209,16 @@ permament_tributary_war_cb = {
         #        }
         #    }            
         #}
+		
         NAND = {
             scope:attacker = {
                 primary_title = {
                     tier < tier_county
                 }
                 this.primary_title.tier < scope:defender.primary_title.tier  
-                exists = var:my_suzerain
+                var:my_suzerain ?= {
+					NOT = { this = scope:defender }
+				}
             }
 			scope:defender = {
             primary_title = {
@@ -222,10 +232,10 @@ permament_tributary_war_cb = {
                 NOT = {
                     scope:attacker = {
                         is_target_in_variable_list = { name = all_tributaries target = scope:defender }
-                    }
-                }
-            }            
-        }
+						}
+					}
+				}
+			}
         }
     }
 	#
@@ -249,12 +259,17 @@ permament_tributary_war_cb = {
             subject = scope:defender
             NOT = {
                 scope:attacker = {
-                    is_target_in_variable_list = { name = all_tributaries target = scope:defender }
+                    var:my_suzerain ?= {
+                        NOT = { this = scope:defender }
+                    }
                 }
-																			 
-										
+					
+		  
             }
         }    
+		scope:attacker = {
+				NOT = { exists = var:my_suzerain }
+        }
     }
 	#
     cost = {

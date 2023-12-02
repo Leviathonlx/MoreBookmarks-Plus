@@ -1,50 +1,167 @@
-﻿###################################################################
-# Purpose: Checks if two culture share a heritage group
-# Scope: culture
-# Arguments: target (culture)
-# Sample Usage: culture:xxx = { has_same_heritage_group_as = { TARGET = culture:yyy } }
-
-has_same_heritage_group_as = {
-	var:heritage_group = $TARGET$.var:heritage_group
-}
+﻿#Heritages
 
 ###################################################################
 # Purpose: Checks if two culture share a heritage family
 # Scope: culture
 # Arguments: target (culture)
-# Sample Usage: culture:xxx = { has_same_heritage_family_as = { TARGET = culture:yyy } }
+# Sample Usage: culture:xxx = { has_same_heritage_family_as_trigger = { TARGET = culture:yyy } }
+has_same_heritage_family_as_trigger = {
+	ccu_has_same_variable_list_trigger = {
+		TARGET = $TARGET$
+		VARIABLE = heritage_family
+	}
+}
 
-has_same_heritage_family_as = {
-	var:heritage_family = $TARGET$.var:heritage_family
+###################################################################
+# Purpose: Checks if two culture share a heritage group
+# Scope: culture
+# Arguments: target (culture)
+# Sample Usage: culture:xxx = { has_same_heritage_group_as_trigger = { TARGET = culture:yyy } }
+has_same_heritage_group_as_trigger = {
+	ccu_has_same_variable_list_trigger = {
+		TARGET = $TARGET$
+		VARIABLE = heritage_group
+	}
+}
+
+###################################################################
+# Purpose: Checks if two culture share a Kulturbund (*very* similar, but distinct cultural heritages)
+# Scope: culture
+# Arguments: target (culture)
+# Sample Usage: culture:xxx = { has_same_kulturbund_as_trigger = { TARGET = culture:yyy } }
+has_same_kulturbund_as_trigger = {
+	ccu_has_same_variable_with_flag_none_trigger = {
+		TARGET = $TARGET$
+		VARIABLE = kulturbund
+	}
+}
+
+#Languages
+
+###################################################################
+# Purpose: Checks if two culture share a language family
+# Scope: culture
+# Arguments: target (culture)
+# Sample Usage: culture:xxx = { has_same_language_family_as_trigger = { TARGET = culture:yyy } }
+has_same_language_family_as_trigger = {
+	ccu_has_same_variable_trigger = {
+		TARGET = $TARGET$
+		VARIABLE = language_family
+	}
+}
+
+###################################################################
+# Purpose: Checks if two culture share a language branch
+# Scope: culture
+# Arguments: target (culture)
+# Sample Usage: culture:xxx = { has_same_language_branch_as_trigger = { TARGET = culture:yyy } }
+has_same_language_branch_as_trigger = {
+	ccu_has_same_variable_trigger = {
+		TARGET = $TARGET$
+		VARIABLE = language_branch
+	}
 }
 
 ###################################################################
 # Purpose: Checks if two culture share a language group
 # Scope: culture
 # Arguments: target (culture)
-# Sample Usage: culture:xxx = { has_same_language_group_as = { TARGET = culture:yyy } }
-
-has_same_language_group_as = {
-	var:language_group = $TARGET$.var:language_group
+# Sample Usage: culture:xxx = { has_same_language_group_as_trigger = { TARGET = culture:yyy } }
+has_same_language_group_as_trigger = {
+	ccu_has_same_variable_with_flag_none_trigger = {
+		TARGET = $TARGET$
+		VARIABLE = language_group
+	}
 }
 
 ###################################################################
-# Purpose: Checks if two culture share a language family
+# Purpose: Checks if two culture share a dialect continuum
 # Scope: culture
 # Arguments: target (culture)
-# Sample Usage: culture:xxx = { has_same_language_family_as = { TARGET = culture:yyy } }
-
-has_same_language_family_as = {
-	var:language_family = $TARGET$.var:language_family
+# Sample Usage: culture:xxx = { has_same_dialect_continuum_as_trigger = { TARGET = culture:yyy } }
+has_same_dialect_continuum_as_trigger = {
+	ccu_has_same_variable_list_trigger = {
+		TARGET = $TARGET$
+		VARIABLE = dialect_continuum
+	}
 }
+
+#Other Language Features
 
 ###################################################################
 # Purpose: Checks if two culture share a language union
 # Scope: culture
 # Arguments: target (culture)
-# Sample Usage: culture:xxx = { is_in_language_union_with = { TARGET = culture:yyy } }
+# Sample Usage: culture:xxx = { is_in_language_union_with_trigger = { TARGET = culture:yyy } }
 
-is_in_language_union_with = {
+is_in_language_union_with_trigger = {
 	NOT = { var:language_union = flag:none }
 	var:language_union = $TARGET$.var:language_union
+}
+
+###################################################################
+# Purpose: Checks if the language of a culture is a creole
+# Scope: culture
+# Arguments: target (culture)
+# Sample Usage: culture:xxx = { has_a_creole_language_trigger = { TARGET = culture:yyy } }
+# has_a_creole_language_trigger = {
+# 	OR = {
+# 		$TARGET$.var:language_creole = var:language_branch
+# 		$TARGET$.var:language_branch = var:language_creole
+# 	}
+# }
+
+#Generics
+
+###################################################################
+# Purpose: General check if cultures have same variabl lists
+# Scope: culture
+# Arguments: target (culture), variable (variable list name)
+ccu_has_same_variable_list_trigger = {
+	trigger_if = {
+		limit = {
+			has_variable_list = $VARIABLE$
+			$TARGET$ = { has_variable_list = $VARIABLE$ }
+		}
+		any_in_list = {
+			variable = $VARIABLE$
+			save_temporary_scope_as = source_variable_list
+			$TARGET$ = { is_target_in_variable_list = { name = $VARIABLE$ target = scope:source_variable_list } }
+		}
+	}
+	trigger_else = { always = no }
+}
+
+###################################################################
+# Purpose: General check if cultures have same variable values, with a -1 as a "no match"
+# Scope: culture
+# Arguments: target (culture), variable (variable name)
+ccu_has_same_variable_with_flag_none_trigger = {
+	trigger_if = {
+		limit = {
+			has_variable = $VARIABLE$
+			$TARGET$ = { has_variable = $VARIABLE$ }
+		}
+		NOR = {
+			var:$VARIABLE$ = flag:none
+			$TARGET$.var:$VARIABLE$ = flag:none
+		}
+		var:$VARIABLE$ = $TARGET$.var:$VARIABLE$
+	}
+	trigger_else = { always = no }
+}
+
+###################################################################
+# Purpose: General check if cultures have same variable values
+# Scope: culture
+# Arguments: target (culture), variable (variable name)
+ccu_has_same_variable_trigger = {
+	trigger_if = {
+		limit = {
+			has_variable = $VARIABLE$
+			$TARGET$ = { has_variable = $VARIABLE$ }
+		}
+		var:$VARIABLE$ = $TARGET$.var:$VARIABLE$
+	}
+	trigger_else = { always = no }
 }
