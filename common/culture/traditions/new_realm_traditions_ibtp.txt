@@ -1,5 +1,131 @@
 ﻿## Completely New Traditions ##
 
+tradition_ghazi = {
+	category = regional
+
+	layers = {
+		0 = martial
+		1 = mena
+		4 = dismounted_warrior.dds
+	}
+
+	is_shown = {
+		scope:character = {
+			has_religion = religion:islam_religion #You need to be Muslim
+		}
+	}
+
+	can_pick = {
+		NOT = {
+			scope:character = {
+				has_government = tribal_government
+			}
+		}
+
+		culture_not_pacifistic_trigger = yes
+
+		# Must have a significant cultural presence in the general Turanian area, i.e. the "frontier"
+		custom_tooltip = {
+			text = culture_on_western_frontier_desc
+			any_culture_county = {
+				percent >= 0.2
+				any_county_province = {
+					OR = {
+						geographical_region = ghw_region_anatolia
+						geographical_region = ghw_region_near_east
+						geographical_region = ghw_region_caucasus
+					}
+				}
+			}
+		}	
+	}
+
+	parameters = {
+		zealous_trait_more_common = yes
+		powerful_foreign_knights_find_you_attractive = yes
+		culture_can_raid_over_land_even_if_feudal_no_restrictions = yes
+		faith_warrior_traits_more_valued = yes
+	}
+
+	culture_modifier = {
+		mercenary_count_mult = 0.5
+	}
+	
+	province_modifier = {
+		
+	}
+	
+	character_modifier = {
+		mercenary_hire_cost_mult = -0.15
+		accolade_glory_gain_mult = 0.1
+		movement_speed = 0.05
+		ai_zeal = low_positive_ai_value
+		ai_boldness = very_low_positive_ai_value
+		ai_greed = very_low_positive_ai_value
+	}
+	
+	cost = {
+		prestige = {
+			# Base cost.
+			add = {
+				value = tradition_base_cost
+				desc = BASE
+				format = "BASE_VALUE_FORMAT"
+			}
+			# Ethos requirement.
+			if = {
+				limit = {
+					NOR = {
+						culture_pillar:ethos_bellicose = { is_in_list = traits }
+						culture_pillar:ethos_stoic = { is_in_list = traits }
+					}
+				}
+				add = {
+					value = tradition_incompatible_ethos_penalty
+					desc = not_bellicose_or_stoic_desc
+				}
+			}
+			#Historical border cultures get a discount
+			if = {
+				limit = {
+					NOR = {
+						has_cultural_pillar = heritage_iranian
+						has_cultural_pillar = heritage_arabic
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = not_of_relevant_islamic_heritage_desc
+				}
+			}
+			
+			multiply = tradition_replacement_cost_if_relevant
+		}
+	}
+	
+	ai_will_do = { 
+		value = 100
+		if = {
+			limit = {
+				NOT = {
+					scope:character = {
+						any_sub_realm_county = {
+							percent >= 0.4
+							any_county_province = {
+								OR = {
+									geographical_region = ghw_region_anatolia
+									geographical_region = ghw_region_near_east
+									geographical_region = ghw_region_caucasus
+								}
+							}
+						}
+					}
+				}
+			}
+			multiply = 0
+		}
+	}
+}
 tradition_roman_pride = {
 	category = regional
 
@@ -28,6 +154,7 @@ tradition_roman_pride = {
 	}
 
 	parameters = {
+		monolithic_culture_feature = yes						  
 		poorly_educated_leaders_distrusted = yes
 		weak_traits_looked_down_upon = yes
 		dislikes_marrying_outside_of_culture = yes
@@ -90,6 +217,83 @@ tradition_roman_pride = {
 	ai_will_do = { value = 100 }
 }
 
+tradition_armenian_resilience = { # EXPERIMENTAL WIP
+	category = regional
+
+	layers = {
+		0 = diplo
+		1 = mediterranean
+		4 = speech.dds
+	}
+
+	is_shown = {
+		has_cultural_pillar = heritage_armenian
+	}
+
+	can_pick = {
+		NOR = { #Cant be taken by Cultures who favor massed troops or a variant
+			has_cultural_tradition = tradition_xenophilic
+			has_cultural_tradition = tradition_religion_blending
+			has_cultural_tradition = tradition_culture_blending
+		}
+		
+		NOT = { # Can not be picked by tribals
+			scope:character = {
+				has_government = tribal_government
+			}
+		}
+	}
+
+	parameters = {
+		monolithic_culture_feature = yes
+		zealous_trait_more_common = yes
+		stubborn_trait_more_common = yes
+		harder_to_convert_county_faith = yes
+		harder_to_convert_character_faith = yes
+		expensive_convert_to_local_culture = yes
+		harder_to_convert_county_culture_without_heritage = yes
+		added_character_boldness = yes
+	}
+
+	# culture_modifier = {
+	# 	cultural_acceptance_gain_mult = -0.3
+	# }
+	
+	province_modifier = {	
+	}
+	
+	character_modifier = {
+		opinion_of_different_faith = -15
+		faith_conversion_piety_cost_mult = 0.5
+		ai_zeal = 25
+	}
+	
+	cost = {
+		prestige = {
+			add = {
+				value = tradition_base_cost
+				desc = BASE
+				format = "BASE_VALUE_FORMAT"
+			}
+			if = {
+				limit = {
+					NOR = {
+						culture_pillar:ethos_courtly = { is_in_list = traits }
+						culture_pillar:ethos_communal = { is_in_list = traits }
+					}
+				}
+				add = {
+					value = tradition_incompatible_ethos_penalty
+					desc = not_courtly_or_communal_desc
+				}
+			}
+			
+			multiply = tradition_replacement_cost_if_relevant
+		}
+	}
+
+	ai_will_do = { value = 100 }
+}
 tradition_karabisianoi = {
 	category = regional
 
@@ -212,7 +416,7 @@ tradition_karabisianoi = {
 	}
 }
 
-tradition_justinian_code = {
+tradition_eastern_roman_law = {
 	category = regional
 
 	layers = {
@@ -232,6 +436,8 @@ tradition_justinian_code = {
     }
 	
 	parameters = {
+		can_blind_prisoners = yes
+		can_castrate_prisoners = yes
 		just_trait_gives_bonuses = yes
 		same_faith_inheritance_only = yes
 		cheaper_to_change_laws = yes
@@ -411,6 +617,7 @@ tradition_rashidun_army = {
 			has_cultural_tradition = tradition_professional_army
 			has_cultural_tradition = tradition_mamluk_military
 			has_cultural_tradition = tradition_sasanian_army
+			has_cultural_tradition = tradition_merc_armies									 
 		}
 		AND = {
 			has_cultural_pillar = heritage_arabic
@@ -548,6 +755,25 @@ tradition_pagan_protectors = {
 					desc = not_bellicose_or_stoic_desc
 				}
 			}
+			if = {
+				limit = {
+					NOT = {
+						any_ruler = {
+							count >= 3
+							culture = prev
+							primary_title.tier >= tier_county
+							OR = {
+								has_trait = zealous
+								has_trait = holy_warrior
+							}
+						}
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = rulers_with_zealous_or_holy_warrior_desc
+				}
+			}
             multiply = tradition_replacement_cost_if_relevant
         }
     }
@@ -571,6 +797,7 @@ tradition_sasanian_army = {
 			has_cultural_tradition = tradition_professional_army
 			has_cultural_tradition = tradition_mamluk_military
 			has_cultural_tradition = tradition_rashidun_army
+			has_cultural_tradition = tradition_merc_armies
 		}
         AND = {
 			has_cultural_pillar = heritage_iranian
@@ -589,6 +816,7 @@ tradition_sasanian_army = {
 			has_cultural_tradition = tradition_professional_army
 			has_cultural_tradition = tradition_mamluk_military
 			has_cultural_tradition = tradition_rashidun_army
+			has_cultural_tradition = tradition_merc_armies
 		}
     }
     
@@ -636,6 +864,106 @@ tradition_sasanian_army = {
 			if = {
 				limit = {
 					NOT = {
+						scope:character = {
+							number_maa_soldiers_of_base_type = {
+								type = skirmishers
+								value >= 1500
+							}	
+							number_maa_soldiers_of_base_type = {
+								type = archers
+								value >= 1500
+							}
+						}
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = culture_head_unfulfilled_small_soldiers_desc
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						scope:character = {	
+							number_maa_soldiers_of_base_type = {
+								type = heavy_infantry
+								value >= 1500
+							}	
+							number_maa_soldiers_of_base_type = {
+								type = pikemen
+								value >= 1500
+							}
+						}
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = culture_head_unfulfilled_heavy_inf_and_pikemen_desc
+				}
+			}
+			if = {
+				limit = {
+					scope:character = {
+						NOT = {
+							number_maa_soldiers_of_base_type = {
+								type = light_cavalry
+								value >= 1500
+							}
+							number_maa_soldiers_of_base_type = {
+								type = heavy_cavalry
+								value >= 750
+							}
+							number_maa_soldiers_of_base_type = {
+								type = archer_cavalry
+								value >= 1500
+							}
+						}
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = culture_head_unfulfilled_cavalry_desc
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_innovation = innovation_mustering_grounds }
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = lacks_mustering_grounds_innovation_desc
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_innovation = innovation_house_soldiers }
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = lacks_house_soldiers_innovation_desc
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_innovation = innovation_men_at_arms }
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = lacks_men_at_arms_innovation_desc
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_innovation = innovation_standing_armies }
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = lacks_standing_armies_innovation_desc
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
 						any_culture_county = {
 							count >= 50
 							any_county_province = {
@@ -654,8 +982,19 @@ tradition_sasanian_army = {
         }
     }
 
-    ai_will_do = { value = 100 }
+	ai_will_do = {
+		value = 100
+		if = {
+			limit = {
+				NOT = {
+					culture_pillar:ethos_bellicose = { is_in_list = traits }
+				}
+			}
+			multiply = 0.25
+		}
+	}
 }
+
 
 tradition_teulu = {
     category = regional
@@ -1341,6 +1680,7 @@ tradition_nile_agriculture = {
 	
 	parameters = {
 		content_trait_more_common = yes
+		diligent_trait_more_common = yes						  
 		coastal_agriculture_building_bonuses = yes
 		hard_working_traits_more_valued = yes
 	}
@@ -1634,14 +1974,14 @@ tradition_portage = {
     }
 
     character_modifier = {
-		naval_movement_speed_mult  = 0.05
+		sea_travel_danger = low_sea_danger_reduction
 		diplomatic_range_mult = 0.15
 		opinion_of_different_culture = 15
     }    
 
 	county_modifier = {
-		tax_mult = 0.1
-		development_growth_factor = 0.15
+		tax_mult = 0.15
+		development_growth_factor = 0.1
 	}
 	
 	culture_modifier = {
@@ -2873,8 +3213,8 @@ tradition_african_agriculture = {
 	}
 	
 	parameters = {
-		plantations_building_bonuses = yes
-		pastures_building_bonuses = yes
+		innovative_traits_more_valued = yes
+		unlocks_qanat_building = yes
 	}
 	
 	county_modifier = {
