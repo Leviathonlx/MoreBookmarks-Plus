@@ -4,6 +4,7 @@ on_game_start = {
 	on_actions = {
 		mb_on_game_start
 		holy_site_fix
+		succexpstartMB
 	}
 	
 	events = {
@@ -312,6 +313,29 @@ mb_on_game_start = {
 				LIEGE = character:209503
 			}
 			
+			## Japan
+			character:10041053 = { designate_diarch = character:11000150 }
+
+			remove_generated_diarch_consequences_effect = {
+				NEW_DIARCH = character:11000150
+				LIEGE = character:10041053
+			}
+			
+		}
+		
+		#1144
+		if = {
+		
+			limit = { game_start_date = 1144.10.1 }
+			
+			## Japan
+			character:10041055 = { designate_diarch = character:11000150 }
+
+			remove_generated_diarch_consequences_effect = {
+				NEW_DIARCH = character:11000150
+				LIEGE = character:10041055
+			}
+			
 		}
 		
 		#1166
@@ -326,6 +350,66 @@ mb_on_game_start = {
 			remove_generated_diarch_consequences_effect = {
 				NEW_DIARCH = character:188908
 				LIEGE = character:188912
+			}
+			
+			### Fatimid Caliphate 
+			
+			character:32910 = { designate_diarch = character:34982 }
+
+			remove_generated_diarch_consequences_effect = {
+				NEW_DIARCH = character:34982
+				LIEGE = character:32910
+			}
+			
+			if = {
+				limit = { exists = character:32910 }
+				character:32910 = { trigger_event = diarchy.0012 }
+			}
+			character:32910 = {
+				designate_diarch = character:3050
+				start_diarchy = vizierate
+				set_variable = {
+					name = my_vizier
+					value = character:32910
+				}
+			}
+			
+		}
+		
+		#1171
+		if = {
+		
+			limit = { game_start_date = 1171.8.1 }
+			
+			
+			## Khitai
+			character:188912 = { designate_diarch = character:188908 }
+
+			remove_generated_diarch_consequences_effect = {
+				NEW_DIARCH = character:188908
+				LIEGE = character:188912
+			}
+			
+			### Fatimid Caliphate 
+			
+			character:32910 = { designate_diarch = character:226000 }
+
+			remove_generated_diarch_consequences_effect = {
+				NEW_DIARCH = character:226000
+				LIEGE = character:32910
+			}
+			
+			if = {
+				limit = { exists = character:32910 }
+				character:32910 = { trigger_event = diarchy.0012 }
+			}
+			character:32910 = {
+				designate_diarch = character:3050
+				start_diarchy = vizierate
+				set_variable = {
+					name = my_vizier
+					value = character:32910
+				}
 			}
 			
 		}
@@ -1093,6 +1177,17 @@ mb_on_game_start = {
 		#	title:d_tatars = { set_de_jure_liege_title = title:k_liao }
 		#	title:d_bayad = { set_de_jure_liege_title = title:k_liao }
 		#}
+		
+		if = {
+			limit = {
+				game_start_date >= 1144.1.1
+				game_start_date <= 1219.1.1
+			}
+			title:k_goguryeo_china = { set_de_jure_liege_title = title:e_jurchen_china }
+			title:k_khitan_china = { set_de_jure_liege_title = title:e_jurchen_china }
+			title:k_yan_china = { set_de_jure_liege_title = title:e_jurchen_china }
+			title:k_yinshan_china = { set_de_jure_liege_title = title:e_jurchen_china }
+		}
 		
 		#For when the Kara-Khitai exist
 		if = {
@@ -2653,6 +2748,20 @@ mb_on_game_start = {
 			set_culture = culture:great_russian
 		}
 		
+		every_living_character = {
+			limit = {
+				game_start_date > 1150.1.1
+				culture = {
+					has_cultural_pillar = heritage_turkic
+				}
+
+				any_realm_county = {
+					any_county_province = { geographical_region = ghw_region_anatolia }
+				}
+			}
+			set_culture = culture:anatolian_turkish
+		}
+		
 		
 		#Murder characters that shouldn't exist
 		every_living_character = {
@@ -3449,6 +3558,56 @@ holy_site_fix = {
     }
 }
 
+succexpstartMB = {
+	#Fix succession laws not being properly set
+    effect = {
+        every_independent_ruler = {
+            limit = {
+                OR = {
+                    has_culture = culture:irish
+                    AND = {
+                        has_culture = culture:gaelic
+                        game_start_date < 1005.1.1
+                    }
+                }
+                OR = {
+                    has_government = feudal_government
+                    has_government = tribal_government
+                }
+                highest_held_title_tier >= tier_county
+            }
+            this.primary_title = {
+                add_title_law = gaelic_elective_succession_law
+            }
+        }
+        every_independent_ruler = {
+            limit = {
+                culture = { has_cultural_parameter = witenagemot_succession_enabled }
+                highest_held_title_tier >= tier_kingdom
+                OR = {
+                    has_government = feudal_government
+                    has_government = tribal_government
+                }
+            }
+            this.primary_title = {
+                add_title_law = saxon_elective_succession_law
+            }
+        }
+        every_independent_ruler = {
+            limit = {
+                culture = { has_cultural_parameter = scandinavian_elective_enabled }
+                highest_held_title_tier >= tier_duchy
+                OR = {
+                    has_government = feudal_government
+                    has_government = tribal_government
+                }
+            }
+            this.primary_title = {
+                add_title_law = scandinavian_elective_succession_law
+            }
+        }
+}
+
 add_right_to_rule_doctrines_on_game_start = {
     effect = {
         every_religion_global = {
@@ -3717,7 +3876,7 @@ sea_historical_chinese_vassal_contracts = {
 					limit = { 
 						NOR = { 
 							religion_tag = islam_religion
-							faith = { trait_is_sin = drunkard } ## Just incase any modded faith has drunkard as a sin
+							#faith = { trait_is_sin = drunkard } ## Just incase any modded faith has drunkard as a sin #This doesn't actually work when used like this. No other faiths have drunkard so let's just get rid of the error report.
 							this = faith:zurvanism # Behafardism
 							this = faith:sabianism
 						} 
@@ -3728,7 +3887,7 @@ sea_historical_chinese_vassal_contracts = {
 					limit = { 
 						OR = {
 							NOT = { religion_tag = islam_religion }
-							faith = { trait_is_sin = drunkard } ## Just incase any modded faith has drunkard as a sin
+							#faith = { trait_is_sin = drunkard } ## Just incase any modded faith has drunkard as a sin
 							this = faith:sabianism
 						} 
 					}
