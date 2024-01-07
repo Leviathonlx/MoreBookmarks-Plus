@@ -1,0 +1,430 @@
+﻿####################################
+
+on_game_start_after_lobby = {
+	on_actions = {
+		on_game_start_cad
+	}
+}
+
+#For characters we use set_character_faith_with_conversion to ensure that family will convert
+#Use every_ruler instead of every_living_character to prevent bloat in error log
+
+on_game_start_cad = {
+	trigger = {
+		always = yes
+	}
+	effect = {
+		#Bulgarian Orthodox in 1066 start date
+
+		every_ruler = {
+			if = {
+				limit = {
+					AND = {
+						game_start_date >= 1066.9.15
+						faith = faith:orthodox
+						OR = {
+							culture = culture:bulgarian
+							culture = culture:vlach
+						}
+					}
+				}
+				set_character_faith_with_conversion = faith:bulgarian_orthodox
+			}
+		}
+		
+		#Georgian Orthodox, notwithstanding changes to province history
+		
+		every_ruler = {
+			if = {
+				limit = {
+					AND = {
+						faith = faith:orthodox
+						OR = {
+							culture = culture:georgian
+							culture = culture:alan #Give them their own faith?
+						}
+					}
+				}
+				set_character_faith_with_conversion = faith:georgian_orthodox
+			}
+		}
+		
+		##Antiochene Melkite, notwithstanding changes to province history
+		every_county = {
+			if = {
+				limit = {
+					AND = { 
+						NOT = { culture = culture:armenian } #Armenians have their own system
+						faith = faith:orthodox
+						county.title_province = { geographical_region = antioch_pentarch_region }
+					}
+				}
+				set_county_faith = faith:melkite
+			}
+		}
+		every_ruler = {
+			if = {
+				limit = {
+					AND = {
+						faith = faith:orthodox
+						capital_province = { geographical_region = antioch_pentarch_region }
+					}
+				}
+				set_character_faith_with_conversion = faith:melkite
+			}
+		}
+		
+		#Jerusalem Melkites
+		every_county = {
+			if = {
+				limit = {
+					AND = {
+						faith = faith:orthodox
+						county.title_province = { geographical_region = jerusalem_pentarch_region }
+					}
+				}
+				set_county_faith = faith:jerusalem_melkite
+			}
+		}
+		#No characters begin in this region with the Orthodox faith
+		
+		#Alexandrian Melkites
+		every_county = {
+			if = {
+				limit = {
+					AND = {
+						faith = faith:orthodox
+						county.title_province = { geographical_region = alexandria_pentarch_region }
+					}
+				}
+				set_county_faith = faith:alexandrian_melkite
+			}
+		}
+		#No characters begin in this region with the Orthodox faith
+		
+		#Armenian Melkites
+		every_county = {
+			if = {
+				limit = {
+					AND = {
+						culture = culture:armenian
+						faith = faith:orthodox
+						county.title_province = { geographical_region = antioch_pentarch_region }
+					}
+				}
+				set_county_faith = faith:tsat
+			}
+		}
+		
+		every_county = {
+			if = {
+				limit = {
+					AND = {
+						culture = culture:armenian
+						faith = faith:orthodox
+						county.title_province = { geographical_region = constantinople_pentarch_region }
+					}
+				}
+				set_county_faith = faith:horoms
+			}
+		}
+		
+		#Cypriot Melkites
+		every_ruler = {
+			if = {
+				limit = {
+					AND = {
+						faith = faith:orthodox
+						capital_province = { geographical_region = cyprus_heresy_region }
+					}
+				}
+				set_character_faith_with_conversion = faith:cyprus_orthodox
+			}
+		}
+		
+		#Bohemian Catholics, rulers only
+		every_ruler = {
+			if = {
+				limit = {
+					AND = {
+						game_start_date <= 936.1.1
+						game_start_date >= 867.1.1
+						faith = faith:catholic
+						capital_province.faith = faith:bohemian_catholic
+					}
+				}
+				set_character_faith_with_conversion = faith:bohemian_catholic
+			}
+		}
+		
+		#Albanian Apostolics, rulers only
+		every_ruler = {
+			if = {
+				limit = {
+					AND = {
+						faith = faith:armenian_apostolic
+						capital_province = { geographical_region = caucasian_albania_region }
+					}
+				}
+				set_character_faith_with_conversion = faith:albanian_apostolic
+			}
+		}
+		
+		##Ambrosian Catholics, rulers only
+		#every_ruler = {
+		#	if = {
+		#		limit = {
+		#			AND = {
+		#				faith = faith:catholic
+		#				capital_province.faith = faith:ambrosian
+		#				highest_held_title_tier < 4 #Will prevent Italy from becoming Ambrosian outright
+		#			}
+		#		}
+		#		set_character_faith_with_conversion = faith:ambrosian
+		#	}
+		#}
+		#
+		##Ethiopian Orthodox
+		#every_ruler = {
+		#	if = {
+		#		limit = {
+		#			AND = { 
+		#				faith = faith:coptic
+		#				capital_province.faith = faith:ethiopian_orthodox
+		#			}
+		#		}
+		#		set_character_faith_with_conversion = faith:ethiopian_orthodox
+		#	}
+		#}
+		#
+		#
+		#Changes to specific faiths
+
+		faith:bulgarian_orthodox = {
+			if = {
+				limit = { game_start_date >= 867.1.1 }
+				#remove_doctrine = orthodox_autocephaly_autocephalous
+				#add_doctrine = unavailable_doctrine
+				remove_doctrine = tenet_adaptive
+				add_doctrine = tenet_communion
+				add_doctrine = tenet_monasticism
+			}
+		}
+		
+		faith:african_church = {
+			if = {
+				limit = { game_start_date >= 867.1.1 } 
+				add_doctrine = special_doctrine_ecumenical_christian
+			}
+		}
+		
+		faith:maphrianate = {
+			if = {
+				limit = { game_start_date >= 867.1.1 }
+				remove_doctrine = special_doctrine_council_capharthutha
+			}
+		}
+		
+		faith:jacobite = {
+			if = {
+				limit = { game_start_date >= 867.1.1 }
+				remove_doctrine = special_doctrine_council_capharthutha
+			}
+		}
+		
+		faith:bohemian_catholic = {
+			if = {
+				limit = { game_start_date >= 1066.9.15 } #Suppressed
+				add_doctrine = unavailable_doctrine
+			}
+		}
+	}
+}
+
+on_county_faith_change = {
+	on_actions = {
+		on_county_faith_change_pentarchy_antioch 
+		on_county_faith_change_pentarchy_jerusalem 
+		on_county_faith_change_pentarchy_alexandria 
+		on_county_faith_change_pentarchy_constantinople 
+		on_county_faith_change_pentarchy_rome
+		on_county_faith_change_autocephaly_armenian
+		on_county_faith_change_autocephaly_albanian
+		on_county_faith_change_autocephaly_cyprus
+		on_county_faith_change_maphrianate_capharthutha 
+		on_county_faith_change_jacobite_capharthutha 
+#		on_county_faith_change_pentarchy_jacobite 
+#		on_county_faith_change_pentarchy_coptic 
+	}
+}
+
+#Orthodox Pentarchy
+on_county_faith_change_pentarchy_antioch = {
+	trigger = {
+		root.faith = { has_doctrine = orthodox_autocephaly_pentarch }
+		NOT = { root.faith = faith:melkite }
+		root.county.title_province = { geographical_region = antioch_pentarch_region }
+	}
+	effect = { set_county_faith = faith:melkite }
+}
+
+on_county_faith_change_pentarchy_jerusalem = {
+	trigger = {
+		root.faith = { has_doctrine = orthodox_autocephaly_pentarch }
+		NOT = { root.faith = faith:jerusalem_melkite }
+		root.county.title_province = { geographical_region = jerusalem_pentarch_region }
+	}
+	effect = { set_county_faith = faith:jerusalem_melkite }
+}
+
+on_county_faith_change_pentarchy_alexandria = {
+	trigger = {
+		root.faith = { has_doctrine = orthodox_autocephaly_pentarch }
+		NOT = { root.faith = faith:alexandrian_melkite }
+		root.county.title_province = { geographical_region = alexandria_pentarch_region }
+	}
+	effect = { set_county_faith = faith:alexandrian_melkite }
+}
+
+on_county_faith_change_pentarchy_constantinople = {
+	trigger = {
+		root.faith = { has_doctrine = orthodox_autocephaly_pentarch }
+		NOR = { 
+			root.faith = faith:iconoclast
+			root.faith = faith:orthodox
+		}
+		root.county.title_province = { geographical_region = constantinople_pentarch_region }
+	}
+	effect = { 
+		if = { 
+			limit = {
+				faith:iconoclast = {
+					has_doctrine = orthodox_autocephaly_pentarch 
+				}
+			}
+			set_county_faith = faith:iconoclast
+		}
+		else = {
+			set_county_faith = faith:orthodox
+		}
+	}
+}
+
+on_county_faith_change_pentarchy_rome = {
+	trigger = {
+		root.faith = { has_doctrine = orthodox_autocephaly_pentarch }
+		faith:roman_orthodox = {
+			has_doctrine = orthodox_autocephaly_pentarch 
+		}
+		NOT = { root.faith = faith:roman_orthodox }
+		root.county.title_province = { geographical_region = rome_pentarch_region }
+	}
+	effect = { set_county_faith = faith:roman_orthodox }
+}
+
+#Culture-based Autocephaly
+on_county_faith_change_autocephaly_armenian = { 
+	trigger = {
+		root.faith = { has_doctrine = oriental_autocephaly_autocephalous }
+		faith:armenian_apostolic = {
+			has_doctrine = oriental_autocephaly_autocephalous
+		}
+		NOR = { 
+			root.faith = faith:armenian_apostolic 
+			root.faith = faith:albanian_apostolic #Lots of overlap between these two
+		}
+		root.county.title_province = { culture = culture:armenian }
+	}
+	effect = { set_county_faith = faith:armenian_apostolic }
+}
+
+#Region-based Autocephaly
+on_county_faith_change_autocephaly_albanian = {
+	trigger = {
+		root.faith = { has_doctrine = oriental_autocephaly_autocephalous }
+		faith:albanian_apostolic = {
+			has_doctrine = oriental_autocephaly_autocephalous
+		}
+		NOT = { root.faith = faith:albanian_apostolic }
+		root.county.title_province = { geographical_region = caucasian_albania_region }
+	}
+	effect = { set_county_faith = faith:albanian_apostolic }
+}
+
+on_county_faith_change_autocephaly_cyprus = {
+	trigger = {
+		OR = { #Don't do both for most, Cyprus is a special case
+			root.faith = { has_doctrine = orthodox_autocephaly_autocephalous }
+			root.faith = { has_doctrine = orthodox_autocephaly_pentarch }
+		}
+		faith:cyprus_orthodox = {
+			has_doctrine = orthodox_autocephaly_autocephalous
+		}
+		root.county.title_province = { geographical_region = cyprus_heresy_region }
+	}
+	effect = { set_county_faith = faith:cyprus_orthodox }
+}
+
+#Council-based Jurisdictions
+on_county_faith_change_maphrianate_capharthutha = {
+	trigger = {
+		root.faith = faith:jacobite
+		faith:jacobite = { 
+			has_doctrine = special_doctrine_council_capharthutha 
+		}
+		root.county.title_province = { geographical_region = maphrianate_region }
+		NOT = { root.faith = faith:maphrianate }
+	}
+	effect = { set_county_faith = faith:maphrianate }
+}
+
+on_county_faith_change_jacobite_capharthutha = {
+	trigger = {
+		root.faith = faith:maphrianate
+		faith:maphrianate = {
+			has_doctrine = special_doctrine_council_capharthutha
+		}
+		root.county.title_province = { geographical_region = jacobite_region }
+		NOT = { root.faith = faith:jacobite }
+	}
+	effect = { set_county_faith = faith:jacobite }
+}
+
+#Autocephalous Faiths(?)
+#
+#
+#
+#Oriental Orthodox Triarchy
+#on_county_faith_change_pentarchy_jacobite = {
+#	effect = {
+#		if = {
+#			limit = {
+#				AND = {
+#					root.faith = faith:coptic
+#					OR = {
+#						county = county:c_antiocheia
+#					}
+#				}
+#			}
+#			set_county_faith = faith:jacobite
+#		}
+#	}
+#}
+#
+#
+#on_county_faith_change_pentarchy_coptic = {
+#	effect = {
+#		if = {
+#			limit = {
+#				AND = {
+#					root.faith = faith:jacobite
+#					OR = {
+#						county = county:c_alexandria
+#					}
+#				}
+#			}
+#			set_county_faith = faith:coptic
+#		}
+#	}
+#}
+#
