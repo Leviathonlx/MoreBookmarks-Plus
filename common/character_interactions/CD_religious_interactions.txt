@@ -1,8 +1,11 @@
+﻿# House head demand conversion
 demand_conversion_interaction = {
 	icon = religious
 	category = interaction_category_religion
 	popup_on_receive = yes
 	pause_on_receive = yes
+	can_send_despite_rejection = yes
+	ai_maybe = yes
 
 	notification_text = HOUSE_HEAD_DEMAND_CONVERSION
 
@@ -23,6 +26,8 @@ demand_conversion_interaction = {
 			is_ruler = yes
 		}
 	}
+
+	cooldown_against_recipient = { years = 15 }
 	desc = {
 		desc = demand_conversion_interaction_desc
 		triggered_desc = {
@@ -78,14 +83,24 @@ demand_conversion_interaction = {
 				use_hook = scope:recipient
 			}
 			scope:recipient = {
-				trigger_event = char_interaction.0180
+				# trigger_event = char_interaction.0180
+				trigger_event = false_conversion.0900
+				save_scope_value_as = {
+					name = forcibly_converted
+					value = yes
+				}
 			}
 		}
 		if = {
 			limit = { scope:recipient = { is_imprisoned_by = scope:actor } }
 			scope:recipient = { release_from_prison = yes }
 			scope:recipient = {
-				trigger_event = char_interaction.0180
+				# trigger_event = char_interaction.0180
+				trigger_event = false_conversion.0900
+				save_scope_value_as = {
+					name = forcibly_converted
+					value = yes
+				}
 			}
 		}
 		else = {
@@ -93,6 +108,24 @@ demand_conversion_interaction = {
 				trigger_event = char_interaction.0181
 			}
 		}
+
+		scope:actor = {
+			if = {
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = piety_from_converting_involved_rulers
+						is_secondary_character_involvement_involved_trigger = {
+							CHAR = scope:recipient
+						}
+					}
+				}
+				add_piety = medium_piety_gain
+			}
+		}
+
+		# If we're a clan this interaction affects unity
+		accept_faith_conversion_add_clan_unity_effect = yes
 	}
 
 	on_decline = {
@@ -130,6 +163,9 @@ demand_conversion_interaction = {
 		scope:actor = {
 			trigger_event = char_interaction.0182
 		}
+
+		# If we're a clan this interaction affects unity
+		refuse_faith_conversion_add_clan_unity_effect = yes
 	}
 
 	auto_accept = {
@@ -141,9 +177,24 @@ demand_conversion_interaction = {
 			scope:actor = { has_strong_hook = scope:recipient }
 		}
 	}
+
+	#For loc
+	on_auto_accept = {
+		scope:recipient = {
+			save_scope_value_as = {
+				name = forcibly_converted
+				value = yes
+			}
+		}
+	}
 	
 	ai_accept = {
 		base = 0
+		# Increase base chance
+		modifier = {
+			add = 50
+			desc = EDUCATE_CHILD_ACTOR_IS_MY_LIEGE
+		}
 		modifier = {
 			add = 100
 			NOT = {
@@ -290,6 +341,24 @@ demand_conversion_vassal_ruler_interaction = {
 			trigger_event = religious_interaction.2002
 		}
 		demand_conversion_vassal_ruler_interaction_effect = yes
+
+		# If we're a clan this interaction affects unity
+		accept_faith_conversion_add_clan_unity_effect = yes
+
+		scope:actor = {
+			if = {
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = piety_from_converting_involved_rulers
+						is_secondary_character_involvement_involved_trigger = {
+							CHAR = scope:recipient
+						}
+					}
+				}
+				add_piety = medium_piety_gain
+			}
+		}
 	}
 
 	on_decline = {
@@ -400,6 +469,9 @@ demand_conversion_vassal_ruler_interaction = {
 				}
 			}
 		}
+
+		# If we're a clan this interaction affects unity
+		refuse_faith_conversion_add_clan_unity_effect = yes
 	}
 	
 	ai_potential = {
@@ -583,6 +655,11 @@ demand_conversion_vassal_ruler_interaction = {
 	}
 	ai_accept = {
 		base = 0
+		# Increase base chance
+		modifier = {
+			add = 50
+			desc = EDUCATE_CHILD_ACTOR_IS_MY_LIEGE
+		}
 		religion_demand_conversion_default_modifier = yes
 
 		modifier = {
@@ -615,6 +692,8 @@ demand_conversion_player_ruler_interaction = {
 			NOT = { faith = scope:actor.faith }
 		}
 	}
+
+	cooldown_against_recipient = { years = 15 }
 
 	is_valid_showing_failures_only = {
 		valid_demand_conversion_conditions_trigger = yes
@@ -680,6 +759,10 @@ demand_conversion_player_ruler_interaction = {
 		}
 	
 		scope:recipient = {
+			save_scope_value_as = {
+				name = forcibly_converted
+				value = yes
+			}
 			trigger_event = religious_interaction.2021
 		}
 	}
@@ -689,6 +772,24 @@ demand_conversion_player_ruler_interaction = {
 		demand_conversion_player_ruler_interaction_effect = yes
 		scope:actor = {
 			trigger_event = char_interaction.0190
+		}
+
+		# If we're a clan this interaction affects unity
+		accept_faith_conversion_add_clan_unity_effect = yes
+
+		scope:actor = {
+			if = {
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = piety_from_converting_involved_rulers
+						is_secondary_character_involvement_involved_trigger = {
+							CHAR = scope:recipient
+						}
+					}
+				}
+				add_piety = medium_piety_gain
+			}
 		}
 	}
 
@@ -716,6 +817,9 @@ demand_conversion_player_ruler_interaction = {
 			}
 			trigger_event = char_interaction.0191
 		}
+
+		# If we're a clan this interaction affects unity
+		refuse_faith_conversion_add_clan_unity_effect = yes
 	}
 	
 	ai_potential = {
