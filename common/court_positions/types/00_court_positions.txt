@@ -116,7 +116,7 @@ court_physician_court_position = {
 					limit = { has_trait = education_learning_4 }
 					add = 12
 				}
-			    else_if = {
+				else_if = {
 					limit = { has_trait = education_learning_5 }
 					add = 22
 				}
@@ -131,6 +131,14 @@ court_physician_court_position = {
 				value = -50
 				desc = court_position_blind_trait
 			}
+		}
+		if = {
+			limit = {
+				any_character_artifact = {
+					has_artifact_modifier = artifact_physician_aptitude_1_modifier
+				}
+			}
+			add = 20
 		}
 		#if = {
 		#	limit = {
@@ -322,7 +330,51 @@ court_physician_court_position = {
                 }
             }
         }
-		add = adjust_court_position_score_for_unity
+
+		if = {
+			limit = {
+				scope:liege = {
+					any_held_county = {
+						any_county_province = {
+							any_province_epidemic = {
+								outbreak_intensity = minor
+							}
+						}
+					}
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				scope:liege = {
+					any_held_county = {
+						any_county_province = {
+							any_province_epidemic = {
+								outbreak_intensity = major
+							}
+						}
+					}
+				}
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				scope:liege = {
+					any_held_county = {
+						any_county_province = {
+							any_province_epidemic = {
+								outbreak_intensity = apocalyptic
+							}
+						}
+					}
+				}
+			}
+			add = 150
+		}
+
+        add = adjust_court_position_score_for_unity
     }
 }
 
@@ -7642,6 +7694,231 @@ court_scholar_court_position = {
 					}
 					add = -75
  				}
+			}
+		}
+		add = court_position_debt_considerations_value
+	}
+}
+#####FP3 Additions End####
+
+chronicler_court_position = {
+	max_available_positions = 1
+	category = court_position_category_special
+	skill = diplomacy
+	
+	is_shown = {
+		has_dlc_feature = legends
+	}
+
+	opinion = {
+		value = regular_court_position_opinion
+	}
+	
+	# How high the aptitude has to be to reach the 5 different modifier levels
+	aptitude_level_breakpoints = { 20 40 60 80 }
+	
+	# How good is this character in this position? root scope is the holder of the court position
+	aptitude = {
+		value = 1
+		add = {
+			value = diplomacy
+			multiply = 2.5
+			max = 50
+			desc = court_position_skill_diplomacy
+		}
+		add = {
+			value = learning
+			multiply = 1
+			max = 50
+			desc = court_position_skill_learning
+		}
+		if = {
+			limit = {
+				has_trait = poet
+			}
+			add = {
+				value = 15
+				desc = court_position_poet_trait
+			}
+		}
+		if = {
+			limit = {
+				has_trait = gregarious
+			}
+			add = {
+				value = 15
+				desc = court_position_gregarious_trait
+			}
+		}
+		if = {
+			limit = {
+				has_trait = diplomat
+			}
+			add = {
+				value = 30
+				desc = court_position_diplomat_trait
+			}
+		}
+		add = court_position_aptitude_family_business_value
+		add = court_position_aptitude_low_penalty_value
+	}
+
+	valid_position = { }
+
+	is_shown_character = {
+		scope:employee = {
+			is_courtier_of = scope:liege
+		}
+	}
+
+	valid_character = {
+		scope:employee = {
+			is_imprisoned = no
+			is_adult = yes
+		}
+	}
+
+	revoke_cost = {
+		prestige =  {
+			value = major_court_position_prestige_revoke_cost 
+
+			# Set to 0 with Dynasty Perk Inner Circle
+			if = {
+				limit = {
+					exists = dynasty
+					dynasty = { has_dynasty_perk = fp2_coterie_legacy_1 }
+
+					employs_court_position = chronicler_court_position
+					any_court_position_holder = {
+						type = chronicler_court_position
+						exists = dynasty
+						house = prev.house
+					}
+				}
+				multiply = 0
+			}
+		}
+	}
+
+	salary = {
+		round = no
+		gold = {
+			value = minor_court_position_salary
+			# Set to 0 with Dynasty Perk Inner Circle
+			if = {
+				limit = {
+					scope:liege = {
+						exists = dynasty
+						dynasty = { has_dynasty_perk = fp2_coterie_legacy_1 }
+
+						employs_court_position = chronicler_court_position
+						any_court_position_holder = {
+					        type = chronicler_court_position
+							exists = dynasty
+							house = prev.house
+						}
+					}
+				}
+				multiply = {
+					value = 0.0
+					desc = inner_circle_salary_mod
+					format = "BASE_VALUE_FORMAT_DECIMALS_MINUS_POSITIVE"
+				}
+			}
+			if = {
+				limit = {
+					scope:liege = {
+						employs_court_position = chronicler_court_position
+						any_court_position_holder = {
+					        type = chronicler_court_position
+					        scope:liege = {
+								has_hook_of_type = {
+									type = obligation_hook
+									target = prev
+								}
+							}
+						}
+					}
+				}
+				multiply = {
+					value = 0.5
+					desc = obligation_hook_salary
+				}
+			}
+		}
+	}
+
+	# These modifiers are employed based on what level the aptitude reaches (levels are defined as breakpoints) 
+	scaling_employer_modifiers = {
+		terrible = {
+			court_grandeur_baseline_add = 0
+		}
+		poor = {
+			court_grandeur_baseline_add = 1
+			monthly_prestige = 0.1
+		}
+		average = {
+			court_grandeur_baseline_add = 1
+			monthly_prestige = 0.25
+		}
+		good = {
+			court_grandeur_baseline_add = 2
+			monthly_prestige = 0.5
+		}
+		excellent = {
+			court_grandeur_baseline_add = 2
+			monthly_prestige = 1
+		}
+	}
+
+	modifier = {
+		monthly_prestige = minor_court_position_prestige_salary
+	}
+
+	on_court_position_received = {
+		basic_gained_court_position_effect = yes
+	}
+	on_court_position_revoked = { 
+		basic_revoked_court_position_effect = yes
+	}
+	on_court_position_invalidated = {
+		basic_invalidated_court_position_effect = yes
+	}
+	# Scripted value to determine whether an AI will hire/fire a position or not. Hires over 0, fires under -50. Look in _court_positions.info for more extensive documentation!
+	candidate_score = {
+		value = 50
+		scope:employee = {
+			# Does the liege have a better candidate that they should be hiring instead?
+			if = {
+				limit = {
+					scope:highest_available_aptitude > scope:employee_aptitude
+				}
+				add = -125
+			}
+			# More likely to pick a courtier with a high aptitude, less likely to pick one with low
+			add = {
+				value = scope:employee_aptitude
+				multiply = 4
+			}
+		}
+
+		add = scope:base_value
+		add = court_position_candidate_score_base_value
+		scope:liege = {
+			# More likely for very generous characters 
+			if = {
+				limit = {
+					ai_greed <= -75
+				}
+				add = 25
+			}
+			# Lots of gold to spend on inspirations!
+			if = {
+				limit = {
+					gold >= 500
+					monthly_character_income > monthly_character_expenses_plus_fourty_percent
+				}
+				add = 50
 			}
 		}
 		add = court_position_debt_considerations_value
