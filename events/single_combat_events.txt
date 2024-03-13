@@ -1910,6 +1910,15 @@ scripted_effect work_out_wounds_or_death_effect = {
 	# Fatality:Always = losing is always fatal.
 	else_if = {
 		limit = { scope:fatality = flag:always }
+		scope:sc_victor = {
+			if = {
+				limit = {
+					this = scope:sc_attacker
+					NOT = { has_execute_reason = scope:sc_loser }
+				}
+				add_kinslayer_trait_or_nothing_effect = { VICTIM = scope:sc_loser }
+			}
+		}
 		scope:sc_loser = {
 			death = {
 				killer = scope:sc_victor
@@ -2216,19 +2225,19 @@ scripted_effect finalise_combat_results_effect = {
 					# Specific to Germanic pagans.
 					religion = religion:germanic_religion
 					# And they gotta be warlike.
-					OR = {
-						faith = {
-							OR = {
-								has_doctrine_parameter = warmonger
-								has_doctrine_parameter = conquest_cb_enabled
-								has_doctrine_parameter = invasion_cb_enabled
-								has_doctrine_parameter = great_holy_wars_active_if_reformed
-								has_doctrine_parameter = clergy_can_fight
-								has_doctrine_parameter = cheaper_holy_wars_active
-								has_doctrine_parameter = great_holy_wars_active
-							}
+					faith = {
+						OR = {
+			 
+							has_doctrine_parameter = warmonger
+							has_doctrine_parameter = conquest_cb_enabled
+							has_doctrine_parameter = invasion_cb_enabled
+							has_doctrine_parameter = great_holy_wars_active_if_reformed
+							has_doctrine_parameter = clergy_can_fight
+							has_doctrine_parameter = cheaper_holy_wars_active
+							has_doctrine_parameter = great_holy_wars_active
+		
 						}
-						culture = { has_cultural_parameter = culture_clergy_can_fight }
+																	 
 					}
 				}
 				save_scope_value_as = {
@@ -2289,6 +2298,28 @@ scripted_effect finalise_combat_results_effect = {
 				change_variable = {
 					name = artifact_duel_var
 					add = 1
+				}
+			}
+		}
+		# Legend seed setup
+		if = {
+			limit = {
+				scope:sc_loser = {
+					OR = {
+						highest_held_title_tier >= tier_empire
+						any_held_title = { is_head_of_faith = yes }
+						has_nickname = nick_genghis_khan
+					}
+				}
+			}
+			create_legend_seed = {
+				type = heroic
+				quality = illustrious
+				chronicle = legendary_battle
+				properties = {
+					winner = root
+					loser = scope:sc_loser
+					location = root.location
 				}
 			}
 		}
@@ -6627,7 +6658,14 @@ single_combat.0001 = {
 
 	#Unsure Attack
 	option = {
-		name = single_combat.0001.unsure_attack
+		name = {
+			trigger = { scope:fatality = flag:yes }
+			text = single_combat.0001.unsure_attack
+		}
+		name = {
+			trigger = { scope:fatality = flag:no }
+			text = single_combat.0001.unsure_attack_non_fatal
+		}
 		trigger = { exists = local_var:combat_move_unsure_attack_flag }
 
 		#Move clarification
