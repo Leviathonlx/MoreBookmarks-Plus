@@ -47,6 +47,72 @@ cad_decision.0005 = { #Select faith tenet one
 	title = cad_decision.0005.t
 	desc = cad_decision.0005.desc
 	theme = realm
+
+	immediate = { #Create Head of Faith
+		play_music_cue = "mx_cue_sacredrite"
+		save_scope_as = reformer
+		if = { # Pick your chaplain first.
+			limit = {
+				exists = cp:councillor_court_chaplain
+				cp:councillor_court_chaplain = { faith = faith:orthodox }
+			}
+			cp:councillor_court_chaplain = { save_scope_as = new_pope }
+		}
+		else = {
+		 	hidden_effect = {
+				create_character = {
+					employer = root
+					template = religious_leader_character
+					random_traits = no
+					save_scope_as = new_pope
+					dynasty = generate
+				}
+			}
+			scope:new_pope = {
+				add_trait = education_learning_3
+				add_trait = zealous
+				add_trait = intellect_good_1
+				random_list = {
+					1 = { add_trait = lustful }
+					1 = { add_trait = chaste }
+					1 = { add_trait = wrathful }
+					1 = { add_trait = diligent }
+					1 = { add_trait = impatient }
+					1 = { add_trait = arrogant }
+					1 = { add_trait = humble }
+					1 = { add_trait = gregarious }
+				}
+				random_list = {
+					1 = { add_trait = honest }
+					1 = { add_trait = ambitious }
+					1 = { add_trait = just }
+					1 = { add_trait = cynical }
+					1 = { add_trait = zealous }
+					1 = { add_trait = compassionate }
+					1 = { add_trait = stubborn }
+				}
+			}
+		}
+		root.faith = {
+			change_fervor = {
+				value = 10
+				desc = fervor_gain_autocephaly
+			}
+		}
+		create_title_and_vassal_change = {
+			type = returned
+			save_scope_as = change
+			add_claim_on_loss = no
+		}
+		root.faith.religious_head_title = {
+			change_title_holder = {
+				holder = scope:new_pope
+				change = scope:change
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+	}
+
 	left_portrait = {
 		character = scope:root
 		animation = personality_zealous
@@ -253,14 +319,14 @@ cad_decision.0008 = { #Select communion
 		}
 	}
 
-	#option = { #Arians, lol
-	#	name = cad_decision.0008.f
-	#
-	#	root.faith = { 
-	#		remove_doctrine = doctrine_circumincession_trinitarian
-	#		add_doctrine = doctrine_circumincession_arianism
-	#	}
-	#}
+	option = { #Arians, lol
+		name = cad_decision.0008.f
+
+		root.faith = { 
+			remove_doctrine = doctrine_circumincession_trinitarian
+			add_doctrine = doctrine_circumincession_arianism
+		}
+	}
 }
 
 cad_decision.0009 = { #Offer sacrifice to Mary
@@ -275,10 +341,6 @@ cad_decision.0009 = { #Offer sacrifice to Mary
 
 	option = { #Burn incense
 		name = cad_decision.0009.a
-
-		cost = {
-			gold = 20
-		}
 
 		hidden_effect = {
 			random_list = {
@@ -307,10 +369,6 @@ cad_decision.0009 = { #Offer sacrifice to Mary
 	option = { #Offer a collyris
 		name = cad_decision.0009.b
 
-		cost = {
-			gold = 50
-		}
-
 		hidden_effect = {
 			random_list = {
 				30 = {
@@ -338,10 +396,6 @@ cad_decision.0009 = { #Offer sacrifice to Mary
 	option = { #Offer nothing
 		name = cad_decision.0009.c
 
-		cost = {
-			piety = 50
-		}
-
 		hidden_effect = {
 			random_list = {
 				10 = {
@@ -364,5 +418,399 @@ cad_decision.0009 = { #Offer sacrifice to Mary
 				}
 			}
 		}
+	}
+}
+
+cad_decision.0010 = { #Enter Catholic Communion, with TCT installed
+	type = letter_event
+	sender = scope:cad_communion_changer
+	opening = cad_decision.0010.t
+	desc = cad_decision.0010.desc
+
+	option = { #No, we will not allow you into Communion
+		name = cad_decision.0010.a
+
+		scope:cad_communion_changer = {
+			send_interface_message = {
+				title = cad_decision.0010.notif.a
+				type = sinful_theocrat_exposed
+				right_icon = scope:k_papal_state.holder
+			}
+		}
+	}
+
+	option = { #Yes, we will allow you into Communion
+		name = cad_decision.0010.b 
+
+		scope:cad_communion_changer = {
+			send_interface_message = {
+				title = cad_decision.0010.notif.b
+				type = virtuous_theocrat_celebrated
+				right_icon = scope:k_papal_state.holder
+			}
+		}
+		scope:cad_communion_changer.faith = {
+			add_doctrine = catholic_autocephaly_autocephalous
+		}
+	}
+}
+
+cad_decision.0012 = { #Enter Catholic Communion
+	type = character_event
+	title = cad_decision.0012.t
+	desc = cad_decision.0012.desc
+	theme = realm
+	left_portrait = {
+		character = scope:religious_head
+		animation = personality_zealous
+	}
+
+	option = { 
+		name = cad_decision.0012.a
+
+		hidden_effect = {
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autonomous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_adoptionism } }
+				root.faith = { remove_doctrine = doctrine_christology_adoptionism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_docetism } }
+				root.faith = { remove_doctrine = doctrine_christology_docetism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_diophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_diophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_miaphysite } }
+				root.faith = { remove_doctrine = doctrine_christology_miaphysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_monophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monothelite } }
+				root.faith = { remove_doctrine = doctrine_christology_monothelite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_nestorian } }
+				root.faith = { remove_doctrine = doctrine_christology_nestorian }
+			}
+		}	
+		#Placed below to prevent issues
+		root.faith = { 
+			add_doctrine = catholic_autocephaly_autocephalous 
+			#change_fervor = 20 #You can't change fervor like this and it's not really needed anyway
+			add_doctrine = doctrine_christology_diophysite
+		}
+	}
+
+	option = { #We changed our minds
+		name = cad_decision.0012.b
+
+		add_piety = 500 #Refund
+	}
+}
+
+cad_decision.0013 = { #Enter Orthodox Communion
+	type = character_event
+	title = cad_decision.0013.t
+	desc = cad_decision.0013.desc
+	theme = realm
+	left_portrait = {
+		character = scope:religious_head
+		animation = personality_zealous
+	}
+
+	option = { 
+		name = cad_decision.0012.a
+
+		hidden_effect = {
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autonomous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_adoptionism } }
+				root.faith = { remove_doctrine = doctrine_christology_adoptionism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_docetism } }
+				root.faith = { remove_doctrine = doctrine_christology_docetism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_diophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_diophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_miaphysite } }
+				root.faith = { remove_doctrine = doctrine_christology_miaphysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_monophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monothelite } }
+				root.faith = { remove_doctrine = doctrine_christology_monothelite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_nestorian } }
+				root.faith = { remove_doctrine = doctrine_christology_nestorian }
+			}
+		}
+
+		root.faith = { 
+			add_doctrine = orthodox_autocephaly_autocephalous 
+			#change_fervor = 20
+			add_doctrine = doctrine_christology_diophysite
+		}
+	}
+
+	option = { #We changed our minds
+		name = cad_decision.0012.b
+
+		add_piety = 500 #Refund
+	}
+}
+
+cad_decision.0014 = { #Enter Oriental Communion
+	type = character_event
+	title = cad_decision.0014.t
+	desc = cad_decision.0014.desc
+	theme = realm
+	left_portrait = {
+		character = scope:religious_head
+		animation = personality_zealous
+	}
+
+	option = { 
+		name = cad_decision.0012.a
+
+		hidden_effect = {
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autonomous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_adoptionism } }
+				root.faith = { remove_doctrine = doctrine_christology_adoptionism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_docetism } }
+				root.faith = { remove_doctrine = doctrine_christology_docetism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_diophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_diophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_miaphysite } }
+				root.faith = { remove_doctrine = doctrine_christology_miaphysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_monophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monothelite } }
+				root.faith = { remove_doctrine = doctrine_christology_monothelite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_nestorian } }
+				root.faith = { remove_doctrine = doctrine_christology_nestorian }
+			}
+		}
+
+		root.faith = { 
+			add_doctrine = oriental_autocephaly_autocephalous 
+			#change_fervor = 20
+			add_doctrine = doctrine_christology_miaphysite
+		}
+	}
+
+	option = { #We changed our minds
+		name = cad_decision.0012.b
+
+		add_piety = 500 #Refund
+	}
+}
+
+cad_decision.0015 = { #Enter Nestorian Communion
+	type = character_event
+	title = cad_decision.0015.t
+	desc = cad_decision.0015.desc
+	theme = realm
+	left_portrait = {
+		character = scope:religious_head
+		animation = personality_zealous
+	}
+
+	option = { 
+		name = cad_decision.0012.a
+
+		hidden_effect = {
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autonomous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = orthodox_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = orthodox_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = oriental_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = oriental_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autocephalous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = catholic_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = catholic_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autonomous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autonomous }
+			}
+			if = { 
+				limit = { root.faith = { has_doctrine = nestorian_autocephaly_autocephalous } }
+				root.faith = { remove_doctrine = nestorian_autocephaly_autocephalous }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_adoptionism } }
+				root.faith = { remove_doctrine = doctrine_christology_adoptionism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_docetism } }
+				root.faith = { remove_doctrine = doctrine_christology_docetism }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_diophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_diophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_miaphysite } }
+				root.faith = { remove_doctrine = doctrine_christology_miaphysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monophysite } }
+				root.faith = { remove_doctrine = doctrine_christology_monophysite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_monothelite } }
+				root.faith = { remove_doctrine = doctrine_christology_monothelite }
+			}
+			if = {
+				limit = { root.faith = { has_doctrine = doctrine_christology_nestorian } }
+				root.faith = { remove_doctrine = doctrine_christology_nestorian }
+			}
+		}
+		#Place below removals to prevent issues
+		root.faith = { 
+			add_doctrine = nestorian_autocephaly_autocephalous 
+			#change_fervor = 20
+			add_doctrine = doctrine_christology_nestorian
+		}
+	}
+
+	option = { #We changed our minds
+		name = cad_decision.0012.b
+
+		add_piety = 500 #Refund
 	}
 }
