@@ -1,0 +1,379 @@
+﻿#Black Death edits. 
+bubonic_plague = {
+	trait = bubonic_plague
+	color = black
+	priority = 5
+
+	shader_data = {
+		strength = 0.8
+		edge_fade = 0.4
+		tile_multiplier = 0.005
+		texture_index = 0
+		channel = red
+	}
+
+	name = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					outbreak_province = province:1580
+					outbreak_intensity = apocalyptic
+				}
+				desc = epidemic_mitcheldean_malaise
+			}
+			triggered_desc = {
+				trigger = {
+					outbreak_province = province:8748
+					outbreak_intensity = apocalyptic
+				}
+				desc = epidemic_green_death
+			}
+			triggered_desc = {
+				trigger = {
+					outbreak_intensity = apocalyptic
+				}
+				desc = epidemic_black_death
+			}
+			triggered_desc = {
+				trigger = {
+					OR = {
+						faith = faith:catholic
+						faith = faith:orthodox
+						faith = faith:nestorian
+						faith = faith:coptic
+						faith = faith:armenian_apostolic
+						faith = faith:insular_celtic
+					}
+				}
+				desc = epidemic_random_saint_plague
+			}
+			triggered_desc = {
+				trigger = {
+					outbreak_intensity = major
+				}
+				desc = epidemic_reapers_will
+			}
+			triggered_desc = {
+				trigger = {
+					outbreak_intensity = major
+				}
+				desc = epidemic_reapers_due
+			}
+			triggered_desc = {
+				trigger = {
+					outbreak_intensity = major
+				}
+				desc = epidemic_wicked_blight
+			}
+			random_valid = {
+				desc = epidemic_realm_plague
+				desc = epidemic_culture_plague
+				desc = epidemic_location_plague
+				desc = epidemic_ruler_plague
+				desc = epidemic_titled_ruler_plague
+				desc = epidemic_evil_god_plague
+				desc = epidemic_bubonic_plague
+			}
+		}
+	}
+	
+	on_start = {
+		if = {
+			limit = {
+				outbreak_intensity = apocalyptic
+			}
+
+			set_global_variable = black_death_happened
+
+			set_global_variable = {
+				name = black_death
+				value = root
+			}
+		}
+		else_if = { #TODO_CE1 remove debug
+			limit = { NOT = { has_global_variable = plague_happened } }
+			set_global_variable = {
+				name = plague_happened
+				value = 1
+			}
+		}
+		else = {
+			change_global_variable = {
+				name = plague_happened
+				add = 1
+			}
+		}
+
+
+		# LEGITIMACY LOSS FROM EPIDEMIC OUTBREAK
+		epidemic_outbreak_legitimacy_effect = { PROVINCE = root.outbreak_province }
+	}
+
+	on_end = {
+		if = {
+			limit = {
+				outbreak_intensity = apocalyptic
+			}
+			remove_global_variable = black_death
+		}
+	}
+	
+	on_monthly = {
+		trigger_event = {
+			on_action = epidemic_ongoing_events
+		}
+	}
+
+	character_infection_chance = {
+		value = character_infection_chance_default_value
+		multiply = 0.02 #The only way we can make it not kill every single character in the game
+	}
+
+	can_infect_character = {
+		can_contract_disease_trigger = { DISEASE = bubonic_plague }
+		immune_to_epidemic = { EPIDEMIC = scope:epidemic }
+	}
+
+	on_character_infected = {
+		contract_disease_notify_effect = { DISEASE = bubonic_plague }
+	}
+
+	infection_levels = {
+		10 = {
+			province_modifier = {
+				monthly_county_control_decline_add = -0.6
+				development_decline = -3
+				levy_reinforcement_rate = -0.3
+				levy_size = -0.25
+				supply_limit_mult = -0.2
+				county_opinion_add = -10
+				epidemic_travel_danger = 25
+			}	
+		}
+		50 = {
+			province_modifier = {
+				monthly_county_control_decline_add = -0.8
+				development_decline = -6
+				levy_reinforcement_rate = -0.5
+				levy_size = -0.4
+				supply_limit_mult = -0.5
+				county_opinion_add = -25
+				epidemic_travel_danger = 40
+			}	
+		}
+		80 = {
+			province_modifier = {
+				monthly_county_control_decline_add = -0.8
+				development_decline = -8
+				levy_reinforcement_rate = -1
+				levy_size = -0.5
+				supply_limit_mult = -1
+				county_opinion_add = -25
+				epidemic_travel_danger = 60
+			}
+		}
+	}
+
+	outbreak_intensities = {
+		minor = {
+			outbreak_chance = {
+				value = outbreak_chance_minor_default_value
+				multiply = outbreak_chance_minor_mult_value
+				multiply = recent_epidemics_outbreak_mult_value
+				multiply = 0.0005 #should almost never be minor
+			}
+			spread_chance = {
+				value = spread_chance_epidemics_default_value
+				multiply = spread_chance_epidemics_mult_value
+			}
+			max_provinces = { 200 400 } # Was max_provinces = { 100 200 }
+
+			infection_duration = {
+				months = { 6 12 }
+			}
+
+			infection_progress_duration = {
+				days = { 40 60 }
+			}
+
+			infection_recovery_duration = {
+				days = { 25 35 }
+			}
+		}
+
+		major = {
+			outbreak_chance = {
+				value = outbreak_chance_major_default_value
+				multiply = outbreak_chance_major_mult_value
+				multiply = recent_epidemics_outbreak_mult_value
+				multiply = 0.005 #should almost never be major
+			}
+			spread_chance = {
+				value = spread_chance_epidemics_default_value
+				multiply = spread_chance_epidemics_mult_value
+			}
+
+			max_provinces = { 300 600 } # Was max_provinces = { 300 500 }
+
+			infection_duration = {
+				months = { 12 24 }
+			}
+
+			infection_progress_duration = {
+				days = { 25 35 }
+			}
+
+			infection_recovery_duration = {
+				days = { 50 70 }
+			}
+		}
+
+		apocalyptic = { #The Black Death
+			# We trigger the event specially for Black Death
+			notification = {
+				global = yes
+				holder_event = ""
+				liege_event = ""
+				realm_event = ""
+			}
+			
+			outbreak_chance = {
+				value = {
+					value = outbreak_chance_black_plague_default_value
+					multiply = outbreak_chance_black_plague_mult_value
+					multiply = recent_epidemics_outbreak_mult_value
+				}
+				if = {
+					limit = {
+						current_date >= 1346.1.1
+						has_game_rule = bd_occurrence_historical
+						NOT = {
+							has_global_variable = black_death_happened
+						}
+						geographical_region = world_central_asia
+					}
+					add = 100
+				}
+
+				if = {
+					limit = {
+						# Currently happening
+						has_global_variable = black_death
+					}
+					value = 0
+				}
+				if = {
+					limit = { #it can only happen once per game
+						has_global_variable = black_death_happened
+						has_game_rule = bd_frequency_once
+					}
+					value = 0
+				}
+				if = {
+					limit = { #it can never happen
+						has_game_rule = bd_frequency_never
+					}
+					value = 0
+				}
+
+				#Historical exemption
+				if = {
+					limit = {
+						has_game_rule = bd_occurrence_historical
+						OR = {
+							current_date < 1346.1.1
+							NOT = {
+								geographical_region = world_central_asia
+							}
+						}
+					}
+					value = 0
+				}
+				multiply = 0.1
+
+			}
+			spread_chance = {
+				value = spread_chance_epidemics_default_value
+				multiply = spread_chance_epidemics_mult_value
+
+				#Exclusions for historical Milan and Poland, husariaaaa
+				if = {
+					limit = {
+						has_game_rule = bd_occurrence_historical
+						OR = {
+							geographical_region = world_tibet
+							county.duchy = title:d_lombardia
+							
+							#MB - Mainly areas that weren't heavily impacted just like Poland and other areas Paradox had above (which did get impacted by the plague just not as extensively).
+							geographical_region = world_japan					#No evidence it reached Japan
+							geographical_region = custom_southern_subsahara 	#Archaeologists and historians have long assumed that the plague didn't make it across the Sahara Desert though that's changed in recent years. Will make it so it only impacts the northern half of the sub-Sahara where the major empires and kingdoms were and down the Niger River towards Nri
+							geographical_region = world_greater_nusantara 		#Controversial whether or not the Black Death impacted Southeast Asia and played a part in the weakening of the Khmer Empire but I can find nothing on it impacting Nusantara. Probably was just spared due to climate. 
+							geographical_region = custom_southeast_asia_plague	#Still let's keep it out of the dense jungle areas that weren't really controlled by the surrounding empires and kingdoms
+							geographical_region = custom_desert_plague 			#Inner Arabia was unlikely heavily impacted by the plague
+							geographical_region = custom_northern_plague		#Keep it out of northern Scandinavia and parts of Siberia and northern steppe
+							geographical_region = custom_mountains_plague		#Mountainous regions not heavily impacted by the plague
+							geographical_region = custom_easteurope_plague		#Mainly to consolidate Paradox's regions. Also edited to include some specific counties such as Brugge and Magdeburg
+							
+							county.duchy = title:d_iceland						#Was remote enough that is wasn't impacted till later epidemics. 
+						}
+					}
+					multiply = 0.02
+				}				
+			}
+			max_provinces = { 8750 10500 } #MB has 13945 used provinces compared to the base games 9660 though in both 2-3k are wasteland/sea tiles so no need to get to the max provinces. Added more limitations above for historical spread. # Was max_provinces = { 6500 7250 }
+
+			infection_duration = {
+				months = { 24 48 }
+			}
+			
+			infection_progress_duration = {
+				days = { 5 9 }
+			}
+
+			infection_recovery_duration = {
+				days = { 80 120 }
+			}
+		}
+	}
+	
+	on_province_infected = {
+		county = {
+			apply_infection_development_loss = { BASE = 10 }
+		}
+		every_player = {
+			if = {
+				limit = {
+					NOR = {
+						any_owned_story = {
+							story_type = story_cycle_black_death
+						}
+						has_character_flag = black_death_splash #black plague is in your realm
+					}
+				}
+				create_story = story_cycle_black_death
+				trigger_event = { #time-based fallback to notify the players that the black death is here.
+					id = epidemic_events.5999
+					years = { 4 6 } #Average time for Black Death to move from Siberia to Europe
+				}
+			}
+		}
+		cant_touch_this_achievement_effect = yes
+	}
+	
+	on_province_recovered = {
+		county = {
+			remove_isolated_capital_modifiers_effect = yes
+		}
+		add_to_variable_list = {
+			name = epidemic_cooldown
+			target = scope:epidemic.epidemic_type
+			years = 50
+		}
+		set_variable = {
+			name = epidemic_cooldown_general
+			years = 15 
+		}
+		# Prosperity event
+		plague_recovery_event_effect = yes
+	}
+}

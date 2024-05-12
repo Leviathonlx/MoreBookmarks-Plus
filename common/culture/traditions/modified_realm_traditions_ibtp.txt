@@ -33,12 +33,11 @@ tradition_byzantine_succession = {
 	}
 	
 	parameters = {
-		can_blind_prisoners = yes
-		can_castrate_prisoners = yes
 		eunuch_trait_bonuses = yes
 		can_appoint_chief_eunuch = yes
 		physical_disfigurement_blocks_inheritance = yes #Actually only blocks claimants and reduce score in elective. Also includes infertility for tooltip reasons.
 		children_can_be_born_in_the_purple = yes
+		allows_adoption = yes
 		disloyal_trait_more_common = yes
 		byzantine_faction_differences = yes
 		byzantine_faction_preffered_claimants = yes
@@ -74,8 +73,8 @@ tradition_byzantine_succession = {
 			}
 			if = {
 				limit = {
-					scope:character = {
 						NOT = {
+						scope:character = {
 							has_title = title:c_byzantion
 						}
 					}
@@ -326,7 +325,6 @@ tradition_horse_lords = {
 	can_pick = {
 		custom_description = {
 			text = culture_in_steppe_desc
-			always = no
 			any_culture_county = {
 				percent >= 0.4
 				any_county_province = {
@@ -344,15 +342,19 @@ tradition_horse_lords = {
 	}
 
 	character_modifier = {
-		light_cavalry_damage_mult = 0.15
-		light_cavalry_pursuit_mult = 0.15
-		light_cavalry_screen_mult = 0.15
-		archer_cavalry_damage_mult = 0.15
-		archer_cavalry_pursuit_mult = 0.15
-		archer_cavalry_screen_mult = 0.15
+		light_cavalry_damage_mult = 0.1
+		light_cavalry_pursuit_mult = 0.1
+		light_cavalry_screen_mult = 0.1
+		archer_cavalry_damage_mult = 0.1
+		archer_cavalry_pursuit_mult = 0.1
+		archer_cavalry_screen_mult = 0.1
 		steppe_cancel_negative_supply = yes
 		supply_duration = 1
-		movement_speed = 0.15
+		movement_speed = 0.1
+		character_travel_speed_mult = 0.2
+		steppe_travel_danger = steppe_high_danger_reduction
+		movement_speed_land_raiding = 0.3
+		hostile_county_attrition_raiding = -0.5
 	}
 	
 	cost = {
@@ -793,6 +795,7 @@ tradition_agrarian = {
 	}
 	
 	parameters = {
+		diligent_trait_more_common = yes
 		content_trait_more_common = yes
 		martial_education_worse_outcomes = yes
 		hard_working_traits_more_valued = yes
@@ -801,6 +804,7 @@ tradition_agrarian = {
 	character_modifier = {
 		men_at_arms_recruitment_cost = 0.25
 		prowess = -2
+		floodplains_travel_danger = floodplains_medium_danger_reduction
 	}
 	
 	county_modifier = {
@@ -916,7 +920,7 @@ tradition_quarrelsome = {
 		disloyal_trait_more_common = yes
 	}
 	character_modifier = {
-		monthly_county_control_growth_factor = -0.4
+		monthly_county_control_decline_factor = 0.4
 		
 		ai_boldness = 25
 		ai_honor = -20
@@ -1016,7 +1020,7 @@ tradition_zealous_people = {
 	}
 	
 	character_modifier = {
-		opinion_of_different_faith = -15
+		opinion_of_different_faith = -20
 		faith_conversion_piety_cost_mult = 0.5
 		ai_zeal = 25
 	}
@@ -1086,4 +1090,90 @@ tradition_zealous_people = {
 			multiply = 0.1
 		}
 	}
+}
+
+tradition_hussar = { #Konni Raids
+	category = regional
+
+	layers = {
+		0 = martial
+		1 = western
+		4 = rider.dds
+	}
+
+	#This replaces Hit and Run
+	is_shown = {
+		OR = {
+			has_cultural_pillar = heritage_south_slavic
+			has_cultural_pillar = heritage_magyar
+			has_cultural_pillar = heritage_west_slavic
+		}
+	}
+	can_pick = {
+		trigger_if = {
+			limit = {
+				OR = {
+					NOT = { exists = scope:replacing }
+					NOT = { scope:replacing = culture_tradition:tradition_hit_and_run }
+				}
+			}
+			NOT = { has_cultural_tradition = tradition_hit_and_run } #To prevent stacking after hybridization
+		}
+	}
+	
+	parameters = {
+		unlock_maa_hussar = yes
+		culture_can_raid_over_land_even_if_feudal_no_restrictions = yes
+	}
+	character_modifier = {
+		skirmishers_damage_mult = 0.05
+		skirmishers_screen_mult = 0.1
+		light_cavalry_damage_mult = 0.05
+		light_cavalry_screen_mult = 0.1
+		siege_weapon_siege_value_mult = -0.2
+		retreat_losses = -0.1
+		hard_casualty_modifier = -0.1
+		advantage = -2
+	}
+	
+	cost = {
+		prestige = {
+			add = {
+				value = tradition_base_cost
+				desc = BASE
+				format = "BASE_VALUE_FORMAT"
+			}
+			if = {
+				limit = {
+					NOT = {
+						culture_pillar:ethos_stoic = { is_in_list = traits }
+					}
+				}
+				add = {
+					value = tradition_incompatible_ethos_penalty
+					desc = not_stoic_desc
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						scope:character = {
+							number_maa_soldiers_of_base_type = {
+								type = light_cavalry
+								value >= 500
+							}
+						}
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = culture_head_light_cavalry_desc
+				}
+			}
+			
+			multiply = tradition_replacement_cost_if_relevant
+		}
+	}
+	
+	ai_will_do = { value = 100 }
 }
