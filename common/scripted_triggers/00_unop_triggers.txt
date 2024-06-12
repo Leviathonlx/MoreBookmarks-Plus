@@ -114,7 +114,7 @@ unop_is_sexually_compatible_with_character = {
 		OR = {
 			is_ai = no
 			AND = {
-				might_cheat_on_partner_trigger = { PARTNER = $CHARACTER$ }
+				might_cheat_on_every_partner_trigger = yes
 				OR = {
 					has_perk = unshackled_lust_perk
 					is_attracted_to_gender_of = $CHARACTER$
@@ -153,45 +153,50 @@ unop_is_sexually_compatible_with_character = {
 	}
 }
 
-unop_can_be_warrior_strict_trigger = {
+unop_can_be_warrior_strict_trigger = { #To make sure clergy fighters does not bypass this
 	unop_can_be_combatant_gender_overall_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
-	trigger_if = { limit = { $ARMY_OWNER$.culture = { has_cultural_parameter = high_prowess_ignores_knight_restrictions } }
+	trigger_if = { 
+		limit = { $ARMY_OWNER$.culture = { has_cultural_parameter = high_prowess_ignores_knight_restrictions } }
 		prowess >= 10
 	}
 }
 
 unop_can_be_knight_strict_trigger = {
 	unop_can_be_warrior_strict_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
-	trigger_if = { limit = { $ARMY_OWNER$.culture = { has_cultural_parameter = minimum_prowess_for_knights } }
+	trigger_if = { 
+		limit = { $ARMY_OWNER$.culture = { has_cultural_parameter = minimum_prowess_for_knights } }
 		prowess >= 12
 	}
 }
 
-#unop_can_be_combatant_gender_overall_trigger = {
-#	#trigger_if = {  # If is member of the clergy allowed to fight and has the same faith as the army owner
-#							 
-#	#	limit = { can_be_combatant_based_on_clergy_fighter_trigger = { ARMY_OWNER = $ARMY_OWNER$ } }
-#	#	always = yes
-#	#}
-#	#trigger_else = {
-#	#	OR = {
-#	#		can_be_combatant_based_on_martial_or_faith_custom_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
-#	#		# Those bypass the Martial & Faith customs on certain conditions
-#	#		can_be_combatant_based_on_culture_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
-#	#		can_be_combatant_based_on_exception_trigger = { ARMY_OWNER = $ARMY_OWNER$ } # Special event case or special trait (like Order_Member)
-#   
-#	#	}
-#	#}
-#}
+unop_can_be_combatant_gender_overall_trigger = {
+	trigger_if = {  # If is member of the clergy allowed to fight and has the same faith as the army owner
+		limit = { is_clergy = yes }
+		unop_can_be_combatant_based_on_clergy_fighter_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	}
+	
+	trigger_else = {
+		OR = {
+			unop_can_be_combatant_based_on_martial_or_faith_custom_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+			# Those bypass the Martial & Faith customs on certain conditions
+			unop_can_be_combatant_based_on_culture_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+			unop_can_be_combatant_based_on_exception_trigger = { ARMY_OWNER = $ARMY_OWNER$ } # Special event case or special trait (like Order_Member)
+		}
+	}
+}
+	
+  
 
 unop_can_be_combatant_based_on_exception_trigger = {
 	OR = {
 		# Event-based special exceptions
-		has_character_modifier = ignores_gender_army_rules
-
+		trigger_if = { 
+			limit = { has_character_modifier = ignores_gender_army_rules }
+			always = yes
+		}
 		# Order members will always fight (as long as they have the same faith as the army owner => As the army commander SHOULD always be an Order GrandMaster this should always be true)
-		AND = {
-			has_trait = order_member
+		trigger_if = {
+			limit = { has_trait = order_member }			
 			faith = $ARMY_OWNER$.faith
 		}
 	}
@@ -199,12 +204,12 @@ unop_can_be_combatant_based_on_exception_trigger = {
 
 unop_can_be_combatant_based_on_culture_trigger = {
 	OR = {
-		AND = {
-			$ARMY_OWNER$ = { culture = { has_cultural_parameter = has_access_to_shieldmaidens } }
+		trigger_if = {
+			limit = { $ARMY_OWNER$ = { culture = { has_cultural_parameter = has_access_to_shieldmaidens } } }
 			has_trait = shieldmaiden
 		}
-		AND = {
-			$ARMY_OWNER$ = { culture = { has_cultural_parameter = high_prowess_ignores_knight_restrictions } }
+		trigger_if = {
+			limit = { $ARMY_OWNER$ = { culture = { has_cultural_parameter = high_prowess_ignores_knight_restrictions } } }
 			prowess >= 10
 		}
 	}
@@ -413,4 +418,112 @@ has_medium_renown = {
 	trigger_else = {
 		always = no
 	}
+}
+
+# This trigger combine is_diarch_valid_trigger & is_diarch_able_trigger to be usable in basic events
+unop_can_be_diarch_trigger = {
+
+	# Basics.
+	is_alive = yes
+	is_adult = yes
+	# If you're in an entrenched regency for some reason, you can't manage a regency yourself.
+	NOT = { has_diarchy_parameter = diarchy_type_is_entrenched_regency }
+	# You need to be mentally & physically sound, to some degree.
+	regency_for_personal_reasons_trigger = no
+	# You can't possibly manage someone else's realm from prison.
+	is_imprisoned = no
+	# If you're in a temporary regency for any other reason, you need to chill.
+	NOT = { has_diarchy_active_parameter = diarchy_type_is_temporary_regency }
+	# You'd clearly be preoccupied.
+	trigger_if = {
+		limit = { exists = involved_activity }
+		save_temporary_scope_as = diarch_temp
+		involved_activity.activity_location.county.holder = {
+			NOR = {
+				this = scope:diarch_temp.liege
+				NOT = {
+					any_liege_or_above = { this = scope:diarch_temp.liege }
+				}
+			}
+		}
+	}
+
+	# If you have somehow managed to get invited to/start an activity outside of your realm (e.g., you're the spouse in a grand wedding), then yeah, you forfeit your position.
+	NAND = {
+		# Is it redundant to check twice?
+		## Yes.
+		### Do the machine spirits demand this thoroughness of us?
+		#### Also yes.
+		##### Do not ask why the God-Machine commands it, merely be glad that it commanded it of you.
+		is_travelling = yes
+		exists = current_travel_plan
+		# We check your liege so that you can attend business within the realm easily.
+		## Schemes are their own special lil guys so we take care of them separately.
+		trigger_if = {
+			limit = { exists = current_travel_plan }
+			trigger_if = {
+				limit = {
+					exists = scope:owner
+					exists = scope:target
+				}
+				travel_would_cause_regency_trigger = { REALM_HOLDER = scope:owner.liege }
+			}
+			## Else, we're an ordinary, gods-fearing root scope, so use that.
+			trigger_else = {
+				travel_would_cause_regency_trigger = { REALM_HOLDER = this.liege }
+			}
+		}
+	}
+
+	# We cannot be at war with our liege.
+	OR = {
+		is_independent_ruler = yes
+		AND = {
+			exists = liege
+			NOT = { is_at_war_with = liege }
+		}
+	}
+
+	## Viziers.
+	trigger_if = {
+		limit = {
+			liege ?= { government_has_flag = may_appoint_viziers }
+		}
+		# Must match their liege's gender preference.
+		diarch_matches_liege_faith_gender_preference_trigger = yes
+		# Viziers aren't big land-owners.
+		## Not in this way, at least.
+		highest_held_title_tier <= tier_barony
+	}
+
+	# Event blocks.
+	OR = {
+		is_ai = no
+		NOT = { has_character_flag = cannot_be_diarch }
+	}
+}
+
+unop_is_elderly_trigger = {
+    OR = {
+        AND = {
+            is_male = yes
+            OR = {
+                AND = {
+                    is_immortal = no
+                    age >= define:NCharacter|MALE_ELDERLY_AGE
+                }
+                effective_age >= define:NCharacter|MALE_ELDERLY_AGE
+            }
+        }
+        AND = {
+            is_female = yes
+            OR = {
+                AND = {
+                    is_immortal = no
+                    age >= define:NCharacter|FEMALE_ELDERLY_AGE
+                }
+                effective_age >= define:NCharacter|FEMALE_ELDERLY_AGE
+            }
+        }
+    }
 }
