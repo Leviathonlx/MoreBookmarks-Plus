@@ -1106,7 +1106,7 @@ unite_africa_decision_effects = {
 
 ### Aveng Battle of Tours Effect
 avenge_the_battle_of_tours_decision_effects = {
-		
+
 	give_nickname = nick_the_avenger
 	add_character_modifier = {
 		modifier = avenger_of_the_martyrs
@@ -1163,7 +1163,7 @@ avenge_the_battle_of_tours_decision_effects = {
 			}
 			county = {
 				add_to_list = every_realm_county
-			}	
+			}
 		}
 
 		every_in_list = {
@@ -1252,7 +1252,7 @@ revive_magyar_paganism_decision_scripted_effect = {
 					30 = {
 						trigger = {
 							NOT = { faith = faith:magyar_pagan }
-						}			
+						}
 						add_faith_minority_effect = {
 							COUNTY = scope:county
 							FAITH = faith:magyar_pagan
@@ -1294,7 +1294,7 @@ favour_the_countryside_basques_decision_fundamentalist_path_scripted_effect = {
 	faith:basque_pagan = {
 		# First, we remove Christian Syncretism & replace it with Warmonger.
 		remove_doctrine = tenet_christian_syncretism
-		add_doctrine = tenet_no_syncretism
+		add_doctrine = doctrine_mz_no_syncretism
 		remove_doctrine = tenet_adaptive
 		add_doctrine = tenet_warmonger
 		# Then, we switch on over from Pluralist to Fundamentalist.
@@ -1325,7 +1325,7 @@ favour_the_countryside_basques_decision_righteous_path_scripted_effect = {
 	faith:basque_pagan = {
 		# First, we remove Christian Syncretism & replace it with Sanctity of Nature.
 		remove_doctrine = tenet_christian_syncretism
-		add_doctrine = tenet_no_syncretism
+		add_doctrine = doctrine_mz_no_syncretism
 		remove_doctrine = tenet_adaptive
 		add_doctrine = tenet_sanctity_of_nature
 		# Then, we switch on over from Pluralist to Righteous.
@@ -1373,7 +1373,6 @@ add_culture_minority_effect = {
 					is_target_in_variable_list = { name = culture_minorities_large target = $CULTURE$  }
 				}
 			}
-
 			add_to_variable_list = {
 				name = culture_minorities_$SIZE$
 				target = $CULTURE$
@@ -1650,6 +1649,10 @@ county_to_county_culture_faith_migration_effect = {
 						NOT = { faith = scope:source_county.faith }
 						NOT = { culture = scope:source_county.culture }
 					}
+					OR = {
+						NOT = { has_variable = faith_migration_protection }
+						NOT = { has_variable = culture_migration_protection }
+					}
 					holder = {
 						has_realm_law_flag = religious_minorities_may_migrate
 						has_realm_law_flag = cultural_minorities_may_migrate
@@ -1669,11 +1672,21 @@ county_to_county_culture_faith_migration_effect = {
 				}
 				save_scope_as = county
 				if = {
-					limit = { NOT = { faith = scope:source_county.faith } }
+					limit = {
+						NOT = {
+							faith = scope:source_county.faith
+							has_variable = faith_migration_protection
+						}
+					}
 					promote_faith_minority_effect = { FAITH = scope:source_county.faith }
 				}
 				if = {
-					limit = { NOT = { culture = scope:source_county.culture } }
+					limit = {
+						NOT = {
+							culture = scope:source_county.culture
+							has_variable = culture_migration_protection
+						}
+					}
 					promote_culture_minority_effect = { CULTURE = scope:source_county.culture }
 				}
 				notify_characters_of_culture_faith_migration_effect = yes
@@ -1699,7 +1712,10 @@ minority_culture_spread_effect = {
 		random_neighboring_county = {
 			limit = {
 				holder = { has_realm_law_flag = cultural_minorities_may_migrate }
-				NOT = { culture = scope:minority_culture }
+				NOT = {
+					culture = scope:minority_culture
+					has_variable = faith_migration_protection
+				}
 			}
 			save_scope_as = county
 			promote_culture_minority_effect = { CULTURE = scope:minority_culture }
@@ -1725,7 +1741,10 @@ minority_faith_spread_effect = {
 		random_neighboring_county = {
 			limit = {
 				holder = { has_realm_law_flag = religious_minorities_may_migrate }
-				NOT = { faith = scope:minority_faith }
+				NOT = {
+					faith = scope:minority_faith
+					has_variable = faith_migration_protection
+				}
 			}
 			save_scope_as = county
 			promote_faith_minority_effect = { FAITH = scope:minority_faith }
@@ -1986,23 +2005,38 @@ do_silk_road_migration_effect = {
 		save_scope_as = county
 		random_county_in_region = {
 			region = $REGION$
+			limit = {
+				NAND = {
+					has_variable = faith_migration_protection
+					has_variable = culture_migration_protection
+				}
+			}
 			save_scope_as = source_county
 		}
 		non_neighbor_migration_effect = yes
 	}
 }
 
-
 fake_silk_road_migration_effect = {
 	random_held_title = {
 		limit = { tier = tier_county }
 		save_scope_as = county
 		if = {
-			limit = { NOT = { faith = scope:county_faith } }
+			limit = {
+				NOR = {
+					faith = scope:county_faith
+					has_variable = faith_migration_protection
+				}
+			}
 			promote_faith_minority_effect = { FAITH = scope:county_faith }
 		}
 		if = {
-			limit = { NOT = { culture = scope:county_culture } }
+			limit = {
+				NOR = {
+					culture = scope:county_culture
+					has_variable = culture_migration_protection
+				}
+			}
 			promote_culture_minority_effect = { CULTURE = scope:county_culture }
 		}
 	}
@@ -2071,7 +2105,7 @@ notify_characters_of_fake_migration_effect = {
 #scope:county
 non_neighbor_migration_effect = {
 	if = {
-		limit = { NOT = { faith = scope:source_county.faith } }
+		limit = { NOR = { faith = scope:source_county.faith } }
 		promote_faith_minority_effect = { FAITH = scope:source_county.faith }
 	}
 	if = {
