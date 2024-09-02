@@ -1480,19 +1480,21 @@ free_tributary = {
 	category = interaction_category_diplomacy
 	use_diplomatic_range = yes
 	
+	desc = free_tributary_desc
+	
 	is_shown = {
 		
 		NOT = { 
 				has_game_rule = MB_tributaries_off
 			}
 			
-		scope:actor = {
-			NOT = {
-				exists = var:my_suzerain
-			}
-			is_at_war = no
-			NOT = { this = scope:recipient }
-		}
+		#scope:actor = {
+		#	NOT = {
+		#		exists = var:my_suzerain
+		#	}
+		#	#is_at_war = no
+		#	NOT = { this = scope:recipient }
+		#}
 		scope:recipient = {
 			exists = var:my_suzerain
 			var:my_suzerain = {
@@ -1500,6 +1502,28 @@ free_tributary = {
 			}
 		}
 	}
+	
+	is_valid_showing_failures_only = {
+		NOT = { scope:actor = { is_at_war_with = scope:recipient } }
+		scope:actor = {
+			is_independent_ruler = yes
+			NOT = {
+				is_at_war = yes
+			}
+		}
+		custom_description = {
+			text = is_at_war_with_another_vassal
+			object = scope:recipient
+			NOT = {
+				scope:actor = {
+					any_vassal_or_below = {
+						is_at_war_with = scope:recipient
+					}
+				}
+			}
+		}
+	}
+	
 	
 	auto_accept = {
 		always = yes
@@ -1517,12 +1541,14 @@ free_tributary = {
                 unset_tributary = {
                     TRIBUTARY = this
                     TRIBUTARY_BASE_TYPE = flag:permanent
-                }                
+					PASSING_TO_HEIR = no
+                }
             }
             else = {
                 unset_tributary = {
                     TRIBUTARY = this
                     TRIBUTARY_BASE_TYPE = flag:non_permanent
+					PASSING_TO_HEIR = no
                 }
             }
 			trigger_event = { id = tributaries.8 } #letter informing that they are no longer required to pay tribute
@@ -2332,12 +2358,14 @@ annex_tributary = {
 						unset_tributary = {
 							TRIBUTARY = scope:recipient
 							TRIBUTARY_BASE_TYPE = flag:permanent
+							PASSING_TO_HEIR = no
 						}
 					}
 					else = {
 						unset_tributary = {
 							TRIBUTARY = scope:recipient
 							TRIBUTARY_BASE_TYPE = flag:non_permanent
+							PASSING_TO_HEIR = no
 						}
 					}
 				}
@@ -2445,6 +2473,7 @@ turn_non_perma_tributary_to_perma = {
 					unset_tributary = {
 						TRIBUTARY = scope:recipient
 						TRIBUTARY_BASE_TYPE = flag:non_permanent
+						PASSING_TO_HEIR = no  
 					}
 					#TODO:MAKE SOME KIND OF EFFECT/S + TRIGGER/S THAT WOULD AUTOMATICALLY ASSIGN CORRECT PERMA TRIB TYPE BASED ON THE NON PERMA TRIB TYPE ~ T.
 					make_tributary = {
