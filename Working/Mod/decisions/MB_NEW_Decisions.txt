@@ -1,0 +1,667 @@
+﻿#############################
+# Establish Rus Cultue 		#
+# by Sean Hughes			#
+#############################
+
+establish_russian_culture_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+
+	ai_check_interval = 120
+
+	desc = establish_russian_culture_decision_desc
+	selection_tooltip = establish_russian_culture_decision_tooltip
+
+	is_shown = {
+	
+		#is_ruler = yes
+		#is_landed = yes
+		
+		culture = { has_cultural_pillar = heritage_north_germanic }
+		
+		any_sub_realm_county = {
+			target_is_de_jure_liege_or_above = title:k_ruthenia #Overall Kingdom title used since the formation of Kiev Rus played a large part in a making a single language be the lingua franca of such a large area
+			OR = {
+			culture = culture:volhynian
+			culture = culture:severian
+			culture = culture:ilmenian
+			culture = culture:polyan
+			culture = culture:krivich
+			culture = culture:vyatichi
+			culture = culture:poloch
+			culture = culture:dregovich
+			culture = culture:drevlian
+			culture = culture:tiverian
+			culture = culture:radimichi
+			culture = culture:buzans
+			culture = culture:ulich
+			}
+		}
+		NOT = {	
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_russian_decision
+			}
+		}
+		
+		#current_date > 950.1.1 #Would rather tribal period last till around the historical timeframe given the existence of the 768 bookmark
+		
+	}
+
+	is_valid = {
+	
+		#
+		
+		culture = { has_cultural_pillar = heritage_north_germanic }
+
+		
+		custom_description = {
+			text = establish_russian_culture_decision_date
+			current_date >= 950.1.1
+		}
+
+		#
+		completely_controls = title:k_ruthenia
+		OR = {
+			religion = religion:christianity_religion #Christianity plays a large part in tribes consolidating
+			religion = religion:islam_religion
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_at_war = no
+		is_imprisoned = no
+	}
+
+	effect = {
+		hidden_effect = {
+			# Generate a list of counties we want to flip to the new culture.
+			title:e_russia = {
+				every_in_de_jure_hierarchy = {
+					limit = { tier = tier_county}
+					add_to_list = russian_counties
+				}
+			}
+			every_sub_realm_title = {
+				limit = {
+					tier = tier_county
+				}
+				if = {
+					limit = {
+						title_province = { geographical_region = special_russian_culture_region }
+						AND = {
+							culture = culture:volhynian
+							culture = culture:severian
+							culture = culture:ilmenian
+							culture = culture:norse
+							culture = culture:polyan
+							culture = culture:krivich
+							culture = culture:vyatichi
+							culture = culture:poloch
+							culture = culture:dregovich
+							culture = culture:drevlian
+							culture = culture:tiverian
+							culture = culture:radimichi
+							culture = culture:buzans
+							culture = culture:ulich
+							}
+					}
+					add_to_list = russian_counties
+				}
+			}
+
+			# Perform the culture flip.
+			every_in_list = {
+				list = russian_counties
+				merge_cultures_in_region_effect = {
+					OLD_CULTURE_1 = culture:norse
+					OLD_CULTURE_2 = culture:volhynian #It's honestly all 3 Rus tribes but you can only have 2 things here and Volhynian is the largest one
+					NEW_CULTURE = culture:russian
+					REGION = special_russian_culture_region
+				}
+			}
+			
+			every_in_list = {
+				list = russian_counties
+				limit = {
+					holder.top_liege = root.top_liege
+				}	
+				# All proto-Rus counties in Kiev-Rus become Russian
+				hidden_effect = {
+					convert_county_and_holder_if_in_region_effect = {
+						OLD_CULTURE = culture:severian
+						NEW_CULTURE = culture:russian
+						REGION = special_russian_culture_region
+					}
+				}
+			}
+			
+			every_in_list = {
+				list = russian_counties
+				limit = {
+					holder.top_liege = root.top_liege
+				}	
+				# All proto-Rus counties in Kiev-Rus become Russian
+				hidden_effect = {
+					convert_county_and_holder_if_in_region_effect = {
+						OLD_CULTURE = culture:ilmenian
+						NEW_CULTURE = culture:russian
+						REGION = special_russian_culture_region
+					}
+				}
+			}
+
+			# Send all players in the game a notification event about the flip.
+			save_scope_as = russian_founder
+			culture:norse = {save_scope_as = old_culture_1}
+			culture:volhynian = {save_scope_as = old_culture_2}
+			culture:russian = {
+				reset_culture_creation_date = yes
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+				save_scope_as = new_culture
+			}
+			every_player = {
+				if = {
+					limit = {
+						NOT = { this = root }
+						AND = {
+							culture = culture:volhynian
+							culture = culture:severian
+							culture = culture:ilmenian
+							culture = culture:norse
+							culture = culture:polyan
+							culture = culture:krivich
+							culture = culture:vyatichi
+							culture = culture:poloch
+							culture = culture:dregovich
+							culture = culture:drevlian
+							culture = culture:tiverian
+							culture = culture:radimichi
+							culture = culture:buzans
+							culture = culture:ulich
+						}
+						exists = capital_province
+						capital_province = { geographical_region = special_russian_culture_region }
+					}
+					trigger_event = global_culture.5000
+				}
+				else_if = {
+					limit = { this = root }
+					trigger_event = global_culture.5001
+				}
+				else_if = {
+					limit = {
+						exists = capital_province
+						capital_province = { geographical_region = world_europe }
+					}
+					trigger_event = global_culture.5002
+				}
+			}
+		}
+
+		# Player changes culture
+		set_culture = culture:russian
+		add_character_flag = converted_culture_this_lifetime
+	
+		
+		hidden_effect = {
+			every_in_list = {
+				list = russian_counties
+				limit = {
+					holder.capital_county = { is_in_list = russian_counties }
+				}
+				holder = {
+					add_to_list = mass_melting_pot_list
+					every_courtier = { add_to_list = mass_melting_pot_list }
+					every_courtier_away = { add_to_list = mass_melting_pot_list }
+				}
+				every_in_list = {
+					list = mass_melting_pot_list
+					limit = {
+						OR = {
+							culture = culture:volhynian
+							culture = culture:severian
+							culture = culture:ilmenian
+							culture = culture:norse
+							culture = culture:polyan
+							culture = culture:krivich
+							culture = culture:vyatichi
+							culture = culture:poloch
+							culture = culture:dregovich
+							culture = culture:drevlian
+							culture = culture:tiverian
+							culture = culture:radimichi
+							culture = culture:buzans
+							culture = culture:ulich
+						}
+					}
+					random = {
+						chance = 40 #
+						set_culture = culture:russian
+					}
+				}
+			}
+		}
+
+		# Summary of above hidden effects to inform players of the decision's impact.
+		show_as_tooltip = {
+			custom_tooltip = establish_russian_culture_decision_effect.tt
+			culture:russian = {
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+			}
+		}
+
+		## Rename the duchy to Normandy
+		#title:d_normandy = {
+		#	save_scope_as = normandy_title
+		#	hidden_effect = {
+		#		set_title_name = d_normandy
+		#	}
+		#	custom_tooltip = establish_russian_culture_decision_effect.tt.2
+		#}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:flag_formed_russian_decision
+		}
+	}
+
+	cost = {
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+form_mamluk_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_mamluk.dds"
+	major = yes
+	desc = form_mamluk_decision_desc
+
+	ai_check_interval = 50
+
+	is_shown = {
+		highest_held_title_tier >= tier_duchy
+		culture = {has_cultural_pillar = heritage_turkic}
+		NOT = { game_start_date >= 1258.1.1 }
+		has_primary_title = title:k_egypt
+		NOT = {
+            is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+                target = flag:form_mamluk_decision
+				
+			}
+        }
+	}
+
+
+	is_valid = {
+  
+		#prestige_level >= 3
+        #completely_controls = title:k_egypt
+		#completely_controls = title:k_syria
+		#completely_controls = title:k_jerusalem
+		has_primary_title = title:k_egypt
+		religion = religion:islam_religion
+
+		is_at_war = no
+	}
+
+	cost = {
+		gold = {
+			value = 1000
+		}
+	}
+
+	effect = {
+
+		#Can only happen once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:form_mamluk_decision
+		}
+
+
+
+	spawn_mamluk_sultans_troops_effects = yes
+
+	add_trait = mamaluk
+
+	add_prestige = 1200
+	add_piety = 800
+
+	dynasty = {
+        add_dynasty_prestige_level = 1
+        add_dynasty_prestige = 1500
+        add_dynasty_modifier = {modifier = rags_to_riches
+                                  years = 80 }
+                }
+
+	
+
+	save_scope_as = mamluk_sultan
+
+	trigger_event = mamluk_events.0001
+
+	}
+
+
+
+}
+
+reunite_two_sicilies_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+	ai_check_interval = 120
+	desc = reunite_two_sicilies_decision_desc
+
+	is_shown = {
+		#game_start_date = 1337.5.24 #No need for this as these titles only exist in later bookmarks anyway and are otherwise never made
+		OR = {
+			has_primary_title = title:k_naples
+			has_primary_title = title:k_trinacria
+		}
+	}
+
+	is_valid = {
+		has_title = title:k_naples
+		has_title = title:k_trinacria
+		completely_controls = title:k_naples
+		completely_controls = title:k_trinacria
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		#show_as_tooltip = { reunite_two_sicilies_effect = yes } #Actually applied in sicily.9001 - prestige, laws, title, innovation effects
+
+		#Events
+		reunite_two_sicilies_effect = yes
+		if = {
+			limit = {
+				has_primary_title = title:k_naples
+			}
+			title:k_sicily = {
+				copy_title_history = title:k_naples
+				set_capital_county = title:k_naples.title_capital_county
+			}
+		}
+		if = {
+			limit = {
+				has_primary_title = title:k_trinacria
+			}
+			title:k_sicily = {
+				copy_title_history = title:k_trinacria
+			}
+		}
+
+		#Can only happen once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:reunite_two_sicilies_decision
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_independent_ruler = yes
+		is_available_adult = yes
+		#Can't be fighting elsewhere.
+		is_at_war = no
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+unite_the_georgian_thrones_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+	ai_check_interval = 60
+	desc = unite_the_georgian_thrones_decision_desc
+
+	is_shown = {
+		OR = {
+			has_primary_title = title:k_imereti
+			has_primary_title = title:k_iberia
+		}
+		game_start_date >= 1250.1.1
+		OR = {
+			calc_true_if = { #At least 2 of the titles has de jure land
+				amount >= 2
+				title:k_imereti = { any_in_de_jure_hierarchy = { tier = tier_county } }
+				title:k_iberia = { any_in_de_jure_hierarchy = { tier = tier_county } }
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:unite_the_georgian_thrones_decision
+			}
+		}
+		highest_held_title_tier < tier_empire				 
+	}
+
+	is_valid = {
+		OR = {
+			has_primary_title = title:k_imereti
+			has_primary_title = title:k_iberia
+		}
+		trigger_if = {
+			limit = { title:k_imereti = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
+			completely_controls = title:k_imereti
+			has_title = title:k_imereti
+		}
+		trigger_if = {
+			limit = { title:k_iberia = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
+			completely_controls = title:k_iberia
+			has_title = title:k_iberia
+		}
+		custom_description = {
+   			text = unite_the_georgian_thrones_decision_primary
+			OR = {
+				has_primary_title = title:k_imereti
+				has_primary_title = title:k_iberia
+			}
+		}
+		#Must not be too early
+		culture = { has_cultural_era_or_later = culture_era_high_medieval }
+		OR = { 
+			has_realm_law = crown_authority_2
+			has_realm_law = crown_authority_3
+		}
+	}
+
+	effect = {
+		save_scope_as = georgia_uniter
+		gain_heroic_legend_seed_tooltip_effect = yes
+		show_as_tooltip = { unite_the_georgian_thrones_decision_effects = yes } #Actually applied in mb_events.0001 - prestige, laws, title changes
+		
+		#Copy title history based on whoever does the uniting. If Imereti is who unites keep their capital as the new capital of Georgia
+		
+		if = {
+			limit = {
+				has_primary_title = title:k_imereti
+			}
+			title:k_georgia = {
+				copy_title_history = title:k_imereti
+				set_capital_county = title:k_imereti.title_capital_county
+			}
+		}
+		if = {
+			limit = {
+				has_primary_title = title:k_iberia
+			}
+			title:k_georgia = {
+				copy_title_history = title:k_iberia
+			}
+		}
+		
+		#Events
+		trigger_event = mb_events.0001
+
+		#Can only be done once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:unite_the_georgian_thrones_decision
+		}
+		set_global_variable = {
+			name = unite_the_georgian_thrones_decision
+			value = scope:georgia_uniter
+		}
+		set_global_variable = {
+			name = unite_the_georgian_thrones_decision_title
+			value = scope:georgia_uniter.primary_title
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+
+######################################
+# Unify the Saxons					 #       
+######################################
+
+unify_saxons_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+	desc = unify_saxons_decision_desc
+	selection_tooltip = unify_saxons_decision_tooltip
+	major = yes
+	ai_check_interval = 1
+
+	is_shown = {
+		culture = { has_cultural_pillar = heritage_west_germanic }
+		is_ruler = yes
+		is_landed = yes
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_unify_saxons
+			}
+		}
+		OR = {
+			has_title = title:e_britannia
+			has_title = title:k_wessex
+			has_title = title:k_essex
+			has_title = title:k_mercia
+			has_title = title:k_northumberland
+			has_title = title:k_east_anglia
+			has_title = title:k_kent
+		}
+		capital_province = { geographical_region = ghw_region_england }
+	}
+	
+	is_valid = {
+		is_independent_ruler = yes
+		prestige_level >= high_prestige_level
+		#Has ruled each kingdom for a very long time.
+		OR = {
+			has_title = title:e_britannia
+			has_title = title:k_wessex
+			has_title = title:k_essex
+			has_title = title:k_mercia
+			has_title = title:k_northumberland
+			has_title = title:k_east_anglia
+			has_title = title:k_kent
+		}
+		completely_controls_region = custom_england2
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+		is_available_adult = yes
+		is_at_war = no
+	}
+
+	# cost = {
+	# 	gold = 200
+	# }	
+
+	effect = {	
+		gain_heroic_legend_seed_tooltip_effect = yes
+		# De jure shifts.
+		title:d_cornwall = { set_de_jure_liege_title = title:k_england }
+		title:d_somerset = { set_de_jure_liege_title = title:k_england }
+		title:d_canterbury = { set_de_jure_liege_title = title:k_england }
+		title:d_essex = { set_de_jure_liege_title = title:k_england }
+		title:d_gloucester = { set_de_jure_liege_title = title:k_england }
+		title:d_norfolk = { set_de_jure_liege_title = title:k_england }
+		title:d_hereford = { set_de_jure_liege_title = title:k_england }
+		title:d_york = { set_de_jure_liege_title = title:k_england }
+		title:d_lancaster =  { set_de_jure_liege_title = title:k_england }
+		title:d_northumberland = { set_de_jure_liege_title = title:k_england }
+		
+		
+		#resolve_title_and_vassal_change = scope:change #DO I NEED THIS?
+		add_prestige = major_prestige_gain #DO I NEED THIS?
+
+		trigger_event = {
+			id = DE_decision_event.0026
+		}
+		
+		create_title_and_vassal_change = {
+			type = created
+			save_scope_as = title_change
+			add_claim_on_loss = no
+		}
+		title:k_england = {
+			change_title_holder = {
+				holder = root
+				change = scope:title_change
+			}
+		}
+		resolve_title_and_vassal_change = scope:title_change
+		hidden_effect = { set_primary_title_to = title:k_england }
+		every_held_title = { #Should destroy all other Kingdoms owned at the time.
+			limit = {
+				tier = tier_kingdom
+				NOT = { this = title:k_england }
+			}
+			root = { destroy_title = prev }
+		}
+		
+		destroy_title = title:k_kent
+		destroy_title = title:k_wessex
+		destroy_title = title:k_essex
+		destroy_title = title:k_mercia
+		destroy_title = title:k_northumberland
+		destroy_title = title:k_east_anglia
+		destroy_title = title:k_hwicce
+		
+		
+
+		#Once per game
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:flag_unify_saxons
+		}
+		set_global_variable = {
+			name = flag_unify_saxons
+			value = root
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 1000
+	}
+}

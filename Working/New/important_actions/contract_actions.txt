@@ -1,0 +1,641 @@
+﻿action_can_complete_task_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_character_active_contract = {
+					exists = var:task_contract_destination
+					OR = {
+						ep3_transport_contract_trigger = yes
+						has_task_contract_type = laamp_help_increase_control_contract
+					}
+					save_temporary_scope_as = temp_contract
+					trigger_if = {
+						limit = { exists = root.current_travel_plan }
+						NOR = {
+							root.current_travel_plan = {
+								any_future_path_location = {
+									this = scope:temp_contract.var:task_contract_destination
+								}
+							}
+							root.location = scope:temp_contract.var:task_contract_destination
+						}
+					}
+				}
+			}
+			every_character_active_contract = {
+				limit = {
+					exists = var:task_contract_destination
+					OR = {
+						ep3_transport_contract_trigger = yes
+						has_task_contract_type = laamp_help_increase_control_contract
+					}
+					save_temporary_scope_as = temp_contract
+					trigger_if = {
+						limit = { exists = root.current_travel_plan }
+						NOT = {	
+							root.current_travel_plan = {
+								any_future_path_location = {
+									this = scope:temp_contract.var:task_contract_destination
+								}
+							}
+						}
+					}
+				}
+				save_scope_as = task_contract
+				try_create_important_action = {
+					important_action_type = action_can_complete_task_contract
+					actor = root
+					recipient = scope:task_contract.task_contract_employer
+				}
+			}
+		}
+	}
+	effect = {
+		open_interaction_window = {
+			interaction = complete_task_contract_interaction
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+action_can_complete_steal_artifact_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_character_active_contract = {
+					exists = var:task_contract_object
+					has_task_contract_type = laamp_steal_artifact_contract
+					save_temporary_scope_as = temp_contract
+				}
+				NOT = {
+					any_scheme = {
+						scheme_type = steal_back_artifact
+						scheme_target_character = scope:temp_contract.task_contract_target
+					}
+				}
+			}
+			every_character_active_contract = {
+				limit = {
+					exists = var:task_contract_object
+					has_task_contract_type = laamp_steal_artifact_contract
+				}
+				save_scope_as = contract
+				task_contract_employer = {
+					save_scope_as = task_contract_employer
+				}
+				try_create_important_action = {
+					important_action_type = action_can_complete_steal_artifact_contract
+					actor = root
+					recipient = scope:contract.var:task_contract_target
+				}
+			}
+		}
+	}
+	effect = {
+		open_interaction_window = {
+			interaction = start_stealing_back_artifact
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+action_can_start_laamp_raid_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_character_active_contract = {
+					has_task_contract_type = laamp_raid_contract
+					save_temporary_scope_as = temp_contract
+				}
+				trigger_if = {
+					limit = {
+						any_character_war = {
+							scope:temp_contract.var:task_contract_war ?= this
+						}
+					}
+					scope:temp_contract.var:task_contract_war ?= {
+						any_war_participant = {
+							NOT = { this = root }
+						}
+					}
+				}
+			}
+			every_character_active_contract = {
+				limit = {
+					has_task_contract_type = laamp_raid_contract
+					save_temporary_scope_as = temp_contract
+					trigger_if = {
+						limit = {
+							root = {
+								any_character_war = {
+									scope:temp_contract.var:task_contract_war ?= this
+								}
+							}
+						}
+						scope:temp_contract.var:task_contract_war ?= {
+							any_war_participant = {
+								NOT = { this = root }
+							}
+						}
+					}
+				}
+				save_scope_as = task_contract
+				task_contract_employer = {
+					save_scope_as = task_contract_employer
+				}
+				if = {
+					limit = {
+						exists = scope:task_contract.var:task_contract_target
+					}
+					try_create_important_action = {
+						important_action_type = action_can_start_laamp_raid_contract
+						actor = root
+						recipient = scope:task_contract.var:task_contract_target
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		open_interaction_window = {
+			interaction = declare_war_interaction
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+action_can_start_join_war_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_character_active_contract = {
+					has_task_contract_type = laamp_join_war_contract
+					save_temporary_scope_as = temp_contract
+					root = {
+						is_character_interaction_valid = {
+							recipient = scope:temp_contract.var:task_contract_employer
+							interaction = join_war_interaction
+						}
+						any_character_war = {
+							NOR = {
+								any_war_attacker = { this = root }
+								any_war_defender = { this = root }
+							}
+						}
+					}
+				}
+			}
+			every_character_active_contract = {
+				limit = {
+					has_task_contract_type = laamp_join_war_contract
+					root = {
+						is_character_interaction_valid = {
+							recipient = scope:temp_contract.var:task_contract_employer
+							interaction = join_war_interaction
+						}
+						any_character_war = {
+							NOR = {
+								any_war_attacker = { this = root }
+								any_war_defender = { this = root }
+							}
+						}
+					}
+				}
+				save_scope_as = task_contract
+				task_contract_employer = {
+					save_scope_as = task_contract_employer
+				}
+				try_create_important_action = {
+					important_action_type = action_can_start_join_war_contract
+					actor = root
+					recipient = scope:task_contract_employer
+				}
+			}
+		}
+	}
+	effect = {
+		open_interaction_window = {
+			interaction = join_war_interaction
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+action_can_train_knights_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_character_active_contract = {
+					has_task_contract_type = laamp_help_train_commanders_contract
+					save_temporary_scope_as = temp_contract
+					task_contract_taker = {		
+						is_character_interaction_valid = {
+						    interaction = task_contract_train_knight_interaction
+						    recipient = scope:temp_contract.task_contract_employer
+						}
+					}
+				}
+			}
+			every_character_active_contract = {
+				limit = {
+					has_task_contract_type = laamp_help_train_commanders_contract
+					task_contract_taker = {
+						is_character_interaction_valid = {
+						    interaction = task_contract_train_knight_interaction
+						    recipient = scope:temp_contract.task_contract_employer
+						}
+					}
+				}
+				try_create_important_action = {
+					important_action_type = action_can_train_knights_contract
+					actor = root
+					recipient = scope:temp_contract.task_contract_employer
+				}
+			}
+		}
+	}
+	effect = {
+		open_interaction_window = {
+			interaction = task_contract_train_knight_interaction 
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+action_can_generate_claim_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_character_active_contract = {
+					has_task_contract_type = laamp_help_fabricate_claim_contract
+					save_temporary_scope_as = temp_contract
+					task_contract_taker = {				
+						is_character_interaction_valid = {
+						    interaction = start_generate_claim_interaction
+						    recipient = scope:temp_contract.task_contract_target
+						}
+					}
+				}
+				NOT = {
+					any_scheme = {
+						scheme_type = generate_claim
+					}
+				}
+			}
+			every_character_active_contract = {
+				limit = {
+					has_task_contract_type = laamp_help_fabricate_claim_contract
+					task_contract_taker = {
+						is_character_interaction_valid = {
+						    interaction = start_generate_claim_interaction
+						    recipient = scope:temp_contract.task_contract_target
+						}
+					}
+				}
+				try_create_important_action = {
+					important_action_type = action_can_generate_claim_contract
+					actor = root
+					recipient = scope:temp_contract.task_contract_target
+				}
+			}
+		}
+	}
+	effect = {
+		open_interaction_window = {
+			interaction = start_generate_claim_interaction 
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+action_can_make_request_interaction = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_contact = {
+					root = {
+						ep3_laamp_diplo_range_trigger = {
+							TARGET = prev
+							LAAMP = root
+						}
+						is_character_interaction_valid = {
+						    interaction = contact_list_request_interaction
+						    recipient = prev
+						}
+					}
+				}
+			}
+			every_contact = {
+				limit = {
+					root = {
+						ep3_laamp_diplo_range_trigger = {
+							TARGET = prev
+							LAAMP = root
+						}
+						is_character_interaction_valid = {
+							interaction = contact_list_request_interaction
+							recipient = prev
+						}
+					}
+				}
+				save_temporary_scope_as = temp_contact
+				try_create_important_action = {
+					important_action_type = action_can_make_request_interaction
+					actor = root
+					recipient = scope:temp_contact
+				}
+			}
+		}
+	}
+	unimportant = {
+		root = {
+			NOT = {
+				is_character_interaction_potentially_accepted = {
+				    interaction = contact_list_request_interaction
+				    recipient = scope:recipient
+				}
+			}
+		}
+	}
+	effect = {
+		open_interaction_window = {
+			interaction = contact_list_request_interaction 
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+action_can_press_faction_demands_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				is_landless_adventurer = yes
+				any_character_active_contract = {
+					has_task_contract_type = laamp_join_faction_contract
+				}
+			}
+			every_character_active_contract = {
+				limit = {
+					has_task_contract_type = laamp_join_faction_contract
+				}
+				save_scope_as = task_contract
+				var:task_contract_faction = {
+					save_scope_as = faction
+				}
+				try_create_important_action = {
+					important_action_type = action_can_press_faction_demands_contract
+					actor = root
+					recipient = this.task_contract_target
+				}
+			}
+		}
+	}
+	effect = {
+		scope:faction = {
+			open_view_data = factions_window
+		}
+	}
+}
+action_new_task_contract = {
+	priority = 330
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				is_landless_adventurer = yes
+				any_character_task_contract = {
+					count > 0
+					NOT = { has_task_contract_group = admin_governance_group }
+					task_contract_tier < define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+					is_criminal = no
+				}
+			}
+			every_character_active_contract = {
+				add_to_temporary_list = my_contracts
+			}
+			every_character_task_contract = {
+				limit = {
+					NOR = {
+						is_in_list = my_contracts
+						has_task_contract_group = admin_governance_group
+					}
+					task_contract_tier < define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+					is_criminal = no
+				}
+				save_scope_as = task_contract
+				try_create_important_action = {
+					important_action_type = action_new_task_contract
+					actor = root
+					recipient = scope:task_contract.task_contract_employer
+				}
+			}
+		}
+	}
+	unimportant = {
+		OR = {
+			scope:task_contract = {
+				"task_contract_location.squared_distance(root.location)" > define:NTaskContract|ADVENTURER_DISTANCE_RESTRICTION
+			}
+			any_character_active_contract = {
+				count > 0
+			}
+		}
+	}
+	effect = {
+		scope:task_contract = { open_view_data = task_contract }
+	}
+}
+action_new_tier_3_task_contract = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				is_landless_adventurer = yes
+				any_character_task_contract = {
+					count > 0
+					NOT = { has_task_contract_group = admin_governance_group }
+					task_contract_tier >= define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+					is_criminal = no
+				}
+			}
+			every_character_active_contract = { add_to_temporary_list = my_contracts }
+			every_character_task_contract = {
+				limit = {
+					NOR = {
+						is_in_list = my_contracts
+						has_task_contract_group = admin_governance_group
+					}
+					task_contract_tier >= define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+					is_criminal = no
+				}
+				save_scope_as = task_contract
+				try_create_important_action = {
+					important_action_type = action_new_tier_3_task_contract
+					actor = root
+					recipient = scope:task_contract.task_contract_employer
+				}
+			}
+		}
+	}
+	unimportant = {
+		OR = {
+			scope:task_contract = {
+				"task_contract_location.squared_distance(root.location)" > define:NTaskContract|ADVENTURER_DISTANCE_RESTRICTION
+			}
+			any_character_active_contract = {
+				count > 0
+			}
+		}
+	}
+	effect = {
+		scope:task_contract = { open_view_data = task_contract }
+	}
+}
+action_new_criminal_task_contract = {
+	priority = 300
+	combine_into_one = yes
+	is_dangerous = yes
+	check_create_action = {
+		if = {
+			limit = {
+				is_landless_adventurer = yes
+				any_character_task_contract = {
+					#count > 0
+					is_criminal = yes
+				}
+			}
+			every_character_active_contract = {
+				add_to_temporary_list = my_contracts
+			}
+			every_character_task_contract = {
+				limit = {
+					NOT = { is_in_list = my_contracts }
+					is_criminal = yes
+				}
+				save_scope_as = task_contract
+				try_create_important_action = {
+					important_action_type = action_new_criminal_task_contract
+					actor = root
+					recipient = scope:task_contract.task_contract_employer
+				}
+			}
+		}
+	}
+	unimportant = {
+		OR = {
+			scope:task_contract = {
+				"task_contract_location.squared_distance(root.location)" > define:NTaskContract|ADVENTURER_DISTANCE_RESTRICTION
+			}
+			any_character_active_contract = {
+				count > 0
+			}
+		}
+	}
+	effect = {
+		scope:task_contract = { open_view_data = task_contract }
+	}
+}
+action_new_governance_issue = {
+	priority = 330
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				is_governor = yes
+				any_character_task_contract = {
+					count > 0
+					has_task_contract_group = admin_governance_group
+					task_contract_tier < define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+				}
+			}
+			every_character_active_contract = { add_to_temporary_list = my_contracts }
+			every_character_task_contract = {
+				limit = {
+					has_task_contract_group = admin_governance_group
+					NOT = { is_in_list = my_contracts }
+					task_contract_tier < define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+				}
+				save_scope_as = task_contract
+				try_create_important_action = {
+					important_action_type = action_new_governance_issue
+					actor = root
+					recipient = scope:task_contract.task_contract_employer
+				}
+			}
+		}
+	}
+	unimportant = {
+		any_character_active_contract = { count > 0 }
+	}
+	effect = {
+		scope:task_contract = { open_view_data = task_contract }
+	}
+}
+action_new_tier_3_governance_issue = {
+	priority = 350
+	combine_into_one = yes
+	check_create_action = {
+		if = {
+			limit = {
+				is_governor = yes
+				any_character_task_contract = {
+					count > 0
+					has_task_contract_group = admin_governance_group
+					task_contract_tier >= define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+				}
+			}
+			every_character_active_contract = { add_to_temporary_list = my_contracts }
+			every_character_task_contract = {
+				limit = {
+					has_task_contract_group = admin_governance_group
+					NOT = { is_in_list = my_contracts }
+					task_contract_tier >= define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+				}
+				save_scope_as = task_contract
+				try_create_important_action = {
+					important_action_type = action_new_tier_3_governance_issue
+					actor = root
+					recipient = scope:task_contract.task_contract_employer
+				}
+			}
+		}
+	}
+	unimportant = {
+		any_character_active_contract = { count > 0 }
+	}
+	effect = {
+		scope:task_contract = { open_view_data = task_contract }
+	}
+}

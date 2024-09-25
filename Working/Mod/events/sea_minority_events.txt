@@ -1,0 +1,1468 @@
+﻿
+namespace = minorities
+namespace = faith_conversion #This is just to overwrite the capital conversion effect															
+
+scripted_effect expel_religious_minorities_effect = {
+	# Lose or gain piety
+	if = {
+		limit = { faith = { has_doctrine = doctrine_pluralism_fundamentalist } }
+		add_piety = major_piety_gain
+	}
+	else_if = {
+		limit = { faith = { has_doctrine = doctrine_pluralism_pluralistic } }
+		add_piety = major_piety_loss
+	}
+
+	stress_impact = {
+		# Lose
+		wrathful = minor_stress_impact_loss
+		vengeful = minor_stress_impact_loss
+		greedy = minor_stress_impact_loss
+		zealous = minor_stress_impact_loss
+		callous = minor_stress_impact_loss
+
+		# Gain
+		compassionate = medium_stress_impact_gain
+		just = medium_stress_impact_gain
+		content = medium_stress_impact_gain
+		generous = medium_stress_impact_gain
+		forgiving = medium_stress_impact_gain
+	}
+
+	# Lose character opinion
+	custom_tooltip = EXPELLED_FAITH_OPINION_EFFECT
+	hidden_effect = {
+		every_vassal_or_below = {
+			limit = { faith = scope:expelled_faith }
+
+			add_opinion = {
+				modifier = expelled_my_faith_opinion
+				target = root
+			}
+			every_courtier_or_guest = {
+				limit = { faith = scope:expelled_faith }
+
+				add_opinion = {
+					modifier = expelled_my_faith_opinion
+					target = root
+				}
+			}
+		}
+	}
+
+	# Lose county opinion
+	every_held_title = {
+		limit = {
+			tier = tier_county
+			faith = scope:expelled_faith
+		}
+		add_county_modifier = {
+			modifier = ruler_expelled_minority_modifier
+			years = 10
+		}
+	}
+
+	every_sub_realm_county = {
+		limit = {
+			county_is_religiously_protected_trigger = no
+			county_has_specific_minority_faith_trigger = { FAITH = scope:expelled_faith }
+		}
+		save_scope_as = source_county
+
+		if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = faith_minorities_small
+					target = scope:expelled_faith
+				}
+			}
+			add_to_temporary_list = small_minority_counties_seized_from
+			custom_tooltip = minorities.1000.expel_minority_tt
+			add_county_modifier = {
+				modifier = small_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = faith_minorities_small
+				target = scope:expelled_faith
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_faith = { save_scope_as = minority_faith }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_faith_minority_effect = { FAITH = scope:expelled_faith }
+							scope:expelled_faith = { save_scope_as = minority_faith }
+							notify_recipient_of_faith_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = faith_minorities_large
+					target = scope:expelled_faith
+				}
+			}
+			add_to_temporary_list = large_minority_counties_seized_from
+			custom_tooltip = minorities.1000.expel_minority_tt
+			add_county_modifier = {
+				modifier = large_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = faith_minorities_large
+				target = scope:expelled_faith
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_faith = { save_scope_as = minority_faith }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_faith_minority_effect = { FAITH = scope:expelled_faith }
+							notify_recipient_of_faith_migration_effect = yes
+						}
+					}
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_faith_minority_effect = { FAITH = scope:expelled_faith }
+							notify_recipient_of_faith_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+	add_gold = {
+		every_in_list = {
+			list = small_minority_counties_seized_from
+			add = this.development_level
+		}
+		every_in_list = {
+			list = large_minority_counties_seized_from
+			add = {
+				value = this.development_level
+				multiply = 2
+			}
+		}
+	}
+}
+
+scripted_effect expel_cultural_minorities_effect = {
+	# Lose cultural acceptance
+	root.primary_title = {
+		save_scope_as = expulsion_realm
+	}
+	scope:expelled_culture = {
+		change_cultural_acceptance = {
+			target = root.culture
+			value = -10
+			desc = cultural_acceptance_loss_expulsion
+		}
+	}
+
+	stress_impact = {
+		# Lose
+		wrathful = minor_stress_impact_loss
+		vengeful = minor_stress_impact_loss
+		greedy = minor_stress_impact_loss
+		zealous = minor_stress_impact_loss
+		callous = minor_stress_impact_loss
+
+		# Gain
+		compassionate = medium_stress_impact_gain
+		just = medium_stress_impact_gain
+		content = medium_stress_impact_gain
+		generous = medium_stress_impact_gain
+		forgiving = medium_stress_impact_gain
+	}
+
+	# Lose opinion
+	custom_tooltip = EXPELLED_CULTURE_OPINION_EFFECT
+	hidden_effect = {
+		every_vassal_or_below = {
+			limit = { culture = scope:expelled_culture }
+
+			add_opinion = {
+				modifier = expelled_my_culture_opinion
+				target = root
+			}
+			every_courtier_or_guest = {
+				limit = { culture = scope:expelled_culture }
+
+				add_opinion = {
+					modifier = expelled_my_culture_opinion
+					target = root
+				}
+			}
+		}
+	}
+
+	# Lose county opinion
+	every_held_title = {
+		limit = {
+			tier = tier_county
+			culture = scope:expelled_culture
+		}
+		add_county_modifier = {
+			modifier = ruler_expelled_minority_modifier
+			years = 10
+		}
+	}
+
+	every_sub_realm_county = {
+		limit = {
+			county_has_specific_minority_culture_trigger = { CULTURE = scope:expelled_culture }
+		}
+		save_scope_as = source_county
+
+		if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = culture_minorities_small
+					target = scope:expelled_culture
+				}
+			}
+			add_to_temporary_list = small_minority_counties_seized_from
+			custom_tooltip = minorities.0000.expel_minority_tt
+			add_county_modifier = {
+				modifier = small_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = culture_minorities_small
+				target = scope:expelled_culture
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_culture = { save_scope_as = minority_culture }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_culture_minority_effect = { CULTURE = scope:expelled_culture }
+							scope:expelled_culture = { save_scope_as = minority_culture }
+							notify_recipient_of_culture_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				is_target_in_variable_list = {
+					name = culture_minorities_large
+					target = scope:expelled_culture
+				}
+			}
+			add_to_temporary_list = large_minority_counties_seized_from
+			custom_tooltip = minorities.0000.expel_minority_tt
+			add_county_modifier = {
+				modifier = large_minority_expelled_modifier
+				years = 10
+			}
+
+			# Remove minority from this county
+			remove_list_variable = {
+				name = culture_minorities_large
+				target = scope:expelled_culture
+			}
+
+			# Pick a random county in a random neighboring realm and move them there
+			hidden_effect = {
+				scope:expelled_culture = { save_scope_as = minority_culture }
+				root = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_culture_minority_effect = { CULTURE = scope:expelled_culture }
+							notify_recipient_of_culture_migration_effect = yes
+						}
+					}
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						random_realm_county = {
+							save_scope_as = county
+							promote_culture_minority_effect = { CULTURE = scope:expelled_culture }
+							notify_recipient_of_culture_migration_effect = yes
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:expelled_culture = culture:brahui
+				has_county_modifier = RICE_pamir_brahui_tribes
+			}
+			remove_county_modifier = RICE_pamir_brahui_tribes
+		}
+	}
+
+	add_gold = {
+		every_in_list = {
+			list = small_minority_counties_seized_from
+			add = this.development_level
+		}
+		every_in_list = {
+			list = large_minority_counties_seized_from
+			add = {
+				value = this.development_level
+				multiply = 2
+			}
+		}
+	}
+}
+
+scripted_effect setup_expel_religious_minorities_effect = {
+	every_sub_realm_county = {
+		limit = {
+			county_is_religiously_protected_trigger = no
+			county_has_astray_or_worse_minority_faith_trigger = { FAITH = root.faith }
+		}
+		every_in_list = {
+			variable = faith_minorities_large
+			limit = {
+				ROOT.faith = {
+					faith_hostility_level = {
+						target = PREV
+						value >= faith_astray_level
+					}
+				}
+				NOT = {
+					ROOT = {
+						is_target_in_variable_list = {
+							name = faith_options
+							target = PREV
+						}
+					}
+				}
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = faith_options
+					target = PREV
+				}
+			}
+		}
+		every_in_list = {
+			variable = faith_minorities_small
+			limit = {
+				ROOT.faith = {
+					faith_hostility_level = {
+						target = PREV
+						value >= faith_astray_level
+					}
+				}
+				NOT = {
+					ROOT = {
+						is_target_in_variable_list = {
+							name = faith_options
+							target = PREV
+						}
+					}
+				}
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = faith_options
+					target = PREV
+				}
+			}
+		}
+	}
+}
+
+scripted_effect setup_expel_cultural_minorities_effect = {
+	every_sub_realm_county = {
+		limit = {
+			county_has_different_heritage_minority_culture_trigger = { CULTURE = root.culture }
+		}
+
+		every_in_list = {
+			variable = culture_minorities_large
+			limit = {
+				ROOT.culture = {
+					NOT = { has_same_culture_heritage = prev }
+				}
+				ROOT = {
+					NOT = {
+						is_target_in_variable_list = {
+							name = culture_options
+							target = PREV
+						}
+					}
+				}
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = culture_options
+					target = PREV
+				}
+			}
+		}
+
+		every_in_list = {
+			variable = culture_minorities_small
+			limit = {
+				ROOT.culture = {
+					NOT = { has_same_culture_heritage = prev }
+				}
+				ROOT = {
+					NOT = {
+						is_target_in_variable_list = {
+							name = culture_options
+							target = PREV
+						}
+					}
+				}
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = culture_options
+					target = PREV
+				}
+			}
+		}
+	}
+}
+
+scripted_effect setup_promote_religious_minorities_effect = {
+	scope:county = {
+		every_in_list = {
+			variable = faith_minorities_large
+			limit = {
+				NOT = { THIS = scope:councillor_liege.faith }
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = faith_options
+					target = PREV
+				}
+			}
+		}
+		every_in_list = {
+			variable = faith_minorities_small
+			limit = {
+				NOT = { THIS = scope:councillor_liege.faith }
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = faith_options
+					target = PREV
+				}
+			}
+		}
+	}
+}
+
+scripted_effect setup_promote_culture_minorities_effect = {
+	scope:county = {
+		every_in_list = {
+			variable = culture_minorities_large
+			limit = {
+				NOT = { THIS = scope:councillor_liege.culture }
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = culture_options
+					target = PREV
+				}
+			}
+		}
+		every_in_list = {
+			variable = culture_minorities_small
+			limit = {
+				NOT = { THIS = scope:councillor_liege.culture }
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = culture_options
+					target = PREV
+				}
+			}
+		}
+	}
+}
+
+scripted_effect setup_cultural_specialist_effect = {
+	every_held_title = {
+		limit = {
+			tier = tier_county
+			OR = {
+				AND = {
+					culture = ROOT.culture
+					county_has_minority_culture_trigger = yes
+				}
+				NOT = { culture = root.culture }
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					culture = ROOT.culture
+					ROOT = {
+						is_target_in_variable_list = {
+							name = culture_options
+							target = PREV.culture
+						}
+					}
+				}
+				culture = { culture_has_specialists = yes }
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = culture_options
+					target = PREV.culture
+				}
+			}
+		}
+		every_in_list = {
+			variable = culture_minorities_small
+			limit = {
+				NOT = { THIS = ROOT.culture }
+				culture_has_specialists = yes
+				NOT = {
+					ROOT = {
+						is_target_in_variable_list = {
+							name = culture_options
+							target = PREV
+						}
+					}
+				}
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = culture_options
+					target = PREV
+				}
+			}
+		}
+		every_in_list = {
+			variable = culture_minorities_large
+			limit = {
+				NOT = { THIS = ROOT.culture }
+				culture_has_specialists = yes
+				NOT = {
+					ROOT = {
+						is_target_in_variable_list = {
+							name = culture_options
+							target = PREV
+						}
+					}
+				}
+			}
+			ROOT = {
+				add_to_variable_list = {
+					name = culture_options
+					target = PREV
+				}
+			}
+		}
+	}
+}
+
+scripted_effect create_cultural_specialist_effect = {
+	var:selected_culture = {
+		save_scope_as = culture
+	}
+	create_character = {
+		gender_female_chance = root_faith_dominant_gender_adjusted_female_chance
+		random_traits = yes
+		employer = ROOT
+		faith = root.faith
+		culture = scope:culture
+		employer = ROOT
+		save_scope_as = cultural_specialist
+	}
+	custom_tooltip = recruit_cultural_specialist_courtier_tt
+	culture_specialist_tooltip_builder = yes
+}
+
+scripted_effect apply_cultural_traits_effect = {
+	if = {
+		limit = { culture = { has_cultural_parameter = eunuch_trait_bonuses } }
+		hidden_effect = {
+			add_trait = eunuch
+		}
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = grants_to_lowborns_bonuses } }
+		hidden_effect = {
+			add_trait = peasant_leader
+		}
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = strong_traits_more_common } }
+		hidden_effect = {
+			add_trait = strong
+		}
+	}
+	if = {
+		limit = {
+			OR = {
+				culture = { has_cultural_parameter = falconer_traits_more_common }
+				culture = { has_cultural_parameter = hunting_traits_more_common }
+			} 
+		}
+		hidden_effect = {
+			add_trait = lifestyle_hunter
+		}
+		if = {
+			limit = { culture = { has_cultural_parameter = hunting_traits_more_common } }
+			hidden_effect = {
+				add_trait_xp = {
+					trait = lifestyle_hunter
+					track = hunter
+					value = 25
+				}
+			}
+		}
+		if = {
+			limit = { culture = { has_cultural_parameter = falconer_traits_more_common } }
+			hidden_effect = {
+				add_trait_xp = {
+					trait = lifestyle_hunter
+					track = falconer
+					value = 25
+				}
+			}
+		}
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = mystic_trait_more_common } }
+		hidden_effect = {
+			add_trait = lifestyle_mystic
+		}
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = poet_trait_more_common } }
+		hidden_effect = {
+			add_trait = poet
+		}
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = has_access_to_shieldmaidens } }
+		if = { # Determined by Cultural Pillars
+			limit = {
+				OR = {
+					AND = {
+						has_dlc_feature = diverge_culture
+						OR = {
+							AND = {
+								is_female = yes
+								culture = { has_cultural_parameter = martial_custom_male_only_combatant }
+							}
+							AND = {
+								is_male = yes
+								culture = { has_cultural_parameter = martial_custom_female_only_combatant }
+							}
+						}
+					}
+					OR = { # Does not have the Royal Court and thus combatant is governed by faith
+						AND = {
+							is_female = yes
+							faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco }
+						}
+						AND = {
+							is_male = yes
+							faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco }
+						}
+					}
+				}
+			}
+			hidden_effect = {
+				if = {
+					limit = { prowess < decent_skill_rating }
+					add_prowess_skill = decent_skill_rating
+				}
+				add_trait = shieldmaiden
+			}
+		}
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = reveler_traits_more_common } }
+		hidden_effect = {
+			add_trait = lifestyle_reveler
+		}
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = herbalist_traits_more_common } }
+		hidden_effect = {
+			add_trait = lifestyle_herbalist
+		}
+		custom_tooltip = recruit_herbalist_tt
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = loyal_trait_more_common } }
+		hidden_effect = {
+			add_trait = loyal
+		}
+		custom_tooltip = recruit_loyal_tt
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = can_recruit_gardeners } }
+		hidden_effect = {
+			add_trait = lifestyle_gardener
+		}
+		custom_tooltip = recruit_gardener_tt
+	}
+	if = {
+		limit = {
+			OR = {
+				has_trait = shieldmaiden
+				trigger_if = {
+					limit = { has_dlc_feature = diverge_culture }
+					OR = {
+						culture = { has_cultural_parameter = martial_custom_equal_combatant }
+						AND = {
+							is_male = yes
+							culture = { has_cultural_parameter = martial_custom_male_only_combatant }
+						}
+						AND = {
+							is_male = no
+							culture = { has_cultural_parameter = martial_custom_female_only_combatant }
+						}
+					}
+				}
+				trigger_else = {
+					OR = {
+						faith = { has_doctrine_parameter = combatant_can_be_either_gender_if_no_roco }
+						AND = {
+							is_male = yes
+							faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco }
+						}
+						AND = {
+							is_male = no
+							faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco }
+						}
+					}
+				}
+			}
+			culture = { has_cultural_parameter = blademaster_trait_bonuses }
+		}
+		hidden_effect = {
+			add_trait = lifestyle_blademaster
+			add_trait_xp = {
+				trait = lifestyle_blademaster
+				value = {
+					integer_range = {
+						min = 15
+						max = 75
+					}
+				}
+			}
+		}
+		custom_tooltip = recruit_blademaster_tt
+	}
+	if = {
+		limit = {
+			OR = {
+				has_trait = shieldmaiden
+				trigger_if = {
+					limit = { has_dlc_feature = diverge_culture }
+					OR = {
+						culture = { has_cultural_parameter = martial_custom_equal_combatant }
+						AND = {
+							is_male = yes
+							culture = { has_cultural_parameter = martial_custom_male_only_combatant }
+						}
+						AND = {
+							is_male = no
+							culture = { has_cultural_parameter = martial_custom_female_only_combatant }
+						}
+					}
+				}
+				trigger_else = {
+					OR = {
+						faith = { has_doctrine_parameter = combatant_can_be_either_gender_if_no_roco }
+						AND = {
+							is_male = yes
+							faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco }
+						}
+						AND = {
+							is_male = no
+							faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco }
+						}
+					}
+				}
+			}
+			culture = { has_cultural_parameter = forest_fighter_trait_more_common }
+		}
+		hidden_effect = {
+			add_trait = forest_fighter
+		}
+		custom_tooltip = recruit_forest_fighter_tt
+	}
+	if = {
+		limit = {
+			OR = {
+				has_trait = shieldmaiden
+				trigger_if = {
+					limit = { has_dlc_feature = diverge_culture }
+					OR = {
+						culture = { has_cultural_parameter = martial_custom_equal_combatant }
+						AND = {
+							is_male = yes
+							culture = { has_cultural_parameter = martial_custom_male_only_combatant }
+						}
+						AND = {
+							is_male = no
+							culture = { has_cultural_parameter = martial_custom_female_only_combatant }
+						}
+					}
+				}
+				trigger_else = {
+					OR = {
+						faith = { has_doctrine_parameter = combatant_can_be_either_gender_if_no_roco }
+						AND = {
+							is_male = yes
+							faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco }
+						}
+						AND = {
+							is_male = no
+							faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco }
+						}
+					}
+				}
+			}
+			culture = { has_cultural_parameter = rough_terrain_expert_trait_more_common }
+		}
+		hidden_effect = {
+			add_trait = rough_terrain_expert
+		}
+		custom_tooltip = recruit_rough_terrain_expert_tt
+	}
+	if = {
+		limit = {
+			OR = {
+				has_trait = shieldmaiden
+				trigger_if = {
+					limit = { has_dlc_feature = diverge_culture }
+					OR = {
+						culture = { has_cultural_parameter = martial_custom_equal_combatant }
+						AND = {
+							is_male = yes
+							culture = { has_cultural_parameter = martial_custom_male_only_combatant }
+						}
+						AND = {
+							is_male = no
+							culture = { has_cultural_parameter = martial_custom_female_only_combatant }
+						}
+					}
+				}
+				trigger_else = {
+					OR = {
+						faith = { has_doctrine_parameter = combatant_can_be_either_gender_if_no_roco }
+						AND = {
+							is_male = yes
+							faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco }
+						}
+						AND = {
+							is_male = no
+							faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco }
+						}
+					}
+				}
+			}
+			culture = { has_cultural_parameter = jungle_stalker_trait_more_common }
+		}
+		hidden_effect = {
+			add_trait = jungle_stalker
+		}
+		custom_tooltip = recruit_jungle_stalker_tt
+	}
+	if = {
+		limit = {
+			OR = {
+				has_trait = shieldmaiden
+				trigger_if = {
+					limit = { has_dlc_feature = diverge_culture }
+					OR = {
+						culture = { has_cultural_parameter = martial_custom_equal_combatant }
+						AND = {
+							is_male = yes
+							culture = { has_cultural_parameter = martial_custom_male_only_combatant }
+						}
+						AND = {
+							is_male = no
+							culture = { has_cultural_parameter = martial_custom_female_only_combatant }
+						}
+					}
+				}
+				trigger_else = {
+					OR = {
+						faith = { has_doctrine_parameter = combatant_can_be_either_gender_if_no_roco }
+						AND = {
+							is_male = yes
+							faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco }
+						}
+						AND = {
+							is_male = no
+							faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco }
+						}
+					}
+				}
+			}
+			culture = { has_cultural_parameter = desert_warrior_trait_more_common }
+		}
+		hidden_effect = {
+			add_trait = desert_warrior
+		}
+		custom_tooltip = recruit_desert_warrior_tt
+	}
+	if = {
+		limit = {
+			OR = {
+				has_trait = shieldmaiden
+				trigger_if = {
+					limit = { has_dlc_feature = diverge_culture }
+					OR = {
+						culture = { has_cultural_parameter = martial_custom_equal_combatant }
+						AND = {
+							is_male = yes
+							culture = { has_cultural_parameter = martial_custom_male_only_combatant }
+						}
+						AND = {
+							is_male = no
+							culture = { has_cultural_parameter = martial_custom_female_only_combatant }
+						}
+					}
+				}
+				trigger_else = {
+					OR = {
+						faith = { has_doctrine_parameter = combatant_can_be_either_gender_if_no_roco }
+						AND = {
+							is_male = yes
+							faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco }
+						}
+						AND = {
+							is_male = no
+							faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco }
+						}
+					}
+				}
+			}
+			culture = { has_cultural_parameter = winter_soldier_trait_more_common }
+		}
+		hidden_effect = {
+			add_trait = winter_soldier
+		}
+	}
+	if = {
+		limit = {
+			culture = {
+				OR = {
+					has_innovation = innovation_varangian_adventurers
+					has_cultural_parameter = rice_norman_adventurers
+				}
+				NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+			}
+		}
+		hidden_effect = {
+			add_trait = adventurer
+		}
+		custom_tooltip = recruit_adventurer_tt
+	}
+	if = {
+		limit = { culture = { has_cultural_parameter = unlock_rice_silk_road_dynasty_legacy } }
+		hidden_effect = {
+			add_trait = RICE_silk_road_merchant
+		}
+		custom_tooltip = recruit_merchant_tt
+	}
+}
+
+scripted_effect culture_specialist_tooltip_builder = {
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = eunuch_trait_bonuses } }
+		custom_tooltip = recruit_eunuch_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = grants_to_lowborns_bonuses } }
+		custom_tooltip = recruit_peasant_leader_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = strong_traits_more_common } }
+		custom_tooltip = recruit_strong_tt
+	}
+	if = {
+		limit = {
+			OR = {
+				var:selected_culture = { has_cultural_parameter = falconer_traits_more_common }
+				var:selected_culture = { has_cultural_parameter = hunting_traits_more_common }
+			} 
+		}
+		custom_tooltip = recruit_hunter_tt
+		if = {
+			limit = { var:selected_culture = { has_cultural_parameter = hunting_traits_more_common } }
+			custom_tooltip = recruit_venator_tt
+		}
+		if = {
+			limit = { var:selected_culture = { has_cultural_parameter = falconer_traits_more_common } }
+			custom_tooltip = recruit_falconer_tt
+		}
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = mystic_trait_more_common}  }
+		custom_tooltip = recruit_mystic_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = poet_trait_more_common } }
+		custom_tooltip = recruit_poet_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = has_access_to_shieldmaidens } }
+		custom_tooltip = recruit_shieldperson_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = reveler_traits_more_common } }
+		custom_tooltip = recruit_reveler_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = herbalist_traits_more_common } }
+		custom_tooltip = recruit_herbalist_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = loyal_trait_more_common } }
+		custom_tooltip = recruit_loyal_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = can_recruit_gardeners } }
+		custom_tooltip = recruit_gardener_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = blademaster_trait_bonuses } }
+		custom_tooltip = recruit_blademaster_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = forest_fighter_trait_more_common } }
+		custom_tooltip = recruit_forest_fighter_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = rough_terrain_expert_trait_more_common } }
+		custom_tooltip = recruit_rough_terrain_expert_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = jungle_stalker_trait_more_common } }
+		custom_tooltip = recruit_jungle_stalker_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = desert_warrior_trait_more_common } }
+		custom_tooltip = recruit_desert_warrior_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = winter_soldier_trait_more_common } }
+		custom_tooltip = recruit_winter_soldier_tt
+	}
+	if = {
+		limit = {
+			var:selected_culture = {
+				OR = {
+					has_innovation = innovation_varangian_adventurers
+					has_cultural_parameter = rice_norman_adventurers
+				}
+				NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+			}
+		}
+		custom_tooltip = recruit_adventurer_tt
+	}
+	if = {
+		limit = { var:selected_culture = { has_cultural_parameter = unlock_rice_silk_road_dynasty_legacy } }
+		custom_tooltip = recruit_merchant_tt
+	}
+}
+
+# Expel Cultural Minorities
+# New and improved! Uses a single event!
+minorities.0001 = {
+	type = character_event
+	title = minorities.0001.t
+	desc = minorities.0001.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	widget = {
+		gui = "sea_select_culture_widget"
+		container = "custom_widgets_container"
+	}
+	theme = dread
+
+	immediate = {
+		remove_variable = selected_culture
+		clear_variable_list = culture_options
+		setup_expel_cultural_minorities_effect = yes
+	}
+	option = {
+		name = minorities.1001.confirm
+		if = {
+			limit = {
+				has_variable = selected_culture
+			}
+			var:selected_culture = { save_scope_as = expelled_culture }
+			expel_cultural_minorities_effect = yes
+		}
+		else = {
+			custom_tooltip = minorities.1001.cancel
+			remove_variable = expelled_or_purged_peasants
+		}
+	}
+	after = {
+		remove_variable = selected_culture
+	}
+}
+
+# Expel Religious Minorities
+# New and improved! Uses a single event!
+minorities.1001 = {
+	type = character_event
+	title = minorities.1001.t
+	desc = minorities.1001.desc
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dread
+
+	immediate = {
+		clear_variable_list = faith_options
+		remove_variable = selected_faith
+		setup_expel_religious_minorities_effect = yes
+	}
+	widget = {
+		gui = "sea_select_faith_widget"
+		container = "custom_widgets_container"
+	}
+	option = {
+		name = minorities.1001.confirm
+		if = {
+			limit = { has_variable = selected_faith }
+			var:selected_faith = { save_scope_as = expelled_faith }
+			expel_religious_minorities_effect = yes
+		}
+		else = {
+			custom_tooltip = minorities.1001.cancel
+			remove_variable = expelled_or_purged_peasants
+		}
+	}
+	after = {
+		clear_variable_list = faith_options
+		remove_variable = selected_faith
+	}
+}
+
+# Promote minorities
+# New and Improved: Condensed to a single event with a special combined gui!
+minorities.2001 = {
+	type = character_event
+	title = minorities.2001.t
+	desc = minorities.2001.desc
+
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	right_portrait = {
+		character = cp:councillor_steward
+		animation = personality_rational
+	}
+	theme = realm
+	immediate = {
+		setup_promote_religious_minorities_effect = yes
+		setup_promote_culture_minorities_effect = yes
+		scope:county = {
+			remove_variable = faith_to_convert
+			remove_variable = culture_to_convert
+		}
+	}
+	widget = {
+		gui = "sea_select_combined_widget"
+		container = "custom_widgets_container"
+	}
+
+	option = {
+		name = minorities.1001.confirm
+		if = {
+			limit = {
+				exists = var:selected_culture
+			}
+			var:selected_culture = { save_scope_as = selected_culture }
+			scope:county = {
+				set_variable = {
+					name = culture_to_convert
+					value = scope:selected_culture
+				}
+			}
+			custom_tooltip = task_promote_minority_effect_event_desc_culture
+		}
+		else_if = {
+			limit = {
+				exists = var:selected_faith
+			}
+			var:selected_faith = { save_scope_as = selected_faith }
+			scope:county = {
+				set_variable = {
+					name = faith_to_convert
+					value = scope:selected_faith
+				}
+			}
+			custom_tooltip = task_promote_minority_effect_event_desc_faith
+		}
+		else = {
+			custom_tooltip = minorities.0001.cancel
+			cp:councillor_steward = {
+				set_council_task = { task_type = task_collect_taxes }
+			}
+		}
+	}
+	after = {
+		clear_variable_list = faith_options
+		clear_variable_list = culture_options
+		remove_variable = selected_culture
+		remove_variable = selected_faith
+	}
+}
+
+# Clear faith minority on county faith change, protect from faith migrations
+minorities.3001 = {
+	hidden = yes
+	scope = landed_title
+
+	trigger = {
+		county_has_specific_minority_faith_trigger = { FAITH = root.faith }
+	}
+
+	immediate = {
+		remove_list_variable = {
+			name = faith_minorities_large
+			target = root.faith
+		}
+		remove_list_variable = {
+			name = faith_minorities_small
+			target = root.faith
+		}
+		set_variable = {
+			name = faith_migration_protection
+			value = yes
+			years = 5
+		}
+	}
+}
+# Clear culture minority on county faith change
+minorities.3002 = {
+	hidden = yes
+	scope = landed_title
+
+	trigger = {
+		county_has_specific_minority_culture_trigger = { CULTURE = root.culture }
+	}
+
+	immediate = {
+		remove_list_variable = {
+			name = culture_minorities_large
+			target = root.culture
+		}
+		remove_list_variable = {
+			name = culture_minorities_small
+			target = root.culture
+		}
+		set_variable = {
+			name = culture_migration_protection
+			value = yes
+			years = 5
+		}
+	}
+}
+minorities.4001 = {
+	type = character_event
+	title = minorities.4001.t
+	desc = minorities.4001.desc
+
+	right_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	widget = {
+		gui = "sea_select_culture_widget"
+		container = "custom_widgets_container"
+	}
+	theme = diplomacy_foreign_affairs_focus
+
+	immediate = {
+		remove_variable = selected_culture
+		clear_variable_list = culture_options
+		setup_cultural_specialist_effect = yes
+	}
+
+	option = {
+		name = minorities.1001.confirm
+		if = {
+			limit = { has_variable = selected_culture }
+			create_cultural_specialist_effect = yes
+			scope:cultural_specialist = { apply_cultural_traits_effect = yes } 
+			recruit_courtier = scope:cultural_specialist
+			custom_tooltip = newline.desc
+			var:selected_culture = {
+				change_cultural_acceptance = {
+					value = 0.5
+					target = ROOT.culture
+					desc = recruited_local_specialist_desc
+				}
+			}
+			add_gold = {
+				value = medium_gold_loss
+				if = {
+					limit = {
+						OR = {
+							has_government = anarchist_government
+							has_realm_law = cultural_minority_status_1
+						}
+					}
+					multiply = 0.5
+				}
+			}
+		}
+		else = {
+			custom_tooltip = minorities.1001.cancel
+			remove_decision_cooldown = recruit_cultural_expert_decision
+		}
+	}
+}
+
+# Vanilla override
+faith_conversion.0001 = {
+	hidden = yes
+
+	immediate = {
+		if = {
+			limit = {
+				primary_title.tier > tier_barony
+				exists = capital_county
+				capital_county.faith = scope:old_faith
+			}
+			capital_county = {
+				save_scope_as = county
+				set_county_faith = root.faith
+				if = {
+					limit = { county_has_specific_large_minority_faith_trigger = { FAITH = root.faith } }
+					remove_list_variable = {
+						name = faith_minorities_large
+						target = root.faith
+					}
+				}
+				if = {
+					limit = { county_has_specific_small_minority_faith_trigger = { FAITH = root.faith } }
+					remove_list_variable = {
+						name = faith_minorities_small
+						target = root.faith
+					}
+				}
+				if = {
+					limit = {
+						scope:old_faith = {
+							faith_hostility_level = {
+								target = root.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add_faith_minority_effect = {
+						FAITH = scope:old_faith
+						COUNTY = scope:county
+						SIZE = large
+					}
+				}
+				else_if = {
+					limit = {
+						scope:old_faith = {
+							faith_hostility_level = {
+								target = root.faith
+								value >= faith_astray_level
+							}
+						}
+					}
+					add_faith_minority_effect = {
+						FAITH = scope:old_faith
+						COUNTY = scope:county
+						SIZE = small
+					}
+				}
+			}
+		}
+		every_vassal = {
+			limit = {
+				primary_title.tier > tier_barony
+				faith = ROOT.faith
+				exists = capital_county
+				capital_county.faith = ROOT.faith
+			}
+			capital_county = {
+				save_scope_as = county
+				if = {
+					limit = { county_has_specific_large_minority_faith_trigger = { FAITH = root.faith } }
+					remove_list_variable = {
+						name = faith_minorities_large
+						target = root.faith
+					}
+				}
+				if = {
+					limit = { county_has_specific_small_minority_faith_trigger = { FAITH = root.faith } }
+					remove_list_variable = {
+						name = faith_minorities_small
+						target = root.faith
+					}
+				}
+				if = {
+					limit = {
+						scope:old_faith = {
+							faith_hostility_level = {
+								target = root.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add_faith_minority_effect = {
+						FAITH = scope:old_faith
+						COUNTY = scope:county
+						SIZE = large
+					}
+				}
+				else_if = {
+					limit = {
+						scope:old_faith = {
+							faith_hostility_level = {
+								target = root.faith
+								value >= faith_astray_level
+							}
+						}
+					}
+					add_faith_minority_effect = {
+						FAITH = scope:old_faith
+						COUNTY = scope:county
+						SIZE = small
+					}
+				}
+			}
+		}
+	}
+}

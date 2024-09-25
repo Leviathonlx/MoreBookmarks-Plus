@@ -1,0 +1,195 @@
+﻿namespace = fp3_clan
+
+### EVENT LIST ####################################################################
+## 3000 - 3000	Ravaged Tulips by Hugo Cortell
+###################################################################################
+
+###################################
+# Ravaged Tulips
+# By Hugo Cortell
+###################################
+scripted_trigger is_bad_tulip_stealing_child = {
+	age > 4 # Baby no steal flower
+	is_adult = no
+	is_available = yes
+	any_close_or_extended_family_member = {
+		is_available_ai_adult = yes
+		house = root.house
+		NOT = { this = root }
+	}
+}
+
+fp3_clan.3000 = {
+	type = character_event
+	title = fp3_clan.3000.t
+	desc = fp3_clan.3000.desc
+
+	theme = mental_break
+	override_background = { reference = garden }
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:fp3_clan_3000_bad_child
+		animation = war_over_win
+	}
+
+	cooldown = { years = 5 }
+
+	weight_multiplier = { # Greatly lower chances if you have no garden
+		base = 0.4
+
+		modifier = {
+			add = 0.6
+			capital_province = { has_building_or_higher = royal_garden_01 }
+		}
+	}
+
+	trigger = {
+		has_fp3_dlc_trigger = yes
+		culture = { has_cultural_tradition = tradition_gardening }
+		house = { any_house_member = { is_bad_tulip_stealing_child = yes } }
+	}
+
+	immediate = {
+		capital_province = { save_scope_as = fp3_clan_3000_loc_loc } # the loc-ation for loc-alization usage
+		house = {
+			random_house_member = {
+				limit = { is_bad_tulip_stealing_child = yes }
+				save_scope_as = fp3_clan_3000_bad_child
+
+				random_close_or_extended_family_member = {
+					limit = { NOT = { this = root } }
+					save_scope_as = fp3_clan_3000_random_family_member
+				}
+			}
+		}
+	}
+
+	option = { # You can keep them, and I'll pay to plant new ones
+		name = fp3_clan.3000.a
+
+		stress_impact = {
+			wrathful = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+		}
+
+		scope:fp3_clan_3000_random_family_member = {
+			add_opinion = {
+				target = root
+				modifier = kindness_opinion
+				opinion = 20
+			}
+		}
+
+		add_clan_unity_interaction_effect = {
+			CHARACTER = root
+			TARGET = scope:fp3_clan_3000_random_family_member
+			VALUE = minor_unity_gain
+			DESC = clan_unity_generic_increased_fallback.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = 1
+				ai_sociability = 1
+			}
+		}
+	}
+
+	option = { # GIVE THEM BACK YOU BUGGER
+		name = fp3_clan.3000.b
+
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			patient = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+
+		scope:fp3_clan_3000_random_family_member = {
+			add_opinion = {
+				target = root
+				modifier = scolded_my_child_opinion # Not exact, but close
+			}
+		}
+
+		add_clan_unity_interaction_effect = {
+			CHARACTER = root
+			TARGET = scope:fp3_clan_3000_random_family_member
+			VALUE = minor_unity_loss
+			DESC = clan_unity_generic_decreased_fallback.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+		}
+	}
+
+	option = { # Alright, time to work the fields, kid
+		name = fp3_clan.3000.c
+		flavor = fp3_clan.3000.c.flavor
+
+		trigger = { has_trait = lifestyle_gardener }
+		stress_impact = { lazy = minor_stress_impact_loss }
+
+		add_clan_unity_interaction_effect = {
+			CHARACTER = root
+			TARGET = scope:fp3_clan_3000_random_family_member
+			VALUE = minor_unity_gain
+			DESC = clan_unity_generic_increased_fallback.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+
+		scope:fp3_clan_3000_random_family_member = {
+			add_opinion = {
+				target = root
+				modifier = kindness_opinion
+				opinion = 10
+			}
+		}
+
+		if = { # In the very rare case that the child already knows about plants and stuff
+			limit = { scope:fp3_clan_3000_bad_child = { has_trait = lifestyle_gardener } }
+			add_opinion = {
+				target = root
+				modifier = fp3_taught_me_gardening_opinion
+			}
+		}
+		else = {
+			random = {
+				chance = {
+					value = 25
+					add = {
+						value = learning
+						multiply = 2
+					}
+				}
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = vassal.2001.t
+					left_icon = ROOT
+					right_icon = scope:fp3_clan_3000_bad_child
+				
+					scope:fp3_clan_3000_bad_child = { add_trait = lifestyle_gardener }
+				}
+				scope:fp3_clan_3000_bad_child = {
+					add_opinion = {
+						target = root
+						modifier = fp3_taught_me_gardening_opinion
+					}
+				}
+			}
+		}
+
+		ai_chance = { base = 1000 }
+	}
+}

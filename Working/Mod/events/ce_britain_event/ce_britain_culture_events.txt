@@ -1,0 +1,160 @@
+﻿namespace = british_culture
+
+
+# Uniting the Anglo-Saxon cultures into a single unit after the Viking Invasion; Fires dynamically or via the decision
+# british_culture.0001-0009													
+
+british_culture.0001 = {
+	scope = none
+	hidden = yes
+
+	immediate = {
+		culture:west_saxon = { save_scope_as = anglo_saxon }
+		culture:kentish = { save_scope_as = anglo_saxon }
+		culture:northumbrian = { save_scope_as = anglo_saxon }
+		culture:mercian = { save_scope_as = anglo_saxon }
+		culture:east_anglian = { save_scope_as = anglo_saxon }
+		
+		#MB
+		culture:east_saxon = { save_scope_as = anglo_saxon }
+		culture:hwiccians = { save_scope_as = anglo_saxon }
+		
+		#Anglo-Saxon gets the innovations from all West Germanics minus Northumbrian
+		culture:anglo_saxon = {
+			reset_culture_creation_date = yes
+			get_all_innovations_from = culture:west_saxon
+			get_all_innovations_from = culture:kentish
+			get_all_innovations_from = culture:mercian
+			get_all_innovations_from = culture:east_anglian
+			
+			get_all_innovations_from = culture:east_saxon
+			get_all_innovations_from = culture:hwiccians
+
+		}
+
+
+		every_county = {
+			limit = {
+				OR = {
+					culture = culture:west_saxon
+					culture = culture:kentish
+					culture = culture:northumbrian
+					culture = culture:mercian
+					culture = culture:east_anglian
+					
+					culture = culture:east_saxon
+					culture = culture:hwiccians
+				}
+				title_province = {	
+					geographical_region = world_europe_west_britannia		
+				}
+			}
+			add_to_list = anglo_saxon_counties
+		}
+
+		every_in_list = {
+			list = anglo_saxon_counties
+
+			# West Germanic Counties become Anglo-Saxon
+			if = {
+				limit = {
+					OR = {
+						culture = culture:west_saxon
+						culture = culture:kentish
+						culture = culture:northumbrian
+						culture = culture:mercian
+						culture = culture:east_anglian
+						
+						culture = culture:east_saxon
+						culture = culture:hwiccians
+					}
+					title_province = {	
+						geographical_region = world_europe_west_britannia		
+					}
+				}
+				random = {
+					chance = 60
+					set_county_culture = culture:anglo_saxon
+				}
+
+				# West and North Germanic rulers flip along to the new culture; North Germanics only flip *if* they are christian and their capital is located in Britain
+				holder = {
+					if = {
+						limit = {
+							culture = { has_cultural_pillar = heritage_west_germanic }
+							capital_province = {
+								geographical_region = world_europe_west_britannia	
+							}
+						}
+						set_culture = culture:anglo_saxon
+						every_courtier = {
+							limit = {
+								culture = { has_cultural_pillar = heritage_west_germanic }
+							}
+							random = {
+								chance = 80
+								set_culture = culture:anglo_saxon
+							}
+						}
+					}
+					else = {
+						limit = {
+							culture = { has_cultural_pillar = heritage_north_germanic }
+							religion = religion:christianity_religion
+							capital_province = {
+								geographical_region = world_europe_west_britannia	
+							}
+						}
+						set_culture = culture:anglo_saxon
+						every_courtier = {
+							limit = {
+								culture = { has_cultural_pillar = heritage_north_germanic }
+								religion = religion:christianity_religion
+							}
+							random = {
+								chance = 80
+								set_culture = culture:anglo_saxon
+							}
+						}
+					}
+				}
+			}
+		}
+
+		every_player = {
+			if = {
+				limit = {
+					is_ai = no
+					save_temporary_scope_as = player
+					any_in_list = {
+						list = anglo_saxon_counties
+						holder = {
+							is_within_diplo_range = { CHARACTER = scope:player }
+						}
+					}
+				}
+				trigger_event = british_culture.0002
+			}
+		}
+	}
+
+}
+
+# Informative Event of the Shift
+british_culture.0002 = {
+	type = character_event
+	title = british_culture.0002.t
+	desc = british_culture.0002.desc
+	theme = culture_change
+	left_portrait = root
+
+	option = {
+		name = british_culture.0002.a
+	}
+	
+}
+
+
+
+# Divergence of the Brythonic Vernaculars into Western and South-Western Brittonic (soon tm)						     	
+# british_culture.0011-0019

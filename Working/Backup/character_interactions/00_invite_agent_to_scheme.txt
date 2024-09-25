@@ -1,0 +1,683 @@
+﻿
+invite_agent_to_scheme_interaction = {
+	special_interaction = invite_to_scheme_interaction
+	hidden = yes
+
+	# Delaying the response makes it possible to invite multiple agents to the same slot.
+	ai_instant_response = yes
+
+	on_accept = {
+		scope:recipient = {
+			if = {
+				limit = {
+					OR = {
+						always = scope:gift
+						always = scope:gift_significant
+						always = scope:offer_hook
+						always = scope:offer_hook_strong
+						always = scope:hook
+						always = scope:opportunities_t1
+						always = scope:opportunities_t2
+						always = scope:prestige
+						always = scope:influence
+						always = scope:council_rights
+						always = scope:de_jure_title
+						always = scope:claimed_title
+						always = scope:piety
+					}
+				}
+				force_add_to_agent_slot = {
+					agent_slot = scope:agent_slot
+					years = 5
+				}	
+			}
+			else = { add_to_agent_slot = scope:agent_slot }
+		}
+		scope:actor = {
+			# No bribe.
+			## We hack this in to stop the window jumping around as you add or remove bribes.
+			if = {
+				limit = {
+					NOR = {
+						always = scope:gift
+						always = scope:gift_significant
+						always = scope:offer_hook
+						always = scope:offer_hook_strong
+						always = scope:hook
+						always = scope:opportunities_t1
+						always = scope:opportunities_t2
+						always = scope:prestige
+						always = scope:influence
+						always = scope:council_rights
+						always = scope:de_jure_title
+						always = scope:claimed_title
+						always = scope:piety
+					}
+				}
+				custom_tooltip = offer_bribes.tt.window_jump_fix
+			}
+			# Bribe
+			if = {
+				limit = { always = scope:gift }
+				pay_short_term_gold = {
+					gold = bribe_value
+					target = scope:recipient
+				}
+				stress_impact = { greedy = minor_stress_impact_gain }
+			}
+			# Big Bribe
+			if = {
+				limit = { always = scope:gift_significant }
+				pay_short_term_gold = {
+					gold = greater_bribe_value
+					target = scope:recipient
+				}
+				stress_impact = { greedy = medium_stress_impact_gain }
+			}
+			# Offer Hook
+			if = {
+				limit = { always = scope:offer_hook }
+				stress_impact = {
+					base = minor_stress_impact_gain
+					paranoid = major_stress_impact_gain
+				}
+				scope:recipient = {
+					add_hook = {
+						type = favor_hook
+						target = scope:actor
+					}
+				}
+			}
+			# Offer Strong Hook
+			if = {
+				limit = { always = scope:offer_hook_strong }
+				stress_impact = { base = major_stress_impact_gain }
+				scope:recipient = {
+					add_hook = {
+						type = strong_favor_hook
+						target = scope:actor
+					}
+				}
+			}
+			# Use Hook
+			if = {
+				limit = { always = scope:hook }
+				use_hook = scope:recipient
+			}
+			# Burn Opportunities
+			if = {
+				limit = { always = scope:opportunities_t1 }
+				custom_tooltip = {
+					text = spend_agent_charges.tt.t1
+					scope:scheme = {
+						change_opportunities = {
+							value = invite_agent_opportunities_t1_value
+							multiply = -1
+						}
+					}
+				}
+			}
+			# Burn More Opportunities
+			if = {
+				limit = { always = scope:opportunities_t2 }
+				custom_tooltip = {
+					text = spend_agent_charges.tt.t2
+					scope:scheme = {
+						change_opportunities = {
+							value = invite_agent_opportunities_t2_value
+							multiply = -1
+						}
+					}
+				}
+			}
+			# Prestige
+			if = {
+				limit = { always = scope:prestige }
+				add_prestige = {
+					value = prestige_bribe_value
+					multiply = -1
+				}
+				scope:recipient = { add_prestige = prestige_bribe_value }
+			}
+			# Influence
+			if = {
+				limit = { always = scope:influence }
+				change_influence = {
+					value = influence_bribe_value
+					multiply = -1
+				}
+				scope:recipient = { change_influence = influence_bribe_value }
+			}
+			# Council Rights
+			if = {
+				limit = { always = scope:council_rights }
+				scope:recipient = {
+					vassal_contract_set_obligation_level = {
+						type = council_rights
+						level = 1
+					}
+					set_vassal_contract_modification_blocked = yes
+				}
+			}
+			create_title_and_vassal_change = {
+				type = granted
+				save_scope_as = change
+			}
+			# De Jure County
+			if = {
+				limit = { always = scope:de_jure_title }
+				random_held_title = {
+					limit = {
+						actor_has_valid_de_jure_enticement_county_trigger = yes
+						any_this_title_or_de_jure_above = {
+							holder ?= { this = scope:recipient }
+						}
+					}
+					change_title_holder = {
+						holder = scope:recipient
+						change = scope:change
+					}
+				}
+			}
+			# Claimed County
+			if = {
+				limit = { always = scope:claimed_title }
+				random_held_title = {
+					limit = {
+						actor_has_valid_claimed_enticement_county_trigger = yes
+						scope:recipient = { has_claim_on = prev }
+					}
+					change_title_holder = {
+						holder = scope:recipient
+						change = scope:change
+					}
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+			# Piety
+			if = {
+				limit = { always = scope:piety }
+				scope:actor = {
+					add_piety = {
+						value = piety_bribe_value
+						multiply = -1
+					}
+				}
+				scope:recipient = { add_piety = piety_bribe_value }
+			}
+		}
+		# Stress.
+		## For scope: recipient.
+		scope:recipient = {
+			if = {
+				limit = {
+					scope:scheme = { is_scheme_category = contract }
+				}
+				# Honourable characters don't like being forced into criminal schemes.
+				if = {
+					limit = {
+						OR = {
+							has_trait = just
+							has_trait = compassionate
+						}
+						scope:scheme.task_contract ?= { is_criminal = yes }
+					}
+					add_opinion = {
+						target = scope:actor
+						modifier = forced_me_to_help_crimes_opinion
+						opinion = -20
+					}
+					stress_impact = {
+						just = minor_stress_impact_gain
+						compassionate = miniscule_stress_impact_gain
+					}
+				}
+				# Lazy characters don't like being made to work at all.
+				else_if = {
+					limit = { has_trait = lazy }
+					add_opinion = {
+						target = scope:actor
+						modifier = forced_me_to_work_opinion
+						opinion = -10
+					}
+					stress_impact = { lazy = miniscule_stress_impact_gain }
+				}
+			}
+		}
+	}
+
+	ai_accept = {
+		base = 0
+		scheme_modifier = {
+			object = scope:scheme
+			target = scope:recipient			
+		}
+		# You should not add modifiers here! If you want to add modifiers, they should be added to either:
+		## - ai_agent_join_chance_hostile_general_suite_modifier
+		## - ai_agent_join_chance_personal_general_suite_modifier
+	}
+
+	auto_accept = {
+		trigger_if = {
+			limit = {
+				scope:recipient.var:devotee_agent_var ?= scope:actor # They are a devotee of yours
+			}
+			custom_tooltip = devotee_agent_desc
+		}
+		trigger_else_if = {
+			limit = {
+				scope:hook = yes
+				scope:actor = { has_strong_hook = scope:recipient }
+			}
+			custom_description = {
+				text = "spending_hook"
+				subject = scope:actor
+				object = scope:recipient
+				always = yes
+			}
+		}
+		trigger_else_if = {
+			limit = {
+				scope:scheme = { is_scheme_category = contract }
+			}
+			# Should be synced with the modifiers in ai_agent_join_chance_laamp_contract_modifier, else agents'll leave the scheme immediately after joining.
+			scope:recipient = {
+				is_courtier_of = scope:actor
+				NOR = {
+					has_relation_rival = scope:actor
+					custom_tooltip = {
+						text = invite_agent_to_scheme_interaction.tt.no_stooges
+						AND = {
+							scope:actor = { has_court_position = stooge_camp_officer }
+							is_court_position_employer = {
+								court_position = stooge_camp_officer
+								who = scope:actor
+							}
+						}
+					}
+				}
+			}
+		}
+		trigger_else = { always = no }
+	}
+	
+	options_heading = invite_agent_to_scheme_interaction.t.options_header
+	# Everyone
+	## Spend opportunities.
+	### x1.
+	send_option = {
+		flag = opportunities_t1
+		is_shown = {
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			custom_tooltip = {
+				text = offer_opportunities.tt.need_an_opportunity.t1
+				scope:scheme = { scheme_agent_charges >= invite_agent_opportunities_t1_value }
+			}
+			custom_tooltip = {
+				text = offer_opportunities.tt.cannot_offer_multiple_sets
+				scope:opportunities_t2 = no
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_OPPORTUNITIES_T1
+	}
+	### x3.
+	send_option = {
+		flag = opportunities_t2
+		is_shown = {
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			custom_tooltip = {
+				text = offer_opportunities.tt.need_an_opportunity.t2
+				scope:scheme = { scheme_agent_charges >= invite_agent_opportunities_t2_value }
+			}
+			custom_tooltip = {
+				text = offer_opportunities.tt.cannot_offer_multiple_sets
+				scope:opportunities_t1 = no
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_OPPORTUNITIES_T2
+	}
+	## Gold
+	send_option = {
+		flag = gift
+		is_shown = {
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			scope:actor.gold >= bribe_value
+			custom_tooltip = {
+				text = offer_gold.tt.cannot_offer_both_bribes
+				scope:gift_significant = no
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_GOLD
+		current_description = {
+			# Triggered desc so that we don't get a weird double tooltip.
+			triggered_desc = {
+				trigger = { scope:actor.gold >= bribe_value }
+				desc = SCHEME_AGENT_GOLD_VALID
+			}
+		}
+	}
+	## Even more gold
+	send_option = {
+		flag = gift_significant
+		is_shown = {
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			scope:actor.gold >= greater_bribe_value
+			custom_tooltip = {
+				text = offer_gold.tt.cannot_offer_both_bribes
+				scope:gift = no
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_GOLD_SIGNIFICANT
+		current_description = {
+			# Triggered desc so that we don't get a weird double tooltip.
+			triggered_desc = {
+				trigger = { scope:actor.gold >= greater_bribe_value }
+				desc = SCHEME_AGENT_GOLD_SIGNIFICANT_VALID
+			}
+		}
+	}
+	## Offer a hook
+	send_option = {
+		flag = offer_hook
+		is_shown = {
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			custom_tooltip = {
+				text = offer_hook.tt.cannot_offer_both_hooks
+				scope:offer_hook_strong = no
+			}
+			NOT = {
+				scope:recipient = { has_hook = scope:actor }
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_HOOK
+	}
+	## Offer a strong hook
+	send_option = {
+		flag = offer_hook_strong
+		is_shown = {
+			scope:actor = { has_trait_with_flag = can_offer_strong_hook_to_agents }
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			custom_tooltip = {
+				text = offer_hook.tt.cannot_offer_both_hooks
+				scope:offer_hook = no
+			}
+			NOT = {
+				scope:recipient = { has_strong_hook = scope:actor }
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_HOOK_STRONG
+	}
+	## Use hook.
+	### Weak hook bonus is added through the scheme's agent join chance.
+	### Strong hook is in the auto_accept block.
+	send_option = {
+		flag = hook
+		is_valid = {
+			scope:actor = { has_usable_hook = scope:recipient }
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_HOOK_EXPLICIT
+	}
+	# Rulers
+	## Prestige
+	send_option = {
+		flag = prestige
+		is_shown = {
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			scope:actor.prestige >= prestige_bribe_value
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_PRESTIGE
+		current_description = {
+			# Triggered desc so that we don't get a weird double tooltip.
+			triggered_desc = {
+				trigger = { scope:actor.prestige >= prestige_bribe_value }
+				desc = SCHEME_AGENT_PRESTIGE_VALID
+			}
+		}
+	}
+	## Influence
+	send_option = {
+		flag = influence
+		is_shown = {
+			scope:actor.top_liege ?= scope:recipient.top_liege
+			scope:actor = { government_allows = administrative }
+			scope:recipient = {
+				OR = {
+					government_allows = administrative
+					host = { government_allows = administrative }
+					AND = {
+						highest_held_title_tier = tier_barony
+						liege = { government_allows = administrative }
+					}
+				}
+			}
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			scope:actor.influence >= influence_bribe_value
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_INFLUENCE
+		current_description = {
+			# Triggered desc so that we don't get a weird double tooltip.
+			triggered_desc = {
+				trigger = { scope:actor.influence >= influence_bribe_value }
+				desc = SCHEME_AGENT_INFLUENCE_VALID
+			}
+		}
+	}
+	## Council Rights
+	send_option = {
+		flag = council_rights
+		is_shown = {
+			would_actor_consider_dramatic_enticement_trigger = yes
+			scope:recipient.liege ?= scope:actor
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			scope:recipient = { vassal_contract_has_modifiable_obligations = yes }
+			NOT = {
+				scope:recipient = { has_trait = lazy }
+			}
+			custom_tooltip = {
+				text = council_rights.tt.already_has_council_rights
+				scope:recipient = {
+					NOT = { vassal_contract_has_flag = can_demand_council_seat }
+				}
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_COUNCIL_RIGHTS
+	}
+	## De jure county of theirs you hold.
+	send_option = {
+		flag = de_jure_title
+		is_shown = {
+			would_actor_consider_dramatic_enticement_trigger = yes
+			scope:recipient = {
+				is_landed = yes
+				any_liege_or_above = { this = scope:actor }
+			}
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			custom_tooltip = {
+				text = de_jure_title.tt.no_suitable_county
+				scope:actor = {
+					any_held_title = {
+						actor_has_valid_de_jure_enticement_county_trigger = yes
+						any_this_title_or_de_jure_above = {
+							holder ?= { this = scope:recipient }
+						}
+					}
+				}
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_DE_JURE_TITLE
+	}
+	# Landless Chars
+	## County they hold a claim to that you hold.
+	send_option = {
+		flag = claimed_title
+		is_shown = {
+			would_actor_consider_dramatic_enticement_trigger = yes
+			trigger_if = {
+				limit = {
+					exists = scope:scheme.scheme_target_character
+				}
+				scope:recipient = {
+					is_ruler = no
+					# And you don't want them _because_ they're in your target's court.
+					NOT = { host = scope:scheme.scheme_target_character }
+				}
+			}
+			trigger_if = {
+				limit = {
+					exists = scope:scheme.scheme_target_title
+				}
+				scope:recipient = {
+					is_ruler = no
+					# And you don't want them _because_ they're in your target's court.
+					NOT = { host = scope:scheme.scheme_target_title.holder }
+				}
+			}
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			scope:recipient = {
+				trigger_if = {
+					limit = {
+						any_claim = { count >= 1 }
+					}
+					custom_tooltip = {
+						text = claimed_title.tt.no_valid_county
+						any_claim = { actor_has_valid_claimed_enticement_county_trigger = yes }
+					}
+				}
+				trigger_else = {
+					custom_tooltip = {
+						text = claimed_title.tt.no_claims
+						always = no
+					}
+				}
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_CLAIMED_TITLE
+	}
+	# Cofaithists
+	## Piety
+	send_option = {
+		flag = piety
+		is_shown = {
+			## Target amenable to this argument.
+			scope:recipient = {
+				OR = {
+					has_trait = devoted
+					has_trait = zealous
+					has_council_position = councillor_court_chaplain
+					government_has_flag = government_is_theocracy
+				}
+			}
+			## In-group out-group requirements.
+			OR = {
+				## Either we share a faith.
+				scope:actor.faith = scope:recipient.faith
+				## Or our faiths *really* get along.
+				scope:recipient.faith = {
+					faith_hostility_level = {
+						target = scope:actor.faith
+						value <= faith_fully_accepted_level
+					}
+				}
+			}
+			# We don't show bribes for schemes where agents will always auto-accept or else deny.
+			NAND = {
+				scope:scheme = { is_scheme_category = contract }
+				scope:recipient = { is_courtier_of = scope:actor }
+			}
+		}
+		is_valid = {
+			scope:actor.piety >= piety_bribe_value
+			NOT = {
+				scope:recipient = { has_trait = cynical }
+			}
+			would_agent_accept_petty_bribes_against_target_trigger = yes
+		}
+		localization = SCHEME_AGENT_PIETY
+		current_description = {
+			# Triggered desc so that we don't get a weird double tooltip.
+			triggered_desc = {
+				trigger = { scope:actor.piety >= piety_bribe_value }
+				desc = SCHEME_AGENT_PIETY_VALID
+			}
+		}
+	}
+	send_options_exclusive = no
+}

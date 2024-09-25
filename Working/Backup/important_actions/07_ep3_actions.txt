@@ -1,0 +1,228 @@
+﻿# LAAMP SUPPORTER EXPIRING
+action_laamp_support_expiring_legend = {
+	type = alert
+	icon = _frame_red # TODO_CD_EP3
+
+	check_create_action = {
+		if = {
+			limit = {
+				NOT = { exists = promoted_legend }
+				any_legend = {
+					save_temporary_scope_as = legend
+					root = {
+						can_become_owner_of_legend = scope:legend
+					}
+				}
+			}
+
+			try_create_important_action = {
+				important_action_type = action_inherit_legend
+				recipient = this
+			}
+		}
+	}
+
+	effect = {
+		open_view_data = legends
+	}
+}
+
+# LAAMP THREAT OF APPREHENSION
+action_laamp_apprehension_threat = {
+	priority = 300
+	combine_into_one = yes
+	is_dangerous = yes
+	check_create_action = {
+		if = {
+			limit = {
+				is_landless_adventurer = yes
+				domicile.domicile_location.county.holder ?= {
+					OR = {
+						OR = {
+							has_imprisonment_reason = root
+							has_execute_reason = root
+							has_banish_reason = root
+						}
+						any_liege_or_above = {
+							OR = {
+								has_imprisonment_reason = root
+								has_execute_reason = root
+								has_banish_reason = root
+							}
+						}
+					}
+				}
+			}
+			domicile.domicile_location.county.holder ?= {
+				if = {
+					limit = {
+						OR = {
+							has_imprisonment_reason = root
+							has_execute_reason = root
+							has_banish_reason = root
+						}
+					}
+					add_to_list = apprehender_list
+				}
+				every_liege_or_above = {
+					limit = {
+						OR = {
+							has_imprisonment_reason = root
+							has_execute_reason = root
+							has_banish_reason = root
+						}
+					}
+					add_to_list = apprehender_list
+				}
+			}
+			ordered_in_list = {
+				list = apprehender_list
+				order_by = highest_held_title_tier
+				save_scope_as = apprehender
+				try_create_important_action = {
+					important_action_type = action_laamp_apprehension_threat
+					actor = this
+					recipient = root
+				}
+			}
+		}
+	}
+
+	effect = {
+		open_view_data = move_domicile_planner
+	}
+}
+
+action_laamp_camp_purpose = {
+	type = alert
+	icon = mercenary_contract_expiring # TODO_CD_EP3 
+
+	check_create_action = {
+		if = {
+			limit = {
+				AND = {
+					is_landless_adventurer = yes
+					# Wanderers are default camp purpose, therefore only show when you DO have Wanderers
+					has_realm_law = camp_purpose_wanderers
+				}
+			}
+
+			try_create_important_action = {
+				important_action_type = action_laamp_camp_purpose
+				recipient = this
+			}
+		}
+	}
+
+	effect = {
+		open_view = my_realm
+	}
+}
+
+action_ep3_can_ask_hof_for_influence = {
+	priority = 900
+	check_create_action = {
+		if = {
+			limit = {
+				exists = faith.religious_head
+				faith.religious_head = {
+					root = {
+						is_character_interaction_potentially_accepted = {
+							recipient = prev
+							interaction = ep3_hof_ask_for_influence_interaction
+						}
+					}
+				}
+			}
+			faith.religious_head = {
+				try_create_important_action = {
+					important_action_type = action_ep3_can_ask_hof_for_influence
+					actor = root
+					recipient = this
+				}
+			}
+		}
+	}
+
+	effect = {
+		open_interaction_window = {
+			interaction = ep3_hof_ask_for_influence_interaction
+			actor = scope:actor
+			recipient = scope:recipient
+		}
+	}
+}
+
+action_ep3_laamp_contract_travel = {
+	check_create_action = {
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				government_has_flag = government_is_landless_adventurer
+				is_travelling = no
+				domicile ?= { provisions >= 250 }
+				any_character_active_contract = { count < 1 }
+				any_character_task_contract = { count <= 3 }
+				is_available = yes
+				is_at_war = no
+			}
+			try_create_important_action = {
+				important_action_type = action_ep3_laamp_contract_travel
+				actor = root
+			}
+		}
+	}
+	effect = {
+		domicile.domicile_location.duchy ?= {
+			save_scope_as = original_duchy
+		}
+		random_duchy = {
+			limit = {
+				NOT = {
+					this = scope:original_duchy
+				}
+				NOT = {
+					any_title_to_title_neighboring_duchy = {
+						this = scope:original_duchy
+					}
+				}
+				title_capital_county.title_province ?= {
+					squared_distance = {
+						target = root.domicile.domicile_location
+						value <= squared_distance_large
+					}
+				}
+				title_capital_county.title_province ?= {
+					squared_distance = {
+						target = root.domicile.domicile_location
+						value >= squared_distance_medium
+					}
+				}
+				title_capital_county.holder ?= {
+					root = {
+						is_character_interaction_valid = {
+							recipient = prev
+							interaction = relocate_camp_to_interaction
+						}
+					}
+				}
+			}
+			save_scope_as = new_duchy
+			title_capital_county.title_province = { save_scope_as = destination_province }
+			title_capital_county.holder = { save_scope_as = destination_holder }
+		}
+		if = {
+			limit = {
+				exists = scope:destination_province
+				exists = scope:destination_holder
+			}
+			pan_camera_to_province = scope:destination_province
+			scope:destination_province = { open_view_data = holding_view }
+			open_interaction_window = {
+				interaction = relocate_camp_to_interaction
+				actor = root
+				recipient = scope:destination_holder
+			}
+		}
+	}
+}

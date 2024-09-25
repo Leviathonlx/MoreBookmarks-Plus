@@ -1,0 +1,415 @@
+﻿create_holy_order_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	}
+	decision_group_type = major
+
+	ai_goal = yes
+
+	is_shown = {
+		is_landed = yes
+		NOT = {
+			faith = {
+				any_faith_holy_order = {
+					holy_order_patron = root
+					save_temporary_scope_as = order
+				}
+			}
+		}
+		# Jomsvikings should use their special decision if appropriate.
+		trigger_if = {
+			limit = { has_fp1_dlc_trigger = yes }
+			faith = {
+				NOT = { fp1_valid_norse_faith_for_jomsvikings_trigger = yes }
+			}
+		}
+
+		trigger_if = {
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					has_struggle_phase_parameter = holy_order_can_be_created_by_dukes
+				}
+				highest_held_title_tier >= tier_duchy
+			}
+			NOT = {
+				any_sub_realm_barony = {
+					is_under_holy_order_lease = yes
+				}
+			}
+		}
+	}
+
+	widget = {
+		controller = create_holy_order
+		barony_valid = {
+			trigger_if = {
+				limit = { exists = this }
+				barony_is_valid_for_holy_order_lease_trigger = { CHARACTER = scope:ruler }
+			}
+			trigger_else = {
+				custom_description = {
+					text = "has_holy_order_barony_selected"
+					always = no
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		is_at_war = no
+	}
+
+	is_valid = {
+		trigger_if = {
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					has_struggle_phase_parameter = holy_order_can_be_created_by_dukes
+				}
+			}
+			highest_held_title_tier >= tier_duchy
+		}
+		trigger_else = {
+			custom_description = {
+				text = "is_king_or_emperor"
+				highest_held_title_tier >= tier_kingdom
+			}
+		}
+
+		custom_description = {
+			text = "has_two_castle_county"
+			any_held_county = {
+				any_in_de_jure_hierarchy = {
+					barony_is_valid_for_holy_order_lease_trigger = { CHARACTER = scope:ruler }
+				}
+			}
+		}
+		trigger_if = {
+			limit = {
+				exists = faith.religious_head
+				NOT = { root = root.faith.religious_head }
+			}
+			faith.religious_head = {
+				opinion = {
+					target = root
+					value >= {
+						value = 0
+						if = {
+							limit = { is_ai = no }
+					 		add = high_positive_opinion
+						}
+					}
+				}
+			}
+		}
+		
+		trigger_if = {
+			limit = {
+				is_ai = yes
+			}
+			piety_level >= 1
+		}
+		trigger_else = {
+			piety_level >= 3
+		}
+	}
+	cost = {
+		gold = {
+			value = holy_order_gold_cost
+		}
+		piety = {
+			value = holy_order_piety_cost
+		}
+	}
+
+	effect = {
+		custom_tooltip = create_holy_order_decision_effect_message
+
+		if = { # If you have no valid barony this will throw errors when you open the decision - we add this check to avoid that 
+			limit = {
+				exists = scope:barony
+			}
+			hidden_effect = {
+				if = {
+					limit = { NOT = { scope:barony.holder = root } }
+					create_title_and_vassal_change = {
+						type = leased_out
+						save_scope_as = change
+						add_claim_on_loss = no
+					}
+					scope:barony = {
+						change_title_holder_include_vassals = {
+							holder = root
+							change = scope:change
+						}
+					}
+					resolve_title_and_vassal_change = scope:change
+				}
+			}
+
+			create_character = {
+				template = holy_order_leader_character
+				location = scope:barony.title_province
+				save_scope_as = leader
+			}
+
+			create_holy_order_neutral_effect = {
+				LEADER = scope:leader
+				CAPITAL = scope:barony
+				NEW_HO_SCOPE = new_holy_order
+				FOUNDER = root
+			}
+		}
+		create_holy_order_effect = yes
+	}
+	
+	ai_potential = {
+		highest_held_title_tier >= tier_kingdom
+		is_playable_character = yes
+		OR = {
+			any_held_title = {
+				tier = tier_barony
+				barony_is_valid_for_holy_order_lease_trigger = { CHARACTER = root }
+			}
+			any_vassal = {
+				primary_title.tier = tier_barony
+				any_held_title = {
+					barony_is_valid_for_holy_order_lease_trigger = { CHARACTER = root }
+				}
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 200
+		modifier = {
+			add = {
+				faith = {
+					# Don't create more than 5 holy orders for a faith
+					every_faith_holy_order = {
+						subtract = 40
+					}
+				}
+			}
+		}
+
+	}
+}
+
+borrow_from_holy_order_decision = { #by Linnéa Thimrén
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_spend_money.dds"
+	}
+	desc = borrow_from_holy_order_decision_desc
+	selection_tooltip = borrow_from_holy_order_decision_tooltip
+
+	ai_check_interval = 72
+
+	cost = {
+		piety = 50
+	}
+
+	cooldown = { days = 5475 }
+
+	is_shown = {
+		is_playable_character = yes
+		highest_held_title_tier > tier_barony
+		faith = {
+			any_faith_holy_order = { #Your faith must have a Holy Order
+				always = yes
+			}
+		}
+		NOR = {
+			exists = var:loan_amount_owed
+			exists = var:loan_holder
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		custom_description = {
+			text = borrow_from_holy_order_gold_condition
+			faith = {
+				any_faith_holy_order = {
+					leader = {
+						gold >= holy_order_gold_value
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		hidden_effect = {
+			set_variable = {
+				name = amount_to_loan
+				value = holy_order_gold_value
+				days = 1
+			}
+			add_character_flag = {
+				flag = borrow_from_holy_order
+				days = 3560
+			}
+			faith = {
+				random_faith_holy_order = {
+					limit = {
+						leader = { gold >= holy_order_gold_value }
+					}
+					leader = {
+						save_scope_as = recipient
+					}
+					save_scope_as = order
+				}
+			}
+			trigger_event = holy_order.0200
+		}
+		custom_tooltip = borrow_from_holy_order_decision_effect_tooltip
+
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 50
+		ai_value_modifier = {
+			ai_zeal = -0.5
+		}
+		ai_value_modifier = {
+			ai_greed = 0.5
+		}
+	}
+}
+
+cancel_holy_order_lease_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	}
+	desc = {
+		first_valid = {
+			triggered_desc = {
+			    trigger = {
+					faith = {
+						faith_hostility_level = {
+							target = scope:barony.lessee_title.holder.faith
+							value >= faith_hostile_level
+						}
+					}
+			    }
+			    desc = cancel_holy_order_lease_hostile_decision_desc
+			}
+			desc = cancel_holy_order_lease_decision_desc
+		}
+	}
+
+	ai_check_interval = 36
+
+	is_shown = {
+		is_landless_adventurer = no
+		is_playable_character = yes
+
+		any_sub_realm_barony = {
+			barony_is_valid_for_holy_order_lease_cancellation_trigger = yes
+		}
+	}
+
+	widget = {
+		controller = revoke_holy_order_lease
+		barony_valid = {
+			trigger_if = {
+				limit = { exists = this }
+				barony_is_valid_for_holy_order_lease_cancellation_trigger = yes
+			}
+			trigger_else = {
+				custom_description = {
+					text = "has_holy_order_barony_selected"
+					always = no
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		is_at_war = no
+	}
+
+	effect = {
+		revoke_holy_order_lease_effect = {
+			CHARACTER = root
+			TARGET = scope:barony.lessee
+			BARONY = scope:barony
+		}
+		hidden_effect = {
+
+			#Message is sent through the on_holy_order_destroyed on_action instead!
+			#send_interface_toast = {
+			#	type = holy_order_founded_message
+			#	desc = i_created_holy_order_message
+			#	left_icon = scope:leader
+			#	right_icon = scope:new_holy_order.title
+			#}
+			#save_scope_as = holy_order_creator
+			#every_ruler = {
+			#	limit = {
+			#		faith = scope:holy_order_creator.faith
+			#		NOT = { this = scope:holy_order_creator }
+			#	}
+			#	send_interface_message = {
+			#		type = holy_order_founded_message
+			#		desc = someone_created_holy_order_message
+			#		left_icon = scope:holy_order_creator
+			#		right_icon = scope:new_holy_order.title
+			#	}
+			#}
+			#every_neighboring_top_liege_realm_owner = {
+			#	limit = {
+			#		NOT = { faith = scope:holy_order_creator.faith }
+			#	}
+			#	send_interface_message = {
+			#		type = enemy_holy_order_founded_message
+			#		desc = other_faith_neighbor_created_holy_order_message
+			#		left_icon = scope:holy_order_creator
+			#		right_icon = scope:new_holy_order.title
+			#	}
+			#}
+		}
+	}
+	
+	ai_potential = {
+		is_playable_character = yes
+		highest_held_title_tier >= tier_county
+		any_sub_realm_barony = {
+			county.holder = { is_ai = yes }
+			is_under_holy_order_lease = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 0
+		# revoke titles leased to holy orders of the wrong faith
+		modifier = {
+			add = 100
+			exists = scope:barony.lessee
+			NOT = {
+				scope:barony.lessee.faith = root.faith
+			}
+		}
+		# Revoke if cynical
+		modifier = {
+			add = 100
+			ai_zeal <= -50
+			exists = scope:barony.lessee
+			NOT = {
+				any_patroned_holy_order = {
+					leader = {
+						this = scope:barony.lessee
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,1640 @@
+﻿namespace = tax_rivalry
+
+# TAX RIVALRY EVENTS
+
+# Maintenance event
+# Checks whether the story is still valid before firing an event related to the story cycle
+tax_rivalry.0001 = {
+	hidden = yes
+	
+	immediate = {
+		# No longer has a clan government
+		if = {
+			limit = { NOT = { scope:story.story_owner = { government_has_flag = government_is_clan } } }
+			scope:story = { end_story = yes }
+		}
+		# End the story if one of the quarrelers has lost their position
+		else_if = {
+			limit = {
+				scope:story.story_owner = {
+					NAND = {
+						cp:councillor_steward = scope:story.var:steward
+						any_tax_collector = {
+							this = scope:story.var:tax_collector
+						}
+					}
+				}
+			}
+			scope:story = { end_story = yes }
+		}
+		# End the story if one of the quarrelers has died
+		else_if = {
+			limit = {
+				OR = {
+					scope:story.var:steward = { is_alive = no }
+					scope:story.var:tax_collector = { is_alive = no }
+				}
+			}
+			scope:story = { end_story = yes }
+		}
+		# If none of these are true, then the story cycle is still valid
+		else = {
+			trigger_event = { on_action = ongoing_tax_rivalry_events }
+		}
+	}
+}
+
+# Steward and Tax-Collector have a chance to reconcile
+# Hidden set-up event
+tax_rivalry.0010 = {
+	hidden = yes
+	cooldown = { years = 5 }
+
+	trigger = {
+		# Steward and tax collector cannot be rivals/nemeses
+		NOT = {
+			scope:story.var:steward = {
+				has_relation_rival = scope:story.var:tax_collector
+			}
+		}
+	}
+
+	# This is more likely to trigger if the clan has high unity
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			AND = {
+				house = { has_house_unity_stage = friendly }
+			}
+			factor = 1.5
+		}
+		modifier = {
+			house = { has_house_unity_stage = harmonious }
+			factor = 3
+		}
+		# ...and vice versa
+		modifier = {
+			AND = {
+				house = {
+					has_house_unity_stage = competitive
+				}
+			}
+			factor = 0.67
+		}
+		modifier = {
+			house = { has_house_unity_stage = antagonistic }
+			factor = 0.33
+		}
+	}
+
+	immediate = {
+		save_scope_as = liege
+		# Randomly decide whether the steward or tax collector should attempt reconciliation first
+		random_list = {
+			# Steward contempates reconciliation first
+			100 = {
+				# More likely if the steward is more compassionate
+				compare_modifier = {
+					target = scope:story.var:tax_collector.ai_compassion
+					value = scope:story.var:steward.ai_compassion
+				}
+				scope:story.var:tax_collector = { save_scope_as = forgiven_rival }
+				scope:story.var:steward = {
+					trigger_event = tax_rivalry.0011
+				}
+			}
+			# Tax collector contemplates reconciliation first
+			100 = {
+				compare_modifier = {
+					target = scope:story.var:steward.ai_compassion
+					value = scope:story.var:tax_collector.ai_compassion
+				}
+				scope:story.var:steward = { save_scope_as = forgiven_rival }
+				scope:story.var:tax_collector = {
+					trigger_event = tax_rivalry.0011
+				}
+			}
+		}
+
+	}
+}
+
+scripted_effect tax_rivalry_0011_reconciliation_failure = {
+	send_interface_toast = {
+		type = event_toast_effect_bad
+		title = tax_rivalry.0011.a.failure
+		left_icon = scope:forgiven_rival
+		add_prestige = minor_prestige_loss
+	}
+}
+
+scripted_effect tax_rivalry_0011_reconciliation_success = {
+	if = {
+		# Add unity if either the steward or tax collector belong to the liege's house
+		limit = {
+			OR = {
+				scope:forgiven_rival.house = scope:liege.house
+				scope:forgiving_rival.house = scope:liege.house
+			}
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:forgiving_rival
+			TARGET = root
+			VALUE = minor_unity_gain
+			DESC = clan_unity_financial_disputes.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+}
+
+# Contemplate making up with your rival
+tax_rivalry.0011 = {
+	type = character_event
+	title = tax_rivalry.0011.t
+	desc = {
+		desc = tax_rivalry.0011.desc_intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					opinion = {
+						target = scope:forgiven_rival
+						value >= 0
+					}
+				}
+				desc = tax_rivalry.0011.desc_opinion
+			}
+			triggered_desc = {
+				trigger = { ai_compassion >= medium_positive_ai_value }
+				desc = tax_rivalry.0011.desc_compassion
+			}
+			triggered_desc = {
+				trigger = {
+					exists = house
+					OR = {
+						house = { has_house_unity_stage = friendly }
+						house = { has_house_unity_stage = harmonious }
+					}
+				}
+				desc = tax_rivalry.0011.desc_unity
+			}
+			desc = tax_rivalry.0011.desc_fallback
+		}
+	}
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = garden
+	}
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	lower_left_portrait = scope:forgiven_rival
+
+	option = { # Attempt reconciliation
+		name = tax_rivalry.0011.a
+		save_scope_as = forgiving_rival
+		if = { # If the rival is a player, then let them decide whether to reconcile themselves
+			limit = {
+				scope:forgiven_rival = { is_ai = no }
+			}
+			custom_tooltip = tax_rivalry.0011.a.tt_player
+			scope:forgiven_rival = {
+				trigger_event = tax_rivalry.0012
+			}
+		}
+		else = { # Otherwise do a diplomacy duel weighted on your opinion of one another, clan unity, and their compassion
+			duel = {
+				skill = diplomacy
+				target = scope:forgiven_rival
+				50 = { # Success
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 2
+						min = -30
+						max = 30
+					}
+					opinion_modifier = {
+						opinion_target = scope:forgiven_rival
+						multiplier = 0.25
+					}
+					modifier = {
+						add = {
+							value = scope:forgiven_rival.ai_compassion
+							multiply = 0.25
+							min = -49
+							max = 49
+						}
+					}
+					modifier = {
+						exists = house
+						add = {
+							value = house.house_unity_value
+							subtract = 50
+						}
+					}
+					show_as_tooltip = {
+						progress_towards_friend_effect = {
+							CHARACTER = scope:forgiven_rival
+							REASON = friend_forgiven_transgression
+							OPINION = 0
+						}
+						reverse_add_opinion = {
+							target = scope:forgiven_rival
+							modifier = forgave_me_opinion
+						}
+						tax_rivalry_0011_reconciliation_success = yes
+					}
+					trigger_event = {
+						id = tax_rivalry.0013
+						days = { 7 14 }
+					}
+				}
+				50 = { # Failure
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -2
+						min = -30
+						max = 30
+					}
+					opinion_modifier = {
+						opinion_target = scope:forgiven_rival
+						multiplier = -0.25
+					}
+					modifier = {
+						add = {
+							value = scope:forgiven_rival.ai_compassion
+							multiply = 0.25
+							min = -49
+							max = 49
+						}
+					}
+					modifier = {
+						exists = house
+						add = {
+							value = house.house_unity_value
+							subtract = 50
+							multiply = -1
+						}
+					}
+					tax_rivalry_0011_reconciliation_failure = yes
+					hidden_effect = {		
+						reverse_add_opinion = {
+							target = scope:forgiven_rival
+							modifier = spurned_opinion
+							opinion = -20
+						}
+					}
+				}
+			}
+		}
+		stress_impact = {
+			sadistic = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			stubborn = minor_stress_impact_gain
+			wrathful = minor_stress_impact_gain
+			arrogant = medium_stress_impact_gain
+			ambitious = medium_stress_impact_gain
+			vengeful = medium_stress_impact_gain
+			compassionate = minor_stress_impact_loss
+			forgiving = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 50
+			opinion_modifier = {
+				who = root
+				opinion_target = scope:forgiven_rival
+				multiplier = 0.25
+			}
+			ai_value_modifier = {
+				ai_compassion = 0.5
+				ai_vengefulness = -0.25
+			}
+		}
+	}
+
+	option = { # Forego this opportunity
+		name = tax_rivalry.0011.b
+		flavor = tax_rivalry.0011.b.tt
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			forgiving = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 0
+			opinion_modifier = {
+				who = root
+				opinion_target = scope:forgiven_rival
+				multiplier = -0.25
+			}
+			ai_value_modifier = {
+				ai_compassion = -0.5
+				ai_vengefulness = 0.25
+			}
+		}
+	}
+}
+
+# Your rival asks you to make amends (player only)
+tax_rivalry.0012 = {
+	type = character_event
+	title = tax_rivalry.0011.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { 
+					opinion = {
+						target = scope:forgiving_rival
+						value >= low_positive_opinion
+					}
+				}
+				desc = tax_rivalry.0012.desc_intro_friendly
+			}
+			desc = tax_rivalry.0012.desc_intro_unfriendly
+		}
+		desc = tax_rivalry.0012.desc_outro
+	}
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = garden
+	}
+	left_portrait = scope:forgiving_rival
+
+	option = { # Accept amends
+		name = tax_rivalry.0012.a
+		show_as_tooltip = {
+			progress_towards_friend_effect = {
+				CHARACTER = scope:forgiving_rival
+				REASON = friend_forgiven_transgression
+				OPINION = 0
+			}
+			reverse_add_opinion = {
+				target = scope:forgiving_rival
+				modifier = forgave_me_opinion
+			}
+			tax_rivalry_0011_reconciliation_success = yes		
+		}
+		scope:forgiving_rival = {
+			trigger_event = tax_rivalry.0013
+		}
+		scope:forgiving_rival = {
+			trigger_event = tax_rivalry.0013
+		}
+	}
+
+	option = { # Reject amends
+		name = tax_rivalry.0012.b
+		# Progress towards rivalry, unless your rival is magnanimous
+		if = {
+			limit = {
+				NOT = { scope:forgiving_rival = { has_trait = forgiving } }
+			}
+			progress_towards_rival_effect = {
+				CHARACTER = scope:forgiving_rival
+				REASON = rival_not_grovel
+				OPINION = 0
+			}
+		}
+		reverse_add_opinion = {
+			target = scope:forgiving_rival
+			modifier = spurned_opinion
+			opinion = -20
+		}
+		scope:forgiving_rival = {
+			tax_rivalry_0011_reconciliation_failure = yes
+		}
+	}
+}
+
+# You make up with your rival
+tax_rivalry.0013 = {
+	type = character_event
+	title = tax_rivalry.0011.t
+	desc = {
+		desc = tax_rivalry.0013.desc_intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { ai_vengefulness >= low_positive_ai_value }
+				desc = tax_rivalry.0013.desc_outro_vengeful
+			 }
+			 desc = tax_rivalry.0013.desc_outro_neutral
+		}
+	}
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = garden
+	}
+	left_portrait = {
+		character = scope:forgiven_rival
+		animation = personality_compassionate
+	}
+
+	immediate = {
+		progress_towards_friend_effect = {
+			CHARACTER = scope:forgiven_rival
+			REASON = friend_forgiven_transgression
+			OPINION = 0
+		}
+		reverse_add_opinion = {
+			target = scope:forgiven_rival
+			modifier = forgave_me_opinion
+		}
+		hidden_effect = {
+			add_opinion = {
+				target = scope:forgiven_rival
+				modifier = forgave_me_opinion
+			}
+		}
+		tax_rivalry_0011_reconciliation_success = yes
+	}
+
+	option = { # Acknowledge end of dispute
+		name = tax_rivalry.0013.a
+		scope:liege = { trigger_event = tax_rivalry.0014 }
+	}
+}
+
+# Liege is notified that steward and tax collector have ended rivalry via making amends
+tax_rivalry.0014 = { 
+	type = character_event
+	title = tax_rivalry.0011.t
+	desc = tax_rivalry.0014.desc
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = garden
+	}
+	left_portrait = {
+		character = scope:forgiving_rival
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:forgiven_rival
+		animation = personality_honorable
+	}
+
+	immediate = {
+		show_as_tooltip = {
+			scope:forgiving_rival = {
+				progress_towards_friend_effect = {
+					CHARACTER = scope:forgiven_rival
+					REASON = friend_forgiven_transgression
+					OPINION = 0
+				}
+				reverse_add_opinion = {
+					target = scope:forgiven_rival
+					modifier = forgave_me_opinion
+				}
+				add_opinion = {
+					target = scope:forgiven_rival
+					modifier = forgave_me_opinion
+				}
+				tax_rivalry_0011_reconciliation_success = yes		
+			}
+		}
+	}
+
+	option = { # Acknowledge end of dispute and corresponding story
+		name = tax_rivalry.0014.a
+		add_prestige = minor_prestige_gain
+	}
+
+	after = {
+		scope:story = { end_story = yes }
+	}
+}
+
+scripted_effect save_rival_as_scope_effect = {
+	if = {
+		limit = {
+			scope:story.var:steward = this
+		}
+		scope:story.var:tax_collector = {
+			save_scope_as = other_rival
+		}
+	}
+	else = {
+		scope:story.var:steward = {
+			save_scope_as = other_rival
+		}
+	}
+}
+
+# ===================================
+# =		Potential Rival Events		=
+# ===================================
+# 	Events that trigger while the rivalry is not yet serious. Opportunities for the liege to profit.
+
+# Contemplate stealing money and pinning the steward/tax collector against one another
+tax_rivalry.1000 = {
+	type = character_event
+	title = tax_rivalry.1000.t
+	desc = tax_rivalry.1000.desc
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = council_chamber
+	}
+	left_portrait = scope:steward
+	right_portrait = scope:tax_collector
+	cooldown = { years = 5 }
+
+	trigger = {
+		is_available = yes
+		scope:story.var:steward = {
+			NOT = { has_relation_rival = scope:story.var:tax_collector }
+		}
+	}
+
+	immediate = {
+		scope:story = {
+			story_owner = { save_scope_as = liege }
+			var:steward = { save_scope_as = steward }
+			var:tax_collector = { save_scope_as = tax_collector }
+		}
+	}
+
+	option = { # Steal
+		name = board_games.0001.d.random.d # Innocent whistling
+		scope:steward = {
+			progress_towards_rival_effect = {
+				REASON = rival_stole_tax_contributions
+				CHARACTER = scope:tax_collector
+				OPINION = 0
+			}
+			pay_short_term_gold = {
+				target = scope:liege
+				gold = minor_gold_value
+			}
+		}
+		scope:tax_collector = {
+			pay_short_term_gold = {
+				target = scope:liege
+				gold = minor_gold_value
+			}	
+		}
+		scope:steward = {
+			add_opinion = {
+				target = scope:tax_collector
+				modifier = fp3_stole_from_me
+			}
+			trigger_event = tax_rivalry.1001
+		}
+		scope:tax_collector = {
+			add_opinion = {
+				target = scope:steward
+				modifier = fp3_stole_from_me
+			}
+			trigger_event = tax_rivalry.1001	
+		}
+		stress_impact = {
+			greedy = minor_stress_impact_loss
+			just = minor_stress_impact_gain
+			honest = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_greed = 0.5
+				ai_honor = -0.25
+			}
+		}
+	}
+	
+	option = { # Work on detente'ing the rivalry
+		name = tax_rivalry.1000.b
+		scope:steward = {
+			if = {
+				limit = { has_relation_potential_rival = scope:tax_collector }
+				remove_relation_potential_rival = scope:tax_collector
+			}
+			add_opinion = {
+				target = scope:tax_collector
+				modifier = pacified_opinion
+			}
+			reverse_add_opinion = {
+				target = scope:tax_collector
+				modifier = pacified_opinion
+			}
+			trigger_event = tax_rivalry.1002 
+		}
+		scope:tax_collector = { trigger_event = tax_rivalry.1002 }
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_greed = -0.25
+				ai_honor = 0.5
+			}
+		}
+	}
+}
+
+# Inform the steward/tax collector that their rival has stolen from them (allegedly)
+tax_rivalry.1001 = {
+	type = character_event
+	title = tax_rivalry.1000.t
+	desc = tax_rivalry.1001.desc
+	left_portrait = {
+		character = scope:other_rival
+		animation = scheme
+	}
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = council_chamber
+	}
+
+	immediate = {
+		# Since this event triggers for both the tax collector and steward, determine who the root's rival is
+		save_rival_as_scope_effect = yes
+		show_as_tooltip = {
+			progress_towards_rival_effect = {
+				REASON = rival_stole_tax_contributions
+				CHARACTER = scope:other_rival
+				OPINION = 0
+			}
+			add_opinion = {
+				target = scope:other_rival
+				modifier = fp3_stole_from_me
+			}
+			pay_short_term_gold = {
+				target = scope:liege
+				gold = minor_gold_value
+			}
+		}
+	}
+
+	option = { # That rat!
+		name = tax_rivalry.1001.a
+	}
+
+}
+
+# Inform the steward/tax collector that their liege has urged them to diminish their rivalry
+tax_rivalry.1002 = {
+	type = character_event
+	title = tax_rivalry.1000.t
+	desc = tax_rivalry.1002.desc
+	left_portrait = {
+		character = scope:liege
+		animation = disapproval
+	}
+	right_portrait = {
+		character = scope:other_rival
+		animation = shame
+	}
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = council_chamber
+	}
+
+	immediate = {
+		# Since this event triggers for both the tax collector and steward, determine who the root's rival is
+		save_rival_as_scope_effect = yes
+		show_as_tooltip = {
+			if = {
+				limit = { has_relation_potential_rival = scope:other_rival }
+				remove_relation_potential_rival = scope:other_rival
+			}
+			add_opinion = {
+				target = scope:other_rival
+				modifier = pacified_opinion
+			}
+			reverse_add_opinion = {
+				target = scope:other_rival
+				modifier = pacified_opinion
+			}
+		}
+	}
+
+	option = { # *Shame*
+		name = tax_rivalry.1002.a
+	}
+
+}
+
+# ===========================
+# =		Nemesis Events		=
+# ===========================
+# 	The rivalry has become severe. The realm will suffer for it.
+
+scripted_effect tax_rivalry_3000_sabotage_setup_effect = {
+# Check whether a peasant army is already at that county
+	scope:liege = {
+		if = {
+			limit = {
+				any_targeting_faction = {
+					faction_is_type = peasant_faction
+					any_faction_county_member = {
+						this = $COUNTY$
+					}
+				}
+			}
+			random_targeting_faction = {
+				limit = {
+					faction_is_type = peasant_faction
+					any_faction_county_member = {
+						this = $COUNTY$
+					}
+				}
+				save_scope_as = faction
+			}
+			$MASTERMIND$ = {
+				save_scope_as = saboteur
+				trigger_event = tax_rivalry.3001
+			}
+		}
+		# If not, then check whether one can be spawned there
+		else_if = {
+			limit = {
+				$COUNTY$ = {
+					can_title_create_faction = {
+						type = peasant_faction
+						target = scope:story.story_owner
+					}
+				}
+			}
+			$MASTERMIND$ = {
+				save_scope_as = saboteur
+				trigger_event = tax_rivalry.3001
+			}
+		}
+		# If none of these are true, then don't trigger a follow-up event
+	}
+}
+
+# One of the rivals has the option to sabotage the other's county
+# Hidden set-up
+tax_rivalry.3000 = {
+	hidden = yes
+
+	trigger = {
+		NOT = { has_character_flag = had_tax_rivalry_3000 }
+		scope:story.var:steward = { has_relation_nemesis = scope:story.var:tax_collector }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_tax_rivalry_3000
+			years = 5
+		}
+		save_scope_as = liege
+		# Randomly decide whether the steward or tax collector should formulate this scheme
+		random_list = {
+			# Steward
+			100 = {
+				trigger = { scope:story.var:steward = { is_available = yes } }
+				# More likely if steward is less honorable, compassionate
+				modifier = {
+					add = {
+						value = scope:story.var:tax_collector.ai_honor
+						subtract = scope:story.var:steward.ai_honor
+					}
+				}
+				modifier = {
+					add = {
+						value = scope:story.var:tax_collector.ai_compassion
+						subtract = scope:story.var:steward.ai_compassion
+					}
+				}
+				scope:story.var:tax_collector = { save_scope_as = sabotaged_rival }
+				
+				# Get a county assigned to the tax collector
+				scope:story.var:tax_collector = {
+					tax_slot = {
+						random_tax_slot_vassal = {
+							random_held_county = { save_scope_as = sabotaged_county }
+						}
+					}
+				}
+
+				# Redundant safety check
+				if = { # Should not be necessary (or ever pass), but acts as an emergency backup
+					limit = { NOT = { exists = scope:sabotaged_county } }
+					scope:liege = {
+						random_held_county = {
+							save_scope_as = sabotaged_county
+						}
+					}
+				}
+
+				# Triggers the follow-up event from here if all conditions are fulfilled
+				tax_rivalry_3000_sabotage_setup_effect = {
+					COUNTY = scope:sabotaged_county
+					MASTERMIND = scope:story.var:steward
+				}
+			}
+			# Tax collector
+			100 = {
+				# Steward needs to actually be in charge of a county for us to consider sabotaging their county
+				trigger = {
+					cp:councillor_steward = { exists = councillor_task_target }
+					scope:story.var:tax_collector = { is_available = yes }
+				}
+				# More likely if tax collector is less honorable, compassionate
+				modifier = {
+					add = {
+						value = scope:story.var:steward.ai_honor
+						subtract = scope:story.var:tax_collector.ai_honor
+					}
+				}
+				modifier = {
+					add = {
+						value = scope:story.var:steward.ai_compassion
+						subtract = scope:story.var:tax_collector.ai_compassion
+					}
+				}
+				scope:story.var:steward = { save_scope_as = sabotaged_rival }
+				scope:liege = {
+					random_held_county = {
+						weight = {
+							base = 1
+							modifier = {
+								factor = 10
+								holder = scope:sabotaged_rival
+							}
+						}
+						save_scope_as = sabotaged_county
+					}
+				}
+				tax_rivalry_3000_sabotage_setup_effect = {
+					COUNTY = scope:sabotaged_county
+					MASTERMIND = scope:story.var:tax_collector
+				}
+			}
+		}
+	}
+}
+
+# Sabotage the realm that your rival is currently in charge of
+tax_rivalry.3001 = {
+	type = character_event
+	title = tax_rivalry.3001.t
+	desc = {
+		desc = tax_rivalry.3001.desc_intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					# TODO_CD_EREN: Check whether the rival is assigned to the county
+				}
+				desc = tax_rivalry.3001.desc_outro_assigned
+			}
+			desc = tax_rivalry.3001.desc_outro_fallback
+		}
+	}
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = terrain_scope
+	}
+	left_portrait = scope:other_rival
+
+	immediate = {
+		scope:sabotaged_county.title_province = { save_scope_as = background_terrain_scope } # For override_background
+		save_rival_as_scope_effect = yes
+	}
+
+	option = { # Sabotage: Spawn a peasant army at that county
+		name = tax_rivalry.3001.a
+		remove_short_term_gold = minor_gold_value
+		flavor = tax_rivalry.3001.a.tt
+		scope:liege = {
+			add_opinion = {
+				target = scope:sabotaged_rival
+				modifier = angry_opinion
+				opinion = -30
+			}
+			# Actually spawning the peasant faction happens in the after of this event
+			# This is so that the notification that a faction has spawned does not overlap with the liege's event
+			trigger_event = tax_rivalry.3003
+		}
+		scope:sabotaged_rival = {
+			add_prestige = medium_prestige_loss
+			add_opinion = {
+				target = scope:saboteur
+				modifier = fp3_sabotaged_me
+			}
+			# Performance reasons (this is just a warning event with only one option that has no effects)
+			if = {
+				limit = { is_ai = no }
+				trigger_event = tax_rivalry.3002
+			}
+		}
+		stress_impact = {
+			just = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			vengeful = minor_stress_impact_loss
+			forgiving = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = -0.25
+				ai_vengefulness = 0.5
+				ai_honor = -0.25
+				ai_energy = 0.1
+			}
+		}
+	}
+
+	option = { # Prevent rival from doing the same to you
+		name = tax_rivalry.3001.b
+		add_character_modifier = {
+			modifier = fp3_wary_of_sabotage_modifier
+			years = 30
+		}
+		# Prevents this story from firing for anyone for 30 years (same duration as modifier)
+		scope:liege = {
+			remove_character_flag = had_tax_rivalry_3000
+			add_character_flag = {
+				flag = had_tax_rivalry_3000
+				years = 30
+			}
+		}
+		ai_chance = {
+			base = 50 # Less likely because this option is less interesting
+			modifier = {
+				has_trait = paranoid
+				add = 100
+			}
+			ai_value_modifier = {
+				ai_compassion = 0.25
+				ai_vengefulness = -0.5
+				ai_honor = 0.25
+				ai_energy = -0.1
+			}
+		}
+	}
+}
+
+# Your rival has spawned a peasant faction in your county
+tax_rivalry.3002 = {
+	type = character_event
+	title = tax_rivalry.3001.t
+	desc = tax_rivalry.3002.desc
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = terrain
+	}
+	right_portrait = {
+		character = scope:liege
+		animation = anger
+	}
+	left_portrait = {
+		character = scope:saboteur
+		animation = scheme
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_negative"
+		show_as_tooltip = {
+			add_prestige = medium_prestige_loss
+			scope:liege = {
+				add_opinion = {
+					target = scope:sabotaged_rival
+					modifier = angry_opinion
+					opinion = -30
+				}
+			}
+		}
+	}
+
+	option = { # Curse them!
+		name = tax_rivalry.3002.a
+		custom_tooltip = tax_rivalry.3001.a.tt
+	}
+}
+
+# Your steward/tax collector has spawned a peasant faction
+tax_rivalry.3003 = {
+	type = character_event
+	title = tax_rivalry.3001.t
+	desc = tax_rivalry.3003.desc
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = terrain_scope
+	}
+	left_portrait = {
+		character = scope:sabotaged_rival
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:saboteur
+		animation = dismissal
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_negative"
+		show_as_tooltip = {
+			scope:sabotaged_rival = {
+				add_prestige = medium_prestige_loss
+				add_opinion = {
+					target = scope:saboteur
+					modifier = fp3_sabotaged_me
+				}
+			}
+		}
+		# If a peasant faction doesn't already exist, then create one
+		if = {
+			limit = {
+				NOT = { exists = scope:sabotage_faction }
+			}
+			hidden_effect = { # Hidden to avoid TT clutter
+				scope:sabotaged_county = {
+					title_create_faction = {
+						type = peasant_faction
+						target = scope:story.story_owner
+					}
+				}
+				scope:story.story_owner = {
+					random_targeting_faction = {
+						limit = {
+							faction_is_type = peasant_faction
+						}
+						save_scope_as = sabotage_faction
+						setup_peasant_leader_effect = yes
+					}
+				}
+			}
+		}
+	}
+
+	option = { # To arms!
+		name = tax_rivalry.3003.a
+		custom_tooltip = tax_rivalry.3003.a.tt
+	}
+
+	# Summon the rabble
+	after = {
+		scope:sabotage_faction = {
+			faction_start_war = {}
+			hidden_effect = { # Hidden to avoid TT clutter
+				faction_spawn_member_county_armies_effect = {
+					FACTION = scope:sabotage_faction
+					ARMY_OWNER = scope:peasant_leader
+					PEASANT_ARMY_NAME = peasant_faction_event_troops
+				}
+			}
+		}
+	}
+}
+
+# ===============================
+# =		Rivalry X Events		=
+# ===============================
+# 	These events can fire at any point during the rivalry and have various effects.
+
+scripted_effect tax_rivalry_4000_unity_loss_effect = {
+	if = {
+		limit = { exists = scope:tax_rivalry_4000_steward_weakened_unity }
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:steward
+			TARGET = scope:tax_collector
+			VALUE = minor_unity_loss
+			DESC = clan_unity_tax_bickering.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+	else_if = {
+		limit = { exists = scope:tax_rivalry_4000_tax_collector_weakened_unity }
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:tax_collector
+			TARGET = scope:steward
+			VALUE = minor_unity_loss
+			DESC = clan_unity_tax_bickering.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+}
+
+# Rivalry weakens clan unity
+tax_rivalry.4000 = {
+	hidden = yes
+
+	trigger = {
+		exists = house
+		exists = scope:story.var:steward.house
+		exists = scope:story.var:tax_collector.house
+		#To influence House Unity, we must all be of the same House!
+		scope:story.var:steward.house = scope:story.var:tax_collector.house
+		house = scope:story.var:tax_collector.house
+	}
+
+	# This event is more likely to trigger depending on the depth of the pair's rivalry
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			scope:story.var:steward = {
+				NOR = {
+					has_relation_potential_rival = scope:story.var:tax_collector
+					has_relation_rival = scope:story.var:tax_collector
+				}
+			}
+			factor = 0
+		}
+		modifier = {
+			scope:story.var:steward = { has_relation_potential_rival = scope:story.var:tax_collector }
+			factor = 0.33
+		}
+		modifier = {
+			scope:story.var:steward = { has_relation_nemesis = scope:story.var:tax_collector }
+			factor = 3
+		}
+	}
+
+	immediate = {
+		scope:story.var:steward = { save_scope_as = steward } # For loc
+		scope:story.var:tax_collector = { save_scope_as = tax_collector } # For loc
+		# Randomly decide whether the steward or tax collector will lower unity
+		random_list = {
+			1 = {
+				save_scope_value_as = {
+					name = tax_rivalry_4000_steward_weakened_unity
+					value = yes
+				}
+				tax_rivalry_4000_unity_loss_effect = yes
+			}
+			1 = {
+				save_scope_value_as = {
+					name = tax_rivalry_4000_tax_collector_weakened_unity
+					value = yes
+				}
+				tax_rivalry_4000_unity_loss_effect = yes
+			}
+		}
+		# Message for liege
+		send_interface_message = {
+			type = event_tax_collector_bad_with_text
+			title = tax_rivalry.4000.t
+			left_icon = scope:steward
+			right_icon = scope:tax_collector
+			show_as_tooltip = { tax_rivalry_4000_unity_loss_effect = yes }
+			desc = tax_rivalry_liege_notification_desc
+		}
+		# Message for steward
+		scope:steward = {
+			send_interface_message = {
+				type = event_tax_collector_bad_with_text
+				title = tax_rivalry.4000.t
+				left_icon = scope:tax_collector
+				show_as_tooltip = { tax_rivalry_4000_unity_loss_effect = yes }
+				desc = tax_rivalry_steward_notification_desc
+			}
+		}
+		# Message for tax collector
+		scope:tax_collector = {
+			send_interface_message = {
+				type = event_tax_collector_bad_with_text
+				title = tax_rivalry.4000.t
+				left_icon = scope:steward
+				show_as_tooltip = { tax_rivalry_4000_unity_loss_effect = yes }
+				desc = tax_rivalry_tax_collector_notification_desc
+			}
+		}
+	}
+}
+
+scripted_effect tax_rivalry_4010_deepen_rivalry_effect = {
+	scope:steward = {
+		# Add an opinion malus if the two are nemeses and their relationship cannot deteriorate any further
+		if = {
+			limit = {
+				OR = {
+					has_relation_nemesis = scope:tax_collector
+				}
+			}
+			add_opinion = {
+				target = scope:tax_collector
+				modifier = fp3_hostile_opinion
+			}
+			reverse_add_opinion = {
+				target = scope:tax_collector
+				modifier = fp3_hostile_opinion
+			}
+		}
+		else_if = {
+			limit = {
+				has_relation_rival = scope:tax_collector
+				NOT = { has_relation_nemesis = scope:tax_collector }
+			}
+			set_relation_nemesis = {
+				reason = rival_escalated_tax_disputes
+				copy_reason = rival
+				target = scope:tax_collector
+			}
+		}
+		else_if = {
+			limit = { NOT = { has_relation_rival = scope:tax_collector } }
+			progress_towards_rival_effect = {
+				REASON = rival_escalated_tax_disputes
+				CHARACTER = scope:tax_collector
+				OPINION = 0
+			}
+		}
+	}
+}
+
+# Rivalry deepens
+tax_rivalry.4010 = {
+	hidden = yes
+
+	# This event is more likely if the pair hate one another
+	weight_multiplier = {
+		base = 1
+		opinion_modifier = {
+			who = scope:story.var:steward
+			opinion_target = scope:story.var:tax_collector
+			multiplier = -0.01
+		}
+		opinion_modifier = {
+			who = scope:story.var:tax_collector
+			opinion_target = scope:story.var:steward
+			multiplier = -0.01
+		}
+		# Personality weights
+		modifier = {
+			add = {
+				value = scope:story.var:steward.ai_compassion
+				divide = -400
+			}
+		}
+		modifier = {
+			add = {
+				value = scope:story.var:tax_collector.ai_compassion
+				divide = -400
+			}
+		}
+		modifier = {
+			add = {
+				value = scope:story.var:steward.ai_vengefulness
+				divide = 200
+			}
+			add = {
+				value = scope:story.var:tax_collector.ai_vengefulness
+				divide = 200
+			}
+		}
+	}
+
+	immediate = {
+		scope:story.var:steward = { save_scope_as = steward } # For loc
+		scope:story.var:tax_collector = { save_scope_as = tax_collector } # For loc
+		# Message for liege
+		send_interface_message = {
+			type = event_tax_collector_bad_with_text
+			title = tax_rivalry.4010.t
+			left_icon = scope:steward
+			right_icon = scope:tax_collector
+			show_as_tooltip = { tax_rivalry_4010_deepen_rivalry_effect = yes }
+			desc = {
+				first_valid = {
+					triggered_desc = {
+						trigger = {
+							# Lazy way of telegraphing that the likelihood of this event happening was low
+							AND = {
+								scope:steward = {
+									opinion = {
+										target = scope:tax_collector
+										value > 0
+									}
+								}
+								scope:tax_collector= {
+									opinion = {
+										target = scope:steward
+										value > 0
+									}
+								}
+							}
+						}
+						desc = tax_rivalry.4010.desc_liege_friendly
+					}
+					desc = tax_rivalry.4010.desc_liege_unfriendly
+				}
+			}
+		}
+		# Message for steward
+		scope:steward = {
+			send_interface_message = {
+				type = event_tax_collector_bad_with_text
+				title = tax_rivalry.4010.t
+				left_icon = scope:tax_collector
+				show_as_tooltip = { tax_rivalry_4010_deepen_rivalry_effect = yes }
+				desc = {
+					first_valid = {
+						triggered_desc = {
+							trigger = {
+								opinion = {
+									target = scope:tax_collector
+									value >= 0
+								}
+								scope:tax_collector= {
+									opinion = {
+										target = scope:steward
+										value >= 0
+									}
+								}
+							}
+							desc = tax_rivalry.4010.desc_steward_friendly
+						}
+						desc = tax_rivalry.4010.desc_steward_unfriendly
+					}
+				}
+			}
+		}
+		# Message for tax collector
+		scope:tax_collector = {
+			send_interface_message = {
+				type = event_tax_collector_bad_with_text
+				title = tax_rivalry.4010.t
+				left_icon = scope:steward
+				show_as_tooltip = { tax_rivalry_4010_deepen_rivalry_effect = yes }
+				desc = {
+					first_valid = {
+						triggered_desc = {
+							trigger = {
+								AND = {
+									scope:steward = {
+										opinion = {
+											target = scope:tax_collector
+											value >= 0
+										}
+									}
+									opinion = {
+										target = scope:steward
+										value >= 0
+									}
+								}
+							}
+							desc = tax_rivalry.4010.desc_tax_collector_friendly
+						}
+						desc = tax_rivalry.4010.desc_tax_collector_unfriendly
+					}
+				}
+			}	
+		}
+		tax_rivalry_4010_deepen_rivalry_effect = yes
+	}
+}
+
+scripted_effect tax_rivalry_4011_weaken_rivalry_effect = {
+	scope:steward = {
+		if = {
+			limit = { has_relation_nemesis = scope:tax_collector }
+			remove_relation_nemesis = scope:tax_collector
+			hidden_effect = {
+				set_relation_rival = {
+					target = scope:tax_collector
+					reason = rival_escalated_tax_disputes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_relation_rival = scope:tax_collector
+				NOT = { has_relation_nemesis = scope:tax_collector }
+			}
+			remove_relation_rival = scope:tax_collector
+			hidden_effect = { set_relation_potential_rival = scope:tax_collector }
+		}
+		else_if = {
+			limit = { has_relation_potential_rival = scope:tax_collector }
+			remove_relation_potential_rival = scope:tax_collector
+		}
+		# Give an opinion bonus if the two no longer have any rival relationship
+		if = {
+			limit = {
+				NOR = {
+					has_relation_rival = scope:tax_collector
+					has_relation_potential_rival = scope:tax_collector
+				}
+			}
+			add_opinion = {
+				target = scope:tax_collector
+				modifier = fp3_conciliatory_opinion
+			}
+			reverse_add_opinion = {
+				target = scope:tax_collector
+				modifier = fp3_conciliatory_opinion
+			}
+		}
+	}
+}
+
+# Rivalry weakens
+tax_rivalry.4011 = {
+	hidden = yes
+
+	# This event is more likely if the pair like one another
+	weight_multiplier = {
+		base = 1
+		opinion_modifier = {
+			who = scope:story.var:steward
+			opinion_target = scope:story.var:tax_collector
+			multiplier = 0.01
+		}
+		opinion_modifier = {
+			who = scope:story.var:tax_collector
+			opinion_target = scope:story.var:steward
+			multiplier = 0.01
+		}
+		# Personality weights
+		modifier = {
+			add = {
+				value = scope:story.var:steward.ai_compassion
+				divide = 200
+			}
+		}
+		modifier = {
+			add = {
+				value = scope:story.var:tax_collector.ai_compassion
+				divide = 200
+			}
+		}
+		modifier = {
+			add = {
+				value = scope:story.var:steward.ai_vengefulness
+				divide = -400
+			}
+			add = {
+				value = scope:story.var:tax_collector.ai_vengefulness
+				divide = -400
+			}
+		}
+	}
+
+	immediate = {
+		scope:story.var:steward = { save_scope_as = steward } # For loc
+		scope:story.var:tax_collector = { save_scope_as = tax_collector } # For loc
+		# Message for liege
+		send_interface_message = {
+			type = event_tax_collector_good_with_text
+			title = tax_rivalry.4011.t
+			left_icon = scope:steward
+			right_icon = scope:tax_collector
+			show_as_tooltip = { tax_rivalry_4011_weaken_rivalry_effect = yes }
+			desc = {
+				first_valid = {
+					triggered_desc = {
+						trigger = {
+							# Lazy way of telegraphing that the likelihood of this event happening was low
+							AND = {
+								scope:steward = {
+									opinion = {
+										target = scope:tax_collector
+										value > 0
+									}
+								}
+								scope:tax_collector= {
+									opinion = {
+										target = scope:steward
+										value > 0
+									}
+								}
+							}
+						}
+						desc = tax_rivalry.4011.desc_liege_friendly
+					}
+					desc = tax_rivalry.4011.desc_liege_unfriendly
+				}
+			}
+		}
+		# Message for steward
+		scope:steward = {
+			send_interface_message = {
+				type = event_tax_collector_good_with_text
+				title = tax_rivalry.4011.t
+				left_icon = scope:tax_collector
+				show_as_tooltip = { tax_rivalry_4011_weaken_rivalry_effect = yes }
+				desc = {
+					first_valid = {
+						triggered_desc = {
+							trigger = {
+								AND = {
+									opinion = {
+										target = scope:tax_collector
+										value <= 0
+									}
+									scope:tax_collector= {
+										opinion = {
+											target = scope:steward
+											value <= 0
+										}
+									}
+								}
+							}
+							desc = tax_rivalry.4011.desc_steward_unfriendly
+						}
+						desc = tax_rivalry.4011.desc_steward_friendly
+					}
+				}
+			}
+		}
+		# Message for tax collector
+		scope:tax_collector = {
+			send_interface_message = {
+				type = event_tax_collector_good_with_text
+				title = tax_rivalry.4011.t
+				left_icon = scope:steward
+				show_as_tooltip = { tax_rivalry_4011_weaken_rivalry_effect = yes }
+				desc = {
+					first_valid = {
+						triggered_desc = {
+							trigger = {
+								AND = {
+									scope:steward = {
+										opinion = {
+											target = scope:tax_collector
+											value <= 0
+										}
+									}
+									opinion = {
+										target = scope:steward
+										value <= 0
+									}
+								}
+							}
+							desc = tax_rivalry.4010.desc_tax_collector_unfriendly
+						}
+						desc = tax_rivalry.4010.desc_tax_collector_friendly
+					}
+				}
+			}	
+		}
+		tax_rivalry_4011_weaken_rivalry_effect = yes
+	}
+}
+
+
+# ====================================
+# =		Invalidated Story Events	 =
+# ====================================
+# 	Various informative events that fire once the story can no longer continue
+
+# Your liege dies and you are the primary heir
+tax_rivalry.9000 = {
+	type = character_event
+	title = tax_rivalry.9000.t
+	desc = tax_rivalry.9000.desc
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = throne_room
+	}
+	left_portrait = {
+		character = scope:fortunate_rival
+		animation = personality_honorable
+	}
+	lower_left_portrait = scope:less_fortunate_rival
+
+	immediate = {
+		play_music_cue = "mx_cue_positive_effect"
+	}
+
+	option = {
+		name = tax_rivalry.9000.a
+		flavor = tax_rivalry.9000.a.tt
+		scope:story = {
+			end_story = yes
+		}
+		stress_impact = {
+			base = medium_stress_impact_loss
+			arrogant = minor_stress_impact_loss
+			ambitious = minor_stress_impact_loss
+		}
+	}
+}
+
+# Your liege dies and your rival is the primary heir
+tax_rivalry.9001 = {
+	type = character_event
+	title = tax_rivalry.9001.t
+	desc = tax_rivalry.9001.desc
+	theme = stewardship_duty_focus
+	override_background = {
+		reference = sitting_room
+	}
+	left_portrait = {
+		character = scope:less_fortunate_rival
+		animation = stress
+	}
+	lower_left_portrait = scope:fortunate_rival
+
+	immediate = {
+		play_music_cue = "mx_cue_negative"
+	}
+
+	option = {
+		name = {
+			trigger = { ai_vengefulness >= low_positive_ai_value }
+			text = tax_rivalry.9001.a_spurned
+		}
+		name = {
+			trigger = { ai_vengefulness < low_positive_ai_value }
+			text = tax_rivalry.9001.a_neutral
+		}
+		flavor = tax_rivalry.9001.a.tt
+		scope:story = {
+			end_story = yes
+		}
+		stress_impact = {
+			base = medium_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+			paranoid = minor_stress_impact_gain
+		}
+	}
+}

@@ -1,0 +1,779 @@
+﻿tributary_war_cb = {
+    group = tributary
+	ai_only_against_neighbors = yes
+
+	war_name = trib_war_cb
+	my_war_name = trib_war_me # Used when the claimant and attacker is the same person
+	war_name_base = trib_war_m_b
+	my_war_name_base = trib_war_m_b
+
+	attacker_score_from_occupation_scale = 150
+	attacker_score_from_battles_scale = 150
+	defender_score_from_battles_scale = 150
+	
+    truce_days = 970
+	
+	allow_hostages = no
+	
+    allowed_for_character = {
+		
+		NOT = { 
+				has_game_rule = MB_tributaries_off
+			}
+			
+		##NB - Changed this to allowed_for_character from allowed_for_character_display_regardless. 
+		trigger_if = {
+			limit = { is_ai = no }
+			prestige_level >= low_prestige_level
+		}
+		trigger_else = { prestige_level >= medium_prestige_level }
+		#END NB
+		 
+		# Ensure that this is only done every now and then.
+		is_independent_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		
+        NAND = {
+            primary_title = {
+                tier < tier_county
+            }
+            scope:attacker.primary_title.tier < scope:defender.primary_title.tier  
+            var:my_suzerain ?= {
+                NOT = { this = scope:defender }
+            }
+        }
+    }
+    allowed_against_character = {
+		#MB
+		OR = {
+			character_is_land_realm_neighbor = scope:attacker
+			AND = {
+				exists = scope:attacker.liege
+				character_is_land_realm_neighbor = scope:attacker.liege
+			}
+		}
+		
+        primary_title = {
+            tier >= tier_county
+        }
+        NOT = { exists = var:my_suzerain }
+        scope:attacker.primary_title.tier >= scope:defender.primary_title.tier  
+        custom_description = {
+            text = not_a_tributary
+            subject = scope:defender
+            NOT = {
+                scope:attacker = {
+                    var:my_suzerain ?= {
+                        NOT = { this = scope:defender }
+                    }
+                }
+            }
+        } 
+		scope:attacker = {
+				NOT = { exists = var:my_suzerain }
+        }
+    }
+
+    cost = {
+        prestige = {
+            value = 250
+        }
+    }
+
+	on_victory_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = trib_on_victory_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = trib_on_victory_desc_defender
+			}
+			desc = trib_on_victory_desc
+		}
+	}
+
+    on_victory = {
+		# Legitimacy
+		add_legitimacy_attacker_victory_effect = yes
+		#EP2 accolade glory gain for winning against higher ranked enemy
+		scope:attacker = { accolade_attacker_war_end_glory_gain_high_effect = yes }																
+        make_tributary = {
+            TYPE = tributary_non_permanent
+            SUZERAIN = scope:attacker
+            TRIBUTARY = scope:defender
+        }
+    }
+
+	on_white_peace_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = trib_on_white_peace_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = trib_on_white_peace_desc_defender
+			}
+			desc = trib_on_white_peace_desc
+		}
+	}
+	
+	on_white_peace = {
+        #EP2 accolade glory gain for doing ok against higher ranked enemy
+		scope:attacker = { accolade_attacker_war_end_glory_gain_low_effect = yes }
+		scope:defender = { accolade_defender_war_end_glory_gain_med_effect = yes } 
+        scope:attacker = {
+            add_prestige = -250
+        }
+    }
+	
+	on_defeat_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = trib_on_defeat_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = trib_on_defeat_desc_defender
+			}
+			desc = trib_on_defeat_desc_attacker
+		}
+	}
+
+    on_defeat = {
+		# Legitimacy
+		add_legitimacy_attacker_defeat_effect = yes
+		#EP2 accolade glory gain for winning against higher ranked enemy
+		scope:defender = { accolade_attacker_war_end_glory_gain_high_effect = yes }
+        scope:attacker = {
+            add_prestige = -300
+            pay_long_term_gold = { 
+                target = scope:defender 
+                gold = 300 
+            }
+        }
+    }
+
+    on_invalidated_desc = {
+        desc = trib_on_invalidated_desc
+    }
+
+}
+
+permament_tributary_war_cb = {
+    group = tributary
+	ai_only_against_neighbors = yes
+
+	war_name = perma_trib_war_cb
+	my_war_name = perma_trib_war_me # Used when the claimant and attacker is the same person
+	war_name_base = perma_trib_war_m_b
+	my_war_name_base = perma_trib_war_m_b
+
+    truce_days = 970
+	
+	attacker_score_from_occupation_scale = 150
+	attacker_score_from_battles_scale = 150
+	defender_score_from_battles_scale = 150
+	
+	allow_hostages = no
+	allowed_for_character = {
+	
+		NOT = { 
+				has_game_rule = MB_tributaries_off
+			}
+			
+		#NB#
+		trigger_if = {
+			limit = { is_ai = no }
+			prestige_level >= low_prestige_level #Fine with the player doing this with less restrictions but don't want the AI doing it a lot
+		}
+		trigger_else = { prestige_level >= medium_prestige_level }
+		#End NB#
+		
+		# Ensure that this is only done every now and then.
+		is_independent_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		
+        #scope:defender = {
+        #    primary_title = {
+        #        tier >= tier_county
+        #    }
+        #    scope:attacker.primary_title.tier >= scope:defender.primary_title.tier 
+        #    NOT = { exists = var:my_suzerain }
+        #    custom_description = {
+        #        text = not_a_tributary
+        #        subject = scope:defender
+        #        NOT = {
+        #            scope:attacker = {
+        #                is_target_in_variable_list = { name = all_tributaries target = scope:defender }
+        #            }
+        #        }
+        #    }            
+        #}
+		
+        NAND = {
+            scope:attacker = {
+                primary_title = {
+                    tier < tier_county
+                }
+                this.primary_title.tier < scope:defender.primary_title.tier  
+                var:my_suzerain ?= {
+					NOT = { this = scope:defender }
+				}
+            }
+			scope:defender = {
+            primary_title = {
+                tier >= tier_county
+            }
+            scope:attacker.primary_title.tier >= scope:defender.primary_title.tier 
+            NOT = { exists = var:my_suzerain }
+            custom_description = {
+                text = not_a_tributary
+                subject = scope:defender
+                NOT = {
+                    scope:attacker = {
+                        is_target_in_variable_list = { name = all_tributaries target = scope:defender }
+						}
+					}
+				}
+			}
+        }
+    }
+	#
+	allowed_against_character = {
+		#MB
+		OR = {
+			character_is_land_realm_neighbor = scope:attacker
+			AND = {
+				exists = scope:attacker.liege
+				character_is_land_realm_neighbor = scope:attacker.liege
+			}
+		}
+		#
+        primary_title = {
+            tier >= tier_county			 
+        }
+        scope:attacker.primary_title.tier >= scope:defender.primary_title.tier 
+        NOT = { exists = var:my_suzerain }
+        custom_description = {
+            text = not_a_tributary
+            subject = scope:defender
+            NOT = {
+                scope:attacker = {
+                    var:my_suzerain ?= {
+                        NOT = { this = scope:defender }
+                    }
+                }
+					
+		  
+            }
+        }    
+		scope:attacker = {
+				NOT = { exists = var:my_suzerain }
+        }
+    }
+	#
+    cost = {
+        prestige = {
+            value = 300
+        }
+    }
+
+	on_victory_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = perma_trib_on_victory_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = perma_trib_on_victory_desc_defender
+			}
+			desc = perma_trib_on_victory_desc_attacker
+		}
+	}
+
+    on_victory = {
+		# Legitimacy
+		add_legitimacy_attacker_victory_effect = yes
+        #EP2 accolade glory gain for winning against higher ranked enemy
+		scope:attacker = { accolade_attacker_war_end_glory_gain_high_effect = yes }
+        make_tributary = {
+            TYPE = tributary_permanent
+            SUZERAIN = scope:attacker
+            TRIBUTARY = scope:defender
+        }
+    }
+
+	on_white_peace_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = perma_trib_on_white_peace_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = perma_trib_on_white_peace_desc_defender
+			}
+			desc = perma_trib_on_white_peace_desc
+		}
+	}
+
+	on_white_peace = {
+        #EP2 accolade glory gain for doing ok against higher ranked enemy
+		scope:attacker = { accolade_attacker_war_end_glory_gain_low_effect = yes }
+		scope:defender = { accolade_defender_war_end_glory_gain_med_effect = yes } 
+        scope:attacker = {
+            add_prestige = -300
+							
+			 
+        }
+    }
+
+	on_defeat_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = perma_trib_on_defeat_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = perma_trib_on_defeat_desc_defender
+			}
+			desc = perma_trib_on_defeat_desc
+		}
+	}
+
+    on_defeat = {
+		# Legitimacy
+		add_legitimacy_attacker_defeat_effect = yes
+		#EP2 accolade glory gain for winning against higher ranked enemy
+		scope:defender = { accolade_attacker_war_end_glory_gain_high_effect = yes }
+        scope:attacker = {
+            add_prestige = -300
+            pay_long_term_gold = { target = scope:defender gold = 300 }
+        }
+    }
+	on_invalidated_desc = {
+		desc = perma_trib_on_invalidated_desc
+	}
+}
+
+independence_tributary_war_cb = {
+    group = tributary
+	ai_only_against_neighbors = no
+
+	war_name = independence_tributary_war_cb
+	my_war_name = independence_tributary_war_me # Used when the claimant and attacker is the same person
+	war_name_base = independence_tributary_war_m_b
+	my_war_name_base = independence_tributary_war_m_b
+	
+	attacker_score_from_occupation_scale = 150
+	attacker_score_from_battles_scale = 150
+	defender_score_from_battles_scale = 150
+	
+	interface_priority = 50
+	
+    truce_days = 970
+	
+	allow_hostages = no
+    allowed_against_character = {
+        scope:defender = {
+            exists = var:suzerain
+            is_target_in_variable_list = { name = all_tributaries target = scope:attacker }
+        }
+    }
+
+    cost = {
+        prestige = {
+            value = 150
+        }
+    }
+
+
+	on_victory_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = trib_indp_on_victory_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = trib_indp_on_victory_desc_defender
+			}
+			desc = trib_indp_on_victory_desc
+		}
+	}
+
+    on_victory = {
+		# Legitimacy
+		add_legitimacy_attacker_victory_effect = yes
+        #EP2 accolade glory gain for winning against higher ranked enemy
+		scope:attacker = { accolade_attacker_war_end_glory_gain_high_effect = yes }
+        scope:attacker = {
+            if = {
+                limit = {
+                    is_permanent_tributary = {
+                        SUZERAIN = scope:defender
+                        TRIBUTARY = scope:attacker
+                    }
+                }
+				 unset_tributary = {
+                    TRIBUTARY = scope:attacker
+                    TRIBUTARY_BASE_TYPE = flag:permanent
+					PASSING_TO_HEIR = no
+                }				   
+               scope:defender = {
+                    unset_tributary = {
+                        TRIBUTARY = scope:attacker
+                        TRIBUTARY_BASE_TYPE = flag:permanent
+                    }  
+                }              
+            }
+            else = {
+                scope:defender = {
+                    unset_tributary = {
+                        TRIBUTARY = scope:attacker
+                        TRIBUTARY_BASE_TYPE = flag:non_permanent
+						PASSING_TO_HEIR = no
+                    }  
+                }
+            }
+        }
+    }
+
+	on_white_peace_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = trib_indp_on_white_peace_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = trib_indp_on_white_peace_desc_defender
+			}
+			desc = trib_indp_on_white_peace_desc
+		}
+	}
+
+	on_white_peace = {
+        #EP2 accolade glory gain for doing ok against higher ranked enemy
+		scope:attacker = { accolade_attacker_war_end_glory_gain_low_effect = yes }
+		scope:defender = { accolade_defender_war_end_glory_gain_med_effect = yes } 
+        scope:attacker = {
+            add_prestige = -150
+        }
+    }
+
+
+	on_defeat_desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:attacker = { is_local_player = yes } }
+				desc = trib_indp_on_defeat_desc_attacker
+			}
+			triggered_desc = {
+				trigger = { scope:defender = { is_local_player = yes } }
+				desc = trib_indp_on_defeat_desc_defender
+			}
+			desc = trib_indp_on_defeat_desc
+		}
+	}
+
+    on_defeat = {
+		# Legitimacy
+		add_legitimacy_attacker_defeat_effect = yes
+        #EP2 accolade glory gain for winning against higher ranked enemy
+		scope:defender = { accolade_attacker_war_end_glory_gain_high_effect = yes }
+        scope:attacker = {
+            add_prestige = -300
+            pay_long_term_gold = { target = scope:defender gold = 150 }
+        }
+    }
+
+    on_invalidated_desc = {
+        desc = trib_indp_on_invalidated_desc
+    }
+
+}
+
+tributary_punitive_war_cb = {
+    group = event
+    ai_only_against_neighbors = yes
+	
+	attacker_score_from_occupation_scale = 150
+	attacker_score_from_battles_scale = 150
+	defender_score_from_battles_scale = 150
+
+    should_invalidate = {
+    }
+
+    on_invalidated_desc = {
+    }
+
+    on_invalidated = {
+    }
+
+    on_declaration = {
+        on_declared_war = yes
+    }
+
+    on_victory_desc = {
+        desc = tributary_punitive_war_cb_victory_desc
+    }
+
+    on_victory = {
+		# Legitimacy
+		add_legitimacy_attacker_victory_effect = yes
+        scope:attacker = { show_pow_release_message_effect = yes }
+        scope:attacker = {
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_gain }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_gain }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_gain }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_gain }
+            }
+        }
+        scope:defender = {
+
+            pay_short_term_gold = {
+                gold = 3
+                target = scope:attacker
+                yearly_income = yes
+            }
+
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_loss }
+            }
+
+            capital_county = {
+                add_county_modifier = { #Prevent the county from being sacked again, by anyone, for quite a while.
+                    modifier = recently_sacked_modifier
+                    years = 20
+                }
+                change_county_control = -10
+                change_development_progress = major_development_progress_loss   #Always deduct progress.
+                if = {  #If they don't have enough progress made, burn a level of development.
+                    limit = { development_towards_level_increase < major_development_progress_gain }
+                    change_development_level = -1
+                }
+            }
+        }
+
+        # Prestige for the attacker's war allies
+        add_from_contribution_attackers = {
+            prestige = {
+                value = major_prestige_value
+            }
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Prestige for the defender's war allies
+        add_from_contribution_defenders = {
+            prestige = {
+                value = major_prestige_value
+            }
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Truce
+        add_truce_attacker_victory_effect = yes
+    }
+
+    on_white_peace_desc = {
+        first_valid = {
+            triggered_desc = {
+                trigger = { scope:defender = { is_local_player = yes } }
+                desc = tributary_punitive_war_cb_white_peace_desc_defender
+            }
+            desc = tributary_punitive_war_cb_white_peace_desc
+        }
+    }
+
+    on_white_peace = {
+        scope:attacker = { show_pow_release_message_effect = yes }
+        # Prestige loss for the attacker
+        scope:attacker = {
+            add_prestige = {
+                value = minor_prestige_value
+                multiply = -1.0
+            }
+            stress_impact = {
+                ambitious = medium_stress_impact_gain
+                arrogant = medium_stress_impact_gain
+            }
+        }
+
+        # Prestige for the attacker's war allies
+        add_from_contribution_attackers = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Prestige for the defender's war allies
+        add_from_contribution_defenders = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        scope:defender = {
+            stress_impact = {
+                arrogant = medium_stress_impact_gain
+            }
+        }
+
+        add_truce_white_peace_effect = yes
+    }
+
+    on_defeat_desc = {
+        desc = tributary_punitive_war_cb_defeat_desc
+    }
+
+    on_defeat = {
+		# Legitimacy
+		add_legitimacy_attacker_defeat_effect = yes
+        scope:attacker = { show_pow_release_message_effect = yes }
+
+        # Prestige loss for the attacker
+        scope:attacker = {
+            pay_short_term_gold = {
+                gold = 3
+                target = scope:defender
+                yearly_income = yes
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_loss }
+            }
+            if = {
+                limit = { scope:defender.primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_loss }
+            }
+        }
+
+        # Prestige for Defender
+        scope:defender = {
+            if = {
+                limit = { primary_title.tier = tier_county }
+                add_prestige = { value = medium_prestige_gain }
+            }
+            if = {
+                limit = { primary_title.tier = tier_duchy }
+                add_prestige = { value = major_prestige_gain }
+            }
+            if = {
+                limit = { primary_title.tier = tier_kingdom }
+                add_prestige = { value = massive_prestige_gain }
+            }
+            if = {
+                limit = { primary_title.tier = tier_empire }
+                add_prestige = { value = monumental_prestige_gain }
+            }
+
+        }
+
+        # Prestige for the attacker's war allies
+        add_from_contribution_attackers = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        # Prestige for the defender's war allies
+        add_from_contribution_defenders = {
+            prestige = minor_prestige_value
+            opinion = {
+                modifier = contributed_in_war
+            }
+        }
+
+        add_truce_attacker_defeat_effect = yes
+
+        scope:attacker = {
+            save_temporary_scope_as = loser
+        }
+        on_lost_aggression_war_discontent_loss = yes
+    }
+
+    on_primary_attacker_death = inherit
+    on_primary_defender_death = inherit
+
+    attacker_allies_inherit = yes
+    defender_allies_inherit = yes
+
+    war_name = "PUNITIVE_WAR_NAME"
+    war_name_base = "PUNITIVE_WAR_NAME_BASE"
+    cb_name = "PUNITIVE_CB_NAME"
+	
+    interface_priority = 80
+
+    ticking_war_score_targets_entire_realm = yes
+    attacker_ticking_warscore = 0
+    attacker_wargoal_percentage = 0.01
+    attacker_score_from_occupation_scale = 50
+    defender_score_from_occupation_scale = 50
+    attacker_score_from_battles_scale = 200
+    defender_score_from_battles_scale = 200
+
+    max_attacker_score_from_battles = 200
+    max_defender_score_from_battles = 200
+
+    max_ai_diplo_distance_to_title = 500
+
+    ai_score_mult = {
+        value = 1
+        # Holy War are limited to connected neighbour to limit big empire expansions over weak realms.
+        add = {
+            if = {
+                limit = {  religious_war_vassals_constraints = yes }
+                add = -1000
+            }
+        }
+    }
+}
+
+# seizes 3 years' income from the defender and frees the captives. Forced concubinage ends and marriages are annulled (with characters in the same realm). Prisoners are released. Freed characters will move to your court unless they are (still) the concubine or spouse of a landed character. Additionally, all freed characters will have a positive opinion modifier toward you as their saviour.
+# release_captives

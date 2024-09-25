@@ -1,0 +1,2099 @@
+﻿@max_vizierate_relations_value = 2
+
+@vizierate_candidate_study_bonus_min_value = 1
+@vizierate_candidate_study_bonus_max_value = 4
+
+@vizier_extravagance_t1_cost_value = 100
+@vizier_extravagance_t2_cost_value = 200
+@vizier_extravagance_t3_cost_value = 300
+@vizier_extravagance_t4_cost_value = 400
+
+@vizierate_bants_threshold_value = high_skill_rating
+
+namespace = vizierate
+
+##################################################
+# #Civil Service Politicking
+# 0001 - 0010	 - Character furthers new relationships.
+# 0031 - 0040	 - Character learns languages to further candidacy.
+# 0041 - 0050	 - Character studies hard to further candidacy.
+# 0051 - 0060	 - Empty event for cycling.
+#
+# #Vizier Spends Cash
+# 0501 - 0510	 - Buys fancy modifier.
+#
+# #Candidates Communicate with Liege
+# 1001 - 1010	 - Offers to replace vizier and distribute their cash reserves.
+#
+##################################################
+
+
+
+
+
+
+
+
+
+
+##################################################
+# GENERAL TRIGGERS & EFFECTS
+
+scripted_trigger liege_valid_for_vizierate_politicking_trigger = {
+	exists = diarch
+	has_diarchy_active_parameter = diarchy_is_vizierate
+}
+
+scripted_trigger is_available_relevant_vizierate_character_trigger = {
+	is_available_ai_adult = yes
+	OR = {
+		# Check to see if they're a major char.
+		is_vizierate_succession_influencer_trigger = yes
+		# Plus nab all our candidates.
+		is_vizierate_succession_candidate_trigger = yes
+	}
+}
+
+scripted_trigger is_available_relevant_vizierate_candidate_trigger = {
+	is_available_ai_adult = yes
+	is_vizierate_succession_candidate_trigger = yes
+}
+
+scripted_trigger is_vizierate_succession_candidate_trigger = {
+	save_temporary_scope_as = char_temp
+	root = {
+		any_diarchy_succession_character = { this = scope:char_temp }
+	}
+}
+
+scripted_trigger is_vizierate_succession_influencer_trigger = {
+	OR = {
+		# The incumbent diarch is technically an influencer, but we don't count them here for technical reasons.
+		# Partners of the liege.
+		is_spouse_of = root
+		is_concubine_of = root
+		# And stay-at-home children.
+		AND = {
+			is_child_of = root
+			is_adult = yes
+		}
+	}
+}
+
+scripted_trigger char_has_any_vizierate_relation_deeper_guts_trigger = {
+	has_relation_flag = {
+		target = prev
+		relation = $RELATION$
+		flag = vizierate_relation
+	}
+	OR = {
+		is_courtier_of = root
+		AND = {
+			highest_held_title_tier = tier_barony
+			liege = root
+		}
+	}
+}
+
+scripted_trigger char_has_any_vizierate_relation_guts_trigger = {
+	any_relation = {
+		type = $RELATION$
+		count $OPERATOR$ $COUNT$
+		char_has_any_vizierate_relation_deeper_guts_trigger = { RELATION = $RELATION$ }
+	}
+}
+
+scripted_trigger char_has_no_vizierate_relation_trigger = {
+	char_has_any_vizierate_relation_guts_trigger = {
+		RELATION = friend
+		OPERATOR = <=
+		COUNT = 0
+	}
+	char_has_any_vizierate_relation_guts_trigger = {
+		RELATION = rival
+		OPERATOR = <=
+		COUNT = 0
+	}
+	# We avoid lover because sex complicates the hell out of these things.
+}
+
+scripted_trigger char_has_below_max_vizierate_relations_trigger = {
+	# Calc how many relevant relations we already have.
+	save_temporary_scope_value_as = {
+		name = valid_vizierate_relations_trigger_check
+		value = {
+			# Friends.
+			every_relation = {
+				type = friend
+				limit = {
+					char_has_any_vizierate_relation_deeper_guts_trigger = { RELATION = friend }
+				}
+				add = 1
+			}
+			# Rivals.
+			every_relation = {
+				type = rival
+				limit = {
+					char_has_any_vizierate_relation_deeper_guts_trigger = { RELATION = rival }
+				}
+				add = 1
+			}
+		}
+	}
+	# Do we have at or more than the max # of relations? If we do, fail the trigger.
+	trigger_if = {
+		limit = { scope:valid_vizierate_relations_trigger_check >= @max_vizierate_relations_value }
+		always = no
+	}
+}
+
+scripted_trigger char_has_any_potential_vizierate_relation_trigger = {
+	OR = {
+		char_has_any_vizierate_relation_guts_trigger = {
+			RELATION = potential_friend
+			OPERATOR = >=
+			COUNT = 1
+		}
+		char_has_any_vizierate_relation_guts_trigger = {
+			RELATION = potential_rival
+			OPERATOR = >=
+			COUNT = 1
+		}
+		# We avoid lover because sex complicates the hell out of these things.
+	}
+}
+
+scripted_effect assemble_vizierate_characters_list_effect = {
+	# The vizier.
+	diarch ?= {
+		if = {
+			limit = { is_available_relevant_vizierate_character_trigger = yes }
+			add_to_list = all_vizierate_characters_list
+			# Plus, save the scope for marginally easier access/loc.
+			save_scope_as = vizier
+			# Finally, filter for the appropriate local event list.
+			if = {
+				limit = { $TRIGGER$ = yes }
+				add_to_list = relevant_vizierate_characters_list
+			}
+		}
+	}
+	# Influencers.
+	every_courtier = {
+		limit = {
+			is_available_relevant_vizierate_character_trigger = yes
+			is_vizierate_succession_influencer_trigger = yes
+		}
+		# Add them to the main lists.
+		add_to_list = all_vizierate_characters_list
+		add_to_list = all_influencer_characters_list
+		# Finally, filter for the appropriate local event list.
+		if = {
+			limit = { $TRIGGER$ = yes }
+			add_to_list = relevant_vizierate_characters_list
+		}
+	}
+	# Relevant candidates.
+	assemble_vizierate_candidates_list_effect = { TRIGGER = $TRIGGER$ }
+}
+
+scripted_effect assemble_vizierate_candidates_list_effect = {
+	# Relevant candidates.
+	## We need to gather these first.
+	every_courtier = {
+		limit = {
+			is_available_relevant_vizierate_character_trigger = yes
+			is_vizierate_succession_candidate_trigger = yes
+		}
+		add_to_list = candidates_pre_filter_list
+	}
+	every_vassal = {
+		limit = { highest_held_title_tier <= tier_barony }
+		add_to_list = candidates_pre_filter_list
+	}
+	## Now comb through them to only grab the most relevant ones.
+	ordered_in_list = {
+		list = candidates_pre_filter_list
+		order_by = diarchy_vizier_succession_score_value
+		# We don't want _too_ many, so just grab those near the top of the list.
+		max = 5
+		check_range_bounds = no
+		# Add them to the main lists.
+		add_to_list = all_vizierate_characters_list
+		add_to_list = all_vizierate_candidates_list
+		# Finally, filter for the appropriate local event list.
+		if = {
+			limit = { $TRIGGER$ = yes }
+			add_to_list = relevant_vizierate_characters_list
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+##################################################
+# CIVIL SERVICE POLITICKING TRIGGERS & EFFECTS
+
+scripted_effect vizierate_0000_queue_next_politicking_on_action_effect = {
+	trigger_event = {
+		on_action = cycle_vizierate_politicking_events_on_action
+		years = { 2 4 }
+	}
+}
+
+
+
+
+
+##################################################
+# CIVIL SERVICE POLITICKING
+
+##################################################
+# Character furthers new relationships.
+# by Ewan Cowhig Croft
+# 0001 - 0010
+##################################################
+
+scripted_trigger vizierate_0001_check_mutual_opinion_trigger = {
+	opinion = {
+		target = scope:opcalc_char
+		value $OPERATOR$ $VALUE$
+	}
+	reverse_opinion = {
+		target = scope:opcalc_char
+		value $OPERATOR$ $VALUE$
+	}
+}
+
+scripted_effect vizierate_0001_apply_mutual_opinion_effect = {
+	add_opinion = {
+		target = scope:opcalc_char
+		modifier = $OPINION$_opinion
+		opinion = $VALUE$
+	}
+	reverse_add_opinion = {
+		target = scope:opcalc_char
+		modifier = $OPINION$_opinion
+		opinion = $VALUE$
+	}
+}
+
+scripted_effect vizierate_0001_assign_best_relation_effect = {
+	# Save scope - we use this name so we can check opinions.
+	## SOONtm.
+	save_scope_as = opcalc_char
+	# Iterate over our other chars.
+	ordered_in_list = {
+		list = all_vizierate_characters_list
+		order_by = {
+			# Ok, we actually want both extremes of emotion here, so...
+			## If we have a positive opinion, just take that.
+			if = {
+				limit = {
+					reverse_opinion = {
+						target = scope:opcalc_char
+						value >= 1
+					}
+				}
+				add = calc_rough_opcalc_char_opinion_value
+			}
+			## If we have a negative opinion, take that, then invert it.
+			else_if = {
+				limit = {
+					reverse_opinion = {
+						target = scope:opcalc_char
+						value <= -1
+					}
+				}
+				add = {
+					value = calc_rough_opcalc_char_opinion_value
+					multiply = -1
+				}
+			}
+			## Otherwise we're a filthy neutral, and who knows where you stand with neutrals?
+			### Coin-flips are annoying in script maths so we assume you just don't get on.
+			else = { add = -1 }
+			## Plus skip the queue & rank internally for existing potential relationships.
+			if = {
+				limit = {
+					OR = {
+						has_relation_potential_friend = scope:opcalc_char
+						has_relation_potential_rival = scope:opcalc_char
+					}
+				}
+				add = 100
+			}
+		}
+		limit = {
+			NOR = {
+				this = scope:opcalc_char
+				has_relation_friend = scope:opcalc_char
+				has_relation_rival = scope:opcalc_char
+			}
+			char_has_below_max_vizierate_relations_trigger = yes
+			is_in_list = relevant_vizierate_characters_list
+		}
+		alternative_limit = {
+			NOR = {
+				this = scope:opcalc_char
+				has_relation_friend = scope:opcalc_char
+				has_relation_rival = scope:opcalc_char
+			}
+			char_has_below_max_vizierate_relations_trigger = yes
+		}
+		# Right, we have a candidate! Now, let's process them.
+		## Best Friend.
+		if = {
+			limit = {
+				can_set_relation_best_friend_trigger = { CHARACTER = scope:opcalc_char }
+				has_relation_friend = scope:opcalc_char
+				vizierate_0001_check_mutual_opinion_trigger = {
+					OPERATOR = >=
+					VALUE = 90
+				}
+			}
+			# Randomise a reason.
+			random_list = {
+				100 = {
+					set_relation_best_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.best_friend.saved_from_assassin
+					}
+				}
+				100 = {
+					set_relation_best_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.best_friend.natural_working_arrangement
+					}
+				}
+				100 = {
+					set_relation_best_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.best_friend.mutually_assured_destruction
+					}
+				}
+				100 = {
+					# Must have somewhat similar personalities.
+					trigger = {
+						number_of_personality_traits_in_common = {
+							target = scope:opcalc_char
+							value >= 2
+						}
+					}
+					set_relation_best_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.best_friend.natural_compliments
+					}
+				}
+				100 = {
+					# Must be able to engage in bants.
+					trigger = {
+						calc_true_if = {
+							amount >= 2
+							diplomacy >= @vizierate_bants_threshold_value
+							intrigue >= @vizierate_bants_threshold_value
+							learning >= @vizierate_bants_threshold_value
+						}
+						scope:opcalc_char = {
+							calc_true_if = {
+								amount >= 2
+								diplomacy >= @vizierate_bants_threshold_value
+								intrigue >= @vizierate_bants_threshold_value
+								learning >= @vizierate_bants_threshold_value
+							}
+						}
+					}
+					set_relation_best_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.best_friend.snarky_bffs
+					}
+				}
+			}
+			add_relation_flag = {
+				relation = best_friend
+				flag = vizierate_relation
+				target = scope:opcalc_char
+			}
+			# Apply opinions.
+			vizierate_0001_apply_mutual_opinion_effect = {
+				OPINION = ally_at_court
+				VALUE = 50
+			}
+		}
+		## Friend.
+		else_if = {
+			limit = {
+				can_set_relation_friend_trigger = { CHARACTER = scope:opcalc_char }
+				OR = {
+					has_relation_potential_friend = scope:opcalc_char
+					vizierate_0001_check_mutual_opinion_trigger = {
+						OPERATOR = >=
+						VALUE = 50
+					}
+				}
+			}
+			# Randomise a reason.
+			random_list = {
+				100 = {
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.enemy_of_my_enemy
+					}
+				}
+				100 = {
+					# Gotta be somewhat desynced.
+					trigger = {
+						number_of_opposing_personality_traits = {
+							target = scope:opcalc_char
+							value >= 2
+						}
+					}
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.unlikely_friendship
+					}
+				}
+				100 = {
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.foiled_conspiracy_together
+					}
+				}
+				100 = {
+					# Must have somewhat similar personalities.
+					trigger = {
+						number_of_personality_traits_in_common = {
+							target = scope:opcalc_char
+							value >= 2
+						}
+					}
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.similar_personalities
+					}
+				}
+				100 = {
+					# We can't easily check for hobbies, so we group by education as a sort of pseudo-interest block.
+					trigger = {
+						OR = {
+							AND = {
+								has_trait = education_diplomacy
+								scope:opcalc_char = { has_trait = education_diplomacy }
+							}
+							AND = {
+								has_trait = education_martial
+								scope:opcalc_char = { has_trait = education_martial }
+							}
+							AND = {
+								has_trait = education_stewardship
+								scope:opcalc_char = { has_trait = education_stewardship }
+							}
+							AND = {
+								has_trait = education_intrigue
+								scope:opcalc_char = { has_trait = education_intrigue }
+							}
+							AND = {
+								has_trait = education_learning
+								scope:opcalc_char = { has_trait = education_learning }
+							}
+						}
+					}
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.shared_pastimes
+					}
+				}
+				100 = {
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.policy_interests
+					}
+				}
+				100 = {
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.friends_at_party
+					}
+				}
+				100 = {
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.accidental_clique
+					}
+				}
+				100 = {
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.co_own_business
+					}
+				}
+				100 = {
+					# Must be able to help with loans.
+					trigger = { scope:opcalc_char.stewardship >= prev.stewardship }
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.unexpected_aid.fiscal
+					}
+				}
+				100 = {
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.unexpected_aid.physical
+					}
+				}
+				100 = {
+					# Must be able to help with in a social situation.
+					trigger = {
+						OR = {
+							scope:opcalc_char.diplomacy >= prev.diplomacy
+							scope:opcalc_char.intrigue >= prev.intrigue
+						}
+					}
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.unexpected_aid.social
+					}
+				}
+				100 = {
+					# Must be able to help with in a schemey situation.
+					trigger = { scope:opcalc_char.intrigue >= prev.intrigue }
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.unexpected_aid.intrigue
+					}
+				}
+				100 = {
+					# Can't have the liege's culture.
+					trigger = {
+						NOR = {
+							culture = root.culture
+							scope:opcalc_char.culture = root.culture
+						}
+					}
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.fellow_minority.culture
+					}
+				}
+				100 = {
+					# Can't have the liege's faith.
+					trigger = {
+						NOR = {
+							faith = root.faith
+							scope:opcalc_char.faith = root.faith
+						}
+					}
+					set_relation_friend = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.friend.fellow_minority.faith
+					}
+				}
+			}
+			add_relation_flag = {
+				relation = friend
+				flag = vizierate_relation
+				target = scope:opcalc_char
+			}
+			# Apply opinions.
+			vizierate_0001_apply_mutual_opinion_effect = {
+				OPINION = ally_at_court
+				VALUE = 40
+			}
+		}
+		## Potential friend.
+		else_if = {
+			limit = {
+				can_set_relation_potential_friend_trigger = { CHARACTER = scope:opcalc_char }
+				vizierate_0001_check_mutual_opinion_trigger = {
+					OPERATOR = >=
+					VALUE = 1
+				}
+			}
+			set_relation_potential_friend = scope:opcalc_char
+			add_relation_flag = {
+				relation = potential_friend
+				flag = vizierate_relation
+				target = scope:opcalc_char
+			}
+			# Apply opinions.
+			vizierate_0001_apply_mutual_opinion_effect = {
+				OPINION = ally_at_court
+				VALUE = 30
+			}
+		}
+		## Potential rival.
+		else_if = {
+			limit = {
+				can_set_relation_potential_rival_trigger = { CHARACTER = scope:opcalc_char }
+				vizierate_0001_check_mutual_opinion_trigger = {
+					OPERATOR = <=
+					VALUE = 0
+				}
+			}
+			set_relation_potential_rival = scope:opcalc_char
+			add_relation_flag = {
+				relation = potential_rival
+				flag = vizierate_relation
+				target = scope:opcalc_char
+			}
+			# Apply opinions.
+			vizierate_0001_apply_mutual_opinion_effect = {
+				OPINION = rival_at_court
+				VALUE = -30
+			}
+		}
+		## Rival.
+		else_if = {
+			limit = {
+				can_set_relation_rival_trigger = { CHARACTER = scope:opcalc_char }
+				OR = {
+					has_relation_potential_rival = scope:opcalc_char
+					vizierate_0001_check_mutual_opinion_trigger = {
+						OPERATOR = <=
+						VALUE = -50
+					}
+				}
+			}
+			# Randomise a reason.
+			random_list = {
+				100 = {
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.enemy_of_my_friend
+					}
+				}
+				100 = {
+					# Gotta be somewhat desynced.
+					trigger = {
+						number_of_opposing_personality_traits = {
+							target = scope:opcalc_char
+							value >= 2
+						}
+					}
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.probable_rivalry
+					}
+				}
+				100 = {
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.victim_of_conspiracy
+					}
+				}
+				100 = {
+					# Must have somewhat similar personalities.
+					trigger = {
+						number_of_personality_traits_in_common = {
+							target = scope:opcalc_char
+							value >= 2
+						}
+					}
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.too_similar
+					}
+				}
+				100 = {
+					# We can't easily check for hobbies, so we group by education as a sort of pseudo-interest block.
+					trigger = {
+						OR = {
+							AND = {
+								has_trait = education_diplomacy
+								scope:opcalc_char = { has_trait = education_diplomacy }
+							}
+							AND = {
+								has_trait = education_martial
+								scope:opcalc_char = { has_trait = education_martial }
+							}
+							AND = {
+								has_trait = education_stewardship
+								scope:opcalc_char = { has_trait = education_stewardship }
+							}
+							AND = {
+								has_trait = education_intrigue
+								scope:opcalc_char = { has_trait = education_intrigue }
+							}
+							AND = {
+								has_trait = education_learning
+								scope:opcalc_char = { has_trait = education_learning }
+							}
+						}
+					}
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.pastime_foes
+					}
+				}
+				100 = {
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.opposing_policies
+					}
+				}
+				100 = {
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.party_foes
+					}
+				}
+				100 = {
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.opposing_minor_cliques
+					}
+				}
+				100 = {
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.business_rivals
+					}
+				}
+				100 = {
+					# Must be able to help with loans.
+					trigger = { scope:opcalc_char.stewardship >= prev.stewardship }
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.unexpected_foe.fiscal
+					}
+				}
+				100 = {
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.unexpected_foe.physical
+					}
+				}
+				100 = {
+					# Must be able to help with in a social situation.
+					trigger = {
+						OR = {
+							scope:opcalc_char.diplomacy >= prev.diplomacy
+							scope:opcalc_char.intrigue >= prev.intrigue
+						}
+					}
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.unexpected_foe.social
+					}
+				}
+				100 = {
+					# Must be able to help with in a schemey situation.
+					trigger = { scope:opcalc_char.intrigue >= prev.intrigue }
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.unexpected_foe.intrigue
+					}
+				}
+				100 = {
+					# Must have some severe cultural problems.
+					trigger = {
+						culture = {
+							cultural_acceptance = {
+								target = scope:opcalc_char.culture
+								value <= 20
+							}
+						}
+					}
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.opposing_minority.culture
+					}
+				}
+				100 = {
+					# Must be some religious compatibility problems.
+					trigger = {
+						faith = {
+							faith_hostility_level = {
+								target = scope:opcalc_char.faith
+								value >= faith_evil_level
+							}
+						}
+						save_temporary_scope_as = char_temp
+						scope:opcalc_char.faith = {
+							faith_hostility_level = {
+								target = scope:char_temp.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					set_relation_rival = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.rival.opposing_minority.faith
+					}
+				}
+			}
+			add_relation_flag = {
+				relation = rival
+				flag = vizierate_relation
+				target = scope:opcalc_char
+			}
+			# Apply opinions.
+			vizierate_0001_apply_mutual_opinion_effect = {
+				OPINION = rival_at_court
+				VALUE = -40
+			}
+		}
+		## Nemesis.
+		else_if = {
+			limit = {
+				can_set_relation_nemesis_trigger = { CHARACTER = scope:opcalc_char }
+				has_relation_rival = scope:opcalc_char
+				vizierate_0001_check_mutual_opinion_trigger = {
+					OPERATOR = <=
+					VALUE = -90
+				}
+			}
+			# Randomise a reason.
+			random_list = {
+				100 = {
+					set_relation_nemesis = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.nemesis.foiled_masterstroke_scheme
+					}
+				}
+				100 = {
+					set_relation_nemesis = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.nemesis.spread_foulest_of_rumours
+					}
+				}
+				100 = {
+					set_relation_nemesis = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.nemesis.waged_mutual_proxy_war
+					}
+				}
+				100 = {
+					set_relation_nemesis = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.nemesis.alleged_arson
+					}
+				}
+				100 = {
+					set_relation_nemesis = {
+						target = scope:opcalc_char
+						reason = vizierate_0001.reason.nemesis.suspicious_protege_death
+					}
+				}
+			}
+			add_relation_flag = {
+				relation = nemesis
+				flag = vizierate_relation
+				target = scope:opcalc_char
+			}
+			# Apply opinions.
+			vizierate_0001_apply_mutual_opinion_effect = {
+				OPINION = rival_at_court
+				VALUE = -50
+			}
+		}
+	}
+}
+
+#	Assign relationships between characters at court who'd be actively trying to lobby to become/decide who gets to be vizier.
+## For the sake of ease we're just avoiding landless rulers you may have vassalised (e.g., the Coptic Pope) for the mo.
+vizierate.0001 = {
+	hidden = yes
+
+	trigger = {
+		# Should we be receiving these events at all?
+		liege_valid_for_vizierate_politicking_trigger = yes
+		# Do we have any valid chars to do this to?
+		OR = {
+			diarch ?= {
+				is_available_relevant_vizierate_character_trigger = yes
+				char_has_below_max_vizierate_relations_trigger = no
+			}
+			any_courtier = {
+				is_available_relevant_vizierate_character_trigger = yes
+				char_has_below_max_vizierate_relations_trigger = no
+			}
+			any_diarchy_succession_character = {
+				is_available_relevant_vizierate_character_trigger = yes
+				char_has_below_max_vizierate_relations_trigger = no
+			}
+		}
+	}
+
+	immediate = {
+		# Assemble the list.
+		assemble_vizierate_characters_list_effect = { TRIGGER = char_has_no_vizierate_relation_trigger }
+		# Right, now we look in the list for fun candidates.
+		random_list = {
+			# Vizier
+			## Has no relations, gains one.
+			10000 = {
+				trigger = {
+					scope:vizier ?= { char_has_no_vizierate_relation_trigger = yes }
+				}
+				scope:vizier = { vizierate_0001_assign_best_relation_effect = yes }
+			}
+			## Has potential relation, step it up.
+			1000 = {
+				trigger = {
+					scope:vizier ?= { char_has_any_potential_vizierate_relation_trigger = yes }
+				}
+				scope:vizier = { vizierate_0001_assign_best_relation_effect = yes }
+			}
+			## Has below max relations, add.
+			100 = {
+				trigger = {
+					scope:vizier ?= { char_has_below_max_vizierate_relations_trigger = yes }
+				}
+				scope:vizier = { vizierate_0001_assign_best_relation_effect = yes }
+			}
+			# Influencer
+			## Has no relations, gains one.
+			1000 = {
+				trigger = {
+					any_in_list = {
+						list = relevant_vizierate_characters_list
+						is_in_list = all_influencer_characters_list
+						char_has_no_vizierate_relation_trigger = yes
+					}
+				}
+				random_in_list = {
+					list = relevant_vizierate_characters_list
+					limit = {
+						is_in_list = all_influencer_characters_list
+						char_has_no_vizierate_relation_trigger = yes
+					}
+					vizierate_0001_assign_best_relation_effect = yes
+				}
+			}
+			## Has potential relation, step it up.
+			100 = {
+				trigger = {
+					any_in_list = {
+						list = relevant_vizierate_characters_list
+						is_in_list = all_influencer_characters_list
+						char_has_any_potential_vizierate_relation_trigger = yes
+					}
+				}
+				random_in_list = {
+					list = relevant_vizierate_characters_list
+					limit = {
+						is_in_list = all_influencer_characters_list
+						char_has_any_potential_vizierate_relation_trigger = yes
+					}
+					vizierate_0001_assign_best_relation_effect = yes
+				}
+			}
+			## Has below max relations, add.
+			10 = {
+				trigger = {
+					any_in_list = {
+						list = relevant_vizierate_characters_list
+						is_in_list = all_influencer_characters_list
+						char_has_below_max_vizierate_relations_trigger = yes
+					}
+				}
+				random_in_list = {
+					list = relevant_vizierate_characters_list
+					limit = {
+						is_in_list = all_influencer_characters_list
+						char_has_below_max_vizierate_relations_trigger = yes
+					}
+					vizierate_0001_assign_best_relation_effect = yes
+				}
+			}
+			# Candidate
+			## Has no relations, gains one.
+			100 = {
+				trigger = {
+					any_in_list = {
+						list = relevant_vizierate_characters_list
+						is_in_list = all_vizierate_candidates_list
+						char_has_no_vizierate_relation_trigger = yes
+					}
+				}
+				random_in_list = {
+					list = relevant_vizierate_characters_list
+					limit = {
+						is_in_list = all_vizierate_candidates_list
+						char_has_no_vizierate_relation_trigger = yes
+					}
+					vizierate_0001_assign_best_relation_effect = yes
+				}
+			}
+			## Has potential relation, step it up.
+			10 = {
+				trigger = {
+					any_in_list = {
+						list = relevant_vizierate_characters_list
+						is_in_list = all_vizierate_candidates_list
+						char_has_any_potential_vizierate_relation_trigger = yes
+					}
+				}
+				random_in_list = {
+					list = relevant_vizierate_characters_list
+					limit = {
+						is_in_list = all_vizierate_candidates_list
+						char_has_any_potential_vizierate_relation_trigger = yes
+					}
+					vizierate_0001_assign_best_relation_effect = yes
+				}
+			}
+			## Has below max relations, add.
+			1 = {
+				trigger = {
+					any_in_list = {
+						list = relevant_vizierate_characters_list
+						is_in_list = all_vizierate_candidates_list
+						char_has_below_max_vizierate_relations_trigger = yes
+					}
+				}
+				random_in_list = {
+					list = relevant_vizierate_characters_list
+					limit = {
+						is_in_list = all_vizierate_candidates_list
+						char_has_below_max_vizierate_relations_trigger = yes
+					}
+					vizierate_0001_assign_best_relation_effect = yes
+				}
+			}
+		}
+	}
+
+	after = { vizierate_0000_queue_next_politicking_on_action_effect = yes }
+}
+
+##################################################
+# Character learns languages to further candidacy.
+# by Ewan Cowhig Croft
+# 0031 - 0040
+##################################################
+
+scripted_trigger vizierate_0031_missing_relevant_language_trigger = {
+	# If they don't know the relevant languages, try to learn 'em.
+	OR = {
+		NOT = { knows_language_of_culture = root.culture }
+		AND = {
+			root = { has_royal_court = yes }
+			NOT = { knows_court_language_of = root }
+		}
+	}
+	# Providing they have less than the current soft-cap, that is.
+	current_extra_languages < language_soft_cap
+}
+
+#	Vizierate candidates want to speak the language of their liege to boost their score.
+vizierate.0031 = {
+	hidden = yes
+
+	trigger = {
+		# Should we be receiving these events at all?
+		liege_valid_for_vizierate_politicking_trigger = yes
+		# Check to see if a candidate should learn a language.
+		## Note that we only care about the top five places, so sometimes we'll fire this event but no actual effects.
+		any_diarchy_succession_character = {
+			is_available_relevant_vizierate_character_trigger = yes
+			vizierate_0031_missing_relevant_language_trigger = yes
+		}
+	}
+
+	immediate = {
+		# Assemble our list!
+		assemble_vizierate_candidates_list_effect = { TRIGGER = vizierate_0031_missing_relevant_language_trigger }
+		# Aaaaaand assign a language.
+		ordered_in_list = {
+			list = relevant_vizierate_characters_list
+			# To be a bit fairer, let's order this.
+			order_by = {
+				value = learning
+				# Weight up diligent chars.
+				if = {
+					limit = { has_trait = diligent }
+					add = 10
+				}
+				# Weight down lazy ones.
+				else_if = {
+					limit = { has_trait = lazy }
+					add = -10
+				}
+			}
+			random_list = {
+				# Learn liege's language.
+				100 = {
+					trigger = {
+						NOT = { knows_language_of_culture = root.culture }
+					}
+					learn_language_of_culture = root.culture
+				}
+				# Learn liege's court language.
+				100 = {
+					trigger = {
+						root = { has_royal_court = yes }
+						NOT = { knows_court_language_of = root }
+					}
+					learn_court_language_of = root
+				}
+			}
+		}
+	}
+
+	after = { vizierate_0000_queue_next_politicking_on_action_effect = yes }
+}
+
+##################################################
+# Character studies hard to further candidacy.
+# by Ewan Cowhig Croft
+# 0041 - 0050
+##################################################
+
+scripted_trigger vizierate_0041_improveable_candidate_trigger = {
+	# Character must have at least one trait that drives them to succeed.
+	OR = {
+		# Some folks have _plans_.
+		has_trait = ambitious
+		has_trait = arrogant
+		has_trait = deceitful
+		# Others just put the time in.
+		has_trait = diligent
+		has_trait = patient
+		# Or know how to learn a lesson.
+		has_trait = humble
+		has_trait = honest
+		# And a few cling on tenaciously.
+		has_trait = stubborn
+		has_trait = vengeful
+	}
+	# Plus some traits that stymy this type of ambition.
+	NOR = {
+		has_trait = lazy
+		has_trait = content
+		has_trait = fickle
+	}
+}
+
+#	Top candidates (as well as the incumbent) will occasionally improve their abilities in an attempt to compete.
+vizierate.0041 = {
+	hidden = yes
+
+	trigger = {
+		# Should we be receiving these events at all?
+		liege_valid_for_vizierate_politicking_trigger = yes
+		# Check to see if a candidate would like to try improving.
+		## Note that we only care about the top five places, so sometimes we'll fire this event but no actual effects.
+		any_diarchy_succession_character = {
+			is_available_relevant_vizierate_character_trigger = yes
+			vizierate_0041_improveable_candidate_trigger = yes
+		}
+	}
+
+	immediate = {
+		# Assemble our list!
+		assemble_vizierate_candidates_list_effect = { TRIGGER = vizierate_0041_improveable_candidate_trigger }
+		# Grab one at random.
+		random_in_list = {
+			list = relevant_vizierate_characters_list
+			# 'gratz mate, yerr gonna get a nice lil buff...
+			random_list = {
+				# Diplomacy.
+				100 = {
+					# Weight up for the right education.
+					modifier = {
+						add = 1000
+						has_trait = education_diplomacy
+					}
+					add_diplomacy_skill = {
+						integer_range = {
+							min = @vizierate_candidate_study_bonus_min_value
+							max = @vizierate_candidate_study_bonus_max_value
+						}
+					}
+				}
+				# Intrigue.
+				100 = {
+					# Weight up for the right education.
+					modifier = {
+						add = 1000
+						has_trait = education_intrigue
+					}
+					add_intrigue_skill = {
+						integer_range = {
+							min = @vizierate_candidate_study_bonus_min_value
+							max = @vizierate_candidate_study_bonus_max_value
+						}
+					}
+				}
+				# Stewardship.
+				100 = {
+					# Weight up for the right education.
+					modifier = {
+						add = 1000
+						has_trait = education_stewardship
+					}
+					add_stewardship_skill = {
+						integer_range = {
+							min = @vizierate_candidate_study_bonus_min_value
+							max = @vizierate_candidate_study_bonus_max_value
+						}
+					}
+				}
+			}
+			# ... and a modifier for yerr troubles.
+			add_stress = major_stress_gain
+			add_character_modifier = {
+				modifier = vizier_candidate_has_studied_recently_modifier
+				years = 10
+			}
+		}
+	}
+
+	after = { vizierate_0000_queue_next_politicking_on_action_effect = yes }
+}
+
+##################################################
+# Empty event for cycling.
+# by Ewan Cowhig Croft
+# 0051 - 0060
+##################################################
+
+#	This event just exists to tell the on_action to keep cycling even if it doesn't do anything this time.
+vizierate.0051 = {
+	hidden = yes
+
+	# Yup, still nothing happening.
+
+	after = { vizierate_0000_queue_next_politicking_on_action_effect = yes }
+}
+
+
+
+
+
+
+
+
+
+
+##################################################
+# VIZIER EXTRAVAGANCE
+
+##################################################
+# Buys fancy modifier
+# by Ewan Cowhig Croft
+# 0501 - 0510
+##################################################
+
+scripted_trigger vizierate_0501_has_any_remaining_modifier_in_tier_trigger = {
+	# I don't respect NAND and I won't use it.
+	OR = {
+		NOT = { has_character_modifier = vizier_extravagance_$TIER$_treasure_modifier }
+		NOT = { has_character_modifier = vizier_extravagance_$TIER$_activities_modifier }
+		NOT = { has_character_modifier = vizier_extravagance_$TIER$_property_modifier }
+		NOT = { has_character_modifier = vizier_extravagance_$TIER$_charity_modifier }
+	}
+}
+
+scripted_effect vizierate_0000_queue_next_extravagance_event_effect = {
+	trigger_event = {
+		id = vizierate.0501
+		months = { 6 18 }
+	}
+}
+
+scripted_effect vizierate_0501_apply_modifiers_effect = {
+	# Nab a modifier.
+	random_list = {
+		100 = {
+			trigger = {
+				NOT = { has_character_modifier = vizier_extravagance_$TIER$_treasure_modifier }
+			}
+			add_character_modifier = {
+				modifier = vizier_extravagance_$TIER$_treasure_modifier
+				desc = vizier_extravagance_$TIER$_treasure_modifier_custom_desc
+			}
+		}
+		100 = {
+			trigger = {
+				NOT = { has_character_modifier = vizier_extravagance_$TIER$_activities_modifier }
+			}
+			add_character_modifier = {
+				modifier = vizier_extravagance_$TIER$_activities_modifier
+				desc = vizier_extravagance_$TIER$_activities_modifier_custom_desc
+			}
+		}
+		100 = {
+			trigger = {
+				NOT = { has_character_modifier = vizier_extravagance_$TIER$_property_modifier }
+			}
+			add_character_modifier = {
+				modifier = vizier_extravagance_$TIER$_property_modifier
+				desc = vizier_extravagance_$TIER$_property_modifier_custom_desc
+			}
+		}
+		100 = {
+			trigger = {
+				NOT = { has_character_modifier = vizier_extravagance_$TIER$_charity_modifier }
+			}
+			add_character_modifier = {
+				modifier = vizier_extravagance_$TIER$_charity_modifier
+				desc = vizier_extravagance_$TIER$_charity_modifier_custom_desc
+			}
+		}
+	}
+	# Apply the cost.
+	remove_short_term_gold = $GOLD$
+}
+
+#	Viziers don't have too many actual expenses (even if they're a baron), so we simulate their lavish lifestyles by having them intermittently spend cash on modifiers.
+vizierate.0501 = {
+	hidden = yes
+
+	trigger = {
+		diarch ?= {
+			OR = {
+				# Can you purchase a t1 modifier?
+				AND = {
+					gold >= @vizier_extravagance_t1_cost_value
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t1 }
+				}
+				# Can you purchase a t2 modifier?
+				AND = {
+					gold >= @vizier_extravagance_t2_cost_value
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t2 }
+				}
+				# Can you purchase a t3 modifier?
+				AND = {
+					gold >= @vizier_extravagance_t3_cost_value
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t3 }
+				}
+				# Can you purchase a t4 modifier?
+				AND = {
+					gold >= @vizier_extravagance_t4_cost_value
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t4 }
+				}
+			}
+		}
+		has_diarchy_parameter = diarchy_is_vizierate
+	}
+
+	# If we don't meet the triggers, that's fine, queue things up again for next time.
+	on_trigger_fail = {
+		# Provided, that is, we have a diarch.
+		if = {
+			limit = {
+				exists = diarch
+				has_diarchy_parameter = diarchy_is_vizierate
+			}
+			vizierate_0000_queue_next_extravagance_event_effect = yes
+		}
+	}
+
+	immediate = {
+		diarch = {
+			# Grab our scope for the loc.
+			save_scope_as = vizier
+			# Alrighty, pick a stage!
+			## T1 modifiers: living it large, ~100 gold a pop.
+			if = {
+				limit = {
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t1 }
+				}
+				vizierate_0501_apply_modifiers_effect = {
+					TIER = t1
+					GOLD = @vizier_extravagance_t1_cost_value
+				}
+			}
+			## T2 modifiers: _extravagant_, ~200 gold a pop.
+			else_if = {
+				limit = {
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t2 }
+				}
+				vizierate_0501_apply_modifiers_effect = {
+					TIER = t2
+					GOLD = @vizier_extravagance_t2_cost_value
+				}
+			}
+			## T3 modifiers: life of the capital, ~300 gold a pop.
+			else_if = {
+				limit = {
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t3 }
+				}
+				vizierate_0501_apply_modifiers_effect = {
+					TIER = t3
+					GOLD = @vizier_extravagance_t3_cost_value
+				}
+			}
+			## T4 modifiers: stuff of (sordid) legends, ~400 gold a pop.
+			else_if = {
+				limit = {
+					vizierate_0501_has_any_remaining_modifier_in_tier_trigger = { TIER = t4 }
+				}
+				vizierate_0501_apply_modifiers_effect = {
+					TIER = t4
+					GOLD = @vizier_extravagance_t4_cost_value
+				}
+			}
+			## Otherwise yerr rich as Croesus, so we we just deduct a bunch of gold and trade you in a healthy wop of prestige for all the stuff™ you're presumably doing.
+			else_if = {
+				limit = { gold >= @vizier_extravagance_t4_cost_value }
+				add_prestige = major_prestige_gain
+				remove_short_term_gold = @vizier_extravagance_t4_cost_value
+			}
+		}
+		# Aaaaand try to refire our event.
+		vizierate_0000_queue_next_extravagance_event_effect = yes
+	}
+}
+
+
+
+
+
+
+
+
+
+
+##################################################
+# CANDIDATES COMMUNICATE WITH LIEGE
+
+##################################################
+# Offers to replace vizier and distribute their cash reserves.
+# by Ewan Cowhig Croft
+# 1001 - 1010
+##################################################
+
+scripted_trigger vizierate_1001_valid_vizierial_candidate_trigger = {
+	# First, let's check some skills.
+	OR = {
+		diplomacy_diff = {
+			target = $VIZIER$
+			value >= -5
+		}
+		stewardship_diff = {
+			target = $VIZIER$
+			value >= -5
+		}
+		intrigue_diff = {
+			target = $VIZIER$
+			value >= -5
+		}
+	}
+	# Save the opinion, as we're gonna be using it a fair bit.
+	save_temporary_opinion_value_as = {
+		name = diarch_opinion
+		target = $VIZIER$
+	}
+	# Gotta _want_ to snake 'em.
+	## Which means filtering out those who wouldn't consider it ever.
+	NOR = {
+		has_trait = loyal
+		has_trait = just
+		has_any_good_relationship_with_character_trigger = { CHARACTER = $VIZIER$ }
+	}
+	## And finding those with a clear motive.
+	OR = {
+		# Some characters will always do this.
+		has_trait = disloyal
+		# Some characters will do this unless they value their relationship with $VIZIER$ too highly.
+		## Ambitious
+		AND = {
+			has_trait = ambitious
+			scope:diarch_opinion < very_high_positive_opinion
+		}
+		## Arrogant
+		AND = {
+			has_trait = arrogant
+			scope:diarch_opinion < high_positive_opinion
+		}
+		## Deceitful
+		AND = {
+			has_trait = deceitful
+			scope:diarch_opinion < medium_positive_opinion
+		}
+		## Arbitrary
+		AND = {
+			has_trait = arbitrary
+			scope:diarch_opinion < neutral_opinion
+		}
+		## Callous
+		AND = {
+			has_trait = callous
+			scope:diarch_opinion < neutral
+		}
+		## Paranoid
+		AND = {
+			has_trait = paranoid
+			scope:diarch_opinion < low_negative_opinion
+		}
+		has_relation_rival = $VIZIER$
+		opinion = {
+			target = $VIZIER$
+			value <= very_high_negative_opinion
+		}
+	}
+}
+
+scripted_effect vizierate_1001_betray_vizier_stress_effect = {
+	# Do you have good relations with them?
+	## Yes.
+	if = {
+		limit = {
+			has_any_good_relationship_with_character_trigger = { CHARACTER = scope:vizier }
+		}
+		stress_impact = {
+			disloyal = medium_stress_impact_loss
+			deceitful = minor_stress_impact_loss
+			arbitrary = miniscule_stress_impact_loss
+			just = minor_stress_impact_gain
+			honest = medium_stress_impact_gain
+			loyal = major_stress_impact_gain
+		}
+	}
+	## No.
+	else = {
+		stress_impact = {
+			deceitful = minor_stress_impact_loss
+			arbitrary = miniscule_stress_impact_loss
+			just = minor_stress_impact_gain
+			honest = medium_stress_impact_gain
+		}
+	}
+}
+
+scripted_effect vizierate_1001_disfavoured_party_opinions_effect = {
+	# Right, let's set up some relationships!
+	## Scope:propositioner vs. scope:vizier.
+	### Try for nemesis.
+	if = {
+		limit = {
+			can_set_relation_nemesis_trigger = { CHARACTER = $OPPOSITE$ }
+			opinion = {
+				target = $OPPOSITE$
+				value <= medium_negative_opinion
+			}
+		}
+		set_relation_nemesis = {
+			target = $OPPOSITE$
+			reason = nemesis_vizier_manoeuvring
+			involved_character = root
+		}
+		add_relation_flag = {
+			relation = nemesis
+			flag = vizierate_relation
+			target = $OPPOSITE$
+		}
+	}
+	### Else try for rival.
+	else_if = {
+		limit = {
+			can_set_relation_rival_trigger = { CHARACTER = $OPPOSITE$ }
+		}
+		set_relation_rival = {
+			target = $OPPOSITE$
+			reason = nemesis_vizier_manoeuvring
+			involved_character = root
+		}
+		add_relation_flag = {
+			relation = rival
+			flag = vizierate_relation
+			target = $OPPOSITE$
+		}
+	}
+	### Else just lose opinion.
+	else = {
+		add_opinion = {
+			target = scope:vizier
+			modifier = hate_opinion
+			opinion = -50
+		}
+		reverse_add_opinion = {
+			target = scope:vizier
+			modifier = respect_opinion
+			opinion = -20
+		}
+	}
+	## Scope:propositioner vs. you.
+	hidden_effect = {
+		if = {
+			limit = {
+				NOT = { exists = scope:no_root_rival }
+				can_set_relation_potential_rival_trigger = { CHARACTER = root }
+			}
+			set_relation_potential_rival = root
+		}
+	}
+}
+
+scripted_effect vizierate_1001_duel_for_vizierate_effect = {
+	scope:propositioner = {
+		duel = {
+			skill = $SKILL$
+			target = scope:vizier
+			# They pull it off.
+			60 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = vizierate_1001_duel_for_vizierate_effect.tt.success
+				root = {
+					# Toast effects.
+					send_interface_toast = {
+						title = vizierate_1001_duel_for_vizierate_effect.tt.success
+						left_icon = scope:propositioner
+						right_icon = scope:vizier
+						# They become your diarch.
+						set_diarch = scope:propositioner
+						# Perform the mulcting.
+						mulct_vizier_for_cash_effect = { VIZIER = scope:vizier }
+						# Plus what path-specific effects do we need to run?
+						if = {
+							limit = { scope:plan = flag:diplomacy }
+							scope:vizier = { banish = yes }
+						}
+						else_if = {
+							limit = { scope:plan = flag:stewardship }
+							custom_tooltip = vizierate_1001_duel_for_vizierate_effect.tt.ex_vizier_remains_at_court
+						}
+						else_if = {
+							limit = { scope:plan = flag:intrigue }
+							rightfully_imprison_character_less_verbose_effect = {
+								TARGET = scope:vizier
+								IMPRISONER = root
+							}
+						}
+					}
+					# Non-toast effects.
+					## What path-specific effects do we need to run?
+					if = {
+						limit = { scope:plan = flag:diplomacy }
+						reverse_add_opinion = {
+							target = scope:vizier
+							modifier = betrayal_opinion
+							opinion = -50
+						}
+						scope:vizier = {
+							# Flick out some relationships.
+							vizierate_1001_disfavoured_party_opinions_effect = { OPPOSITE = scope:propositioner }
+						}
+					}
+					else_if = {
+						limit = { scope:plan = flag:stewardship }
+						reverse_add_opinion = {
+							target = scope:vizier
+							modifier = betrayal_opinion
+							opinion = -50
+						}
+						scope:vizier = {
+							# Flick out some relationships.
+							vizierate_1001_disfavoured_party_opinions_effect = { OPPOSITE = scope:propositioner }
+						}
+					}
+					else_if = {
+						limit = { scope:plan = flag:intrigue }
+						reverse_add_opinion = {
+							target = scope:vizier
+							modifier = betrayal_opinion
+							opinion = -75
+						}
+						scope:vizier = {
+							# Flick out some relationships.
+							vizierate_1001_disfavoured_party_opinions_effect = { OPPOSITE = scope:propositioner }
+							# Don't forget the torture!
+							add_character_modifier = {
+								modifier = recently_tortured
+								years = 5
+							}
+						}
+					}
+				}
+			}
+			# It doesn't _quite_ work.
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = vizierate_1001_duel_for_vizierate_effect.tt.failure
+				root = {
+					send_interface_toast = {
+						title = vizierate_1001_duel_for_vizierate_effect.tt.failure
+						left_icon = scope:propositioner
+						right_icon = scope:vizier
+						scope:vizier = {
+							update_diarchy_swing_with_perspective_effect = {
+								SWING = medium_sop_swing_diarch_gain
+								LIEGE = root
+							}
+						}
+					}
+					scope:propositioner = {
+						# Relations'n'opinions.
+						## Flag that we _don't_ want the rival stuff this time.
+						save_scope_as = no_root_rival
+						## Then fire the usual effects.
+						vizierate_1001_disfavoured_party_opinions_effect = { OPPOSITE = scope:vizier }
+						# Plus: crippling stress from the failure.
+						add_stress = monumental_stress_gain
+					}
+				}
+			}
+		}
+	}
+}
+
+#	One of the potential vizierial candidates at your court offers to take over the job.
+vizierate.1001 = {
+	type = letter_event
+	opening = vizierate.1001.t
+	desc = {
+		desc = vizierate.1001.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:plan = flag:diplomacy }
+				desc = vizierate.1001.desc.diplomacy
+			}
+			triggered_desc = {
+				trigger = { scope:plan = flag:stewardship }
+				desc = vizierate.1001.desc.stewardship
+			}
+			triggered_desc = {
+				trigger = { scope:plan = flag:intrigue }
+				desc = vizierate.1001.desc.intrigue
+			}
+		}
+		desc = vizierate.1001.desc.outro
+	}
+	sender = scope:propositioner
+
+	cooldown = { years = 25 }
+
+	trigger = {
+		# Standard checks.
+		is_available_at_peace_adult = yes
+		# Diarchy checks.
+		has_diarchy_active_parameter = diarchy_is_vizierate
+		NOT = { has_diarchy_active_parameter = vizier_cannot_be_snaked }
+		diarch = {
+			# We want to make sure that your vizier is doing well enough that they're worth couping, so check for funky modifiers.
+			OR = {
+				has_character_modifier = vizier_extravagance_t3_treasure_modifier
+				has_character_modifier = vizier_extravagance_t3_activities_modifier
+				has_character_modifier = vizier_extravagance_t3_property_modifier
+				has_character_modifier = vizier_extravagance_t3_charity_modifier
+				has_character_modifier = vizier_extravagance_t4_treasure_modifier
+				has_character_modifier = vizier_extravagance_t4_activities_modifier
+				has_character_modifier = vizier_extravagance_t4_property_modifier
+				has_character_modifier = vizier_extravagance_t4_charity_modifier
+			}
+		}
+		# Do we have a suitable contender?
+		any_diarchy_succession_character = {
+			vizierate_1001_valid_vizierial_candidate_trigger = { VIZIER = root.diarch }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		
+		# Weight down if your diarch is loyal.
+		modifier = {
+			add = -0.5
+			diarch.diarch_loyalty >= diarch_loyalty_visibly_loyal_threshold
+		}
+		# Weight up if they're disloyal.
+		modifier = {
+			add = 0.5
+			diarch.diarch_loyalty <= diarch_loyalty_visibly_disloyal_threshold
+		}
+	}
+
+	immediate = {
+		# First, let's sort some scopes.
+		## Nab the vizier for ease of loc.
+		diarch = { save_scope_as = vizier }
+		## Then let's sort a scope:propositioner.
+		### Grab all our candidates.
+		every_diarchy_succession_character = {
+			limit = {
+				vizierate_1001_valid_vizierial_candidate_trigger = { VIZIER = scope:vizier }
+			}
+			add_to_list = char_list
+		}
+		### Then select the best.
+		ordered_in_list = {
+			list = char_list
+			order_by = diarch_loyalty_score_type_vizierate_value
+			limit = {
+				has_any_bad_relationship_with_character_trigger = { CHARACTER = scope:vizier }
+			}
+			alternative_limit = { always = yes }
+			save_scope_as = propositioner
+		}
+		# Alright, what method will scope:propositioner suggest to ingratiate themselves?
+		random_list = {
+			# Diplomacy Challenge: oust them politically.
+			100 = {
+				trigger = {
+					# Must be at least somewhat capable of matching them here.
+					scope:propositioner = {
+						diplomacy_diff = {
+							target = scope:vizier
+							value >= -5
+						}
+					}
+				}
+				save_scope_value_as = {
+					name = plan
+					value = flag:diplomacy
+				}
+			}
+			# Stewardship Challenge: take over their business interests.
+			100 = {
+				trigger = {
+					# Must be at least somewhat capable of matching them here.
+					scope:propositioner = {
+						stewardship_diff = {
+							target = scope:vizier
+							value >= -5
+						}
+					}
+				}
+				save_scope_value_as = {
+					name = plan
+					value = flag:stewardship
+				}
+			}
+			# Intrigue Challenge: capture and torture them.
+			100 = {
+				trigger = {
+					# Must be at least somewhat capable of matching them here.
+					scope:propositioner = {
+						intrigue_diff = {
+							target = scope:vizier
+							value >= -5
+						}
+					}
+				}
+				save_scope_value_as = {
+					name = plan
+					value = flag:intrigue
+				}
+			}
+		}
+		# Finally, what tier of mulcting are we gonna offer?
+		## We need to set all the scopes up here, as we're emulating the interaction.
+		### T4.
+		if = {
+			limit = {
+				scope:vizier = {
+					OR = {
+						has_character_modifier = vizier_extravagance_t4_treasure_modifier
+						has_character_modifier = vizier_extravagance_t4_activities_modifier
+						has_character_modifier = vizier_extravagance_t4_property_modifier
+						has_character_modifier = vizier_extravagance_t4_charity_modifier
+					}
+				}
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_minimal
+				value = no
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_minor
+				value = no
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_medium
+				value = no
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_major
+				value = no
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_massive
+				value = yes
+			}
+		}
+		### T3.
+		else_if = {
+			limit = {
+				scope:vizier = {
+					OR = {
+						has_character_modifier = vizier_extravagance_t3_treasure_modifier
+						has_character_modifier = vizier_extravagance_t3_activities_modifier
+						has_character_modifier = vizier_extravagance_t3_property_modifier
+						has_character_modifier = vizier_extravagance_t3_charity_modifier
+					}
+				}
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_minimal
+				value = no
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_minor
+				value = no
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_medium
+				value = no
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_major
+				value = yes
+			}
+			save_scope_value_as = {
+				name = mulct_vizier_interaction_massive
+				value = no
+			}
+		}
+		## Still, it'll be free.
+		save_scope_as = free_mulct
+	}
+
+	# Diplomacy duel.
+	option = {
+		name = vizierate.1001.a
+		trigger = { scope:plan = flag:diplomacy }
+
+		# Duel time.
+		vizierate_1001_duel_for_vizierate_effect = { SKILL = diplomacy }
+
+		vizierate_1001_betray_vizier_stress_effect = yes
+		ai_chance = {
+			base = 1
+			opinion_modifier = {
+				opinion_target = scope:vizier
+				multiplier = -1
+			}
+			opinion_modifier = { opinion_target = scope:propositioner }
+		}
+	}
+	
+	# Stewardship duel.
+	option = {
+		name = vizierate.1001.b
+		trigger = { scope:plan = flag:stewardship }
+
+		# Duel time.
+		vizierate_1001_duel_for_vizierate_effect = { SKILL = stewardship }
+
+		vizierate_1001_betray_vizier_stress_effect = yes
+		ai_chance = {
+			base = 1
+			opinion_modifier = {
+				opinion_target = scope:vizier
+				multiplier = -1
+			}
+			opinion_modifier = { opinion_target = scope:propositioner }
+		}
+	}
+	
+	# Intrigue duel.
+	option = {
+		name = vizierate.1001.c
+		trigger = { scope:plan = flag:intrigue }
+
+		# Duel time.
+		vizierate_1001_duel_for_vizierate_effect = { SKILL = intrigue }
+
+		vizierate_1001_betray_vizier_stress_effect = yes
+		ai_chance = {
+			base = 1
+			opinion_modifier = {
+				opinion_target = scope:vizier
+				multiplier = -1
+			}
+			opinion_modifier = { opinion_target = scope:propositioner }
+		}
+	}
+	
+	# Take scope:vizier's side.
+	option = {
+		name = vizierate.1001.d
+
+		# Gain opinion with your vizier.
+		raise_diarch_opinion_with_loyalty_update_effect = {
+			OPINION_TYPE = pleased_opinion
+			OPINION_AMOUNT = 20
+		}
+		# Plus a hook if we can.
+		add_favour_hook_if_possible_simple_effect = { TARGET = scope:vizier }
+		# RIP for scope:propositioner though.
+		scope:propositioner = {
+			## They're upset with you.
+			add_opinion = {
+				target = root
+				modifier = respect_opinion
+				opinion = -50
+			}
+			# Flick out some relationships.
+			vizierate_1001_disfavoured_party_opinions_effect = { OPPOSITE = scope:vizier }
+			## We also filter them out of the succession.
+			custom_tooltip = vizierate.1001.d.tt.filtered_out
+			set_variable = {
+				name = diarch_succession_filtered_due_to_incumbents_politicking
+				value = root
+			}
+		}
+
+		# Stress depends: do you have good relations with them?
+		## Yes.
+		if = {
+			limit = {
+				has_any_good_relationship_with_character_trigger = { CHARACTER = scope:vizier }
+			}
+			stress_impact = {
+				loyal = major_stress_impact_loss
+				honest = medium_stress_impact_loss
+				just = minor_stress_impact_loss
+				arbitrary = miniscule_stress_impact_gain
+				deceitful = minor_stress_impact_gain
+			}
+		}
+		## No.
+		else = {
+			stress_impact = {
+				honest = medium_stress_impact_loss
+				just = minor_stress_impact_loss
+				arbitrary = miniscule_stress_impact_gain
+				deceitful = minor_stress_impact_gain
+			}
+		}
+		ai_chance = {
+			base = 1
+			opinion_modifier = {
+				opinion_target = scope:propositioner
+				multiplier = -1
+			}
+			opinion_modifier = { opinion_target = scope:vizier }
+		}
+	}
+	
+	# Your petty politics are beneath me.
+	option = {
+		name = vizierate.1001.e
+
+		# You disappoint scope:propositioner.
+		reverse_add_opinion = {
+			target = scope:propositioner
+			modifier = disappointed_opinion
+			opinion = -20
+		}
+
+		# No stress on the opt-out.
+		ai_chance = {
+			base = 1
+			ai_value_modifier = { ai_energy = -3 }
+		}
+	}
+}

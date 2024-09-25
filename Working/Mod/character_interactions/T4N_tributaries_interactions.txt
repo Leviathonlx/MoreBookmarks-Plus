@@ -1,0 +1,2530 @@
+﻿#Tributaries Character Interactions
+
+#call_suzerain_to_war = {
+#	category = interaction_category_diplomacy
+#	use_diplomatic_range = no
+#
+#	is_shown = {
+#		scope:actor = { #put here every tributary type which should be able to call suzerain
+#			scope:recipient = {
+#				is_tributary = yes
+#			}
+#			is_at_war = yes
+#			NOT = { is_at_war_with = scope:recipient }
+#		}
+#		scope:recipient = {
+#			exists = var:suzerain
+#		}
+#		NOR = {
+#			scope:actor = {
+#				AND = {
+#					exists = var:my_suzerain
+#					any_war_ally = {
+#						this = var:my_suzerain
+#					}
+#				}
+#			}
+#			scope:recipient = {
+#				is_at_war_with = scope:actor
+#			}
+#		}
+#		custom_description = {
+#			text = trib_type_allows_call_to_arms
+#			exists = var:can_call_to_war_tributary
+#			var:can_call_to_war_tributary = yes
+#		}
+#	}
+#
+#	on_accept = {
+#		scope:actor = {
+#			if = {
+#				limit = {
+#					is_attacker = this
+#				}
+#				add_attacker = scope:recipient
+#			}
+#			else = {
+#				add_defender = scope:recipient
+#			}
+#		}
+#	}
+#
+#	ai_target_quick_trigger = {							# Quick triggers for the ai_targets
+#		adult = yes										# The target needs to be adult
+#		prison = no 									# Target must be in prison
+#	}
+#
+#	ai_accept = {
+#		base = 20
+#
+#		modifier = {  # Refuse call against Heir
+#			add = -1000
+#			exists = scope:recipient.player_heir
+#			trigger_if = {
+#				limit = { scope:target.casus_belli.primary_defender = scope:actor }
+#				scope:target.casus_belli.primary_attacker = scope:recipient.player_heir
+#			}
+#			trigger_else = {
+#				scope:target.casus_belli.primary_defender = scope:recipient.player_heir
+#			}
+#			desc = WONT_FIGHT_HEIR_REASON
+#		}
+#
+#		modifier = {  # Refuse call against Spouse
+#			add = -1000
+#			scope:recipient = {
+#				trigger_if = {
+#					limit = { scope:target.casus_belli.primary_defender = scope:actor }
+#					any_spouse = {
+#						this = scope:target.casus_belli.primary_attacker
+#					}
+#				}
+#				trigger_else = {
+#					any_spouse = {
+#						this = scope:target.casus_belli.primary_defender
+#					}
+#				}
+#				
+#			}
+#			desc = WONT_FIGHT_SPOUSE_REASON
+#		}
+#
+#		opinion_modifier = { # Opinion Factor
+#			who = scope:recipient
+#			opinion_target = scope:actor
+#			multiplier = 1.0
+#			desc = AI_OPINION_REASON
+#		}
+#
+#		# Honor factor
+#		ai_value_modifier = {
+#			ai_honor = 1
+#			min = 0
+#		}
+#
+#		modifier = {  # Tends to join defensive wars
+#			add = 50
+#			scope:target.casus_belli.primary_defender = scope:actor
+#			desc = DEFENSIVE_WAR_REASON
+#		}
+#
+#		compare_modifier = { # Likes fighting infidels
+#			trigger = {
+#				scope:recipient.faith = scope:actor.faith
+#				OR = {
+#					AND = {
+#						scope:target.casus_belli.primary_attacker = {
+#							this = scope:actor
+#							faith = {
+#								faith_hostility_level = {
+#									target = scope:target.casus_belli.primary_defender.faith
+#									value >= religious_cb_enabled_hostility_level
+#								}
+#							}
+#						}
+#					}
+#					AND = {
+#						scope:target.casus_belli.primary_defender = {
+#							this = scope:actor
+#							faith = {
+#								faith_hostility_level = {
+#									target = scope:target.casus_belli.primary_defender.faith
+#									value >= religious_cb_enabled_hostility_level
+#								}
+#							}
+#						}
+#					}
+#				}
+#			}
+#			target = scope:recipient
+#			value = ai_zeal
+#			desc = "ZEAL_AGAINST_INFIDELS"
+#			min = 0
+#			multiplier = 0.5
+#		}
+#
+#		modifier = {  # Reluctant to attack another ally
+#			add = -50
+#			scope:target.casus_belli.primary_attacker = scope:actor
+#			scope:recipient = {
+#				is_allied_to = scope:target.casus_belli.primary_defender
+#			}
+#			desc = ATTACK_ON_ALLY_REASON
+#		}
+#
+#		modifier = {  # Reluctant to defend against another ally
+#			add = -25
+#			scope:target.casus_belli.primary_defender = scope:actor
+#			scope:recipient = {
+#				is_allied_to = scope:target.casus_belli.primary_attacker
+#			}
+#			desc = WAR_WITH_ALLY_REASON
+#		}
+#
+#		modifier = {  # Reluctant to join wars against religious brethren.
+#			add = -50
+#			NOT = { scope:recipient.faith = scope:actor.faith }
+#			scope:target.casus_belli.primary_attacker = scope:actor
+#			scope:target.casus_belli.primary_defender.faith = scope:recipient.faith
+#			scope:target.casus_belli.war = {
+#				OR = {
+#					using_cb = minor_religious_war
+#					using_cb = religious_war
+#					using_cb = major_religious_war
+#					using_cb = undirected_great_holy_war
+#					using_cb = directed_great_holy_war
+#				}
+#			}
+#			desc = WONT_ATTACK_RELIGIOUS_BRETHREN_REASON
+#		}
+#	}
+#
+#	# Score above 0 means the AI will call this ally. Note that DESIRED_WAR_SIDE_STRENGTH still applies and can prevent calling the ally
+#	ai_will_do = {
+#		base = 100
+#		
+#		modifier = { # If the player is at war, do not bother them with offensive calls
+#			scope:target.casus_belli.primary_attacker = scope:actor
+#			scope:recipient = {
+#				is_ai = no
+#				any_character_war = {
+#					primary_defender = scope:recipient
+#				}
+#			}
+#			factor = 0
+#		}
+#		
+#		modifier = { # Don't call players in against their heirs (they wouldn't accept the reverse situation... don't be a hypocrite)
+#			exists = scope:recipient.player_heir
+#			scope:recipient = {			
+#				is_ai = no
+#			}
+#			trigger_if = {
+#				limit = { scope:target.casus_belli.primary_defender = scope:actor }
+#				scope:target.casus_belli.primary_attacker = scope:recipient.player_heir
+#			}
+#			trigger_else = {
+#				scope:target.casus_belli.primary_defender = scope:recipient.player_heir
+#			}
+#			factor = 0
+#		}
+#		
+#		modifier = { # Same with spouses
+#			scope:recipient = {			
+#				is_ai = no
+#			}
+#			trigger_if = {
+#				limit = { scope:target.casus_belli.primary_defender = scope:actor }
+#				any_spouse = {
+#					this = scope:target.casus_belli.primary_attacker
+#				}
+#			}
+#			trigger_else = {
+#				any_spouse = {
+#					this = scope:target.casus_belli.primary_defender
+#				}
+#			}
+#			factor = 0
+#		}
+#		
+#		modifier = { # Don't call brand-new allies into old wars, at least until some time has elapsed.
+#			has_variable = delay_calling_recent_ally
+#			var:delay_calling_recent_ally = scope:recipient
+#			scope:target = {
+#				war_days >= 30
+#			}
+#			factor = 0
+#
+#		}
+#
+#		modifier = { # If the recipient is allied to both the attacker and the defender, the attacker shouldn't call
+#			scope:target.casus_belli.primary_attacker = scope:actor
+#			scope:target.casus_belli.primary_defender = {
+#				is_allied_to = scope:recipient
+#			}
+#			factor = 0
+#		}
+#	}
+#}
+#
+##Call Tributaries to war
+#call_tributaries_to_war = {
+#	category = interaction_category_diplomacy
+#	use_diplomatic_range = no
+#	is_shown = {
+#		scope:actor = {
+#			is_suzerain = yes
+#			is_at_war = yes
+#		}
+#		scope:actor = {
+#			this = scope:recipient
+#			custom_description = {
+#				text = trib_type_allows_call_to_arms
+#				any_in_list = {
+#					variable = all_tributaries
+#					exists = var:can_call_to_war_suzerain
+#					var:can_call_to_war_suzerain = yes
+#				}
+#			}				
+#		}
+#	}
+#
+#	auto_accept = {
+#		always = yes
+#	}
+#
+#	on_accept = {
+#		every_in_list = {
+#			variable = all_tributaries
+#			limit = {
+#				exists = var:can_call_to_war_suzerain
+#				var:can_call_to_war_suzerain = flag:yes
+#			}
+#			save_temporary_scope_as = temp_trib_war
+#			scope:actor = {
+#				random_character_war = {
+#					save_temporary_scope_as = temp_war
+#				}
+#				if = {
+#					limit = {
+#						is_attacker_in_war = scope:tmp_war
+#					}
+#					scope:tmp_war = {
+#						add_attacker = scope:temp_trib_war
+#					}
+#				}
+#				else = {
+#					scope:tmp_war = {
+#						add_defender = scope:temp_trib_war
+#					}
+#				}
+#			}
+#		}
+#	}
+#
+#	ai_target_quick_trigger = {							# Quick triggers for the ai_targets
+#		adult = yes										# The target needs to be adult
+#		prison = no 									# Target must be in prison
+#	}
+#
+#	# Score above 0 means the AI will call this ally. Note that DESIRED_WAR_SIDE_STRENGTH still applies and can prevent calling the ally
+#	ai_will_do = {
+#		base = 100
+#		
+#		modifier = { # If the player is at war, do not bother them with offensive calls
+#			scope:target.casus_belli.primary_attacker = scope:actor
+#			scope:recipient = {
+#				is_ai = no
+#				any_character_war = {
+#					primary_defender = scope:recipient
+#				}
+#			}
+#			factor = 0
+#		}
+#		
+#		modifier = { # Don't call players in against their heirs (they wouldn't accept the reverse situation... don't be a hypocrite)
+#			exists = scope:recipient.player_heir
+#			scope:recipient = {			
+#				is_ai = no
+#			}
+#			trigger_if = {
+#				limit = { scope:target.casus_belli.primary_defender = scope:actor }
+#				scope:target.casus_belli.primary_attacker = scope:recipient.player_heir
+#			}
+#			trigger_else = {
+#				scope:target.casus_belli.primary_defender = scope:recipient.player_heir
+#			}
+#			factor = 0
+#		}
+#		
+#		modifier = { # Same with spouses
+#			scope:recipient = {			
+#				is_ai = no
+#			}
+#			trigger_if = {
+#				limit = { scope:target.casus_belli.primary_defender = scope:actor }
+#				any_spouse = {
+#					this = scope:target.casus_belli.primary_attacker
+#				}
+#			}
+#			trigger_else = {
+#				any_spouse = {
+#					this = scope:target.casus_belli.primary_defender
+#				}
+#			}
+#			factor = 0
+#		}
+#		
+#		modifier = { # Don't call brand-new allies into old wars, at least until some time has elapsed.
+#			has_variable = delay_calling_recent_ally
+#			var:delay_calling_recent_ally = scope:recipient
+#			scope:target = {
+#				war_days >= 30
+#			}
+#			factor = 0
+#
+#		}
+#
+#		modifier = { # If the recipient is allied to both the attacker and the defender, the attacker shouldn't call
+#			scope:target.casus_belli.primary_attacker = scope:actor
+#			scope:target.casus_belli.primary_defender = {
+#				is_allied_to = scope:recipient
+#			}
+#			factor = 0
+#		}
+#	}	
+#}
+#
+#ruler offers tribute to other character
+offer_tribute = {
+	category = interaction_category_diplomacy
+	use_diplomatic_range = yes
+	is_shown = {
+		NOT = { 
+				has_game_rule = MB_tributaries_off
+			}
+		scope:actor = {
+			NOR = {
+				is_tributary = yes
+				is_suzerain = yes
+			}
+			tier_difference = { #We don't want a King to be able to offer to be a tributary of a Duke. Also don't want a King offering to become a tributary as a King would be unlikely to do such a thing
+                        target = scope:recipient
+                        value > 1
+                    }
+			is_independent_ruler = yes #We don't want people who are direct vassals of one country offering to become a tributary of an external country		
+			is_at_war = no
+			NOT = { this = scope:recipient }
+			NOR = {
+				any_liege_or_above = {
+					this = scope:recipient
+				}	
+                any_vassal_or_below = {
+                    this = scope:recipient
+                }		
+			}
+			is_independent_ruler = yes			
+		}
+		scope:recipient = {
+			NOT = {
+				is_tributary = yes
+			}
+			is_at_war = no				
+			highest_held_title_tier >= tier_county
+			is_independent_ruler = yes
+		}
+	}
+
+	#Non Permanent trib
+	send_option = {										
+		is_shown = {
+			always = yes
+		}
+		flag = non_permanent_trib							# If selected then scope:flag_name will be set to yes
+		localization = non_permanent_trib				# Loc_key for option label
+		starts_enabled = { always = yes	}				# Trigger for whether this should be on when the window opens. If not defined, defaults to off
+
+	}
+
+	#Permanent trib
+	send_option = {
+		is_shown = {
+			always = yes
+		}
+		flag = permanent_trib
+		localization = permanent_trib	
+	}
+
+	send_options_exclusive = yes
+
+	on_accept = {
+		scope:recipient = {
+			if = {
+				limit = {
+					scope:non_permanent_trib = yes
+				}
+				make_tributary = {
+					TYPE = tributary_non_permanent
+					SUZERAIN = scope:recipient
+					TRIBUTARY = scope:actor
+				}
+			}
+			else_if = {
+				limit = {
+					scope:permanent_trib = yes
+				}
+				make_tributary = {
+					TYPE = tributary_permanent
+					SUZERAIN = scope:recipient
+					TRIBUTARY = scope:actor
+				}		
+			}
+			save_scope_as = my_suzerain_evt
+			scope:actor = {
+				trigger_event = { id = tributaries.10 }
+			}
+		}
+	}
+
+	on_decline = {
+		scope:recipient = {
+			save_scope_as = not_suzerain
+		}
+		scope:actor = {
+			trigger_event = { id = tributaries.12 }
+		}
+	}	
+
+	ai_accept = {
+		base = 5
+
+		modifier = {
+			add = 50
+			scope:actor.realm_size > scope:recipient.realm_size
+			desc = will_accept_bigger_trib
+		}
+		modifier = {
+			add = 25
+			scope:actor.realm_size < scope:recipient.realm_size
+			desc = will_accept_smaller_trib			
+		}
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_trait = craven
+					has_trait = trusting
+					has_trait = lazy
+				}
+			}
+			add = -40
+			desc = dislike_those_traits
+		}
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_trait = brave
+					has_trait = paranoid
+					has_trait = diligent
+				}
+			}
+			add = 60
+			desc = like_those_traits	
+		}
+		modifier = {
+			scope:actor = {
+				is_at_war = yes
+			}
+			factor = 0
+			desc = do_not_want_to_fight_trib_war
+		}	
+		modifier = { # Perk boost
+			desc = offer_vassalization_true_ruler_perk_tt
+			trigger = {
+				scope:actor = { has_perk = true_ruler_perk }
+			}
+			add = true_ruler_value
+		}
+
+		# MAIN
+		modifier = { #Different faith, no pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOR = { #Of two different faiths AND the potential vassal's faith is not pluralistic.
+						faith = scope:actor.faith
+						faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					}
+				}
+			}
+			add = {
+				value = -40
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -40
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -40
+				}
+			}
+		}
+		
+		modifier = { #Different faith, pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOT = {
+						faith = scope:actor.faith
+					}
+					NOT = {
+						scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					}
+					faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+			}
+			add = {
+				value = -20
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -20
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -20
+				}
+			}
+		}
+		
+		modifier = { #Different faith, both have pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOT = {
+						faith = scope:actor.faith
+					}
+					scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+			}
+			add = {
+				value = -10
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -10
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -10
+				}
+			}
+		}
+		modifier = { #I am a King!
+			desc = offer_vassalization_interaction_aibehavior_amkingtier_tt
+			trigger = {
+				scope:recipient = { highest_held_title_tier = tier_kingdom }
+			}
+			add = -50
+		}
+		modifier = { #We just fought against each other.
+			desc = offer_vassalization_interaction_aibehavior_recent_war_tt
+			trigger = {
+				scope:recipient = {
+					any_truce_holder = {
+						this = scope:actor
+					}
+				}
+			}
+			add = -40
+		}
+		modifier = { #I fought an independence war against you.
+			desc = offer_vassalization_interaction_aibehavior_independence_war_tt
+			trigger = {
+				scope:recipient = {
+					exists = var:independence_war_former_liege
+					var:independence_war_former_liege = scope:actor
+				}
+			}
+			add = -100
+		}
+		modifier = { #Wide difference in rank
+			desc = offer_vassalization_interaction_aibehavior_widetitletier_tt
+			trigger = {
+				scope:actor = {
+					tier_difference = {
+						target = scope:recipient
+						value > 1
+					}
+				}
+			}
+			add = 5
+		}
+		modifier = { # Is the Rightful Liege of recipient
+			desc = offer_vassalization_interaction_aibehavior_rightfulliegetitleholder_tt
+			trigger = {
+				scope:actor = { is_rightful_liege_of = scope:recipient }
+			}
+			add = 20
+		}
+		modifier = { #Is not the Rightful Liege of recipient
+			desc = offer_vassalization_interaction_aibehavior_not_rightfulliegetitleholder_tt
+			trigger = {
+				NOT = {
+					scope:actor = { is_rightful_liege_of = scope:recipient }
+				}
+			}
+			add = -20
+		}
+		modifier = { #Distant Realm.
+			desc = offer_vassalization_interaction_aibehavior_distantrealm_tt
+			trigger = {
+				scope:actor = {
+					character_is_realm_neighbor = scope:recipient
+					NOT = {
+						character_is_land_realm_neighbor = scope:recipient
+					}
+				}
+			}
+			add = -100
+		}
+		modifier = { #Remote Realm.
+			desc = offer_vassalization_interaction_aibehavior_remoterealm_tt
+			trigger = {
+				scope:actor = {
+					NOT = {
+						character_is_realm_neighbor = scope:recipient
+					}
+				}
+				scope:recipient.capital_province = { squared_distance = { target = scope:actor.capital_province value >= 200000 } }
+			}
+			add = -500
+		}
+		modifier = {
+		desc = offer_vassalization_interaction_aibehavior_power_tt
+	  	  	add = {
+				value = 1
+					subtract = {
+					value = scope:recipient.max_military_strength
+					divide = { value = scope:actor.max_military_strength min = 1 }
+					}
+				multiply = 20
+				ceiling = yes
+	  		}
+		}
+
+		# MINOR
+		modifier = { #Friend modifier.
+			desc = offer_vassalization_interaction_aibehavior_friend_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_friend = scope:actor
+					NOT = { has_relation_best_friend = scope:actor }
+				}
+			}
+			add = 10
+		}
+		modifier = { #Best Friend modifier.
+			desc = offer_vassalization_interaction_aibehavior_best_friend_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_best_friend = scope:actor
+				}
+			}
+			add = 20
+		}
+		modifier = { #Rivalry modifier.
+			desc = offer_vassalization_interaction_aibehavior_rival_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_rival = scope:actor
+					NOT = { has_relation_nemesis = scope:actor }
+				}
+			}
+			add = -10
+		}
+		modifier = { #Nemesis modifier.
+			desc = offer_vassalization_interaction_aibehavior_nemesis_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_nemesis = scope:actor
+				}
+			}
+			add = -1000
+		}
+		modifier = { #Same Dynasty modifier.
+			desc = offer_vassalization_interaction_aibehavior_dynasty_tt
+			trigger = {
+				scope:recipient = {
+					dynasty = scope:actor.dynasty
+				}
+			}
+			add = 5
+		}
+		modifier = { #Cultural modifiers.
+			add = -10
+			desc = offer_vassalization_interaction_aibehavior_culture_tt
+			trigger = {
+				scope:actor = {
+					culture = {
+						has_same_culture_heritage = scope:recipient.culture
+					}
+					NOT = { has_same_culture_as = scope:recipient }
+				}
+			}
+		}
+		
+		modifier = { #Cultural Group modifiers.
+			add = -30
+			desc = offer_vassalization_interaction_aibehavior_culture_group_tt
+			trigger = {
+				scope:actor = {
+					NOT = { 
+						culture = {
+							has_same_culture_heritage = scope:recipient.culture
+						}
+					}
+				}
+			}
+		}
+		modifier = { #Ageism modifier vs kids.
+			desc = offer_vassalization_interaction_aibehavior_child_tt
+			trigger = {
+				scope:actor = {
+					age < 12
+				}
+				scope:recipient = {
+					age > 16
+				}
+			}
+			add = -5
+		}
+		modifier = { #Illegitimacy modifier.
+			desc = offer_vassalization_interaction_aibehavior_illegitimate_tt
+			trigger = {
+				OR = {
+					AND = {
+						scope:actor = {
+							has_trait = bastard
+						}
+						scope:recipient = {
+							faith = { NOT = { has_doctrine = doctrine_bastardry_none } }
+						}
+					}
+					has_trait = denounced
+					has_trait = disinherited
+				}
+			}
+			add = -10
+		}
+
+		modifier = { #Claimant modifier.
+			desc = offer_vassalization_interaction_aibehavior_claimant_tt
+			trigger = {
+				scope:actor.primary_title = {
+					scope:recipient = {
+						has_claim_on = prev
+					}
+				}
+			}
+			add = -15
+		}
+
+		# OPINION INFLUENCE
+		modifier = {
+			add = intimidated_external_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = cowed_external_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+		opinion_modifier = { #Compare Opinion modifier.
+			who = scope:recipient
+			opinion_target = scope:actor
+			multiplier = 0.35
+		}					
+	}
+
+	ai_will_do = {
+		base = 10
+		
+		modifier = {
+			scope:recipient.realm_size > scope:actor.realm_size
+			add = 20
+		}
+		modifier = {
+			scope:recipient.realm_size < scope:actor.realm_size
+			factor = 0
+		}
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_trait = craven
+					has_trait = trusting
+					has_trait = lazy
+				}
+			}
+			add = 40
+		}
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_trait = brave
+					has_trait = paranoid
+					has_trait = diligent
+				}
+			}
+			add = -60
+		}
+	}
+}
+
+#Ruler offers character to become a tribute
+ruler_offer_tribute_to_recipient = {
+	category = interaction_category_diplomacy
+	use_diplomatic_range = yes
+	#MB#
+	#Let's make it so the AI doesn't spam you to death with this and so the player can't spam it
+	cooldown = { years = 1 }
+	cooldown_against_recipient = { years = 5 }
+	
+	is_shown = {
+		#Let's not let a Duke even see the option to ask a King or Emperor to be a tributary as obviously a King would laugh at a Duke asking such a thing
+		
+		scope:actor.primary_title.tier >= scope:recipient.primary_title.tier
+		
+		#/MB
+		
+		NOT = { 
+				has_game_rule = MB_tributaries_off
+			}
+			
+		scope:actor = {
+			NOT = {
+				is_tributary = yes
+			}
+			is_at_war = no
+			NOT = { this = scope:recipient }
+			
+			OR = {
+                has_government = mandala_government
+                has_government = nomadic_government
+                has_government = clan_government
+                has_government = administrative_government
+				has_government = feudal_government
+				has_government = imperial_government
+				has_government = autocratic_government
+				has_government = roman_government
+            }
+			
+			is_independent_ruler = yes
+			highest_held_title_tier >= tier_duchy #We don't want someone who only holds a county trying to make tributaries
+			#/MB
+		}
+		scope:recipient = {
+			NOT = {
+				is_tributary = yes
+			}
+			highest_held_title_tier >= tier_county
+			NOR = {
+				any_liege_or_above = {
+					this = scope:actor
+				}	
+                any_vassal_or_below = {
+                    this = scope:actor
+                }		
+			}
+			is_independent_ruler = yes
+		}
+	}
+
+	on_accept = {
+		scope:recipient = {
+			if = {
+				limit = {
+					scope:non_permanent_trib = yes
+				}
+				make_tributary = {
+					TYPE = tributary_non_permanent
+					SUZERAIN = scope:actor
+					TRIBUTARY = scope:recipient
+				}
+			}
+			else_if = {
+				limit = {
+					scope:permanent_trib = yes
+				}
+				make_tributary = {
+					TYPE = tributary_permanent
+					SUZERAIN = scope:actor
+					TRIBUTARY = scope:recipient
+				}		
+			}
+			save_scope_as = trib
+			scope:actor = {
+				trigger_event = { id = tributaries.9 }
+			}
+		}
+	}
+
+	on_decline = {
+		scope:recipient = {
+			save_scope_as = not_trib
+		}
+		scope:actor = {
+			trigger_event = { id = tributaries.11 }
+		}
+	}
+
+	#Non Permanent trib
+	send_option = {										
+		is_shown = {
+			always = yes
+		}
+		flag = non_permanent_trib							# If selected then scope:flag_name will be set to yes
+		localization = non_permanent_trib				# Loc_key for option label
+		starts_enabled = { always = yes	}				# Trigger for whether this should be on when the window opens. If not defined, defaults to off
+
+	}
+
+	#Permanent trib
+	send_option = {
+		is_shown = {
+			always = yes
+		}
+		flag = permanent_trib
+		localization = permanent_trib	
+	}
+
+	ai_accept = {
+		base = 5
+
+		modifier = {
+			add = -1000
+			scope:actor.realm_size < scope:recipient.realm_size
+			desc = will_not_accept_smaller_suzerain
+		}
+		modifier = {
+			add = 75
+			scope:actor.realm_size > scope:recipient.realm_size
+			desc = will_accept_bigger_suzerain		
+		}
+		modifier = {
+			scope:recipient = {
+				OR = {
+					has_trait = craven
+					has_trait = trusting
+					has_trait = lazy
+				}
+			}
+			add = -40
+			desc = dislike_those_traits
+		}
+		modifier = {
+			scope:recipient = {
+				OR = {
+					has_trait = brave
+					has_trait = paranoid
+					has_trait = diligent
+				}
+			}
+			add = 60
+			desc = like_those_traits	
+		}
+		modifier = {
+			scope:actor = {
+				is_at_war = yes
+			}
+			factor = 0
+			desc = do_not_want_to_fight_suzerain_war
+		}	
+		modifier = { # Perk boost
+			desc = offer_vassalization_true_ruler_perk_tt
+			trigger = {
+				scope:actor = { has_perk = true_ruler_perk }
+			}
+			add = true_ruler_value
+		}
+
+		# MAIN
+		modifier = { #Different faith, no pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOR = { #Of two different faiths AND the potential vassal's faith is not pluralistic.
+						faith = scope:actor.faith
+						faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					}
+				}
+			}
+			add = {
+				value = -40
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -40
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -40
+				}
+			}
+		}
+		
+		modifier = { #Different faith, pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOT = {
+						faith = scope:actor.faith
+					}
+					NOT = {
+						scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					}
+					faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+			}
+			add = {
+				value = -20
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -20
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -20
+				}
+			}
+		}
+		
+		modifier = { #Different faith, both have pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOT = {
+						faith = scope:actor.faith
+					}
+					scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+			}
+			add = {
+				value = -10
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -10
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -10
+				}
+			}
+		}
+		modifier = { #I am a King!
+			desc = offer_vassalization_interaction_aibehavior_amkingtier_tt
+			trigger = {
+				scope:recipient = { highest_held_title_tier = tier_kingdom }
+			}
+			add = -50
+		}
+		modifier = { #I am a Emperor!
+			desc = offer_vassalization_interaction_aibehavior_amkingtier_tt
+			trigger = {
+				scope:recipient = { highest_held_title_tier = tier_empire }
+			}
+			add = -200 
+			}
+		modifier = { #We just fought against each other.
+			desc = offer_vassalization_interaction_aibehavior_recent_war_tt
+			trigger = {
+				scope:recipient = {
+					any_truce_holder = {
+						this = scope:actor
+					}
+				}
+			}
+			add = -40
+		}
+		modifier = { #I fought an independence war against you.
+			desc = offer_vassalization_interaction_aibehavior_independence_war_tt
+			trigger = {
+				scope:recipient = {
+					exists = var:independence_war_former_liege
+					var:independence_war_former_liege = scope:actor
+				}
+			}
+			add = -100
+		}
+		modifier = { #Wide difference in rank
+			desc = offer_vassalization_interaction_aibehavior_widetitletier_tt
+			trigger = {
+				scope:actor = {
+					tier_difference = {
+						target = scope:recipient
+						value > 1
+					}
+				}
+			}
+			add = 5
+		}
+		modifier = { # Is the Rightful Liege of recipient
+			desc = offer_vassalization_interaction_aibehavior_rightfulliegetitleholder_tt
+			trigger = {
+				scope:actor = { is_rightful_liege_of = scope:recipient }
+			}
+			add = 20
+		}
+		modifier = { #Is not the Rightful Liege of recipient
+			desc = offer_vassalization_interaction_aibehavior_not_rightfulliegetitleholder_tt
+			trigger = {
+				NOT = {
+					scope:actor = { is_rightful_liege_of = scope:recipient }
+				}
+			}
+			add = -20
+		}
+		modifier = { #Distant Realm.
+			desc = offer_vassalization_interaction_aibehavior_distantrealm_tt
+			trigger = {
+				scope:actor = {
+					character_is_realm_neighbor = scope:recipient
+					NOT = {
+						character_is_land_realm_neighbor = scope:recipient
+					}
+				}
+			}
+			add = -100
+		}
+		modifier = { #Remote Realm.
+			desc = offer_vassalization_interaction_aibehavior_remoterealm_tt
+			trigger = {
+				scope:actor = {
+					NOT = {
+						character_is_realm_neighbor = scope:recipient
+					}
+				}
+				scope:recipient.capital_province = { squared_distance = { target = scope:actor.capital_province value >= 200000 } }
+			}
+			add = -500
+		}
+		modifier = {
+		desc = offer_vassalization_interaction_aibehavior_power_tt
+	  	  	add = {
+				value = 1
+					subtract = {
+					value = scope:recipient.max_military_strength
+					divide = { value = scope:actor.max_military_strength min = 1 }
+					}
+				multiply = 20
+				ceiling = yes
+	  		}
+		}
+
+		# MINOR
+		modifier = { #Friend modifier.
+			desc = offer_vassalization_interaction_aibehavior_friend_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_friend = scope:actor
+					NOT = { has_relation_best_friend = scope:actor }
+				}
+			}
+			add = 10
+		}
+		modifier = { #Best Friend modifier.
+			desc = offer_vassalization_interaction_aibehavior_best_friend_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_best_friend = scope:actor
+				}
+			}
+			add = 20
+		}
+		modifier = { #Rivalry modifier.
+			desc = offer_vassalization_interaction_aibehavior_rival_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_rival = scope:actor
+					NOT = { has_relation_nemesis = scope:actor }
+				}
+			}
+			add = -10
+		}
+		modifier = { #Nemesis modifier.
+			desc = offer_vassalization_interaction_aibehavior_nemesis_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_nemesis = scope:actor
+				}
+			}
+			add = -1000
+		}
+		modifier = { #Same Dynasty modifier.
+			desc = offer_vassalization_interaction_aibehavior_dynasty_tt
+			trigger = {
+				scope:recipient = {
+					dynasty = scope:actor.dynasty
+				}
+			}
+			add = 5
+		}
+		modifier = { #Cultural modifiers.
+			add = -10
+			desc = offer_vassalization_interaction_aibehavior_culture_tt
+			trigger = {
+				scope:actor = {
+					culture = {
+						has_same_culture_heritage = scope:recipient.culture
+					}
+					
+					NOT = { has_same_culture_as = scope:recipient }
+				}
+			}
+		}
+		
+		modifier = { #Cultural Group modifiers.
+			add = -30
+			desc = offer_vassalization_interaction_aibehavior_culture_group_tt
+			trigger = {
+				scope:actor = {
+					NOT = { 
+						culture = {
+							has_same_culture_heritage = scope:recipient.culture
+						}
+					}
+				}
+			}
+		}
+		modifier = { #Ageism modifier vs kids.
+			desc = offer_vassalization_interaction_aibehavior_child_tt
+			trigger = {
+				scope:actor = {
+					age < 12
+				}
+				scope:recipient = {
+					age > 16
+				}
+			}
+			add = -5
+		}
+		modifier = { #Illegitimacy modifier.
+			desc = offer_vassalization_interaction_aibehavior_illegitimate_tt
+			trigger = {
+				OR = {
+					AND = {
+						scope:actor = {
+							has_trait = bastard
+						}
+						scope:recipient = {
+							faith = { NOT = { has_doctrine = doctrine_bastardry_none } }
+						}
+					}
+					has_trait = denounced
+					has_trait = disinherited
+				}
+			}
+			add = -10
+		}
+
+		modifier = { #Claimant modifier.
+			desc = offer_vassalization_interaction_aibehavior_claimant_tt
+			trigger = {
+				scope:actor.primary_title = {
+					scope:recipient = {
+						has_claim_on = prev
+					}
+				}
+			}
+			add = -15
+		}
+
+		# OPINION INFLUENCE
+		modifier = {
+			add = intimidated_external_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = cowed_external_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+		opinion_modifier = { #Compare Opinion modifier.
+			who = scope:recipient
+			opinion_target = scope:actor
+			multiplier = 0.35
+		}	
+	}
+
+	ai_will_do = {
+		base = 10
+		
+		modifier = {
+			scope:recipient.realm_size > scope:actor.realm_size
+			add = 20
+		}
+		modifier = {
+			scope:recipient.realm_size < scope:actor.realm_size
+			factor = 0
+		}
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_trait = craven
+					has_trait = trusting
+					has_trait = lazy
+				}
+			}
+			add = -40
+		}
+		modifier = {
+			scope:actor = {
+				OR = {
+					has_trait = brave
+					has_trait = paranoid
+					has_trait = diligent
+				}
+			}
+			add = 60	
+		}		
+	}
+
+	send_options_exclusive = yes
+}
+
+free_tributary = {
+	category = interaction_category_diplomacy
+	use_diplomatic_range = yes
+	
+	desc = free_tributary_desc
+	
+	is_shown = {
+		
+		NOT = { 
+				has_game_rule = MB_tributaries_off
+			}
+			
+		#scope:actor = {
+		#	NOT = {
+		#		exists = var:my_suzerain
+		#	}
+		#	#is_at_war = no
+		#	NOT = { this = scope:recipient }
+		#}
+		scope:recipient = {
+			exists = var:my_suzerain
+			var:my_suzerain = {
+				this = scope:actor
+			}
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		NOT = { scope:actor = { is_at_war_with = scope:recipient } }
+		scope:actor = {
+			is_independent_ruler = yes
+			NOT = {
+				is_at_war = yes
+			}
+		}
+		custom_description = {
+			text = is_at_war_with_another_vassal
+			object = scope:recipient
+			NOT = {
+				scope:actor = {
+					any_vassal_or_below = {
+						is_at_war_with = scope:recipient
+					}
+				}
+			}
+		}
+	}
+	
+	
+	auto_accept = {
+		always = yes
+	}
+	
+	on_accept = {
+		scope:recipient = {
+            if = {
+                limit = {
+                    is_permanent_tributary = {
+                        SUZERAIN = scope:actor
+                        TRIBUTARY = this
+                    }
+                }
+                unset_tributary = {
+                    TRIBUTARY = this
+                    TRIBUTARY_BASE_TYPE = flag:permanent
+					PASSING_TO_HEIR = no
+                }
+            }
+            else = {
+                unset_tributary = {
+                    TRIBUTARY = this
+                    TRIBUTARY_BASE_TYPE = flag:non_permanent
+					PASSING_TO_HEIR = no
+                }
+            }
+			trigger_event = { id = tributaries.8 } #letter informing that they are no longer required to pay tribute
+		}
+	}
+
+	ai_will_do = {
+		base = 0
+	}
+}
+
+annex_tributary = {
+	category = interaction_category_diplomacy
+	use_diplomatic_range = no
+	ai_frequency = 12
+
+	is_shown = {
+		NOT = { 
+				has_game_rule = MB_tributaries_off
+			}
+			
+		scope:actor = {
+			is_target_in_variable_list = { name = permanent_tributaries target = scope:recipient }
+			NOT = {
+				this = scope:recipient
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor.primary_title.tier > scope:recipient.primary_title.tier
+		exists = scope:recipient.var:possible_vasalisation_year
+		OR = {
+			custom_description = {
+				text = trib_type_disallow_annexing_subjects
+				scope:recipient.var:possible_vasalisation_year <= -1
+			}
+			custom_description = {
+				text = trib_type_allow_annexing_subjects
+				AND = {
+					scope:recipient.var:possible_vasalisation_year > -1
+					scope:recipient.var:possible_vasalisation_year <= current_year
+				}
+			}		
+		}
+	}
+
+	#auto_accept = {
+	#	always = yes
+	#}
+
+	greeting = positive
+	notification_text = OFFER_VASSALIZATION_INTERACTION_NOTIFICATION
+
+	ai_min_reply_days = 5
+	ai_max_reply_days = 10
+
+	ai_targets = {
+		ai_recipients = neighboring_rulers
+	}
+
+	#Cribbed from "Offer Vassalage" interaction
+	ai_accept = {
+		base = 50
+		#MAIN
+		#Heretic/Infidel modifier.
+		#Tier difference modifier.
+		#Dejure modifier.
+		#Distant/Remote Realm modifier.
+		#Military power difference modifier.
+
+		#MINOR
+		#Rivalry modifier.
+		#Same Dynasty modifier.
+		#Cultural/Cultural Group modifiers.
+		#Ageism modifier vs kids.
+		#Ruler Legitimacy modifier.
+		#Claimant modifier.
+
+		#OPINION SCALES
+		#Dread
+		#Compare Opinion modifier.
+		
+		# PERKS
+		modifier = { # Perk boost
+			desc = offer_vassalization_true_ruler_perk_tt
+			trigger = {
+				scope:actor = { has_perk = true_ruler_perk }
+			}
+			add = true_ruler_value
+		}
+
+		# EVENTS - temporary bonuses gained by events
+		modifier = {
+			desc = event_bonus_to_vassal_accept_tt
+			trigger = {
+				scope:actor = { has_character_modifier = event_bonus_to_vassal_accept }
+			}
+			add = 20
+		}
+		
+		modifier = { # Cultural Acceptance
+			add = offer_vassalage_acceptance_value
+			desc = cultural_acceptance_interaction_reason
+			trigger = {
+				scope:actor = {
+					NOT = { has_same_culture_as = scope:recipient }
+					culture = {
+						cultural_acceptance = { target = scope:recipient.culture value <= 90 }
+					}
+				}
+			}
+		}
+
+		# MAIN
+		modifier = { #Different faith, no pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOR = { #Of two different faiths AND the potential vassal's faith is not pluralistic.
+						faith = scope:actor.faith
+						faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					}
+				}
+			}
+			add = {
+				value = -40
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -40
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -40
+				}
+			}
+		}
+		
+		modifier = { #Different faith, pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOT = {
+						faith = scope:actor.faith
+					}
+					NOT = {
+						scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					}
+					faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+			}
+			add = {
+				value = -20
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -20
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -20
+				}
+			}
+		}
+		
+		modifier = { #Different faith, both have pluralism.
+			desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+			trigger = {
+				scope:recipient = {
+					NOT = {
+						faith = scope:actor.faith
+					}
+					scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+					faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+			}
+			add = {
+				value = -10
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					add = -10
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					add = -10
+				}
+			}
+		}
+		modifier = { #I am a King!
+			desc = offer_vassalization_interaction_aibehavior_amkingtier_tt
+			trigger = {
+				scope:recipient = { highest_held_title_tier = tier_kingdom }
+			}
+			add = {
+				value = -50
+				if = {
+					limit = {
+						scope:recipient = {
+							OR = {
+								government_has_flag = government_is_republic
+								government_has_flag = government_is_theocracy
+							}
+						}
+					}
+					add = -50
+				}
+				if = {
+					limit = {
+						scope:recipient.sub_realm_size >= 5
+					}
+					add = -50
+				}
+				if = {
+					limit = {
+						scope:recipient.sub_realm_size >= 10
+					}
+					add = -100
+				}
+			}
+		}
+		modifier = { #We just fought against each other.
+			desc = offer_vassalization_interaction_aibehavior_recent_war_tt
+			trigger = {
+				scope:recipient = {
+					any_truce_holder = {
+						this = scope:actor
+					}
+				}
+			}
+			add = -50
+		}
+		modifier = { #I fought an independence war against you.
+			desc = offer_vassalization_interaction_aibehavior_independence_war_tt
+			trigger = {
+				scope:recipient = {
+					exists = var:independence_war_former_liege
+					var:independence_war_former_liege = scope:actor
+				}
+			}
+			add = -200
+		}
+		modifier = { # I am Tribal and you are not
+			desc = interaction_tribal_vs_nontribal
+			trigger = {
+				scope:recipient = {
+					government_has_flag = government_is_tribal
+				}
+				scope:actor = {
+					NOT = { government_has_flag = government_is_tribal }
+				}
+			}
+			add = -20
+		}
+		modifier = { # You are Tribal and I am not
+			desc = interaction_tribal_vs_nontribal
+			trigger = {
+				scope:actor = {
+					government_has_flag = government_is_tribal
+				}
+				scope:recipient = {
+					NOT = { government_has_flag = government_is_tribal }
+				}
+			}
+			add = -20
+		}
+		modifier = { # I am Ulus and you are not
+			desc = interaction_tribal_vs_nontribal_ulus
+			trigger = {
+				scope:recipient = {
+					government_has_flag = government_is_ulus
+				}
+				scope:actor = {
+					NOT = { government_has_flag = government_is_ulus }
+				}
+			}
+			add = -20
+		}
+		modifier = { # You are Ulus and I am not
+			desc = interaction_tribal_vs_nontribal_ulus
+			trigger = {
+				scope:actor = {
+					government_has_flag = government_is_ulus
+				}
+				scope:recipient = {
+					NOT = { government_has_flag = government_is_ulus }
+				}
+			}
+			add = -20
+		}
+		modifier = { # Isolationist tradition
+			desc = isolationist_reason
+			trigger = {
+				NOT = {
+					scope:actor.culture = scope:recipient.culture
+				}
+				scope:recipient.culture = {
+					has_cultural_tradition = tradition_isolationist
+				}
+			}
+			add = -20
+		}
+		modifier = { #Bankrupt
+			desc = bankrupt_reason
+			trigger = {
+				scope:actor.gold <= -1
+			}
+			add = -100
+		}
+		modifier = { #Wide difference in rank
+			desc = offer_vassalization_interaction_aibehavior_widetitletier_tt
+			trigger = {
+				scope:actor = {
+					tier_difference = {
+						target = scope:recipient
+						value > 1
+					}
+				}
+			}
+			add = 10
+		}
+		modifier = { # Allied
+			desc = offer_vassalization_interaction_aibehavior_allied_tt
+			trigger = {
+				scope:recipient = {
+					is_allied_to = scope:actor
+				}
+			}
+			add = 20
+		}
+		modifier = { # Is the Rightful Liege of recipient
+			desc = offer_vassalization_interaction_aibehavior_rightfulliegetitleholder_tt
+			trigger = {
+				scope:actor = { is_rightful_liege_of = scope:recipient }
+			}
+			add = 20
+		}
+		modifier = { #Is not the Rightful Liege of recipient
+			desc = offer_vassalization_interaction_aibehavior_not_rightfulliegetitleholder_tt
+			trigger = {
+				NOT = {
+					scope:actor = { is_rightful_liege_of = scope:recipient }
+				}
+			}
+			add = -20
+		}
+		
+		modifier = { #Is not the Rightful Liege of recipient
+			desc = no_annex_reason
+			trigger = {
+				OR = {
+					scope:recipient = { has_title = title:d_genoa }
+					scope:recipient = { has_title = title:d_pisa }
+					scope:recipient = { has_title = title:k_venice }
+					scope:recipient = { has_title = title:k_papal_states }
+				}
+			}
+			add = -500
+		}
+		
+		modifier = { # Encircled
+			desc = offer_vassalization_interaction_aibehavior_encircled_tt
+			trigger = {
+				scope:recipient = {
+					NOT = {
+						any_neighboring_top_liege_realm_owner = {
+							NOT = {
+								this = scope:actor
+							}
+						}
+					}
+					NOT = {
+						any_realm_county = {
+							is_coastal_county = yes
+						}
+					}
+				}
+			}
+			add = 20
+		}
+		modifier = { #Distant Realm — Overseas Connection
+			desc = offer_vassalization_interaction_aibehavior_distantrealm_tt
+			trigger = {
+				scope:actor = {
+					character_is_realm_neighbor = scope:recipient
+					NOT = { #Ibiza should want to be a vassal of Mallorca, etc.
+						character_is_land_realm_neighbor = scope:recipient
+						scope:actor = { is_rightful_liege_of = scope:recipient }
+					}
+				}
+			}
+			add = -100
+		}
+		modifier = { #Distant Realm — No Connection
+			desc = offer_vassalization_interaction_aibehavior_distantrealm_tt
+			trigger = {
+				scope:actor = {
+					NOT = {
+						character_is_realm_neighbor = scope:recipient
+					}
+				}
+				scope:recipient.capital_province = { squared_distance = { target = scope:actor.capital_province value < 200000 } }
+			}
+			add = -250
+		}
+		modifier = { #Remote Realm.
+			desc = offer_vassalization_interaction_aibehavior_remoterealm_tt
+			trigger = {
+				scope:actor = {
+					NOT = {
+						character_is_realm_neighbor = scope:recipient
+					}
+				}
+				scope:recipient.capital_province = { squared_distance = { target = scope:actor.capital_province value >= 200000 } }
+			}
+			add = -500
+		}
+		modifier = {
+			desc = offer_vassalization_interaction_aibehavior_power_tt
+	  	  	add = {
+				value = 1
+				subtract = {
+					value = scope:recipient.max_military_strength # Intended for recipient to use max, to avoid having vassalizations become too easy for weakened realms
+					divide = { value = scope:actor.current_military_strength min = 1 }
+				}
+				multiply = 20
+				ceiling = yes
+	  		}
+		}
+		modifier = {
+			desc = offer_vassalization_interaction_aibehavior_vassal_opinion_tt
+			trigger = {
+				scope:actor = {
+				number_of_powerful_vassals >= 1
+				}
+			}
+
+	  	  	add = {
+				value = 0
+				scope:actor = {
+					every_powerful_vassal = {
+						if = {
+							limit = {
+								save_temporary_opinion_value_as = {
+									name = vassal_opinion
+									target = scope:actor
+								}
+							}
+							add = scope:vassal_opinion
+						}
+					}
+
+					if = {
+						limit = {
+							number_of_powerful_vassals > 0
+						}
+						divide = number_of_powerful_vassals
+					}
+					else = {
+						divide = 5
+					}
+				}
+
+				divide = 5
+	  		}
+		}
+
+		# MINOR
+		modifier = { #Friend modifier.
+			desc = offer_vassalization_interaction_aibehavior_friend_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_friend = scope:actor
+					NOT = { has_relation_best_friend = scope:actor }
+				}
+			}
+			add = 10
+		}
+		modifier = { #Best Friend modifier.
+			desc = offer_vassalization_interaction_aibehavior_best_friend_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_best_friend = scope:actor
+				}
+			}
+			add = 20
+		}
+		modifier = { #Lover modifier.
+			desc = interaction_lover
+			trigger = {
+				scope:recipient = {
+					has_relation_lover = scope:actor
+					NOT = { has_relation_soulmate = scope:actor }
+				}
+			}
+			add = 10
+		}
+		modifier = { #Soulmate modifier.
+			desc = interaction_soulmate
+			trigger = {
+				scope:recipient = {
+					has_relation_soulmate = scope:actor
+				}
+			}
+			add = 20
+		}
+		modifier = { #Rivalry modifier.
+			desc = offer_vassalization_interaction_aibehavior_rival_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_rival = scope:actor
+					NOT = { has_relation_nemesis = scope:actor }
+				}
+			}
+			add = -100
+		}
+		modifier = { #Nemesis modifier.
+			desc = offer_vassalization_interaction_aibehavior_nemesis_tt
+			trigger = {
+				scope:recipient = {
+					has_relation_nemesis = scope:actor
+				}
+			}
+			add = -1000
+		}
+		modifier = { #Same Dynasty modifier.
+			desc = offer_vassalization_interaction_aibehavior_dynasty_tt
+			trigger = {
+				scope:recipient = {
+					dynasty = scope:actor.dynasty
+				}
+			}
+			add = 5
+		}
+		
+		modifier = { # Same language
+			add = 5
+			desc = speaks_same_language_interaction_reason
+			trigger = {
+				scope:actor = {
+					knows_language_of_culture = scope:recipient.culture
+				}
+			}
+		}
+		
+		modifier = { # Iberian Struggle, less likely for outsiders to vassalize inside
+			add = -35
+			desc = iberian_struggle_reason_reason
+			trigger = {
+				scope:actor = {
+					NOT = {
+						any_character_struggle = { is_struggle_type = iberian_struggle }
+					}
+				}
+				scope:recipient = {
+					any_character_struggle = { is_struggle_type = iberian_struggle }
+				}
+			}
+		}
+
+		modifier = { #Ageism modifier vs kids.
+			desc = offer_vassalization_interaction_aibehavior_child_tt
+			trigger = {
+				scope:actor = {
+					age < 12
+				}
+				scope:recipient = {
+					age > 16
+				}
+			}
+			add = -5
+		}
+		modifier = { #Illegitimacy modifier.
+			desc = offer_vassalization_interaction_aibehavior_illegitimate_tt
+			trigger = {
+				OR = {
+					AND = {
+						scope:actor = {
+							has_trait = bastard
+						}
+						scope:recipient = {
+							faith = { NOT = { has_doctrine = doctrine_bastardry_none } }
+						}
+					}
+					has_trait = denounced
+					has_trait = disinherited
+				}
+			}
+			add = -10
+		}
+
+		modifier = { #Claimant modifier.
+			desc = offer_vassalization_interaction_aibehavior_claimant_tt
+			trigger = {
+				scope:actor.primary_title = {
+					scope:recipient = {
+						has_claim_on = prev
+					}
+				}
+			}
+			add = -20
+		}
+
+		modifier = { # Ambitious
+			desc = TAKE_THE_VOWS_AMBITIOUS
+			trigger = {
+				scope:recipient = {
+					has_trait = ambitious
+				}
+			}
+			add = -20
+		}
+
+		modifier = { # Paranoid
+			desc = INTERACTION_PARANOID
+			trigger = {
+				scope:recipient = {
+					has_trait = paranoid
+				}
+			}
+			add = -20
+		}
+
+		modifier = { # Arrogant
+			desc = INTERACTION_ARROGANT
+			trigger = {
+				scope:recipient = {
+					has_trait = arrogant
+				}
+			}
+			add = -20
+		}
+
+		modifier = { # Fickle
+			desc = INTERACTION_FICKLE
+			trigger = {
+				scope:recipient = {
+					has_trait = fickle
+				}
+			}
+			add = -10
+		}
+
+		modifier = { # Stubborn
+			desc = INTERACTION_STUBBORN
+			trigger = {
+				scope:recipient = {
+					has_trait = stubborn
+				}
+			}
+			add = -10
+		}
+
+		modifier = { # Trusting
+			desc = TAKE_THE_VOWS_TRUSTING
+			trigger = {
+				scope:recipient = {
+					has_trait = trusting
+				}
+			}
+			add = 5
+		}
+
+		modifier = { # Content
+			desc = INTERACTION_CONTENT
+			trigger = {
+				scope:recipient = {
+					has_trait = content
+				}
+			}
+			add = 5
+		}
+
+		# OPINION INFLUENCE
+		modifier = {
+			add = intimidated_external_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = cowed_external_reason_value
+			scope:recipient = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+		opinion_modifier = { #Compare Opinion modifier - Clans care more about opinion
+			trigger = {
+				scope:actor = {
+					government_has_flag = government_is_clan
+				}
+				scope:recipient = {
+					government_has_flag = government_is_clan
+				}
+			}
+			who = scope:recipient
+			opinion_target = scope:actor
+			multiplier = 0.7
+		}
+		opinion_modifier = { #Compare Opinion modifier.
+			trigger = {
+				OR = {
+					scope:actor = {
+						NOT = { government_has_flag = government_is_clan }
+					}
+					scope:recipient = {
+						NOT = { government_has_flag = government_is_clan }
+					}
+				}
+			}
+			who = scope:recipient
+			opinion_target = scope:actor
+			multiplier = 0.35
+		}
+		
+		# DIPLOMATIC COURT GRANDEUR BONUS
+		modifier = {
+			trigger = {
+				scope:actor = {
+					has_royal_court = yes
+					has_court_type = court_diplomatic
+					court_grandeur_current_level >= 1
+				}
+			}
+			add = {
+				value = scope:actor.court_grandeur_current
+				if = {
+					limit = { # Reduce the bonus if you are below your expected level
+						scope:actor = {
+							court_grandeur_current_level < court_grandeur_minimum_expected_level
+						}
+					}
+					multiply = 0.15
+				}
+				else = {
+					multiply = 0.3
+				}
+			}
+			desc = DIPLOMATIC_COURT_ACCEPTANCE_INCREASE_REASON
+		}
+
+		## CONTRACT OPTIONS
+		#modifier = {
+		#	add = 60
+		#	scope:recipient = {	government_has_flag = government_is_feudal }
+		#	scope:religious_exemption = yes
+		#	desc = CONTRACT_RELIGIOUS_EXEMPTION_REASON
+		#}
+		#modifier = {
+		#	add = 30
+		#	scope:recipient = {	government_has_flag = government_is_clan }
+		#	scope:religious_exemption_clan = yes 
+		#	desc = CONTRACT_RELIGIOUS_EXEMPTION_REASON
+		#}
+		#modifier = {
+		#	add = 30
+		#	scope:recipient = {	government_has_flag = government_is_feudal }
+		#	scope:low_obligations = yes
+		#	desc = CONTRACT_LOW_TAXES_REASON
+		#}
+		#modifier = {
+		#	add = -40
+		#	scope:recipient = {	government_has_flag = government_is_feudal }
+		#	scope:high_obligations = yes
+		#	desc = CONTRACT_HIGH_TAXES_REASON
+		#}
+		#
+		#modifier = { # AI-only weights, keep the pope from vassalizing too fast
+		#	trigger = {
+		#		exists = faith:catholic.religious_head
+		#		faith:catholic.religious_head = scope:actor
+		#		scope:actor = { is_ai = yes }
+		#	}
+		#	add = -50
+		#}
+	}
+
+	on_accept = {
+		scope:recipient = {
+			custom_description = {
+				text = annex_tributary_desc
+				subject = scope:recipient
+				create_title_and_vassal_change = {
+					type = independency
+					save_scope_as = change
+				}
+				change_liege = { liege = scope:actor change = scope:change }
+				resolve_title_and_vassal_change = scope:change
+				scope:actor = {
+					if = {
+						limit = {
+							is_permanent_tributary = {
+								SUZERAIN = this
+								TRIBUTARY = scope:recipient
+							}
+						}
+						unset_tributary = {
+							TRIBUTARY = scope:recipient
+							TRIBUTARY_BASE_TYPE = flag:permanent
+							PASSING_TO_HEIR = no
+						}
+					}
+					else = {
+						unset_tributary = {
+							TRIBUTARY = scope:recipient
+							TRIBUTARY_BASE_TYPE = flag:non_permanent
+							PASSING_TO_HEIR = no
+						}
+					}
+				}
+			}
+		}
+	}
+
+	on_decline = {}
+	
+	ai_potential = {
+		is_adult = yes
+		is_independent_ruler = yes
+		highest_held_title_tier > tier_county
+	}
+
+	ai_will_do = {
+		base = 100
+
+		# AI prefers to receive higher obligations from their vassals when possible.
+		modifier = {
+			add = 2
+			scope:low_obligations = yes
+		}
+
+		modifier = {
+			add = 3
+			scope:normal_obligations = yes
+		}
+
+		modifier = {
+			add = 4
+			scope:high_obligations = yes
+		}
+
+		# Cynical rulers are happy to offer religious protection to potential vassals, but only when it makes them accept a vassalization offer they would otherwise refuse.
+		# Zealous rulers become increasingly reluctant to offer religious protection, as they want to enforce religious homogeneity in their realm.
+		modifier = {
+			add = {
+				value = ai_zeal
+				multiply = -2
+				max = 1
+			}
+			scope:religious_exemption = yes
+		}
+
+
+		modifier = { # If the recipient is a player, do not bother sending
+			factor = 0
+			scope:recipient = {
+				is_ai = no
+			}
+		}
+	}
+}
+
+turn_non_perma_tributary_to_perma = {
+	category = interaction_category_diplomacy
+	is_shown = {
+		NOT = { 
+				has_game_rule = MB_tributaries_off
+			}
+			
+		scope:actor = {
+			is_target_in_variable_list = { name = non_permanent_tributaries target = scope:recipient }
+			NOT = {
+				this = scope:recipient
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		exists = scope:recipient.var:possible_permafication_year
+		OR = {
+			custom_description = {
+				text = trib_type_disallow_permafing_subjects
+				scope:recipient.var:possible_permafication_year <= -1
+			}
+			custom_description = {
+				text = trib_type_allow_permafing_subjects
+				AND = {
+					scope:recipient.var:possible_permafication_year > -1
+					scope:recipient.var:possible_permafication_year <= current_year	
+				}
+			}		
+		}
+		
+	}
+
+	auto_accept = {
+		always = yes
+	}
+
+	on_accept = {
+		scope:recipient = {
+			custom_description = {
+				text = non_permanent_trib_turns_into_perma
+				subject = scope:recipient
+
+				scope:actor = {
+					remove_list_variable = { name = non_permanent_tributaries target = prev }
+					add_to_variable_list = { name = permanent_tributaries target = prev }
+				}
+				remove_variable = possible_permafication_year
+				scope:actor = {
+					unset_tributary = {
+						TRIBUTARY = scope:recipient
+						TRIBUTARY_BASE_TYPE = flag:non_permanent
+						PASSING_TO_HEIR = no  
+					}
+					#TODO:MAKE SOME KIND OF EFFECT/S + TRIGGER/S THAT WOULD AUTOMATICALLY ASSIGN CORRECT PERMA TRIB TYPE BASED ON THE NON PERMA TRIB TYPE ~ T.
+					make_tributary = {
+						TYPE = tributary_permanent
+						SUZERAIN = scope:actor
+						TRIBUTARY = scope:recipient
+					}				
+				}		
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+	}	
+}

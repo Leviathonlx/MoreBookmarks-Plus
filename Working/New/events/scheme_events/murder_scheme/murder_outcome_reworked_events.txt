@@ -1,0 +1,5987 @@
+﻿namespace = murder_outcome_reworked
+
+##################################################
+# #Outcomes — Standard
+# 0001 - 0010	Hired An Assassin
+# 0011 - 0020	Hired A Gang Of Thugs
+# 0021 - 0030	Poisoning
+# 0031 - 0040	Creepy-Crawly
+# 0041 - 0050	Riled-Up Mob
+# 0051 - 0060	Bricked Up Alive
+# 0061 - 0070	Sink A Boat They're On
+# 0071 - 0080	Poisoned Drink
+#
+# #Outcomes — Children
+# 4001 - 4010	Left Child In Forest
+# 4011 - 4020	Infant Stabbed To Death
+# 4021 - 4030	Infant Bitten By Creepy Crawly
+# 4031 - 4040	Poisoned Candy
+# 4041 - 4050	Child Pushed To Death
+#
+# #Outcomes — Prison
+# 7001 - 7010	Beaten To Death In Prison
+# 7011 - 7020	Unwelcome Guest - House Arrest
+#
+# #Outcomes — Special/Other
+# 8001 - 8010	Strangling Incapable
+##################################################
+
+
+
+
+
+
+
+
+
+
+##################################################
+# GENERAL SCRIPTED TRIGGERS & EFFECTS
+
+# Murders that have to take place somewhere static, like a castle that you're staying at/live in.
+scripted_trigger murder_requires_grounded_location_trigger = {
+	scope:target = {
+		is_travelling = no
+		location = { is_sea_province = no }
+	}
+}
+
+# Murders that have to take place on the road.
+scripted_trigger murder_requires_mutable_location_trigger = {
+	scope:target = {
+		is_travelling = yes
+		location = { is_sea_province = no }
+	}
+}
+
+# When toggled on, this'll spoof an event's standard scopes so that loc and such can be tested without setting up a scheme each time then hoping for the result.
+## You still need _a_ murder scheme.
+scripted_effect debug_sort_scheme_scopes_for_testing_effect = {
+	if = {
+		limit = { always = no }
+		hidden_effect = {
+			random_scheme = {
+				save_scope_as = scheme
+				scheme_owner = { save_scope_as = owner }
+				scheme_target_character = { save_scope_as = target }
+				random_scheme_agent_character = { save_scope_as = assassin }
+			}
+			# Misc secondary controls.
+			## Scheme discovered.
+			if = {
+				limit = { always = yes }
+				save_scope_value_as = {
+					name = scheme_discovered
+					value = yes
+				}
+				scope:owner = { save_scope_as = owner_to_reveal }
+			}
+			## Scheme has an associated bad memory.
+			if = {
+				limit = { always = yes }
+				random_memory = { save_scope_as = bad_memory }
+			}
+			## Scheme part of a house feud.
+			if = {
+				limit = { always = yes }
+				save_scope_value_as = {
+					name = return_feud_as_true_for_debug
+					value = yes
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+##################################################
+# OUTCOMES — STANDARD
+
+##################################################
+# Hired An Assassin
+# by Petter Vilberg
+# 0001 - 0010
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.0001 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.2001.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		first_valid = {
+			# Murdered by local consort.
+			triggered_desc = {
+				trigger = {
+					scope:assassin = {
+						location = scope:target.location
+						OR = {
+							is_consort_of = scope:target
+							has_relation_lover = scope:target
+						}
+					}
+				}
+				desc = murder_outcome_reworked.0001.desc.assassin_present_at_location.consort
+			}
+			# Murdered by local assassin.
+			triggered_desc = {
+				trigger = { scope:assassin.location = scope:target.location }
+				desc = murder_outcome_reworked.0001.desc.hired_assassin.assassin_present_at_location
+				
+			}
+			# Murdered by anonymous assassin.
+			desc = murder_outcome_reworked.0001.desc.hired_assassin.assassin_remote_working
+		}
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = assassin
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = corridor_night }
+
+	trigger = {
+		scope:target = {
+			location = { is_sea_province = no }
+		}
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Grab the best person to fill our assassin portrait.
+		grab_best_agent_murderer_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome_reworked.0000.revealed.owner.response.1
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2001.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			is_ai = no
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0002 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0002 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0002.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				first_valid = {
+					# Reference an appropriate negative memory if we've got one set up.
+					triggered_desc = {
+						trigger = {
+							exists = scope:scheme_discovered
+							exists = scope:owner_to_reveal.house
+							exists = scope:bad_memory
+							# Only for murder methods with characters who can deliver messages
+						}
+						desc = murder_outcome_reworked.0000.memories.target.voice_overheard
+					}
+					# Else, normal flow.
+					desc = {
+						random_valid = {
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+						}
+						# Reference house feud if appropriate.
+						triggered_desc = {
+							trigger = {
+								existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+							}
+							desc = murder_outcome_reworked.0000.addendum.house_feud.2
+						}
+					}
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = assassin
+		camera = camera_event_right_pointing_right
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = corridor_night }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0003 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.4001.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0003.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = fear
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = sword_yield_start
+	}
+	right_portrait = {
+		character = scope:target
+		animation = rage
+	}
+	override_background = { reference = corridor_night }
+
+	trigger = {
+		scope:target = {
+			location = { is_sea_province = no }
+		}
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Grab the best person to fill our assassin portrait.
+		grab_best_agent_murderer_effect = yes
+		# Tell scope:owner how things are gonna go; actual effects applied in the follow-up event.
+		show_as_tooltip = { murder_failure_effect = yes }
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4001.a.discovered
+					}
+					desc = murder_outcome.4001.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0004 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0004 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0004.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = rage
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = sword_yield_start
+		camera = camera_event_center_pointing_left
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = { reference = corridor_night }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Hired A Gang Of Thugs
+# by Petter Vilberg
+# 0011 - 0020
+##################################################
+
+scripted_trigger character_in_location_for_thug_murder_trigger = {
+	# Important enough to have a retinue.
+	is_ruler = yes
+	# Not so important that they wouldn't sully themselves with this.
+	character_title_allows_off_screen_wandering_trigger = yes
+	OR = {
+		murder_requires_grounded_location_trigger = yes
+		murder_requires_mutable_location_trigger = yes
+	}
+}
+
+scripted_effect grab_best_location_for_thug_murder_effect = {
+	scope:target.location = {
+		# Get our location.
+		## We prefer a nice holding at night.
+		if = {
+			limit = {
+				has_holding = yes
+				county.development_level >= 10
+			}
+			save_scope_as = alley_background
+		}
+		## Otherwise, grab our current terrain.
+		else = { save_scope_as = background_terrain_scope }
+	}
+}
+
+# Owner POV — Success
+murder_outcome_reworked.0011 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.2002.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0011.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	center_portrait = {
+		character = scope:assassin
+		scripted_animation = bow_drawn
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = {
+		trigger = { exists = scope:alley_background }
+		reference = alley_night
+	}
+	override_background = {
+		trigger = { exists = scope:background_terrain_scope }
+		reference = wilderness_scope
+	}
+
+	trigger = { character_in_location_for_thug_murder_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		# Sort our cosmetic scopes.
+		grab_best_location_for_thug_murder_effect = yes
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome_reworked.0000.revealed.owner.response.1
+					}
+					# Arrogant response.
+					triggered_desc = {
+						trigger = {
+							NOR = {
+								has_trait = humble
+								has_trait = compassionate
+								has_trait = content
+							}
+						}
+						desc = murder_outcome.2002.a
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2002.a.less_arrogant
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			is_ai = no
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0012 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0012 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:alley_background }
+				desc = murder_outcome_reworked.0012.desc.alley
+			}
+			desc = murder_outcome_reworked.0012.desc.wilderness
+		}
+		desc = murder_outcome_reworked.0012.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				first_valid = {
+					# Reference an appropriate negative memory if we've got one set up.
+					triggered_desc = {
+						trigger = {
+							exists = scope:scheme_discovered
+							exists = scope:owner_to_reveal.house
+							exists = scope:bad_memory
+							# Only for murder methods with characters who can deliver messages
+						}
+						desc = murder_outcome_reworked.0000.memories.target.voice_overheard
+					}
+					# Else, normal flow.
+					desc = {
+						random_valid = {
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+						}
+						# Reference house feud if appropriate.
+						triggered_desc = {
+							trigger = {
+								existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+							}
+							desc = murder_outcome_reworked.0000.addendum.house_feud.2
+						}
+					}
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	center_portrait = {
+		character = scope:assassin
+		scripted_animation = bow_drawn
+		camera = camera_event_center_pointing_left
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = {
+		trigger = { exists = scope:alley_background }
+		reference = alley_night
+	}
+	override_background = {
+		trigger = { exists = scope:background_terrain_scope }
+		reference = wilderness_scope
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0013 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1002.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0013.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = fear
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = sword_yield_start
+	}
+	right_portrait = {
+		character = scope:target
+		animation = sword_coup_degrace
+	}
+	override_background = {
+		trigger = { exists = scope:alley_background }
+		reference = alley_night
+	}
+	override_background = {
+		trigger = { exists = scope:background_terrain_scope }
+		reference = wilderness_scope
+	}
+
+	trigger = { character_in_location_for_thug_murder_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+		# Sort our cosmetic scopes.
+		grab_best_location_for_thug_murder_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome_reworked.0000.revealed.owner.response.1
+					}
+					triggered_desc = {
+						trigger = {
+							NOT = { has_trait = humble }
+						}
+						desc = murder_outcome.4002.a
+					}
+					desc = murder_outcome.4002.a.less_arrogant
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0014 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0014 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:alley_background }
+				desc = murder_outcome_reworked.0012.desc.alley
+			}
+			desc = murder_outcome_reworked.0012.desc.wilderness
+		}
+		desc = murder_outcome_reworked.0014.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = sword_coup_degrace
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = sword_yield_start
+		camera = camera_event_center_pointing_left
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = {
+		trigger = { exists = scope:alley_background }
+		reference = alley_night
+	}
+	override_background = {
+		trigger = { exists = scope:background_terrain_scope }
+		reference = wilderness_scope
+	}
+
+	immediate = {
+		# Process ending effects.
+		murder_failure_effect = yes
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Poisoning
+# by Petter Vilberg
+# 0021 - 0030
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.0021 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.2003.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0021.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = poison		
+	}
+	override_background = { reference = feast }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		add_character_flag = {
+			flag = murdered_by_poison
+			years = 5
+		}
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = {
+							random_valid = {
+								desc = murder_outcome.2003.a.discovered_1
+								desc = murder_outcome.2003.a.discovered_2
+							}
+						}
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2003.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			is_ai = no
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0022 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0022 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0022.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	override_background = { reference = feast }
+	left_portrait = {
+		character = scope:target
+		animation = poison		
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0023 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1003.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0023.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = fear
+		}
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	override_background = { reference = feast }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4003.a.discovered
+					}
+					desc = murder_outcome.4003.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0024 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0024 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5002.poisoned_duck
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	override_background = { reference = feast }
+	left_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+
+	immediate = {
+		# Process ending effects.
+		murder_failure_effect = yes
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Creepy-Crawly
+# by Petter Vilberg
+# 0031 - 0040
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.0031 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1004.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0031.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = {
+		trigger = { scope:background = flag:embarked }
+		reference = fp1_ocean
+	}
+	override_background = {
+		trigger = { scope:background = flag:travelling }
+		reference = ep3_relaxing_tent
+	}
+	override_background = {
+		trigger = { scope:background = flag:stationary }
+		reference = bedchamber
+	}
+	
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Creepy crawly
+		set_local_venomous_creature_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		# Sort background.
+		scope:target = {
+			if = {
+				limit = {
+					location = {
+						OR = {
+							is_sea_province = yes
+							is_river_province = yes
+						}
+					}
+				}
+				save_scope_value_as = {
+					name = background
+					value = flag:embarked
+				}
+			}
+			else_if = {
+				limit = { is_travelling = yes }
+				save_scope_value_as = {
+					name = background
+					value = flag:travelling
+				}
+			}
+			else = {
+				save_scope_value_as = {
+					name = background
+					value = flag:stationary
+				}
+			}
+		}
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.2004.a.discovered
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2004.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			is_ai = no
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0032 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0032 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5001.creepy_crawly_intro
+		### Identify the bug!
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						learning >= very_high_skill_rating
+						has_trait = lifestyle_hunter
+					}
+				}
+				desc = murder_outcome.5001.creepy_crawly_known
+			}
+			desc = murder_outcome.5001.creepy_crawly_unknown
+		}
+		desc = murder_outcome.5001.creepy_crawly_end
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	override_background = { reference = bedchamber }
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0033 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1004.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0033.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = fear
+		}
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+		outfit_tags = { nightgown }
+	}
+	override_background = { reference = bedchamber }
+	
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Creepy crawly
+		set_local_venomous_creature_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.2004.a.discovered
+					}
+					desc = murder_outcome.4004.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0034 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0034 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0034.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						learning >= very_high_skill_rating
+						has_trait = lifestyle_hunter
+					}
+				}
+				desc = murder_outcome.5001.creepy_crawly_known
+			}
+			desc = murder_outcome_reworked.0034.desc_unknown
+		}
+		desc = murder_outcome_reworked.0034.desc_end
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	override_background = { reference = bedchamber }
+	left_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+		outfit_tags = { nightgown }
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+
+	immediate = {
+		# Process ending effects.
+		murder_failure_effect = yes
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Riled-Up Mob
+# by Petter Vilberg
+# 0041 - 0050
+##################################################
+
+scripted_trigger murder_outcome_riled_mob_trigger = {
+	# In a location that might riot.
+	scope:target.location.county ?= { county_opinion <= -1 }
+}
+
+# Owner POV — Success
+murder_outcome_reworked.0041 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1005.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0041.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	center_portrait = {
+		character = scope:peasant
+		animation = aggressive_spear
+		hide_info = yes
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = alley_night }
+
+	trigger = {
+		murder_requires_grounded_location_trigger = yes
+		murder_outcome_riled_mob_trigger = yes
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		# Make us a peasant.
+		if = {
+			limit = {
+				exists = scope:target.capital_province
+			}
+			create_character = {
+				template = generic_peasant_character
+				location = scope:target.capital_province
+				save_scope_as = peasant
+			}
+		}
+		else = {
+			create_character = {
+				template = generic_peasant_character
+				location = scope:target.location
+				save_scope_as = peasant
+			}
+		}
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = {
+							first_valid = {
+								triggered_desc = {
+									trigger = {
+										NOR = {
+											has_trait = humble
+											has_trait = compassionate
+										}
+									}
+									desc = murder_outcome.2005.a.discovered
+								}
+								desc = murder_outcome.2005.a.discovered.less_arrogant
+							}
+						}
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2005.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			is_ai = no
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0042 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0042 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0042.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				first_valid = {
+					# Reference an appropriate negative memory if we've got one set up.
+					triggered_desc = {
+						trigger = {
+							exists = scope:scheme_discovered
+							exists = scope:owner_to_reveal.house
+							exists = scope:bad_memory
+							# Only for murder methods with characters who can deliver messages
+						}
+						desc = murder_outcome_reworked.0000.memories.target.voice_overheard
+					}
+					# Else, normal flow.
+					desc = {
+						random_valid = {
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+						}
+						# Reference house feud if appropriate.
+						triggered_desc = {
+							trigger = {
+								existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+							}
+							desc = murder_outcome_reworked.0000.addendum.house_feud.2
+						}
+					}
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	center_portrait = {
+		character = scope:peasant
+		animation = aggressive_spear
+		camera = camera_event_center_pointing_left
+		hide_info = yes
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = alley_night }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+
+	after = {
+		scope:peasant = { silent_disappearance_effect = yes }
+	}
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0043 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1005.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0043.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = fear
+	}
+	center_portrait = {
+		character = scope:peasant
+		animation = sword_yield_start
+		hide_info = yes
+	}
+	right_portrait = {
+		character = scope:target
+		animation = rage
+	}
+	override_background = { reference = alley_night }
+
+	trigger = {
+		murder_requires_grounded_location_trigger = yes
+		murder_outcome_riled_mob_trigger = yes
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+		# Make us a peasant.
+		create_character = {
+			template = generic_peasant_character
+			location = scope:target.capital_province
+			save_scope_as = peasant
+		}
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4005.a.discovered
+					}
+					desc = murder_outcome.4005.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0044 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0044 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0044.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = rage
+	}
+	center_portrait = {
+		character = scope:peasant
+		animation = sword_yield_start
+		camera = camera_event_center_pointing_left
+		hide_info = yes
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = { reference = alley_night }
+
+	immediate = {
+		# Process ending effects.
+		murder_failure_effect = yes
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+
+	after = {
+		scope:peasant = { silent_disappearance_effect = yes }
+	}
+}
+
+##################################################
+# Bricked Up Alive
+# by Linnéa Thimrén
+# 0051 - 0060
+##################################################
+
+scripted_trigger murder_outcome_immurement_trigger = {
+	scope:target = { drinks_alcohol_trigger = yes }
+}
+
+# Owner POV — Success
+murder_outcome_reworked.0051 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1006.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0051.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = toast_goblet
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = bp1_wine_cellar }
+
+	trigger = {
+		murder_requires_grounded_location_trigger = yes
+		murder_outcome_immurement_trigger = yes
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_disappearance }
+		scope:target.location.barony = {
+			set_variable = { #You can find the corpse if you siege the place...
+				name = immured
+				value = scope:target
+			}
+		}
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.2006.a.discovered
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2006.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			is_ai = no
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0052 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0052 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5001.bricked
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = toast_goblet
+	}
+	override_background = { reference = bp1_wine_cellar }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_disappearance }
+ 		if = {
+ 			limit = {
+ 				NOT = { exists = scope:home_province }
+ 			}
+ 			if = {
+	 			limit = { exists = capital_province }
+	 			capital_province = { save_scope_as = home_province }
+	 		}
+ 			else_if = {
+	 			limit = { exists = domicile.domicile_location }
+	 			domicile.domicile_location = { save_scope_as = home_province }
+	 		}
+	 		else = {
+	 			location = { save_scope_as = home_province }
+	 		}
+	 	}
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0053 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1006.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0053.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = fear
+		}
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	override_background = { reference = bp1_wine_cellar }
+
+	trigger = {
+		murder_outcome_immurement_trigger = yes
+		murder_requires_grounded_location_trigger = yes
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4006.a.discovered
+					}
+					desc = murder_outcome.4006.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0054 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0054 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5002.bricked
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = { reference = bp1_wine_cellar }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+ 		if = {
+ 			limit = {
+ 				NOT = { exists = scope:home_province }
+ 			}
+ 			if = {
+	 			limit = { exists = capital_province }
+	 			capital_province = { save_scope_as = home_province }
+	 		}
+ 			else_if = {
+	 			limit = { exists = domicile.domicile_location }
+	 			domicile.domicile_location = { save_scope_as = home_province }
+	 		}
+	 		else = {
+	 			location = { save_scope_as = home_province }
+	 		}
+	 	}
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Sink A Boat They're On
+# by Linnéa Thimrén
+# 0061 - 0070
+##################################################
+
+scripted_trigger murder_outcome_sink_boat_trigger = {
+	# Can't drown if you're not at sea.
+	scope:target = {
+		location = { is_sea_province = yes }
+	}
+}
+
+# Owner POV — Success
+murder_outcome_reworked.0061 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1007.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0061.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = fp1_ocean }
+
+	trigger = { murder_outcome_sink_boat_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.2007.a.discovered
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2007.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		if = {
+			limit = {
+				scope:owner = { has_variable_list = entourage_members_to_kill }
+			}
+			clear_variable_list = entourage_members_to_kill
+		}
+		scope:target = { trigger_event = murder_outcome_reworked.0062 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0062 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		first_valid = {
+			triggered_desc = {
+				trigger = { is_travelling = yes }
+				desc = murder_outcome_reworked.0062.desc_travel
+			}
+			desc = murder_outcome_reworked.0062.desc_port
+		}
+		desc = murder_outcome_reworked.0062.desc
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = fp1_ocean }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0063 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1007.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0063.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = fear
+		}
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	override_background = { reference = fp1_ocean }
+
+	trigger = { murder_outcome_sink_boat_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4007.a.discovered
+					}
+					desc = murder_outcome.4007.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0064 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0064 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0064.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = { reference = fp1_ocean }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Poisoned Drink
+# by Linnéa Thimrén
+# 0071 - 0080
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.0071 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1008.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0071.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = poison
+	}
+	override_background = { reference = feast }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		add_character_flag = {
+			flag = murdered_by_poison
+			years = 5
+		}
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome_reworked.0000.revealed.owner.response.1
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2008.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0072 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.0072 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		### What are they actually drinking?
+		first_valid = {
+			triggered_desc = {
+				trigger = { drinks_alcohol_trigger = yes }
+				desc = murder_outcome.5001.poisoned_drink_alcohol
+			}
+			desc = murder_outcome.5001.poisoned_drink_no_alcohol
+		}
+		desc = murder_outcome.5001.poisoned_drink
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = poison
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = feast }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.0073 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1006.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.0073.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = fear
+		}
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	override_background = { reference = feast }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		show_as_tooltip = { murder_failure_effect = yes }
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4008.a.discovered
+					}
+					desc = murder_outcome.4008.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.0074 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.0074 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.0074.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = { reference = feast }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+##################################################
+# OUTCOMES — CHILDREN
+
+##################################################
+# Left Child In Forest
+# by Petter Vilberg
+# 4001 - 4010
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.4001 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.2201.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4001.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = dismissal
+		hide_info = yes
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = wilderness_scope }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		scope:target.location = { save_scope_as = wilderness_scope }
+		create_character = {
+			template = hunter_template
+			location = scope:target.location
+			culture = scope:target.location.culture
+			faith = scope:target.location.faith
+			save_scope_as = assassin
+		}
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		stress_impact = {
+			base = medium_stress_gain
+			compassionate = major_stress_impact_gain
+		}
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.2201.a.discovered
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2201.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4002 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.4002 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		### Reference scope:assassin, if they exist.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:assassin }
+				desc = murder_outcome.5001.assassin
+			}
+			desc = murder_outcome.5001.courtier
+		}
+		desc = murder_outcome.5001.lured_into_forest
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.success.child
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = dismissal
+		camera = camera_event_center_pointing_left
+		hide_info = yes
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = wilderness_scope }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		grab_best_agent_murderer_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.child }
+
+	after = {
+		hidden_effect = {
+			scope:assassin = { silent_disappearance_effect = yes }
+		}
+	}
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.4003 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.4201.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4003.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	override_background = { reference = wilderness_scope }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		scope:target.location = { save_scope_as = wilderness_scope }
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4201.a.discovered
+					}
+					desc = murder_outcome.4201.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4004 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.4004 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5002.lured_into_forest
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2.servants
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = stress
+	}
+	override_background = { reference = wilderness_scope }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { age < 2 }
+						desc = murder_outcome.5002.infant
+					}
+					desc = murder_outcome.5002.child
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Infant Stabbed To Death
+# by Petter Vilberg
+# 4011 - 4020
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.4011 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1202.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4011.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = assassin
+		hide_info = yes
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = bedchamber }
+
+	trigger = {
+		scope:target = {
+			location = { is_sea_province = no }
+		}
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		create_character = {
+			template = bp2_wet_nurse_template
+			location = scope:target.location
+			culture = scope:target.location.culture
+			faith = scope:target.location.faith
+			save_scope_as = assassin
+		}
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# Sadists & the callous.
+					triggered_desc = {
+						trigger = {
+							OR = {
+								has_trait = sadistic
+								has_trait = callous
+							}
+						}
+						desc = murder_outcome.2202.a.sadistic
+					}
+					# Everyone else.
+					desc = murder_outcome.2202.a
+				}
+			}
+		}
+		trait = sadistic
+		trait = callous
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4012 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.4012 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5001.stab_infant
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.success.baby
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+		desc = murder_outcome_reworked.0000.revealed.scheme_target.success.baby.end
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	center_portrait = {
+		character = scope:assassin
+		animation = assassin
+		camera = camera_event_center_pointing_left
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.child }
+
+	after = {
+		hidden_effect = {
+			scope:assassin = { silent_disappearance_effect = yes }
+		}
+	}
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.4013 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1202.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4013.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	override_background = { reference = bedchamber }
+
+	trigger = {
+		scope:target = {
+			location = { is_sea_province = no }
+		}
+	}
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4202.a
+					}
+					desc = murder_outcome.4001.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4014 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.4014 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5002.stab_infant
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.baby
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+		desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.baby.end
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = stress
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { age < 2 }
+						desc = murder_outcome.5002.infant
+					}
+					desc = murder_outcome.5002.child
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Infant Bitten By Creepy Crawly
+# by Linnéa Thimrén
+# 4021 - 4030
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.4021 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1202.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4021.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = bedchamber }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Creepy crawly
+		set_local_venomous_creature_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# Sadists & the callous.
+					triggered_desc = {
+						trigger = {
+							OR = {
+								has_trait = sadistic
+								has_trait = callous
+							}
+						}
+						desc = murder_outcome.2202.a.sadistic
+					}
+					# Everyone else.
+					desc = murder_outcome.2202.a
+				}
+			}
+		}
+		trait = sadistic
+		trait = callous
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4022 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.4022 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5001.infant_creepy_crawly
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.success.baby
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+		desc = murder_outcome_reworked.0000.revealed.scheme_target.success.baby.end
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.child }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.4023 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1202.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4023.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	override_background = { reference = bedchamber }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Creepy crawly
+		set_local_venomous_creature_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4202.a
+					}
+					desc = murder_outcome.4001.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4024 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.4024 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.4024.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.baby.2
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+		desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.baby.end
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = stress
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { age < 2 }
+						desc = murder_outcome.5002.infant
+					}
+					desc = murder_outcome.5002.child
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Poisoned Candy
+# by Linnéa Thimrén
+# 4031 - 4040
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.4031 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1202.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4031.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = poison
+	}
+	override_background = { reference = courtyard }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		add_character_flag = {
+			flag = murdered_by_poison
+			years = 5
+		}
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# Sadists & the callous.
+					triggered_desc = {
+						trigger = {
+							OR = {
+								has_trait = sadistic
+								has_trait = callous
+							}
+						}
+						desc = murder_outcome.2202.a.sadistic
+					}
+					# Everyone else.
+					desc = murder_outcome.2202.a
+				}
+			}
+		}
+		trait = sadistic
+		trait = callous
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4032 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.4032 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5001.poisoned_candy
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.success.child
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = poison
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = courtyard }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.child }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.4033 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1202.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4033.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	override_background = { reference = courtyard }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4204.a
+					}
+					desc = murder_outcome.4001.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4034 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.4034 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.4034.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2.servants
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = stress
+	}
+	override_background = { reference = courtyard }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = murder_outcome.5002.will_find_out
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+	}
+
+	option = {
+		name = murder_outcome.5002.revenge_will_be_had
+		trigger = {
+			exists = scope:scheme_discovered
+		}
+		add_character_modifier = {
+			modifier = watchful_modifier
+			days = watchful_modifier_duration
+			}
+	}
+}
+
+##################################################
+# Child Pushed To Death
+# by Linnéa Thimrén
+# 4041 - 4050
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.4041 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.2205.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4041.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = courtyard }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+		# Try to sort something to lure them in.
+		rooftop_murder_lure_for_child_effect = yes
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# Sadists & the callous.
+					triggered_desc = {
+						trigger = {
+							OR = {
+								has_trait = sadistic
+								has_trait = callous
+							}
+						}
+						desc = murder_outcome.2202.a.sadistic
+					}
+					# Everyone else.
+					desc = murder_outcome.2202.a
+				}
+			}
+		}
+		trait = sadistic
+		trait = callous
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4042 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.4042 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_dog }
+				desc = murder_outcome.5001.child_pushed_dog
+			}
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_cat }
+				desc = murder_outcome.5001.child_pushed_cat
+			}
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_toy }
+				desc = murder_outcome.5001.child_pushed_toy
+			}
+			desc = murder_outcome.5001.child_pushed
+		}
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.success.child
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = courtyard }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# First we kill dogs.
+		if = {
+			limit = {
+				scope:murder_method = flag:child_pushed
+				exists = scope:child_pushed_dog
+			}
+			show_as_tooltip = {
+				scope:target = {
+					remove_dog_story_modifiers_effect = yes
+				}
+			}
+			scope:target = {
+				random_owned_story = {
+					limit = { story_type = story_cycle_pet_dog }
+					hidden_effect = { end_story = yes }
+				}
+			}
+		}
+		# Then we kill cats.
+		else_if = {
+			limit = {
+				scope:murder_method = flag:child_pushed
+				exists = scope:child_pushed_cat
+				NOT = { exists = scope:cat_survives }
+			}
+			show_as_tooltip = {
+				scope:target = {
+					remove_cat_story_modifiers_effect = yes
+				}
+			}
+			scope:target = {
+				random_owned_story = {
+					limit = { story_type = story_cycle_pet_cat }
+					hidden_effect = { end_story = yes }
+				}
+			}
+		}
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.child }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.4043 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1202.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.4043.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_dog }
+				desc = murder_outcome.4205.desc_dog
+			}
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_cat }
+				desc = murder_outcome.4205.desc_cat
+			}
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_toy }
+				desc = murder_outcome.4205.desc_toy
+			}
+			desc = murder_outcome.4205.desc_nothing
+		}
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	override_background = { reference = courtyard }
+
+	trigger = { murder_requires_grounded_location_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+		# Try to sort something to lure them in.
+		rooftop_murder_lure_for_child_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4202.a
+					}
+					desc = murder_outcome.4001.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.4044 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.4044 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_dog }
+				desc = murder_outcome.5002.child_pushed_dog
+			}
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_cat }
+				desc = murder_outcome.5002.child_pushed_cat
+			}
+			triggered_desc = {
+				trigger = { exists = scope:child_pushed_toy }
+				desc = murder_outcome.5002.child_pushed_toy
+			}
+			desc = murder_outcome.5002.child_pushed
+		}
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2.servants
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = stress
+	}
+	override_background = { reference = courtyard }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { age < 2 }
+						desc = murder_outcome.5002.infant
+					}
+					desc = murder_outcome.5002.child
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+##################################################
+# OUTCOMES — PRISON
+
+##################################################
+# Beaten To Death In Prison
+# by Petter Vilberg
+# 7001 - 7010
+##################################################
+
+scripted_trigger murder_outcome_beaten_to_death_in_dungeon_trigger = {
+	# Should be in the right type of prison.
+	scope:target = { is_in_prison_type = dungeon }
+}
+
+# Owner POV — Success
+murder_outcome_reworked.7001 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.2301.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.7001.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = dungeon }
+
+	trigger = { murder_outcome_beaten_to_death_in_dungeon_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.2301.a.discovered
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2301.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.7002 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.7002 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5001.beat_to_death_in_dungeon
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				first_valid = {
+					# Reference an appropriate negative memory if we've got one set up.
+					triggered_desc = {
+						trigger = {
+							exists = scope:scheme_discovered
+							exists = scope:owner_to_reveal.house
+							exists = scope:bad_memory
+							# Only for murder methods with characters who can deliver messages
+						}
+						desc = murder_outcome_reworked.0000.memories.target.voice_overheard
+					}
+					# Else, normal flow.
+					desc = {
+						random_valid = {
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+						}
+						# Reference house feud if appropriate.
+						triggered_desc = {
+							trigger = {
+								existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+							}
+							desc = murder_outcome_reworked.0000.addendum.house_feud.2
+						}
+					}
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = dungeon }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.7003 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.4301.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.7003.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = fear
+		}
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	override_background = { reference = dungeon }
+
+	trigger = { murder_outcome_beaten_to_death_in_dungeon_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4301.a.discovered
+					}
+					desc = murder_outcome.4001.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.7004 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.7004 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.7004.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = { reference = dungeon }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Unwelcome Guest - House Arrest
+# by Petter Vilberg
+# 7011 - 7020
+##################################################
+
+scripted_trigger murder_outcome_house_arrest_generic_trigger = {
+	# Should be in the right type of prison.
+	scope:target = { is_in_prison_type = house_arrest }
+}
+
+# Owner POV — Success
+murder_outcome_reworked.7011 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.2302.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.7011.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	override_background = { reference = bedchamber }
+
+	trigger = { murder_outcome_house_arrest_generic_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2001.b
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.2302.a.discovered
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2302.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.7012 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.7012 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome_reworked.7012.desc
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				first_valid = {
+					# Reference an appropriate negative memory if we've got one set up.
+					triggered_desc = {
+						trigger = {
+							exists = scope:scheme_discovered
+							exists = scope:owner_to_reveal.house
+							exists = scope:bad_memory
+							# Only for murder methods with characters who can deliver messages
+						}
+						desc = murder_outcome_reworked.0000.memories.target.voice_overheard
+					}
+					# Else, normal flow.
+					desc = {
+						random_valid = {
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1
+							desc = murder_outcome_reworked.0000.revealed.scheme_target.success.2
+						}
+						# Reference house feud if appropriate.
+						triggered_desc = {
+							trigger = {
+								existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+							}
+							desc = murder_outcome_reworked.0000.addendum.house_feud.2
+						}
+					}
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = map_fear
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.adult }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.7013 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.4302.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.7013.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = fear
+		}
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	override_background = { reference = bedchamber }
+
+	trigger = { murder_outcome_house_arrest_generic_trigger = yes }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.4302.a.discovered
+					}
+					desc = murder_outcome.4001.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.7014 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.7014 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5002.unwelcome_guest_house_arrest
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1
+					desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.2
+				}
+				# Reference house feud if appropriate.
+				triggered_desc = {
+					trigger = {
+						existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+					}
+					desc = murder_outcome_reworked.0000.addendum.house_feud.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		triggered_animation = {
+			trigger = { exists = scope:scheme_discovered }
+			animation = rage
+		}
+		animation = paranoia
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = fear
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome.5002.revenge_will_be_had
+					}
+					desc = murder_outcome.5002.will_find_out
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+##################################################
+# OUTCOMES — SPECIAL/OTHER
+
+##################################################
+# Strangling Incapable
+# by a mysterious designer in a bygone age
+# 8001 - 8010
+##################################################
+
+# Owner POV — Success
+murder_outcome_reworked.8001 = {
+	type = character_event
+	window = scheme_successful_event
+	title = murder_outcome.1401.t
+	desc = {
+		# Opening.
+		## Intro.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.success_declaration.generic.1
+			desc = murder_outcome_reworked.0000.success_declaration.generic.2
+			desc = murder_outcome_reworked.0000.success_declaration.generic.3
+		}
+		## Reference an appropriate negative memory if we've got one.
+		first_valid = {
+			## General.
+			triggered_desc = {
+				trigger = { exists = scope:bad_memory }
+				desc = murder_outcome_reworked.0000.memories.bad.general
+			}
+			## House feud.
+			triggered_desc = {
+				trigger = {
+					existing_feud_against_target_trigger = { TARGET = scope:target }
+				}
+				desc = murder_outcome_reworked.0000.memories.bad.house_feud
+			}
+			## Nothin'.
+			desc = murder_outcome_reworked.0000.memories.line_break
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.8001.desc
+		# Secrecy.
+		first_valid = {
+			# Scheme revealed.
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.success.1
+					}
+				}
+			}
+			# Scheme unrevealed.
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:target
+		animation = dead
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# General owner success effects.
+		scheme_owner_pov_murder_success_effect = { REASON = death_mysterious }
+	}
+
+	# No further action to take.
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					# House feud.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome.2401.a.discovered
+					}
+					# Scheme discovered.
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome_reworked.0000.revealed.owner.response.1
+					}
+					# Not caught in the act.
+					desc = murder_outcome.2401.a
+				}
+			}
+		}
+	}
+
+	# Feuding, opt to stop.
+	option = {
+		name = murder_outcome.2001.c
+		trigger = {
+			existing_feud_against_target_trigger = { TARGET = scope:target }
+		}
+		show_as_tooltip = { house_feud_end_modifier_effect = yes }
+		house_feud_end_story_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.8002 }
+	}
+}
+
+# Target POV — Success
+murder_outcome_reworked.8002 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5001.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5001.strangle_incapable
+		## Not an appropriate death to reveal as being due to scope:owner's bad memories of scope:target.
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.success.1.incapable
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = dead
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = schadenfreude
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process target murder effects.
+		murder_success_kill_effect = { REASON = death_mysterious }
+	}
+
+	option = { name = murder_outcome_reworked.0000.successful_scheme_target.incapable }
+}
+
+# Owner POV — Failure
+murder_outcome_reworked.8003 = {
+	type = character_event
+	window = scheme_failed_event
+	title = murder_outcome.1401.t
+	desc = {
+		# Opening.
+		random_valid = {
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.1
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.2
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.3
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.4
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.5
+			desc = murder_outcome_reworked.0000.failure_declaration.generic.6
+		}
+		# What was our plan?
+		desc = murder_outcome_reworked.8003.desc
+		# Secrecy.
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:scheme_discovered }
+				desc = {
+					random_valid = {
+						desc = murder_outcome_reworked.0000.revealed.generic.1
+						desc = murder_outcome_reworked.0000.revealed.failure.1
+					}
+					# Reference house feud if appropriate.
+					triggered_desc = {
+						trigger = {
+							existing_feud_against_target_trigger = { TARGET = scope:target }
+						}
+						desc = murder_outcome_reworked.0000.addendum.house_feud.1
+					}
+				}
+			}
+			desc = {
+				random_valid = {
+					desc = murder_outcome_reworked.0000.kept_secret.generic.1
+					desc = murder_outcome_reworked.0000.kept_secret.generic.2
+				}
+			}
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:owner
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:target
+		animation = shiver
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+		# Process ending effects.
+		murder_failure_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { exists = scope:scheme_discovered }
+						desc = murder_outcome_reworked.0000.revealed.owner.response.1
+					}
+					desc = murder_outcome.4401.a
+				}
+			}
+		}
+		scope:scheme = { end_scheme = yes }
+	}
+
+	option = {
+		name = murder_outcome.4001.b
+		trigger = {
+			NOT = { exists = scope:scheme_discovered }
+		}
+		restart_murder_scheme_effect = yes
+	}
+
+	# Fire the rest of the outcome.
+	after = {
+		scope:target = { trigger_event = murder_outcome_reworked.8004 }
+	}
+}
+
+# Target POV — Failure
+murder_outcome_reworked.8004 = {
+	type = character_event
+	window = scheme_target_event
+	title = murder_outcome.5002.t
+	desc = {
+		# Opening.
+		## Plan.
+		desc = murder_outcome.5002.strangle_incapable
+		# Secrecy.
+		triggered_desc = {
+			trigger = {
+				exists = scope:scheme_discovered
+				exists = scope:owner_to_reveal
+			}
+			desc = murder_outcome_reworked.0000.revealed.scheme_target.failure.1.incapable
+		}
+		# Reference house feud if appropriate.
+		triggered_desc = {
+			trigger = {
+				existing_feud_against_target_trigger = { TARGET = scope:owner_to_reveal }
+			}
+			desc = murder_outcome_reworked.0000.addendum.house_feud.2.2
+		}
+	}
+	theme = murder_scheme
+	left_portrait = {
+		character = scope:target
+		animation = shiver
+	}
+	right_portrait = {
+		character = scope:owner_to_reveal
+		animation = stress
+	}
+	override_background = { reference = bedchamber }
+
+	immediate = {
+		# Toggleable for loc testing.
+		debug_sort_scheme_scopes_for_testing_effect = yes
+	}
+
+	option = { name = murder_outcome.5002.option_incapable }
+}

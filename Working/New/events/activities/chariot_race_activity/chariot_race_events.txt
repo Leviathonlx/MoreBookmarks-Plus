@@ -1,0 +1,4523 @@
+﻿@high_bet_value = 200
+@medium_bet_value = 150
+@low_bet_value = 100
+@miniscule_bet_value = 50
+
+namespace = chariot_race
+
+# Opening event for the spectators
+# by Chad Uhl & Jason Cantalini
+chariot_race.0001 = {
+	type = activity_event
+	title = chariot_race.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					root = scope:host
+				}
+				desc = chariot_race.0001.desc
+			}
+			desc = chariot_race.0001.desc_spectator
+		}
+	}
+	theme = chariot_race
+	override_background = {
+		trigger = {
+			scope:activity.activity_location = {
+				this = province:496
+			}
+		}
+		reference = ep3_constantinople
+	}
+	override_background = {
+		trigger = {
+			scope:activity.activity_location = {
+				NOT = { this = province:496 }
+			}
+		}
+		reference = tour_arrival
+	}
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				root = scope:host
+			}
+			animation = personality_honorable
+		}
+		triggered_animation = {
+			trigger = {
+				NOT = { root = scope:host }
+			}
+			animation = happiness
+		}
+	}
+	cooldown = { years = 1 }
+
+	option = {
+		name = chariot_race.0001.a
+		if = {
+			limit = {
+				NOR = {
+					root = scope:host
+					has_trait = shy
+					has_trait = temperate
+					has_trait = zealous
+				}
+			}
+			add_stress = miniscule_stress_loss
+		}
+		if = {
+			limit = {
+				root = scope:host
+			}
+			capital_province.county = {
+				change_development_progress = minor_development_progress_gain
+			}
+			change_influence = minor_influence_gain
+		}
+		else = {
+			change_influence = miniscule_influence_gain
+		}
+	}
+}
+
+#########################################################################
+###
+### GAMBLING SYSTEM EVENTS
+###
+
+# Open the betting
+# by Chad Uhl & Jason Cantalini
+chariot_race.0100 = {
+	type = activity_event
+	title = chariot_race.0100.t
+	desc = {
+		desc = chariot_race.0100.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { this = scope:host }
+				desc = chariot_race.0100.desc.emperor
+			}
+			desc = chariot_race.0100.desc.others
+		}
+	}
+	theme = chariot_race
+	
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				root = scope:host
+			}
+			animation = drink_goblet
+		}
+		animation = betting
+	}
+	center_portrait = {
+		character = scope:bookmaker
+		triggered_animation = {
+			trigger = {
+				root = scope:host
+			}
+			animation = obsequious_bow
+		}
+		triggered_animation = {
+			trigger = {
+				NOT = { root = scope:host }
+			}
+			animation = reading
+		}
+		camera = camera_event_right
+	}
+
+	option = { # Blues
+		name = chariot_race.0100.a
+		flavor = BLUE_VENETOI_GLOSS
+		trait = charioteer_blue
+
+		if = {
+			limit = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position = { has_trait = charioteer_blue }
+			}
+			court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+			custom_tooltip = chariot_race.influence_from_employed_charioteer
+		}
+		custom_tooltip = chariot_race.0110.d.blue_odds_to_win
+		custom_tooltip = chariot_race.0110.d.blue_odds_to_place
+		custom_tooltip = chariot_race.0110.d.blue_odds_to_show
+		if = {
+			limit = {
+				is_ai = no
+			}
+			custom_tooltip = chariot_race.0110.number_betting_blue
+		}
+
+		set_variable = {
+			name = wager_team
+			value = flag:blues
+		}
+
+		scope:activity = {
+			if = {
+				limit = { has_variable = characters_betting_blue }
+				change_variable = {
+					name = characters_betting_blue
+					add = 1
+				}
+			}
+			else = {
+				set_variable = {
+					name = characters_betting_blue
+					value = 1
+				}
+			}
+		}
+
+		trigger_event = chariot_race.0110
+
+		stress_impact = {
+			content = miniscule_stress_impact_gain
+			cynical = miniscule_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position ?= {
+					has_trait = charioteer_blue
+				}
+				add = 50
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					short_term_gold <= 50
+					has_trait = content
+					has_trait = cynical
+					has_trait = paranoid
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_council_position = councillor_court_chaplain
+					any_held_title = { is_head_of_faith = yes }
+				}
+				OR = {
+					NOR = {
+						has_trait = greedy
+						has_trait = eccentric
+					}
+					piety_level < 1
+				}
+			}
+		}
+	}
+
+	option = { # Greens
+		name = chariot_race.0100.b
+		flavor = GREEN_PRASINOI_GLOSS
+		trait = charioteer_green
+
+		if = {
+			limit = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position = { has_trait = charioteer_green }
+			}
+			court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+			custom_tooltip = chariot_race.influence_from_employed_charioteer
+		}
+		custom_tooltip = chariot_race.0110.d.green_odds_to_win
+		custom_tooltip = chariot_race.0110.d.green_odds_to_place
+		custom_tooltip = chariot_race.0110.d.green_odds_to_show
+		if = {
+			limit = {
+				is_ai = no
+			}
+			custom_tooltip = chariot_race.0110.number_betting_green
+		}
+		
+		set_variable = {
+			name = wager_team
+			value = flag:greens
+		}
+
+		scope:activity = {
+			if = {
+				limit = { has_variable = characters_betting_green }
+				change_variable = {
+					name = characters_betting_green
+					add = 1
+				}
+			}
+			else = {
+				set_variable = {
+					name = characters_betting_green
+					value = 1
+				}
+			}
+		}
+
+		trigger_event = chariot_race.0110
+
+		stress_impact = {
+			content = miniscule_stress_impact_gain
+			cynical = miniscule_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position ?= {
+					has_trait = charioteer_green
+				}
+				add = 50
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					short_term_gold <= 50
+					has_trait = content
+					has_trait = cynical
+					has_trait = paranoid
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_council_position = councillor_court_chaplain
+					any_held_title = { is_head_of_faith = yes }
+				}
+				OR = {
+					NOR = {
+						has_trait = greedy
+						has_trait = eccentric
+					}
+					piety_level < 1
+				}
+			}
+		}
+	}
+
+	option = { # Whites
+		name = chariot_race.0100.c
+		flavor = WHITE_LEUKOI_GLOSS
+		trait = charioteer_white
+
+		if = {
+			limit = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position = { has_trait = charioteer_white }
+			}
+			court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+			custom_tooltip = chariot_race.influence_from_employed_charioteer
+		}
+		custom_tooltip = chariot_race.0110.d.white_odds_to_win
+		custom_tooltip = chariot_race.0110.d.white_odds_to_place
+		custom_tooltip = chariot_race.0110.d.white_odds_to_show
+		if = {
+			limit = {
+				is_ai = no
+			}
+			custom_tooltip = chariot_race.0110.number_betting_white
+		}
+		
+		set_variable = {
+			name = wager_team
+			value = flag:whites
+		}
+
+		scope:activity = {
+			if = {
+				limit = { has_variable = characters_betting_white }
+				change_variable = {
+					name = characters_betting_white
+					add = 1
+				}
+			}
+			else = {
+				set_variable = {
+					name = characters_betting_white
+					value = 1
+				}
+			}
+		}
+
+		trigger_event = chariot_race.0110
+
+		stress_impact = {
+			content = miniscule_stress_impact_gain
+			cynical = miniscule_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position ?= {
+					has_trait = charioteer_white
+				}
+				add = 50
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					short_term_gold <= 50
+					has_trait = content
+					has_trait = cynical
+					has_trait = paranoid
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_council_position = councillor_court_chaplain
+					any_held_title = { is_head_of_faith = yes }
+				}
+				OR = {
+					NOR = {
+						has_trait = greedy
+						has_trait = eccentric
+					}
+					piety_level < 1
+				}
+			}
+		}
+	}
+
+	option = { # Reds
+		name = chariot_race.0100.d
+		flavor = RED_RHOUSIOI_GLOSS
+		trait = charioteer_red
+
+		if = {
+			limit = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position = { has_trait = charioteer_red }
+			}
+			court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+			custom_tooltip = chariot_race.influence_from_employed_charioteer
+		}
+		custom_tooltip = chariot_race.0110.d.red_odds_to_win
+		custom_tooltip = chariot_race.0110.d.red_odds_to_place
+		custom_tooltip = chariot_race.0110.d.red_odds_to_show
+		if = {
+			limit = {
+				is_ai = no
+			}
+			custom_tooltip = chariot_race.0110.number_betting_red
+		}
+		
+		set_variable = {
+			name = wager_team
+			value = flag:reds
+		}
+
+		scope:activity = {
+			if = {
+				limit = { has_variable = characters_betting_red }
+				change_variable = {
+					name = characters_betting_red
+					add = 1
+				}
+			}
+			else = {
+				set_variable = {
+					name = characters_betting_red
+					value = 1
+				}
+			}
+		}
+
+		trigger_event = chariot_race.0110
+
+		stress_impact = {
+			content = miniscule_stress_impact_gain
+			cynical = miniscule_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position ?= {
+					has_trait = charioteer_red
+				}
+				add = 50
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					short_term_gold <= 50
+					has_trait = content
+					has_trait = cynical
+					has_trait = paranoid
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_council_position = councillor_court_chaplain
+					any_held_title = { is_head_of_faith = yes }
+				}
+				OR = {
+					NOR = {
+						has_trait = greedy
+						has_trait = eccentric
+					}
+					piety_level < 1
+				}
+			}
+		}
+	}
+	
+	option = { # Don't place a bet
+		name = chariot_race.0100.e
+		stress_impact = {
+			greedy = miniscule_stress_impact_gain
+			ambitious = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			ai_value_modifier = {
+				ai_boldness = -1
+				ai_greed = -1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = greedy
+					has_trait = ambitious
+				}
+			}
+		}
+	}
+}
+
+scripted_effect save_charioteer_scopes_by_faction_effect = {
+	scope:activity = {
+		switch = {
+			trigger = root.var:wager_team
+			flag:blues = {
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_blue
+					}
+					save_scope_as = faction_1
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_blue
+						NOT = { this = scope:faction_1 }
+					}
+					save_scope_as = faction_2
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_blue
+						NOR = {
+							this = scope:faction_1
+							this = scope:faction_2
+						}
+					}
+					save_scope_as = faction_3
+				}
+			}
+			flag:greens = {
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_green
+					}
+					save_scope_as = faction_1
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_green
+						NOT = { this = scope:faction_1 }
+					}
+					save_scope_as = faction_2
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_green
+						NOR = {
+							this = scope:faction_1
+							this = scope:faction_2
+						}
+					}
+					save_scope_as = faction_3
+				}
+			}
+			flag:whites = {
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_white
+					}
+					save_scope_as = faction_1
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_white
+						NOT = { this = scope:faction_1 }
+					}
+					save_scope_as = faction_2
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_white
+						NOR = {
+							this = scope:faction_1
+							this = scope:faction_2
+						}
+					}
+					save_scope_as = faction_3
+				}
+			}
+			flag:reds = {
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_red
+					}
+					save_scope_as = faction_1
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_red
+						NOT = { this = scope:faction_1 }
+					}
+					save_scope_as = faction_2
+				}
+				random_guest_subset = {
+					name = charioteers
+					limit = {
+						has_trait = charioteer_red
+						NOR = {
+							this = scope:faction_1
+							this = scope:faction_2
+						}
+					}
+					save_scope_as = faction_3
+				}
+			}
+		}
+	}
+}
+
+# Choose which character to bet on
+# by Chad Uhl & Jason Cantalini
+chariot_race.0110 = {
+	type = activity_event
+	title = chariot_race.0110.t
+	desc = chariot_race.0110.desc
+	theme = chariot_race
+
+	left_portrait = {
+		character = scope:faction_1
+		animation = hero_flex
+	}
+	center_portrait = {
+		character = scope:faction_2
+		animation = war_defender
+		camera = camera_event_left_wedding
+	}
+	right_portrait = {
+		character = scope:faction_3
+		animation = wrestling_victory
+		camera = camera_event_right_pointing_left
+	}
+	lower_left_portrait = scope:bookmaker
+
+	immediate = {
+		# for tooltip loc
+		save_scope_as = root_scope
+		save_charioteer_scopes_by_faction_effect = yes
+	}
+
+	option = { # Bet on faction_1
+		name = chariot_race.0110.a
+		highlight_portrait = scope:faction_1
+		flavor = chariot_race.0110.a.flavor
+		if = {
+			limit = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position = scope:faction_1
+			}
+			court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+			custom_tooltip = chariot_race.influence_from_employed_charioteer
+		}
+		custom_tooltip = chariot_race.0110.a.odds_to_win
+		custom_tooltip = chariot_race.0110.a.odds_to_place
+		custom_tooltip = chariot_race.0110.a.odds_to_show
+		set_variable = {
+			name = wager_target
+			value = scope:faction_1
+		}
+		stress_impact = {
+			ambitious = miniscule_stress_impact_loss
+			trusting = miniscule_stress_impact_loss
+			greedy = miniscule_stress_impact_loss
+			content = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = content
+					has_trait = cynical
+				}
+			}
+		}
+	}
+	option = { # Bet on faction_2
+		name = chariot_race.0110.b
+		highlight_portrait = scope:faction_2
+		flavor = chariot_race.0110.b.flavor
+		if = {
+			limit = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position = scope:faction_2
+			}
+			court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+			custom_tooltip = chariot_race.influence_from_employed_charioteer
+		}
+		custom_tooltip = chariot_race.0110.b.odds_to_win
+		custom_tooltip = chariot_race.0110.b.odds_to_place
+		custom_tooltip = chariot_race.0110.b.odds_to_show
+		set_variable = {
+			name = wager_target
+			value = scope:faction_2
+		}
+		stress_impact = {
+			ambitious = miniscule_stress_impact_loss
+			trusting = miniscule_stress_impact_loss
+			greedy = miniscule_stress_impact_loss
+			content = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = content
+					has_trait = cynical
+				}
+			}
+		}
+	}
+	option = { # Bet on faction_3
+		name = chariot_race.0110.c
+		trigger = { exists = scope:faction_3 }
+		highlight_portrait = scope:faction_3
+		flavor = chariot_race.0110.c.flavor
+		if = {
+			limit = {
+				employs_court_position = charioteer_court_position
+				court_position:charioteer_court_position = scope:faction_3
+			}
+			court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+			custom_tooltip = chariot_race.influence_from_employed_charioteer
+		}
+		custom_tooltip = chariot_race.0110.c.odds_to_win
+		custom_tooltip = chariot_race.0110.c.odds_to_place
+		custom_tooltip = chariot_race.0110.c.odds_to_show
+		set_variable = {
+			name = wager_target
+			value = scope:faction_3
+		}
+		stress_impact = {
+			ambitious = miniscule_stress_impact_loss
+			trusting = miniscule_stress_impact_loss
+			greedy = miniscule_stress_impact_loss
+			content = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = content
+					has_trait = cynical
+				}
+			}
+		}
+	}
+	option = { # Bet on any of the faction members
+		name = chariot_race.0110.d
+		flavor = chariot_race.0110.d.flavor
+		switch = {
+			trigger = var:wager_team
+			flag:blues = {
+				if = {
+					limit = {
+						employs_court_position = charioteer_court_position
+						court_position:charioteer_court_position = { has_trait = charioteer_blue }
+					}
+					court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+					custom_tooltip = chariot_race.influence_from_employed_charioteer
+				}
+				custom_tooltip = chariot_race.0110.d.blue_odds_to_win
+				custom_tooltip = chariot_race.0110.d.blue_odds_to_place
+				custom_tooltip = chariot_race.0110.d.blue_odds_to_show
+			}
+			flag:greens = {
+				if = {
+					limit = {
+						employs_court_position = charioteer_court_position
+						court_position:charioteer_court_position = { has_trait = charioteer_green }
+					}
+					court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+					custom_tooltip = chariot_race.influence_from_employed_charioteer
+				}
+				custom_tooltip = chariot_race.0110.d.green_odds_to_win
+				custom_tooltip = chariot_race.0110.d.green_odds_to_place
+				custom_tooltip = chariot_race.0110.d.green_odds_to_show
+			}
+			flag:whites = {
+				if = {
+					limit = {
+						employs_court_position = charioteer_court_position
+						court_position:charioteer_court_position = { has_trait = charioteer_white }
+					}
+					court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+					custom_tooltip = chariot_race.influence_from_employed_charioteer
+				}
+				custom_tooltip = chariot_race.0110.d.white_odds_to_win
+				custom_tooltip = chariot_race.0110.d.white_odds_to_place
+				custom_tooltip = chariot_race.0110.d.white_odds_to_show
+			}
+			flag:reds = {
+				if = {
+					limit = {
+						employs_court_position = charioteer_court_position
+						court_position:charioteer_court_position = { has_trait = charioteer_red }
+					}
+					court_position:charioteer_court_position = { save_scope_as = my_charioteer }
+					custom_tooltip = chariot_race.influence_from_employed_charioteer
+				}
+				custom_tooltip = chariot_race.0110.d.red_odds_to_win
+				custom_tooltip = chariot_race.0110.d.red_odds_to_place
+				custom_tooltip = chariot_race.0110.d.red_odds_to_show
+			}
+		}
+		set_variable = {
+			name = wager_target
+			value = root
+		}
+		stress_impact = {
+			cynical = miniscule_stress_impact_loss
+			content = miniscule_stress_impact_loss
+			ambitious = minor_stress_impact_gain
+			trusting = minor_stress_impact_gain
+			greedy = miniscule_stress_impact_gain
+			brave = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = -1
+				ai_greed = -1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = ambitious
+					has_trait = trusting
+				}
+			}
+		}
+	}
+
+	after = {
+		trigger_event = chariot_race.0120
+	}
+}
+
+chariot_race.0120 = {
+	type = activity_event
+	title = chariot_race.0120.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:wager_target = root }
+				desc = chariot_race.0120.desc.team
+			}
+			desc = chariot_race.0120.desc
+		}
+	}
+	theme = chariot_race
+
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	center_portrait = {
+		character = scope:bookmaker
+		animation = writing
+		camera = camera_event_right
+	}
+	lower_center_portrait = {
+		trigger = { NOT = { var:wager_target ?= root } }
+		character = var:wager_target
+	}
+
+	option = {
+		name = chariot_race.0120.a
+		if = {
+			limit = { var:wager_target ?= this }
+			switch = {
+				trigger = var:wager_team
+				flag:blues = { custom_tooltip = chariot_race.0110.d.blue_odds_to_win }
+				flag:greens = { custom_tooltip = chariot_race.0110.d.green_odds_to_win }
+				flag:whites = { custom_tooltip = chariot_race.0110.d.white_odds_to_win }
+				flag:reds = { custom_tooltip = chariot_race.0110.d.red_odds_to_win }
+			}
+		}
+		else = {
+			custom_tooltip = chariot_race.0120.a.info
+		}
+			
+		# Show chance to win and payout
+		set_variable = {
+			name = wager_type
+			value = flag:win
+		}
+		stress_impact = {
+			ambitious = miniscule_stress_impact_loss
+			content = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = content
+					has_trait = cynical
+					has_trait = paranoid
+				}
+			}
+		}
+	}
+	option = {
+		name = chariot_race.0120.b
+		if = {
+			limit = { var:wager_target ?= this }
+			switch = {
+				trigger = var:wager_team
+				flag:blues = { custom_tooltip = chariot_race.0110.d.blue_odds_to_place }
+				flag:greens = { custom_tooltip = chariot_race.0110.d.green_odds_to_place }
+				flag:whites = { custom_tooltip = chariot_race.0110.d.white_odds_to_place }
+				flag:reds = { custom_tooltip = chariot_race.0110.d.red_odds_to_place }
+			}
+		}
+		else = {
+			custom_tooltip = chariot_race.0120.b.info
+		}
+		set_variable = {
+			name = wager_type
+			value = flag:place
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	option = {
+		name = chariot_race.0120.c
+		if = {
+			limit = { var:wager_target ?= this }
+			switch = {
+				trigger = var:wager_team
+				flag:blues = { custom_tooltip = chariot_race.0110.d.blue_odds_to_show }
+				flag:greens = { custom_tooltip = chariot_race.0110.d.green_odds_to_show }
+				flag:whites = { custom_tooltip = chariot_race.0110.d.white_odds_to_show }
+				flag:reds = { custom_tooltip = chariot_race.0110.d.red_odds_to_show }
+			}
+		}
+		else = {
+			custom_tooltip = chariot_race.0120.c.info
+		}
+		set_variable = {
+			name = wager_type
+			value = flag:show
+		}
+		stress_impact = {
+			content = miniscule_stress_impact_loss
+			ambitious = minor_stress_impact_gain
+			trusting = minor_stress_impact_gain
+			greedy = miniscule_stress_impact_gain
+			brave = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = -1
+				ai_greed = -1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = ambitious
+					has_trait = trusting
+					has_trait = greedy
+					has_trait = brave
+				}
+			}
+		}
+	}
+
+	after = {
+		trigger_event = chariot_race.0130
+	}
+}
+
+scripted_effect place_wager_effect = {
+	show_as_tooltip = {
+		pay_short_term_gold = {
+			target = scope:bookmaker
+			gold = $WAGER_VALUE$
+		}
+	}
+	hidden_effect = { remove_short_term_gold = $WAGER_VALUE$ }
+	set_variable = {
+		name = wager_value
+		value = $WAGER_VALUE$
+	}
+	scope:activity = {
+		change_variable = {
+			name = chariot_race_pot
+			add = $WAGER_VALUE$
+		}
+	}
+	trigger_event = {
+		id = chariot_race_ongoing_jp.0600
+		days = 3
+	}
+}
+
+chariot_race.0130 = {
+	type = activity_event
+	title = chariot_race.0130.t
+	desc = chariot_race.0130.desc
+	theme = chariot_race
+
+	left_portrait = {
+		character = root
+		animation = war_defender
+	}
+	center_portrait = {
+		character = scope:bookmaker
+		animation = writing
+		camera = camera_event_right
+	}
+	lower_center_portrait = {
+		trigger = { NOT = { root.var:wager_target = root } }
+		character = root.var:wager_target
+	}
+
+	option = {
+		name = chariot_race.0130.a
+
+		show_as_unavailable = { gold <= @high_bet_value }
+		place_wager_effect = { WAGER_VALUE = @high_bet_value }
+
+		stress_impact = {
+			content = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+			profligate = medium_stress_loss
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_greed = 1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = content
+					has_trait = cynical
+					has_trait = paranoid
+				}
+			}
+		}
+	}
+
+	option = {
+		name = chariot_race.0130.b 
+		show_as_unavailable = { gold <= @medium_bet_value }
+		place_wager_effect = { WAGER_VALUE = @medium_bet_value }
+
+		stress_impact = {
+			content = miniscule_stress_impact_gain
+			profligate = medium_stress_loss
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 0.5
+				ai_greed = 0.5
+				ai_rationality = 0.5
+			}
+			modifier = {
+				factor = 0
+				has_trait = content
+			}
+		}
+	}
+ 
+	option = {
+		name = chariot_race.0130.c
+		show_as_unavailable = { gold <= @low_bet_value }
+		place_wager_effect = { WAGER_VALUE = @low_bet_value }
+
+		stress_impact = {
+			ambitious = miniscule_stress_impact_gain
+			profligate = medium_stress_loss
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = -0.5
+				ai_greed = -0.5
+				ai_rationality = 0.5
+			}
+			modifier = {
+				factor = 0
+				has_trait = ambitious
+			}
+		}
+	}
+
+	option = {
+		name = chariot_race.0130.d
+		place_wager_effect = { WAGER_VALUE = @miniscule_bet_value }
+
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			trusting = minor_stress_impact_gain
+			greedy = miniscule_stress_impact_gain
+			brave = miniscule_stress_impact_gain
+			profligate = medium_stress_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = -1
+				ai_greed = -1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = ambitious
+					has_trait = trusting
+					has_trait = greedy
+					has_trait = brave
+				}
+			}
+		}
+	}
+}
+
+#########################################################################
+###
+### EMPEROR MAKES AN INTRO SPEECH
+###
+
+# The Giver of the Games
+# Emperor decides how to address the crowd
+# by Chad Uhl & Jason Cantalini
+chariot_race.0200 = {
+	type = activity_event
+	title = chariot_race.0200.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					exists = scope:honorary_guest
+				}
+				desc = chariot_race.0200.intro_guest
+			}
+			desc = chariot_race.0200.intro_no_guest
+		}
+		desc = chariot_race.0200.desc
+	}
+	theme = chariot_race
+	
+	left_portrait = {
+		character = root
+		animation = emotion_thinking_scepter
+	}
+	center_portrait = {
+		trigger = {
+			exists = scope:honorary_guest
+		}
+		character = scope:honorary_guest
+		animation = throne_room_bow_1
+	}
+	lower_left_portrait = scope:claimant
+	lower_right_portrait = scope:foe
+
+	immediate = {
+		save_scope_as = root_scope
+		#Save guest scope
+		if = {
+			limit = {
+				exists = scope:activity.special_guest:chariot_race_honorary_guest
+				scope:activity.special_guest:chariot_race_honorary_guest.location ?= root.location
+			}
+			scope:activity.special_guest:chariot_race_honorary_guest = {
+				save_scope_as = honorary_guest
+			}
+		}
+		#Save claimant scope
+		#Does root not like their actual current title heir?
+		if = {
+			limit = {
+				primary_title = {
+					any_title_heir = {
+						trigger_if = {
+							limit = {
+								root = {
+									is_ai = yes
+								}
+							}
+							reverse_opinion = {
+								target = root
+								value < -25
+							}
+						}
+						OR = {
+							NOT = {
+								house = root.house
+							}
+							has_relation_potential_rival = root
+							has_relation_rival = root
+							has_relation_nemesis = root
+						}
+						#If a player, must be at races
+						OR = {
+							is_ai = yes
+							is_participant_in_activity = scope:activity
+						}
+						save_temporary_scope_as = claimant_temp
+					}
+					place_in_line_of_succession = {
+						target = scope:claimant_temp
+						value = 0
+					}
+				}
+			}
+			primary_title = {
+				random_title_heir = {
+					limit = {
+						trigger_if = {
+							limit = {
+								root = {
+									is_ai = yes
+								}
+							}
+							reverse_opinion = {
+								target = root
+								value < -25
+							}
+						}
+						OR = {
+							NOT = {
+								house = root.house
+							}
+							has_relation_potential_rival = root
+							has_relation_rival = root
+							has_relation_nemesis = root
+						}
+						#If a player, must be at races
+						OR = {
+							is_ai = yes
+							is_participant_in_activity = scope:activity
+						}
+						save_temporary_scope_as = claimant_temp
+						root.primary_title = {
+							place_in_line_of_succession = {
+								target = scope:claimant_temp
+								value = 0
+							}
+						}
+					}
+					save_scope_as = claimant
+				}
+			}
+		}
+		#Is there someone in the list root hates especially?
+		else_if = {
+			limit = {
+				primary_title = {
+					any_title_heir = {
+						OR = {
+							has_relation_rival = root
+							has_relation_nemesis = root
+						}
+						#If a player, must be at races
+						OR = {
+							is_ai = yes
+							is_participant_in_activity = scope:activity
+						}
+						save_temporary_scope_as = claimant_temp
+					}
+					place_in_line_of_succession = {
+						target = scope:claimant_temp
+						value <= 5
+					}
+				}
+			}
+			primary_title = {
+				random_title_heir = {
+					limit = {
+						OR = {
+							has_relation_rival = root
+							has_relation_nemesis = root
+						}
+						#If a player, must be at races
+						OR = {
+							is_ai = yes
+							is_participant_in_activity = scope:activity
+						}
+						save_temporary_scope_as = claimant_temp
+						root.primary_title = {
+							place_in_line_of_succession = {
+								target = scope:claimant_temp
+								value <= 5
+							}
+						}
+					}
+					add_to_list = title_claimants
+				}
+			}
+			ordered_in_list = {
+				list = title_claimants
+				order_by = "appointment_candidate_score(root.primary_title)"
+				position = 0
+				save_scope_as = claimant
+			}
+		}
+		#Highest in list root doesn't care for
+		else_if = {
+			limit = {
+				primary_title = {
+					any_title_heir = {
+						trigger_if = {
+							limit = {
+								root = {
+									is_ai = yes
+								}
+							}
+							reverse_opinion = {
+								target = root
+								value < 0
+							}
+						}
+						OR = {
+							NOT = {
+								house = root.house
+							}
+							has_relation_rival = root
+							has_relation_nemesis = root
+						}
+						#If a player, must be at races
+						OR = {
+							is_ai = yes
+							is_participant_in_activity = scope:activity
+						}
+					}
+				}
+			}
+			primary_title = {
+				every_title_heir = {
+					limit = {
+						trigger_if = {
+							limit = {
+								root = {
+									is_ai = yes
+								}
+							}
+							reverse_opinion = {
+								target = root
+								value < 0
+							}
+						}
+						OR = {
+							NOT = {
+								house = root.house
+							}
+							has_relation_rival = root
+							has_relation_nemesis = root
+						}
+						#If a player, must be at races
+						OR = {
+							is_ai = yes
+							is_participant_in_activity = scope:activity
+						}
+					}
+					add_to_list = title_claimants
+				}
+			}
+			ordered_in_list = {
+				list = title_claimants
+				order_by = "appointment_candidate_score(root.primary_title)"
+				position = 0
+				save_scope_as = claimant
+			}
+		}
+		
+		#Save war enemy to mention
+		if = {
+			limit = {
+				is_at_war_as_defender = yes
+			}
+			random_primary_war_enemy = {
+				limit = {
+					is_at_war_as_attacker = yes
+				}
+				save_scope_as = foe
+			}
+		}
+		#Save legend
+		if = {
+			limit = {
+				exists = root.promoted_legend
+			}
+			root.promoted_legend = {
+				save_scope_as = promoted_legend
+			}
+		}
+
+		#Save imperial_house_candidate
+		if = {
+			limit = {
+				root.primary_title = {
+					any_title_heir = {
+						exists = root.house
+						house ?= root.house
+						NOR = {
+							has_relation_rival = root
+							has_relation_nemesis = root
+							is_at_war_with = root
+							this = scope:claimant 
+						}
+					}
+				}
+			}
+			root.primary_title = {
+				every_title_heir = {
+					limit = {
+						exists = root.house
+						house ?= root.house
+						NOR = {
+							has_relation_rival = root
+							has_relation_nemesis = root
+							is_at_war_with = root
+							this = scope:claimant 
+						}
+					}
+					add_to_list = imperial_house_candidates
+				}
+			}
+			ordered_in_list = {
+				list = imperial_house_candidates
+				order_by = "appointment_candidate_score(root.primary_title)"
+				position = 0
+				save_scope_as = imperial_house_candidate
+			}
+		}
+	}
+
+	option = { # Sway Scheme against Special Guest
+		name = chariot_race.0200.a
+		flavor = chariot_race.0200.a.flavor
+		trigger = {
+			exists = scope:honorary_guest
+			has_activity_intent = befriend_attendee_intent
+			scope:honorary_guest = {
+				this = root.intent_target
+			}
+		}
+		scope:activity = {
+			add_activity_log_entry = {
+				key = sway_speech_log
+				score = 25
+				tags = { positive }
+				character = root
+				target = scope:honorary_guest
+				root = {
+					#Friendship progress if this is the kinda person who loves praise
+					if = {
+						limit = {
+							scope:honorary_guest = {
+								OR = {
+									has_trait = arrogant
+									has_trait = gregarious
+									has_trait = ambitious
+								}
+							}
+						}
+						set_relation_friend = {
+							target = scope:honorary_guest
+							reason = friend_honored_in_the_hippodrome
+						}
+						
+					}
+					#Just a little opinion if they would hate this kind of attention
+					else_if = {
+						limit = {
+							scope:honorary_guest = {
+								OR = {
+									has_trait = shy
+									has_trait = zealous
+									has_trait = humble
+									has_trait = paranoid
+								}
+							}
+						}
+						random = {
+							chance = 50
+							progress_towards_friend_effect = {
+								CHARACTER = scope:honorary_guest
+								OPINION = 30
+								REASON = friend_honored_in_the_hippodrome
+							}
+						}
+					}
+					#Person is normie
+					else = {
+						progress_towards_friend_effect = {
+							CHARACTER = scope:honorary_guest
+							OPINION = 30
+							REASON = friend_honored_in_the_hippodrome
+						}
+					}
+					scope:honorary_guest = {
+						add_prestige = minor_prestige_gain
+						change_influence = minor_influence_gain
+					}
+				}
+				set_variable = {
+					name = emperor_speech_topic
+					value = flag:sway
+				}
+			}
+		}
+
+		stress_impact = {
+			compassionate = miniscule_stress_impact_loss
+			arrogant = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_compassion = 0.5
+				ai_sociability = 0.5
+			}
+			modifier = {
+				factor = 0
+				has_trait = arrogant
+			}
+		}
+	}
+
+	option = { # Seduce scheme against Special Guest
+		name = chariot_race.0200.b
+		flavor = chariot_race.0200.b.flavor
+		trigger = {
+			exists = scope:honorary_guest
+			has_activity_intent = woo_attendee_intent
+			OR = {
+				scope:honorary_guest = {
+					this = root.intent_target
+				}
+				any_scheme = {
+					scheme_type = seduce
+					scheme_target_character = scope:honorary_guest
+				}
+			}
+		}
+		scope:activity = {
+			add_activity_log_entry = {
+				key = seduce_speech_log
+				score = 25
+				tags = { positive }
+				character = root
+			}
+		}
+		#Big seduce progress if this person loves the romance
+		if = {
+			limit = {
+				scope:honorary_guest = {
+					OR = {
+						has_trait = arrogant
+						has_trait = gregarious
+						has_trait = eccentric
+						has_trait = lustful
+					}
+				}
+			}
+			
+			if = {
+				limit = {
+					any_scheme = {
+						scheme_type = seduce
+						scheme_target_character = scope:honorary_guest
+					}
+				}
+				random_scheme = {
+					limit = {
+						scheme_type = seduce
+						scheme_target_character = scope:honorary_guest
+					}
+					add_scheme_progress = 3
+					add_scheme_modifier = {
+						type = awed_by_romantic_speech_modifier
+					}
+				}
+				reverse_add_opinion = {
+					modifier = grateful_opinion
+					target = scope:honorary_guest
+					opinion = 30
+				}
+			}
+			else  = {
+				progress_towards_lover_effect = {
+					CHARACTER = scope:honorary_guest
+					OPINION = 30
+					REASON = lover_romantic_speech_in_the_hippodrome
+				}
+			}
+		}
+		#Just a little opinion if they would hate this kind of attention
+		else_if = {
+			limit = {
+				scope:honorary_guest = {
+					OR = {
+						has_trait = shy
+						has_trait = zealous
+						has_trait = humble
+						has_trait = paranoid
+						has_trait = chaste
+					}
+				}
+			}
+			if = {
+				limit = {
+					any_scheme = {
+						scheme_type = seduce
+						scheme_target_character = scope:honorary_guest
+					}
+				}
+				random_scheme = {
+					limit = {
+						scheme_type = seduce
+						scheme_target_character = scope:honorary_guest
+					}
+					add_scheme_progress = 1
+					add_scheme_modifier = {
+						type = flustered_by_romantic_speech_modifier
+					}
+				}
+			}
+			else  = {
+				reverse_add_opinion = {
+					modifier = grateful_opinion
+					target = scope:honorary_guest
+					opinion = 20
+				}
+			}
+		}
+		#Person is normie
+		else = {
+			
+			if = {
+				limit = {
+					any_scheme = {
+						scheme_type = seduce
+						scheme_target_character = scope:honorary_guest
+					}
+				}
+				random_scheme = {
+					limit = {
+						scheme_type = seduce
+						scheme_target_character = scope:honorary_guest
+					}
+					add_scheme_progress = scheme_progress_gain
+					add_scheme_modifier = {
+						type = charmed_by_romantic_speech_modifier
+					}
+				}
+				reverse_add_opinion = {
+					modifier = grateful_opinion
+					target = scope:honorary_guest
+					opinion = 15
+				}
+			}
+			else  = {
+				progress_towards_lover_effect = {
+					CHARACTER = scope:honorary_guest
+					OPINION = 15
+					REASON = lover_romantic_speech_in_the_hippodrome
+				}
+			}
+		}
+		scope:activity = {
+			set_variable = {
+				name = emperor_speech_topic
+				value = flag:seduce
+			}
+		}
+		stress_impact = {
+			lustful = miniscule_stress_impact_loss
+			chaste = minor_stress_impact_gain
+			shy = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = 0.5
+				ai_honor = -0.5
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = chaste
+					has_trait = shy
+				}
+			}
+		}
+	}
+
+	option = { # Present Heir (Special Guest)
+		name = chariot_race.0200.c
+		flavor = chariot_race.0200.c.flavor
+		trigger = {
+			exists = scope:honorary_guest
+			scope:honorary_guest = {
+				OR = {
+					any_claim = {
+						this = root.primary_title
+					}
+					root.primary_title = {
+						any_title_heir = {
+							this = scope:honorary_guest
+						}
+					}
+				}
+			}
+		}
+		scope:activity = {
+			add_activity_log_entry = {
+				key = present_heir_speech_log
+				score = 25
+				tags = { positive }
+				character = root
+				target = scope:honorary_guest
+				#Should only be super effective the first time the crowd is shown the heir
+				if = {
+					limit = {
+						scope:honorary_guest = {
+							NOT = {
+								has_character_flag = chariot_race_speech_heir
+							}
+						}
+					}
+					root.primary_title = {
+						change_appointment_investment = {
+							target = scope:activity.special_guest:chariot_race_honorary_guest
+							value = 50
+						}
+					}
+					scope:honorary_guest = {
+						add_prestige = minor_prestige_gain
+						change_influence = minor_influence_gain
+					}
+				}
+				else = {
+					root.primary_title = {
+						change_appointment_investment = {
+							target = scope:activity.special_guest:chariot_race_honorary_guest
+							value = 20
+						}
+					}
+					scope:honorary_guest = {
+						change_influence = minor_influence_gain
+					}
+				}
+				custom_tooltip = honorary_guest_support_tooltip
+			}
+		}
+
+		scope:honorary_guest = {
+			add_character_flag = chariot_race_speech_heir
+		}
+		scope:activity = {
+			set_variable = {
+				name = emperor_speech_topic
+				value = flag:present_heir
+			}
+		}
+		stress_impact = {
+			paranoid = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_rationality = 0.5
+				ai_honor = 0.5
+			}
+			modifier = {
+				add = -50
+				scope:honorary_guest = {
+					NOR = {
+						diplomacy > medium_skill_rating
+						martial > medium_skill_rating
+						stewardship > medium_skill_rating
+						intrigue > medium_skill_rating
+						learning > medium_skill_rating
+					}
+				}
+			}
+			modifier = {
+				add = -100
+				has_trait = paranoid
+				NOT = {
+					scope:honorary_guest = {
+						is_close_family_of = root
+					}
+				}
+			}
+			modifier = {
+				add = -300
+				exists = root.house
+				scope:honorary_guest.house ?= {
+					NOT = {
+						this = root.house
+					}
+				}
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:honorary_guest
+					value >= 50
+				}
+			}
+			modifier = {
+				add = 100
+				opinion = {
+					target = scope:honorary_guest
+					value >= 80
+				}
+			}
+			modifier = {
+				add = -100
+				opinion = {
+					target = scope:honorary_guest
+					value <= 0
+				}
+			}
+			modifier = {
+				add = -100
+				opinion = {
+					target = scope:honorary_guest
+					value <= -75
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					opinion = {
+						target = scope:honorary_guest
+						value < -25
+					}
+					primary_heir = {
+						AND = {
+							NOT = { this = scope:honorary_guest }
+							house = root.house
+						}
+					}
+					primary_title = {
+						place_in_line_of_succession = {
+							target = scope:honorary_guest
+							value < 5
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = { # Appease Populace (Intent)
+		name = chariot_race.0200.d
+		flavor = chariot_race.0200.d.flavor
+		trigger = { has_activity_intent = appease_populace_intent }
+		scope:activity = {
+			add_activity_log_entry = {
+				key = appease_populace_speech_log
+				score = 25
+				tags = { positive }
+				character = root
+				root = {
+					capital_province.county = {
+						add_county_modifier = {
+							modifier = emperor_chariot_race_speech_appeasing_populace_modifier
+							years = 10
+						}
+					}
+					add_legitimacy_effect = { LEGITIMACY = minor_legitimacy_gain }
+					complete_activity_intent = yes
+					custom_tooltip = combats_sow_discord_responses_tooltip
+				}
+			}
+			set_variable = {
+				name = emperor_speech_topic
+				value = flag:appease_populace
+			}
+		}
+		stress_impact = {
+			craven = miniscule_stress_impact_loss
+			generous = miniscule_stress_impact_loss
+			greedy = minor_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+			stubborn = medium_stress_impact_gain
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_greed = -0.5
+				ai_boldness = 0.5
+			}
+			modifier = {
+				add = -100
+				capital_county.county_opinion > -20
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = arrogant
+					has_trait = stubborn
+					has_trait = just
+					has_trait = greedy
+					capital_county.county_opinion >= 0
+				}
+			}
+		}
+	}
+
+	option = { # Increase Legitimacy (Intent)
+		name = chariot_race.0200.e
+		flavor = chariot_race.0200.e.flavor 
+		trigger = { has_activity_intent = legitimacy_intent }
+		duel = {
+			skill = diplomacy
+			value = medium_skill_rating
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				modifier = {
+					add = 20
+					capital_county = {
+						county_opinion >= 10
+					}
+				}
+				desc = chariot_race.0200.e.success
+				send_interface_toast = {
+					title = chariot_race.0200.e.success
+					left_icon = root
+					scope:activity = {
+						add_activity_log_entry = {
+							key = legitimacy_speech_success_log
+							score = 25
+							tags = { positive }
+							character = root
+					
+							#Effect
+							root = {
+								add_legitimacy_effect = { LEGITIMACY = major_legitimacy_gain }
+								add_prestige = minor_prestige_gain
+							}
+						}
+						set_variable = {
+							name = emperor_speech_topic
+							value = flag:increase_legitimacy_success
+						}
+					}		
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				modifier = {
+					add = 20
+					capital_county = {
+						county_opinion < -10
+					}
+				}
+				desc = chariot_race.0200.e.failure
+				send_interface_toast = {
+					title = chariot_race.0200.e.failure
+					left_icon = root
+					scope:activity = {
+						add_activity_log_entry = {
+							key = legitimacy_speech_fail_log
+							score = 25
+							tags = { negative }
+							character = root
+					
+							#Effect
+							root = {
+								add_legitimacy_effect = { LEGITIMACY = minor_legitimacy_loss }
+								add_prestige = minor_prestige_loss
+							}
+						}
+						set_variable = {
+							name = emperor_speech_topic
+							value = flag:increase_legitimacy_fail
+						}
+					}
+				}
+			}
+		}
+		stress_impact = {
+			humble = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_greed = 0.5
+				ai_boldness = 0.5
+			}
+			modifier = {
+				factor = 0
+				has_trait = humble
+			}
+		}
+	}
+
+	option = { # Spread Legend (Intent)
+		name = chariot_race.0200.f
+		flavor = chariot_race.0200.f.flavor
+		trigger = { has_activity_intent = spread_legend_intent }
+		scope:activity = {
+			add_activity_log_entry = {
+				key = legend_speech_log
+				score = 25
+				tags = { positive }
+				character = root
+				root = {
+					add_character_modifier = {
+						modifier = emperor_chariot_race_legend_speech_modifier
+						years = 10
+					}	
+				}
+			}
+			set_variable = {
+				name = emperor_speech_topic
+				value = flag:spread_legend
+			}
+		}
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_energy = 0.5
+				ai_sociability = 0.5
+			}
+		}
+	}
+
+	option = { # Discredit Claimant (Situational)
+		name = chariot_race.0200.g
+		flavor = chariot_race.0200.g.flavor
+		trigger = {
+			exists = scope:claimant
+		}
+		progress_towards_rival_effect = {
+			CHARACTER = scope:claimant
+			OPINION = -40
+			REASON = rival_denigrated_in_the_hippodrome
+		}
+		duel = {
+			skill = intrigue
+			value = medium_skill_rating
+			55 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -54
+				}
+				modifier = {
+					add = 25
+					influence_level >= 3
+				}
+				modifier = {
+					add = 25
+					capital_county = {
+						county_opinion >= 10
+					}
+				}
+				modifier = {
+					add = 25
+					legitimacy_level >= 3
+				}
+				desc = chariot_race.0200.g.success
+				send_interface_toast = {
+					title = chariot_race.0200.g.success
+					left_icon = root
+					right_icon = scope:claimant
+					scope:activity = {
+						add_activity_log_entry = {
+							key = discredit_claimant_speech_success_log
+							score = 25
+							tags = { positive }
+							character = root
+							target = scope:claimant
+					
+							#Effect
+							root.primary_title = {
+								change_appointment_investment = {
+									target = scope:claimant
+									value = -80
+								}
+							}
+							scope:claimant = {
+								change_influence = medium_influence_loss
+								add_prestige = medium_prestige_loss
+							}
+							if = {
+								limit = {
+									exists = scope:imperial_house_candidate
+								}
+								custom_tooltip = imperial_candidate_support_tooltip
+							}
+						}
+						set_variable = {
+							name = emperor_speech_topic
+							value = flag:discredit_claimant_success
+						}
+					}		
+				}
+			}
+			45 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -44
+				}
+				modifier = {
+					add = 25
+					scope:claimant = { influence_level >= 3 }
+				}
+				modifier = {
+					add = 25
+					capital_county = {
+						county_opinion < -10
+					}
+				}
+				modifier = {
+					add = 25
+					legitimacy_level < 2
+				}
+				desc = chariot_race.0200.g.failure
+				send_interface_toast = {
+					title = chariot_race.0200.g.failure
+					left_icon = root
+					right_icon = scope:claimant
+					scope:activity = {
+						add_activity_log_entry = {
+							key = discredit_claimant_speech_fail_log
+							score = 25
+							tags = { negative }
+							character = root
+							target = scope:claimant
+					
+							#Effect
+							root = { add_legitimacy = minor_legitimacy_loss }
+							root.primary_title = {
+								change_appointment_investment = {
+									target = scope:claimant
+									value = 30
+								}
+							}
+							custom_tooltip = discredited_claimant_support_tooltip
+						}
+						set_variable = {
+							name = emperor_speech_topic
+							value = flag:discredit_claimant_fail
+						}
+					}
+				}
+			}
+		}
+		stress_impact = {
+			content = miniscule_stress_impact_gain
+			calm = minor_stress_impact_gain
+			forgiving = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = 0.5
+				ai_boldness = 0.5
+			}
+			modifier = {
+				add = 100
+				OR = {
+					has_trait = paranoid
+					has_trait = arbitrary
+				}
+			}
+			modifier = {
+				add = -50
+				scope:claimant = {
+					OR = {
+						is_child_of = root
+						opinion = {
+							target = scope:claimant
+							value > 20
+						}
+					}
+				}
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:claimant
+					value <= -50
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = calm
+					has_trait = forgiving
+					opinion = {
+						target = scope:claimant
+						value >= 70
+					}
+					primary_heir = {
+						AND = {
+							this = scope:claimant
+							NOT = { house = root.house }
+						}
+					}
+					primary_title = {
+						place_in_line_of_succession = {
+							target = scope:claimant
+							value < 3
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = { # Drum up War Support (Situational)
+		name = chariot_race.0200.h
+		flavor = chariot_race.0200.h.flavor
+		trigger = {
+			is_at_war_as_defender = yes
+			exists = scope:foe
+		}
+		scope:activity = {
+			add_activity_log_entry = {
+				key = war_speech_log
+				score = 25
+				tags = { positive }
+				character = root
+				target = scope:foe
+				root = {
+					add_character_modifier = {
+						modifier = emperor_chariot_race_war_speech_modifier
+						years = 10
+					}
+				}
+			}
+			set_variable = {
+				name = emperor_speech_topic
+				value = flag:war_support
+			}
+		}
+		#custom loc for attendee responses
+		custom_tooltip = chariot_race_war_support_attendees_tt
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = 0.5
+				ai_zeal = 0.5
+			}
+			modifier = {
+				add = -50
+				scope:foe = {
+					highest_held_title_tier = tier_duchy
+				}
+			}
+			modifier = {
+				factor = 0
+				scope:foe = {
+					highest_held_title_tier <= tier_county
+				}
+			}
+			modifier = {
+				add = 100
+				scope:foe = {
+					highest_held_title_tier >= tier_empire
+				}
+			}
+		}
+	}
+
+	option = { # Fallback
+		name = chariot_race.0200.i
+		flavor = chariot_race.0200.i.flavor
+		scope:activity = {
+			add_activity_log_entry = {
+				key = influence_speech_log
+				score = 25
+				tags = { positive }
+				character = root
+				root = {
+					if = {
+						limit = {
+							has_activity_intent = increase_influence_intent
+						}
+						change_influence = medium_influence_gain
+						add_internal_flag = special
+					}
+					else = {
+						change_influence = minor_influence_gain
+					}
+					add_legitimacy_effect = { LEGITIMACY = miniscule_legitimacy_gain }
+					capital_county = {
+						add_county_modifier = {
+							modifier = emperor_chariot_race_speech_neutral_county_modifier
+							years = 10
+						}
+					}
+				}
+			}
+			set_variable = {
+				name = emperor_speech_topic
+				value = flag:gain_influence
+			}
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_honor = 0.5
+				ai_rationality = 0.5
+			}
+			modifier = {
+				add = 100
+				has_activity_intent = increase_influence_intent
+			}
+		}
+	}
+
+	after = {
+		scope:activity = {
+			every_attending_character = {
+				limit = { NOT = { this = scope:host } }
+				trigger_event = chariot_race.0201
+			}
+		}
+		trigger_event = {
+			id = chariot_race.0202
+			days = 5
+		}
+	}
+}
+
+# Crowd hears what the Emperor says
+# by Chad Uhl & Jason Cantalini
+chariot_race.0201 = {
+	type = activity_event
+	title = chariot_race.0201.t
+	desc = {
+		#Intro should be different for honorary guests/imperial family and regular guests
+		first_valid = {
+			triggered_desc = { # Gain Influence Intent
+				trigger = { chariot_race_0201_sitting_in_kathisma_trigger = yes }
+				desc = chariot_race.0201.kathisma
+			}
+			desc = chariot_race.0201.intro
+		}
+		#Little flavor of emperor's character
+		first_valid = {
+			triggered_desc = { # Cool guy
+				trigger = {
+					scope:host = {
+						OR = {
+							has_trait = gregarious
+							has_trait = brave
+							has_trait = arrogant
+							dread >= 50
+						}
+					}
+					chariot_race_0201_sitting_in_kathisma_trigger = yes 
+				}
+				desc = chariot_race.0201.emperor_unfazed
+			}
+			triggered_desc = { # Cool guy
+				trigger = {
+					chariot_race_0201_sitting_in_kathisma_trigger = yes 
+				}
+				desc = chariot_race.0201.emperor_nervous
+			}
+			desc = chariot_race.0201.emperor_distant
+		}
+		#Description of speech
+		first_valid = {
+			triggered_desc = { # Gain Influence Intent
+				trigger = { scope:activity.var:emperor_speech_topic = flag:gain_influence }
+				desc = chariot_race.0201.gain_influence
+			}
+			triggered_desc = { # Sway Scheme against Special Guest
+				trigger = { scope:activity.var:emperor_speech_topic = flag:sway }
+				desc = chariot_race.0201.sway
+			}
+			triggered_desc = { # Sway Scheme against Special Guest
+				trigger = {
+					scope:activity.var:emperor_speech_topic = flag:sway
+					exists = scope:honorary_guest
+					this = scope:honorary_guest
+				}
+				desc = chariot_race.0201.sway_self
+			}
+			triggered_desc = { # Seduce scheme against Special Guest
+				trigger = { scope:activity.var:emperor_speech_topic = flag:seduce }
+				desc = chariot_race.0201.seduce
+			}
+			triggered_desc = { # Sway Scheme against Special Guest
+				trigger = {
+					scope:activity.var:emperor_speech_topic = flag:seduce
+					exists = scope:honorary_guest
+					this = scope:honorary_guest
+				}
+				desc = chariot_race.0201.seduce_self
+			}
+			triggered_desc = { # Present Heir (Special Guest)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:present_heir }
+				desc = chariot_race.0201.present_heir
+			}
+			triggered_desc = { # Sway Scheme against Special Guest
+				trigger = {
+					scope:activity.var:emperor_speech_topic = flag:present_heir
+					exists = scope:honorary_guest
+					this = scope:honorary_guest
+				}
+				desc = chariot_race.0201.present_heir_self
+			}
+			triggered_desc = { # Appease Populace (Intent)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:appease_populace }
+				desc = chariot_race.0201.appease_populace
+			}
+			triggered_desc = { # Increase Legitimacy (Intent)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:increase_legitimacy_success }
+				desc = chariot_race.0201.increase_legitimacy_success
+			}
+			triggered_desc = { # Increase Legitimacy (Intent)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:increase_legitimacy_fail }
+				desc = chariot_race.0201.increase_legitimacy_fail
+			}
+			triggered_desc = { # Spread Legend (Intent)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:spread_legend }
+				desc = chariot_race.0201.spread_legend
+			}
+			triggered_desc = { # Discredit Claimant (Situational)
+				trigger = {
+					OR = {
+						scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+						scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+					}
+					exists = scope:claimant
+					this = scope:claimant
+				}
+				desc = chariot_race.0201.discredit_claimant_self
+			}
+			triggered_desc = { # Discredit Claimant (Situational)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success }
+				desc = chariot_race.0201.discredit_claimant_success
+			}
+			triggered_desc = { # Discredit Claimant (Situational)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail }
+				desc = chariot_race.0201.discredit_claimant_fail
+			}
+			triggered_desc = { # Strum up War Support (Situational)
+				trigger = { scope:activity.var:emperor_speech_topic = flag:war_support }
+				desc = chariot_race.0201.war_support
+			}
+		}
+		#Description of reaction
+		first_valid = {
+			triggered_desc = { # Gain Influence Intent
+				trigger = { chariot_race_0201_negative_crowd_reaction_trigger = yes }
+				desc = chariot_race.0201.angry_crowd
+			}
+			desc = chariot_race.0201.happy_crowd
+		}
+	}
+
+	theme = chariot_race
+	
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				opinion = {
+					target = scope:host
+					value > 0
+				}
+				NOT = { chariot_race_0201_sitting_in_kathisma_trigger = yes }
+			}
+			animation = throne_room_cheer_1
+		}
+		triggered_animation = {
+			trigger = {
+				opinion = {
+					target = scope:host
+					value > 0
+				}
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+			}
+			animation = throne_room_applaud_1
+		}
+		triggered_animation = {
+			trigger = {
+				opinion = {
+					target = scope:host
+					value <= 0
+				}
+			}
+			animation = personality_cynical
+		}
+		camera = camera_event_left_away
+	}
+	center_portrait = {
+		character = scope:next_seat
+		triggered_animation = {
+			trigger = {
+				NOT = { this = scope:host }
+			}
+			animation = throne_room_cheer_2
+		}
+		triggered_animation = {
+			trigger = {
+				this = scope:host
+			}
+			animation = wedding_objection_start
+		}
+		camera = camera_event_center_away
+	}
+	lower_center_portrait = scope:distant_emperor
+	lower_left_portrait = scope:speech_subject
+
+	immediate = {
+		#save someone appropriate to sit next to root
+		if = {
+			limit = {
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+			}
+			scope:host = {
+				save_scope_as = next_seat
+			}
+		}
+		else_if = {
+			limit = {
+				scope:activity = {
+					any_attending_character = {
+						is_playable_character = yes
+					}
+				}
+			}
+			scope:activity = {
+				random_attending_character = {
+					limit = {
+						is_playable_character = yes
+					}
+					save_scope_as = next_seat
+				}
+			}
+			scope:host = { save_scope_as = distant_emperor }
+		}
+		else = {
+			scope:activity = {
+				random_guest_subset = {
+					name = spectators
+					save_scope_as = next_seat
+				}
+			}
+			scope:host = { save_scope_as = distant_emperor }
+		}
+		#Save the character being talked about, if any
+		if = {
+			limit = {
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:sway
+					scope:activity.var:emperor_speech_topic = flag:seduce
+					scope:activity.var:emperor_speech_topic = flag:present_heir
+				}
+				
+				NOT = { this ?= scope:activity.special_guest:chariot_race_honorary_guest }
+			}
+			scope:activity.special_guest:chariot_race_honorary_guest = {
+				save_scope_as = speech_subject
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+					scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+				}
+				NOT = { this ?= scope:claimant }
+			}
+			scope:claimant = {
+				save_scope_as = speech_subject
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:war_support
+				}
+				NOT = { this ?= scope:foe }
+			}
+			scope:foe = {
+				save_scope_as = speech_subject
+			}
+		}
+	}
+
+	option = { # Support imperial house candidates
+		name = {
+			trigger = {
+				scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+			}
+			text = chariot_race.0201.aa.discredit
+		}
+		name = {
+			trigger = {
+				scope:activity.var:emperor_speech_topic = flag:present_heir
+			}
+			text = chariot_race.0201.aa.honorary_guest
+		}
+		trigger = {
+			highest_held_title_tier >= tier_county
+			OR = {
+				AND = {
+					scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+					NOR = {
+						this = scope:claimant
+						this = scope:imperial_house_candidate
+					}
+					exists = scope:imperial_house_candidate
+				}
+				AND = {
+					scope:activity.var:emperor_speech_topic = flag:present_heir
+					NOT = {
+						this = scope:honorary_guest
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+			}
+			scope:host.primary_title = {
+				change_appointment_investment = {
+					target = scope:imperial_house_candidate
+					value = 2
+				}
+			}
+			reverse_add_opinion = {
+				target = scope:imperial_house_candidate
+				opinion = 15
+				modifier = grateful_opinion
+			}
+			change_influence = miniscule_influence_gain
+		}
+		else = {
+			scope:host.primary_title = {
+				change_appointment_investment = {
+					target = scope:honorary_guest
+					value = 3
+				}
+			}
+			reverse_add_opinion = {
+				target = scope:honorary_guest
+				opinion = 15
+				modifier = grateful_opinion
+			}
+			change_influence = miniscule_influence_gain
+		}
+		stress_impact = {
+			just = minor_stress_impact_loss
+			fickle = minor_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+			arbitrary = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 75
+			ai_value_modifier = {
+				ai_honor = 0.5
+				ai_greed = -0.5
+			}
+
+			modifier = {
+				add = 50
+				scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+				opinion = {
+					target = scope:imperial_house_candidate
+					value >= 25
+				}
+			}
+			modifier = {
+				add = 100
+				scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+				opinion = {
+					target = scope:imperial_house_candidate
+					value >= 75
+				}
+			}
+			modifier = {
+				add = -50
+				scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+				opinion = {
+					target = scope:imperial_house_candidate
+					value <= -25
+				}
+			}
+			modifier = {
+				add = -100
+				scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+				opinion = {
+					target = scope:imperial_house_candidate
+					value <= -75
+				}
+			}
+			modifier = {
+				add = 200
+				scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+				exists = scope:imperial_house_candidate.house
+				house ?= scope:imperial_house_candidate.house
+			}
+			modifier = {
+				add = 50
+				scope:activity.var:emperor_speech_topic = flag:present_heir
+				opinion = {
+					target = scope:honorary_guest
+					value >= 25
+				}
+			}
+			modifier = {
+				add = 100
+				scope:activity.var:emperor_speech_topic = flag:present_heir
+				opinion = {
+					target = scope:honorary_guest
+					value >= 75
+				}
+			}
+			modifier = {
+				add = -50
+				scope:activity.var:emperor_speech_topic = flag:present_heir
+				opinion = {
+					target = scope:honorary_guest
+					value <= -25
+				}
+			}
+			modifier = {
+				add = -100
+				scope:activity.var:emperor_speech_topic = flag:present_heir
+				opinion = {
+					target = scope:honorary_guest
+					value <= -75
+				}
+			}
+			modifier = {
+				add = 200
+				scope:activity.var:emperor_speech_topic = flag:present_heir
+				exists = scope:honorary_guest.house
+				house ?= scope:honorary_guest.house
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:host
+					value >= 25
+				}
+			}
+			modifier = {
+				add = 100
+				opinion = {
+					target = scope:host
+					value >= 75
+				}
+			}
+			modifier = {
+				add = -50
+				opinion = {
+					target = scope:host
+					value <= -25
+				}
+			}
+			modifier = {
+				add = -100
+				opinion = {
+					target = scope:host
+					value <= -75
+				}
+			}
+
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = fickle
+					has_trait = arbitrary
+					has_trait = ambitious
+				}
+			}
+		}
+	}
+
+	option = { # Support candidate that the mob likes
+		name = chariot_race.0201.ab
+		trigger = {
+			highest_held_title_tier >= tier_county
+			scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+			NOT = {
+				this = scope:claimant
+			}
+		}
+		scope:host.primary_title = {
+			change_appointment_investment = {
+				target = scope:claimant
+				value = 3
+			}
+		}
+		reverse_add_opinion = {
+			target = scope:claimant
+			opinion = 20
+			modifier = grateful_opinion
+		}
+		reverse_add_opinion = {
+			target = scope:host
+			opinion = -10
+			modifier = angry_opinion
+		}
+		change_influence = miniscule_influence_gain
+		stress_impact = {
+			vengeful = miniscule_stress_impact_loss
+			just = minor_stress_impact_gain
+			trusting = minor_stress_impact_gain
+			forgiving = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 75
+			ai_value_modifier = {
+				ai_honor = -0.5
+				ai_vengefulness = 0.5
+			}
+			modifier = {
+				add = 200
+				exists = scope:claimant.house
+				house ?= scope:claimant.house
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:claimant
+					value >= 25
+				}
+			}
+			modifier = {
+				add = 100
+				opinion = {
+					target = scope:claimant
+					value >= 75
+				}
+			}
+			modifier = {
+				add = -50
+				opinion = {
+					target = scope:claimant
+					value <= -25
+				}
+			}
+			modifier = {
+				add = -100
+				opinion = {
+					target = scope:claimant
+					value <= -75
+				}
+			}
+			modifier = {
+				add = -50
+				opinion = {
+					target = scope:host
+					value >= 25
+				}
+			}
+			modifier = {
+				add = -100
+				opinion = {
+					target = scope:host
+					value >= 75
+				}
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:host
+					value <= -25
+				}
+			}
+			modifier = {
+				add = 100
+				opinion = {
+					target = scope:host
+					value <= -75
+				}
+			}
+
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = just
+					has_trait = trusting
+					has_trait = forgiving
+					has_trait = content
+				}
+			}
+		}
+	}
+
+	option = { # Holler and Buy Drinks
+		name = chariot_race.0201.a
+		flavor = chariot_race.0201.a.flavor
+		trigger = {
+			has_trait = lifestyle_reveler
+			drinks_alcohol_trigger = yes
+		}
+		add_trait_xp = {
+			trait = lifestyle_reveler
+			value = 20
+		}
+		add_character_modifier = {
+			modifier = soused_at_the_races_modifier
+			years = 1
+		}
+		if = {
+			limit = {
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+				scope:host = {
+					NOR = {
+						has_trait = temperate
+						drinks_alcohol_trigger = no
+					}
+				}
+			}
+			reverse_add_opinion = {
+				modifier = amused_opinion
+				target = scope:host
+				opinion = 20
+			}
+		}
+		stress_impact = {
+			base = minor_stress_impact_loss
+			drunkard = minor_stress_impact_loss
+			gregarious = minor_stress_impact_loss
+			eccentric = miniscule_stress_impact_loss
+			lazy = minor_stress_impact_loss
+			content = minor_stress_impact_loss
+			diligent = minor_stress_impact_gain
+			calm = minor_stress_impact_gain
+			zealous = miniscule_stress_impact_gain
+			temperate = minor_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 150
+			ai_value_modifier = {
+				ai_energy = -1
+				ai_sociability = 1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = diligent
+					has_trait = temperate
+					has_trait = ambitious
+					has_trait = calm
+				}
+			}
+			modifier = {
+				add = 75
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+				scope:host = {
+					NOR = {
+						has_trait = temperate
+						drinks_alcohol_trigger = no
+					}
+				}
+			}
+			modifier = {
+				add = 75
+				OR = {
+					has_trait = drunkard
+					has_trait = gregarious
+					has_trait = lazy
+					has_trait = content
+				}
+			}
+		}
+	}
+
+	option = { # Discredit Emperor
+		name = chariot_race.0201.b
+		flavor = chariot_race.0201.b.flavor
+		if = {
+			limit = {
+				has_activity_intent = increase_influence_intent
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+			}
+			change_influence = medium_influence_gain
+		}
+		else_if = {
+			limit = {
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+			}
+			change_influence = minor_influence_gain
+		}
+		else = {
+			change_influence = miniscule_influence_gain
+		}
+		if = {
+			limit = {
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+				is_appointment_valid_trigger = {
+					TITLE = scope:host.primary_title
+					CANDIDATE = root
+					TOP_LIEGE = scope:host
+				}
+			}
+			scope:host.primary_title = {
+				change_appointment_investment = {
+					target = root
+					value = appointment_score_minor_value
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+				chariot_race_0201_sitting_in_kathisma_trigger = no
+				is_appointment_valid_trigger = {
+					TITLE = scope:host.primary_title
+					CANDIDATE = root
+					TOP_LIEGE = scope:host
+				}
+			}
+			scope:host.primary_title = {
+				change_appointment_investment = {
+					target = root
+					value = miniscule_influence_gain
+				}
+			}
+		}
+		if = {
+			limit = {
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+			}
+			reverse_add_opinion = {
+				modifier = insult_opinion
+				target = scope:host
+				opinion = -25
+			}
+		}
+		if = {
+			limit = {
+				scope:honorary_guest ?= root
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:sway
+					scope:activity.var:emperor_speech_topic = flag:seduce
+					scope:activity.var:emperor_speech_topic = flag:present_heir
+				}
+			}
+			stress_impact = {
+				compassionate = medium_stress_impact_gain
+				forgiving = medium_stress_impact_gain
+				trusting = medium_stress_impact_gain
+				loyal = medium_stress_impact_gain
+				just = medium_stress_impact_gain
+				content = minor_stress_impact_gain
+				humble = minor_stress_impact_gain
+			}
+		}
+		stress_impact = {
+			ambitious = miniscule_stress_impact_loss
+			arbitrary = miniscule_stress_impact_loss
+			compassionate = minor_stress_impact_gain
+			forgiving = medium_stress_impact_gain
+			content = minor_stress_impact_gain
+			humble = minor_stress_impact_gain
+			loyal = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = -1
+				ai_greed = 1
+			}
+			modifier = {
+				add = 50
+				has_activity_intent = increase_influence_intent
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+			}
+			modifier = {
+				add = -50
+				chariot_race_0201_negative_crowd_reaction_trigger = no
+			}
+			modifier = {
+				add = -50
+				scope:honorary_guest ?= root
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:sway
+					scope:activity.var:emperor_speech_topic = flag:seduce
+					scope:activity.var:emperor_speech_topic = flag:present_heir
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = compassionate
+					has_trait = forgiving
+					has_trait = content
+					has_trait = humble
+					has_trait = loyal
+					AND = {
+						OR = {
+							scope:activity.var:emperor_speech_topic = flag:sway
+							scope:activity.var:emperor_speech_topic = flag:seduce
+							scope:activity.var:emperor_speech_topic = flag:present_heir
+						}
+						OR = {
+							has_trait = just
+							has_trait = trusting
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = { # Instigate Counter-Chants
+		name = chariot_race.0201.c
+		flavor = chariot_race.0201.c.flavor
+		trigger = {
+			has_activity_intent = sow_discord_intent
+		}
+		#Great effect from emperor's speech being received negatively
+		if = {
+			limit = {
+				OR = {
+					chariot_race_0201_negative_crowd_reaction_trigger = yes
+					#Has sow discord enhancing flag and it wasn't a terrible speech
+					AND = {
+						has_character_flag = races_commoner_aiding_discord
+						NOR = {
+							scope:activity.var:emperor_speech_topic = flag:appease_populace
+							scope:host.capital_county = {
+								county_opinion >= 25
+							}
+							scope:host = {
+								legitimacy_level >= 5
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					is_ai = yes
+					root.house.house_head = {
+						NOR = {
+							this = root
+							this = scope:honorary_guest
+							this = scope:host
+						}
+					}
+					scope:host.primary_title = {
+						any_title_heir = {
+							this = root.house.house_head
+						}
+					}
+					opinion = {
+						target = root.house.house_head
+						value >= 50
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root.house.house_head
+						value = 40
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					scope:host.primary_title = {
+						any_title_heir = {
+							this = root
+						}
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root
+						value = 40
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					root.primary_heir = {
+						NOR = {
+							this = scope:honorary_guest
+							this = scope:host
+						}
+					}
+					scope:host.primary_title = {
+						any_title_heir = {
+							house = root.house
+							this = root.primary_heir
+						}
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root.primary_heir
+						value = 40
+					}
+				}
+			}
+			show_as_tooltip = {
+				chariot_race_sow_discord_strong_response_effect = yes
+			}
+		}
+		#Terrible effect from positive speech reception
+		else_if = {
+			limit = {
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:appease_populace
+					scope:host.capital_county = {
+						county_opinion >= 25
+					}
+					scope:host = {
+						legitimacy_level >= 5
+					}
+				}
+				NOR = {
+					scope:activity.var:emperor_speech_topic = flag:increase_legitimacy_fail
+					scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+					has_character_flag = races_commoner_aiding_discord
+				}
+			}
+			if = {
+				limit = {
+					is_ai = yes
+					root.house.house_head = {
+						NOR = {
+							this = root
+							this = scope:honorary_guest
+							this = scope:host
+						}
+					}
+					scope:host.primary_title = {
+						any_title_heir = {
+							this = root.house.house_head
+						}
+					}
+					opinion = {
+						target = root.house.house_head
+						value >= 50
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root.house.house_head
+						value = 10
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					scope:host.primary_title = {
+						any_title_heir = {
+							this = root
+						}
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root
+						value = 10
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					root.primary_heir = {
+						NOR = {
+							this = scope:honorary_guest
+							this = scope:host
+						}
+					}
+					scope:host.primary_title = {
+						any_title_heir = {
+							house = root.house
+							this = root.primary_heir
+						}
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root.primary_heir
+						value = 10
+					}
+				}
+			}
+			show_as_tooltip = {
+				chariot_race_sow_discord_weak_response_effect = yes
+			}
+		}
+		#Normal effect
+		else = {
+			if = {
+				limit = {
+					is_ai = yes
+					exists = root.house
+					root.house.house_head = {
+						NOR = {
+							this = root
+							this = scope:host
+							trigger_if = {
+								limit = { exists = scope:honorary_guest }
+								this = scope:honorary_guest
+							}
+						}
+					}
+					scope:host.primary_title = {
+						any_title_heir = {
+							this = root.house.house_head
+						}
+					}
+					opinion = {
+						target = root.house.house_head
+						value >= 50
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root.house.house_head
+						value = 40
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					scope:host.primary_title = {
+						any_title_heir = {
+							this = root
+						}
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root
+						value = 20
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					exists = root.primary_heir
+					root.primary_heir = {
+						NOR = {
+							this = scope:honorary_guest
+							this = scope:host
+						}
+					}
+					scope:host.primary_title = {
+						any_title_heir = {
+							house = root.house
+							this = root.primary_heir
+						}
+					}
+				}
+				scope:host.primary_title = {
+					change_appointment_investment = {
+						target = root.primary_heir
+						value = 20
+					}
+				}
+			}
+			show_as_tooltip = {
+				chariot_race_sow_discord_normal_response_effect = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:activity = {
+					NOT = {
+						has_variable = counter_chant_count
+					}
+				}
+			}
+			scope:activity = {
+				set_variable = {
+					name = counter_chant_count
+					value = 1
+				}
+			}
+		}
+		else = {
+			scope:activity = {
+				change_variable = {
+					name = counter_chant_count
+					add = 1
+				}
+			}
+		}
+		scope:activity = {
+			add_to_variable_list = {
+				name = counter_chanters
+				target = root
+			}
+		}
+		
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						scope:claimant ?= root
+						scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+					}
+					AND = {
+						scope:activity.var:emperor_speech_topic = flag:present_heir
+						NOT = { scope:honorary_guest = root }
+						OR = {
+							has_claim_on = scope:host.primary_title
+							scope:host.primary_title = {
+								any_title_heir = {
+									this = root
+								}
+								place_in_line_of_succession = {
+									target = root
+									value >= 10
+								}
+							}
+						}
+					}
+				}
+			}
+			stress_impact = {
+				ambitious = minor_stress_impact_loss
+				disloyal = minor_stress_impact_loss
+				vengeful = minor_stress_impact_loss
+				wrathful = minor_stress_impact_loss
+				deceitful = minor_stress_impact_loss
+				arrogant = minor_stress_impact_loss
+				sadistic = minor_stress_impact_loss
+				just = minor_stress_impact_gain
+				loyal = minor_stress_impact_gain
+				honest = minor_stress_impact_gain
+				forgiving = medium_stress_impact_gain
+			}
+		}
+		else = {
+			stress_impact = {
+				just = medium_stress_impact_gain
+				loyal = medium_stress_impact_gain
+				honest = medium_stress_impact_gain
+				forgiving = major_stress_impact_gain
+				compassionate = minor_stress_impact_gain
+				content = minor_stress_impact_gain
+			}
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = 1
+				ai_boldness = 1
+				ai_honor = -1
+			}
+			modifier = {
+				add = 100
+				OR = {
+					AND = {
+						scope:claimant ?= root
+						scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+					}
+					AND = {
+						NOT = { scope:honorary_guest ?= root }
+						OR = {
+							has_claim_on = scope:host.primary_title
+							scope:host.primary_title = {
+								any_title_heir = {
+									this = root
+								}
+								place_in_line_of_succession = {
+									target = root
+									value >= 10
+								}
+							}
+						}
+					}
+				}
+			}
+			modifier = {
+				add = -50
+				opinion = {
+					target = scope:host
+					value > 25
+				}
+			}
+			modifier = {
+				add = -100
+				opinion = {
+					target = scope:host
+					value > 75
+				}
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:host
+					value <= -25
+				}
+			}
+			modifier = {
+				add = 100
+				opinion = {
+					target = scope:host
+					value <= -75
+				}
+			}
+			modifier = {
+				add = 100
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:appease_populace
+					scope:host.capital_county = {
+						county_opinion >= 25
+					}
+					scope:host = {
+						legitimacy_level >= 5
+					}
+				}
+				NOR = {
+					scope:activity.var:emperor_speech_topic = flag:increase_legitimacy_fail
+					scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = compassionate
+					has_trait = forgiving
+					has_trait = content
+					has_trait = honest
+					has_trait = just
+					has_trait = loyal
+				}
+			}
+		}
+	}
+
+	option = { # Donate to the cause of war
+		name = chariot_race.0201.d
+		flavor = chariot_race.0201.d.flavor
+		trigger = {
+			scope:activity.var:emperor_speech_topic = flag:war_support
+			scope:host = {
+				is_liege_or_above_of = root
+			}
+		}
+		if = {
+			limit = {
+				chariot_race_0201_negative_crowd_reaction_trigger = no
+			}
+			add_prestige = minor_prestige_gain
+			pay_short_term_gold = {
+				target = scope:host
+				gold = minor_gold_value
+			}
+			
+		}
+		else = {
+			add_prestige = miniscule_prestige_gain
+			pay_short_term_gold = {
+				target = scope:host
+				gold = minor_gold_value
+			}
+		}
+		if = {
+			limit = {
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+			}
+			reverse_add_opinion = {
+				modifier = loyalty_opinion
+				target = scope:host
+				opinion = 25
+			}
+		}
+		else = {
+			reverse_add_opinion = {
+				modifier = loyalty_opinion
+				target = scope:host
+				opinion = 10
+			}
+		}
+		
+		stress_impact = {
+			loyal = minor_stress_impact_loss
+			trusting = miniscule_stress_impact_loss
+			wrathful = miniscule_stress_impact_loss
+			zealous = miniscule_stress_impact_loss
+			generous = miniscule_stress_impact_loss
+			cynical = miniscule_stress_impact_gain
+			greedy = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 150
+			ai_value_modifier = {
+				ai_greed = 1
+				ai_rationality = -1
+			}
+			modifier = {
+				add = 50
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+			}
+			modifier = {
+				add = 50
+				has_trait = loyal
+			}
+			modifier = {
+				add = -50
+				OR = {
+					has_trait = cynical
+					chariot_race_0201_negative_crowd_reaction_trigger = yes
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					short_term_gold <= medium_gold_value
+					has_trait = greedy
+				}
+				
+			}
+		}
+	}
+
+	option = { # Thank the emperor
+		name = chariot_race.0201.e
+		flavor = chariot_race.0201.e.flavor
+		trigger = {
+			scope:honorary_guest ?= root
+			OR = {
+				scope:activity.var:emperor_speech_topic = flag:sway
+				scope:activity.var:emperor_speech_topic = flag:seduce
+				scope:activity.var:emperor_speech_topic = flag:present_heir
+			}
+		}
+		if = {
+			limit = {
+				has_activity_intent = befriend_attendee_intent
+				scope:host = {
+					this = root.intent_target
+					NOR = {
+						has_trait = callous
+						has_trait = sadistic
+						has_trait = paranoid
+						has_trait = fickle
+					}
+				}
+			}
+			scope:host = {
+				progress_towards_friend_effect = {
+					CHARACTER = root
+					OPINION = 40
+					REASON = friend_honored_in_the_hippodrome
+				}
+			}
+		}
+		else = {
+			reverse_add_opinion = {
+				modifier = friendliness_opinion
+				target = scope:host
+				opinion = 20
+			}
+		}
+		if = {
+			limit = {
+				has_activity_intent = woo_attendee_intent
+				scope:host = {
+					this = root.intent_target
+					NOR = {
+						has_trait = chaste
+						has_trait = celibate
+					}
+					is_attracted_to_gender_of = root
+					OR = {
+						attraction > 0
+						scope:activity.var:emperor_speech_topic = flag:seduce
+					}
+				}
+			}
+			scope:host = {
+				progress_towards_lover_effect = {
+					CHARACTER = scope:honorary_guest
+					OPINION = 20
+					REASON = lover_romantic_speech_in_the_hippodrome
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				any_scheme = {
+					scheme_type = seduce
+					scheme_target_character = scope:host
+				}
+			}
+			random_scheme = {
+				limit = {
+					scheme_type = seduce
+					scheme_target_character = scope:host
+				}
+				add_scheme_progress = scheme_progress_gain
+				add_scheme_modifier = {
+					type = flattering_gratitude_modifier
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_activity_intent = increase_influence_intent
+				chariot_race_0201_negative_crowd_reaction_trigger = no
+			}
+			change_influence = medium_influence_gain
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_activity_intent = increase_influence_intent
+					chariot_race_0201_negative_crowd_reaction_trigger = no
+				}
+			}
+			change_influence = minor_influence_gain
+		}
+		
+		stress_impact = {
+			base = miniscule_stress_impact_loss
+			loyal = minor_stress_impact_loss
+			just = miniscule_stress_impact_loss
+			trusting = miniscule_stress_impact_loss
+			compassionate = miniscule_stress_impact_loss
+			arrogant = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 150
+			ai_value_modifier = {
+				ai_compassion = 1
+				ai_honor = 1
+			}
+			modifier = {
+				add = 75
+				has_activity_intent = increase_influence_intent
+				chariot_race_0201_negative_crowd_reaction_trigger = no
+			}
+			modifier = {
+				add = -75
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+				NOT = { has_activity_intent = increase_influence_intent }
+			}
+			modifier = {
+				add = 75
+				has_trait = loyal
+			}
+			modifier = {
+				add = -75
+				has_trait = arrogant
+			}
+		}
+	}
+
+	option = { # Praise Emperor
+		name = chariot_race.0201.f
+		trigger = {
+			NAND = {
+				scope:honorary_guest ?= root
+				OR = {
+					scope:activity.var:emperor_speech_topic = flag:sway
+					scope:activity.var:emperor_speech_topic = flag:seduce
+					scope:activity.var:emperor_speech_topic = flag:present_heir
+				}
+			}
+		}
+		if = {
+			limit = {
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+				has_activity_intent = increase_influence_intent
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+			}
+			change_influence = minor_influence_gain
+		}
+		else_if = {
+			limit = {
+				chariot_race_0201_negative_crowd_reaction_trigger = no
+				has_activity_intent = increase_influence_intent
+			}
+			change_influence = minor_influence_gain
+		}
+		else_if = {
+			limit = {
+				has_activity_intent = increase_influence_intent
+				chariot_race_0201_sitting_in_kathisma_trigger = yes
+			}
+			change_influence = miniscule_influence_gain
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						scope:claimant ?= root
+						OR = {
+							scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+							scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+						}
+					}
+					AND = {
+						scope:activity.var:emperor_speech_topic = flag:present_heir
+						NOT = { scope:honorary_guest ?= root }
+						OR = {
+							has_claim_on = scope:host.primary_title
+							scope:host.primary_title = {
+								any_title_heir = {
+									this = root
+								}
+								place_in_line_of_succession = {
+									target = root
+									value >= 10
+								}
+							}
+						}
+					}
+				}
+			}
+			stress_impact = {
+				base = miniscule_stress_impact_gain
+				vengeful = medium_stress_impact_gain
+				wrathful = minor_stress_impact_gain
+				arrogant = medium_stress_impact_gain
+				ambitious = medium_stress_impact_gain
+				honest = medium_stress_impact_gain
+			}
+		}
+		else = {
+			stress_impact = {
+				base = miniscule_stress_impact_loss
+				loyal = minor_stress_impact_loss
+				trusting = miniscule_stress_impact_loss
+				arrogant = miniscule_stress_impact_gain
+			}
+		}
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_sociability = 1
+				ai_honor = 1
+			}
+			modifier = {
+				add = 50
+				has_activity_intent = increase_influence_intent
+				chariot_race_0201_negative_crowd_reaction_trigger = no
+			}
+			modifier = {
+				add = -50
+				chariot_race_0201_negative_crowd_reaction_trigger = yes
+			}
+			modifier = {
+				add = -50
+				OR = {
+					AND = {
+						scope:claimant ?= root
+						OR = {
+							scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+							scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+						}
+					}
+					AND = {
+						scope:activity.var:emperor_speech_topic = flag:present_heir
+						NOT = { scope:honorary_guest ?= root }
+						has_claim_on = scope:host.primary_title
+						is_appointment_valid_trigger = {
+							TITLE = scope:host.primary_title
+							CANDIDATE = root
+							TOP_LIEGE = scope:host
+						}
+					}
+				}
+			}
+			modifier = {
+				add = 50
+				has_trait = loyal
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = arrogant
+					AND = {
+						OR = {
+							AND = {
+								scope:claimant ?= root
+								OR = {
+									scope:activity.var:emperor_speech_topic = flag:discredit_claimant_success
+									scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+								}
+							}
+							AND = {
+								scope:activity.var:emperor_speech_topic = flag:present_heir
+								NOT = { scope:honorary_guest ?= root }
+								has_claim_on = scope:host.primary_title
+								is_appointment_valid_trigger = {
+									TITLE = scope:host.primary_title
+									CANDIDATE = root
+									TOP_LIEGE = scope:host
+								}
+							}
+						}
+						OR = {
+							has_trait = vengeful
+							has_trait = wrathful
+							has_trait = arrogant
+							has_trait = ambitious
+							has_trait = honest
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+chariot_race.0202 = {
+	hidden = yes
+	immediate = {
+		if = {
+			limit = {
+				scope:activity = {
+					has_variable = counter_chant_count
+				}
+			}
+			capital_county = {
+				save_scope_as = imperial_capital
+			}
+			scope:activity = {
+				add_activity_log_entry = {
+					key = counter_chanters_log
+					character = scope:host
+					score = 25
+					tags = { negative}
+					scope:host = {
+						send_interface_message = {
+							type = event_chariot_race_sow_discord
+							title = chariot_race.0202.title
+							desc = chariot_race.0202.desc
+							left_icon = scope:host.capitaL_county
+							#strong response
+							if = {
+								limit = {
+									chariot_race_0201_negative_crowd_reaction_trigger = yes
+								}
+								chariot_race_sow_discord_strong_response_effect = yes
+							}
+							#weak response
+							else_if = {
+								limit = {
+									OR = {
+										scope:activity.var:emperor_speech_topic = flag:appease_populace
+										scope:host.capital_county = {
+											county_opinion >= 25
+										}
+										scope:host = {
+											legitimacy_level >= 5
+										}
+									}
+									NOR = {
+										scope:activity.var:emperor_speech_topic = flag:increase_legitimacy_fail
+										scope:activity.var:emperor_speech_topic = flag:discredit_claimant_fail
+									}
+								}
+								chariot_race_sow_discord_weak_response_effect = yes
+							}
+							#normal response
+							else = {
+								chariot_race_sow_discord_normal_response_effect = yes
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+#########################################################################
+###
+### HAND OUT THE PRIZES AND XP
+###
+
+# The Race Begins
+# by Chad Uhl
+chariot_race.0250 = {
+	type = activity_event
+	title = chariot_race.0250.t 
+	desc = chariot_race.0250.desc 
+	theme = chariot_race
+
+	override_background = { reference = ep3_hippodrome_track }
+
+	left_portrait = {
+		character = scope:activity.var:second_place
+		animation = hero_flex
+	}
+	center_portrait = {
+		character = scope:activity.var:first_place
+		animation = war_defender
+		camera = camera_event_left_wedding
+	}
+	right_portrait = {
+		character = scope:activity.var:third_place
+		animation = wrestling_victory
+		camera = camera_event_right_pointing_left
+	}
+
+	option = {
+		name = chariot_race.0250.a
+	}
+}
+
+#########################################################################
+###
+### HAND OUT THE PRIZES AND XP
+###
+
+# Prize event
+chariot_race.0400 = {
+	type = activity_event
+	title = chariot_race.0400.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { this = scope:host }
+				desc = chariot_race.0400.desc_emperor
+			}
+			desc = chariot_race.0400.desc_spectators
+		}
+	}
+	theme = chariot_race
+	
+	left_portrait = {
+		character = scope:activity.var:second_place
+		animation = war_over_win
+		camera = camera_event_left_forward
+	}
+	center_portrait = {
+		character = scope:activity.var:first_place
+		animation = wrestling_victory
+		camera = camera_event_center_pointing_forward
+	}
+	right_portrait = {
+		character = scope:activity.var:third_place
+		animation = war_over_tie
+		camera = camera_event_right_forward
+	}
+
+	override_background = { reference = ep3_hippodrome_track }
+
+	immediate = {
+		play_sound_effect = "event:/DLC/EP3/SFX/Events/Event_Moments/ep3_evn_eventmoment_chariot_race_ceremony"
+		show_as_tooltip = {
+			scope:activity = {
+				var:first_place = { distribute_charioteer_trait_xp_effect = { VALUE = 15 } }
+				var:second_place = { distribute_charioteer_trait_xp_effect = { VALUE = 12 } }
+				var:third_place = { distribute_charioteer_trait_xp_effect = { VALUE = 8 } }
+				custom_tooltip = every_losing_charioteer_xp_gain
+			}
+		}
+	}
+
+	option = { 
+		name = chariot_race.0400.a
+	}
+}
+
+# Individual Reward event for host
+chariot_race.0500 = {
+	type = activity_event
+	title = chariot_race.0500.t
+	desc = chariot_race.0500.desc
+	theme = chariot_race
+	
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+
+	immediate = {
+		 show_as_tooltip = { disburse_chariot_race_activity_host_rewards = yes }
+	}
+
+	option = { 
+		name = chariot_race.0500.a
+	}
+}
+
+# Individual Reward event for spectators
+chariot_race.0501 = {
+	type = activity_event
+	title = chariot_race.0500.t
+	desc = chariot_race.0500.desc
+	theme = chariot_race
+	
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+
+	immediate = {
+		 show_as_tooltip = { disburse_chariot_race_activity_spectator_rewards = yes }
+	}
+
+	option = { 
+		name = chariot_race.0500.a
+	}
+}
+
+# Putting this in a scripted effect so my colleagues won't easily find my nested switches
+scripted_effect save_winningest_member_of_team_wager = {
+	switch = {
+		trigger = var:wager_type
+		flag:win = {
+			scope:activity.var:first_place = { save_scope_as = team_wager_target }
+		}
+		flag:place = {
+			switch = {
+				trigger = var:wager_team
+				flag:blues = {
+					if = {
+						limit = {
+							scope:activity.var:first_place = { has_trait = charioteer_blue }
+						}
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+				}
+				flag:greens = {
+					if = {
+						limit = {
+							scope:activity.var:first_place = { has_trait = charioteer_green }
+						}
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+				}
+				flag:whites = {
+					if = {
+						limit = {
+							scope:activity.var:first_place = { has_trait = charioteer_white }
+						}
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+				}
+				flag:reds = {
+					if = {
+						limit = {
+							scope:activity.var:first_place = { has_trait = charioteer_red }
+						}
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+				}
+			}
+		}
+		flag:show = {
+			switch = {
+				trigger = var:wager_team
+				flag:blues = {
+					if = {
+						limit = { scope:activity.var:first_place = { has_trait = charioteer_blue } }
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else_if = {
+						limit = { scope:activity.var:second_place = { has_trait = charioteer_blue } }
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:third_place = { save_scope_as = team_wager_target }
+					}
+				}
+				flag:greens = {
+					if = {
+						limit = { scope:activity.var:first_place = { has_trait = charioteer_green } }
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else_if = {
+						limit = { scope:activity.var:second_place = { has_trait = charioteer_green } }
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:third_place = { save_scope_as = team_wager_target }
+					}
+				}
+				flag:whites = {
+					if = {
+						limit = { scope:activity.var:first_place = { has_trait = charioteer_white } }
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else_if = {
+						limit = { scope:activity.var:second_place = { has_trait = charioteer_white } }
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:third_place = { save_scope_as = team_wager_target }
+					}
+				}
+				flag:reds = {
+					if = {
+						limit = { scope:activity.var:first_place = { has_trait = charioteer_red } }
+						scope:activity.var:first_place = { save_scope_as = team_wager_target }
+					}
+					else_if = {
+						limit = { scope:activity.var:second_place = { has_trait = charioteer_red } }
+						scope:activity.var:second_place = { save_scope_as = team_wager_target }
+					}
+					else = {
+						scope:activity.var:third_place = { save_scope_as = team_wager_target }
+					}
+				}
+			}
+		}
+	}
+}
+
+# How'd my bet go? 
+chariot_race.0600 = {
+	type = activity_event
+	window = chariot_race_pivotal_moment_widget
+	title = chariot_race.0600.t
+	desc = {
+		desc = chariot_race.0600.intro
+		first_valid = {
+			triggered_desc = { # Successful Wager - Team
+				trigger = {
+					has_character_flag = successful_bet
+					var:wager_target = root
+				}
+				desc = chariot_race.0600.desc.won_team
+			}
+			triggered_desc = { # Successful Wager - Individual
+				trigger = {
+					has_variable = wager_target
+					NOT = { var:wager_target = root }
+					has_character_flag = successful_bet
+				}
+				desc = chariot_race.0600.desc.won_individual
+			}
+			triggered_desc = { # Failed Wager - Team
+				trigger = {
+					has_variable = wager_target
+					var:wager_target = root
+					NOT = { has_character_flag = successful_bet }
+				}
+				desc = chariot_race.0600.desc.lost_team
+			}
+			triggered_desc = { # Failed Wager - Individual
+				trigger = {
+					has_variable = wager_target
+					NOR = {
+						has_character_flag = successful_bet 
+						var:wager_target = root
+					}
+				}
+				desc = chariot_race.0600.desc.lost_individual
+			}
+			triggered_desc = {
+				trigger = {
+					has_variable = wager_target
+					var:wager_target = { is_alive = no }
+				}
+				desc = chariot_race.0600.desc.dead
+			}
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					root = scope:host
+					employs_court_position = bookmaker_court_position
+					scope:activity.var:chariot_race_pot >= 10 
+				}
+				desc = chariot_race.0600.desc.bookmaker
+			}
+			triggered_desc = {
+				trigger = {
+					root = scope:host
+					employs_court_position = bookmaker_court_position
+				}
+				desc = chariot_race.0600.desc.bookmaker.no_money
+			}
+		}
+	}
+	theme = chariot_race
+	override_background = { reference = ep3_hippodrome_track }
+
+	# Pivotal Moment Illustrations
+	override_transition = { # Your charioteer loses
+		trigger = {
+			AND = {
+				has_variable = wager_value
+				NOT = { has_character_flag = successful_bet }
+			}
+			court_position:charioteer_court_position ?= {
+				NOR = {
+					this = scope:activity.var:first_place
+					this = scope:activity.var:second_place
+					this = scope:activity.var:third_place
+				}
+			}
+		}
+		reference = pivotal_chariots_fail
+	}
+	override_transition = { # Blue Wins
+		trigger = {
+			scope:activity.var:first_place = { has_trait = charioteer_blue }
+		}
+		reference = pivotal_chariots_win_blue
+	}
+	override_transition = { # Green Wins
+		trigger = {
+			scope:activity.var:first_place = { has_trait = charioteer_green }
+		}
+		reference = pivotal_chariots_win_green
+	}
+	override_transition = { # White Wins
+		trigger = {
+			scope:activity.var:first_place = { has_trait = charioteer_white }
+		}
+		reference = pivotal_chariots_win_white
+	}
+	override_transition = { # Red Wins
+		trigger = {
+			scope:activity.var:first_place = { has_trait = charioteer_red }
+		}
+		reference = pivotal_chariots_win_red
+	}
+	
+	left_portrait = {
+		character = scope:activity.var:first_place
+		animation = chariot_w_horses_happy
+		camera = camera_event_chariot_very_left_hippodrome
+	}
+	center_portrait = {
+		character = scope:activity.var:second_place
+		animation = chariot_shocked
+		camera = camera_event_chariot_center_hippodrome
+	}
+	right_portrait = {
+		character = scope:activity.var:third_place
+		animation = chariot_neutral
+		camera = camera_event_chariot_very_right_hippodrome
+	}
+
+	lower_left_portrait = scope:bookmaker
+
+	immediate = {
+		play_sound_effect = "event:/DLC/EP3/SFX/Events/Event_Moments/ep3_evn_eventmoment_chariot_race_pivotal_moment"
+		# Find a charioteer to talk about if you placed a bet on a team
+		if = {
+			limit = {
+				has_variable = wager_target
+				has_variable = wager_team
+				var:wager_target = root
+			}
+			save_winningest_member_of_team_wager = yes
+			scope:activity = {
+				ordered_guest_subset = {
+					name = charioteers
+					order_by = charioteer_victory_score_value
+					position = scope:team_wager_target.following_charioteer_index
+					save_scope_as = following_charioteer
+				}
+			}
+		}
+
+		# Handle Bookmaker Accounting
+		if = {
+			limit = {
+				root = scope:host
+				employs_court_position = bookmaker_court_position
+			}
+			root.court_position:bookmaker_court_position = { save_scope_as = bookmaker }
+			if = {
+				limit = { scope:activity.var:chariot_race_pot >= 10  }
+				set_variable = {
+					name = gold_gained_emperor
+					value = {
+						value = scope:activity.var:chariot_race_pot
+						multiply = 0.9
+						max = root.monumental_gold_value
+					}
+				}
+				set_variable = {
+					name = gold_gained_bookmaker
+					value = {
+						value = scope:activity.var:chariot_race_pot
+						multiply = 0.1
+					}
+				}
+			}
+		}
+
+		# Show pre-awarded winnings in the option tooltip
+		show_as_tooltip = {
+			individual_chariot_race_payout_effect = yes
+		}
+	}
+
+	option = { 
+		name = { # Successful Wager - Individual
+			trigger = {
+				has_character_flag = successful_bet
+				NOT = { var:wager_target = root }
+			}
+			text = chariot_race.0600.a.individual
+		}
+		name = { # Successful Wager - Team
+			trigger = {
+				has_character_flag = successful_bet
+				var:wager_target = root
+			}
+			text = chariot_race.0600.a.team
+		}
+		name = { # Failed Wager
+			trigger = {
+				NOT = { has_character_flag = successful_bet }
+			}
+			text = chariot_race.0600.a.lost
+		}
+		name = { # Wager Target Dead
+			trigger = {
+				var:wager_target = { is_alive = no }
+			}
+			text = chariot_race.0600.a.dead
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_variable = gold_gained_emperor
+				has_variable = gold_gained_bookmaker
+			}
+			add_gold = var:gold_gained_emperor
+			root.court_position:bookmaker_court_position = {
+				save_scope_as = bookmaker
+				add_gold = root.var:gold_gained_bookmaker
+			}
+		}
+	}
+}
