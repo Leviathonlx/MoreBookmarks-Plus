@@ -8,9 +8,6 @@
 
 	allowed_for_character = {
 		can_use_conquest_cbs_trigger = yes
-		NOT = {
-			government_has_flag = government_is_landless_adventurer
-		}
 	}
 
 	allowed_against_character = {
@@ -48,20 +45,6 @@
 
 		# AI in struggles act insularly for wars that don't have a familial or legal basis.
 		multiply = struggle_wars_prioritise_struggle_targets_value
-		# Tell the Romans to stop going adventuring into the steppe for no gods-damned reason.
-		multiply = byzantium_conquests_ai_score_value
-		#Declaring war on the frankokratia leader can really ruin the whole thing
-		if = {
-			limit = {
-				scope:defender = {
-					any_owned_story = {
-						story_type = frankokratia_story
-						NOT = { has_variable = franko_war_complete }
-					}
-				}
-			}
-			multiply = 0
-		}
 	}
 
 	valid_to_start = {
@@ -159,9 +142,6 @@
 		# Legitimacy
 		add_legitimacy_attacker_victory_effect = yes
 
-		# Influence
-		add_influence_attacker_victory_effect = yes
-
 		#EP2 accolade glory gain for winning against higher ranked enemy
 		scope:attacker = { accolade_attacker_war_end_glory_gain_low_effect = yes }
 
@@ -170,9 +150,6 @@
 			save_scope_as = change
 			add_claim_on_loss = yes
 		}
-
-		# EP3 Laamp possibility warning
-		scope:defender = { ep3_war_loss_adventurer_tt_effect = yes }
 
 		#As this is just a county conquest, simply grab the designated county.
 		every_in_list = {
@@ -276,9 +253,6 @@
 		# Legitimacy
 		add_legitimacy_attacker_defeat_effect = yes
 
-		# Influence
-		add_influence_attacker_defeat_effect = yes
-
 		#EP2 accolade glory gain for winning against higher ranked enemy
 		scope:defender = { accolade_defender_war_end_glory_gain_low_effect = yes }
 
@@ -287,7 +261,10 @@
 			pay_short_term_gold_reparations_effect = {
 				GOLD_VALUE = 2
 			}
-			add_prestige = medium_prestige_loss
+			add_prestige = {
+				value = medium_prestige_value
+				multiply = -1.0
+			}
 		}
 
 		# Prestige for Defender
@@ -350,9 +327,6 @@ duchy_conquest_cb = {
 
 	allowed_for_character = {
 		can_use_conquest_cbs_trigger = yes
-		NOT = {
-			government_has_flag = government_is_landless_adventurer
-		}
 	}
 
 	allowed_for_character_display_regardless = {
@@ -427,22 +401,6 @@ duchy_conquest_cb = {
 
 		# AI in struggles act insularly for wars that don't have a familial or legal basis.
 		multiply = struggle_wars_prioritise_struggle_targets_value
-		# Tell the Romans to stop going adventuring into the steppe for no gods-damned reason.
-		multiply = byzantium_conquests_ai_score_value
-		multiply = muslim_invasions_prefer_nonmuslims_ai_score_value
-
-		#Declaring war on the frankokratia leader can really ruin the whole thing
-		if = {
-			limit = {
-				scope:defender = {
-					any_owned_story = {
-						story_type = frankokratia_story
-						NOT = { has_variable = franko_war_complete }
-					}
-				}
-			}
-			multiply = 0
-		}
 	}
 
 	valid_to_start = {
@@ -450,26 +408,6 @@ duchy_conquest_cb = {
 			any_in_de_jure_hierarchy = {
 				tier = tier_county
 				neighboring_county_or_viking_conquest_trigger = { CHARACTER = root }
-			}
-		}
-		scope:target = {
-			trigger_if = {
-				limit = {
-					scope:attacker = {
-						is_ai = yes
-					}
-				}
-				any_in_de_jure_hierarchy = {
-					continue = { tier > tier_county }
-					count >= 2
-					tier = tier_county
-					holder ?= {
-						OR = {
-							this = scope:defender
-							is_vassal_or_below_of = scope:defender
-						}
-					}
-				}
 			}
 		}
 	}
@@ -601,9 +539,6 @@ duchy_conquest_cb = {
 			save_scope_as = change
 			add_claim_on_loss = yes
 		}
-
-		# EP3 Laamp possibility warning
-		scope:defender = { ep3_war_loss_adventurer_tt_effect = yes }
 
 		# go through the dejure hierarchy under target titles, transfer eligible vassals and sieze counties from ineligible ones
 		every_in_list = {
@@ -843,9 +778,6 @@ ducal_conquest_cb = {
 	allowed_for_character = {
 		has_perk = ducal_conquest_perk
 		can_use_conquest_cbs_trigger = no
-		NOT = {
-			government_has_flag = government_is_landless_adventurer
-		}
 	}
 
 	allowed_against_character = {
@@ -963,9 +895,6 @@ ducal_conquest_cb = {
 			save_scope_as = change
 			add_claim_on_loss = yes
 		}
-
-		# EP3 Laamp possibility warning
-		scope:defender = { ep3_war_loss_adventurer_tt_effect = yes }
 
 		# go through the dejure hierarchy under target titles, transfer titles with same or worse tolerance holders (their religion equaly or less tolerated than the defender's),
 		# take the holder as vassal otherwise and don't go deeper
@@ -1191,21 +1120,6 @@ ducal_conquest_cb = {
 	max_attacker_score_from_occupation = 150
 
 	max_ai_diplo_distance_to_title = 1500
-
-	ai_score_mult = {
-		#Declaring war on the frankokratia leader can really ruin the whole thing
-		if = {
-			limit = {
-				scope:defender = {
-					any_owned_story = {
-						story_type = frankokratia_story
-						NOT = { has_variable = franko_war_complete }
-					}
-				}
-			}
-			multiply = 0
-		}
-	}
 }
 
 ireland_laudabiliter_conquest_cb = {
@@ -1281,8 +1195,8 @@ ireland_laudabiliter_conquest_cb = {
 
 	cost = {
 		piety = {
-			value = 0
 			add = common_cb_impious_piety_cost
+			value = 0
 			if = {
 				limit = {
 					scope:defender.faith = scope:attacker.faith
@@ -1341,10 +1255,6 @@ ireland_laudabiliter_conquest_cb = {
 			save_scope_as = change
 			add_claim_on_loss = yes
 		}
-
-		# EP3 Laamp possibility warning
-		scope:defender = { ep3_war_loss_adventurer_tt_effect = yes }
-		
 		# go through the dejure hierarchy under target titles, transfer titles with same or worse tolerance holders (their religion equaly or less tolerated than the defender's),
 		# take the holder as vassal otherwise and don't go deeper
 		every_in_list = {
@@ -1571,19 +1481,4 @@ ireland_laudabiliter_conquest_cb = {
 	max_attacker_score_from_occupation = 150
 
 	max_ai_diplo_distance_to_title = 500
-
-	ai_score_mult = {
-		#Declaring war on the frankokratia leader can really ruin the whole thing
-		if = {
-			limit = {
-				scope:defender = {
-					any_owned_story = {
-						story_type = frankokratia_story
-						NOT = { has_variable = franko_war_complete }
-					}
-				}
-			}
-			multiply = 0
-		}
-	}
 }

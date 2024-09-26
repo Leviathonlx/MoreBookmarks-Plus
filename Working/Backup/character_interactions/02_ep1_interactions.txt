@@ -12,6 +12,7 @@ fund_inspiration_interaction = {
 	desc = fund_inspiration_interaction_desc
 
 	is_shown = {
+		has_ep1_dlc_trigger = yes
 		scope:recipient = {
 			is_ruler = no
 			exists = inspiration
@@ -49,6 +50,12 @@ fund_inspiration_interaction = {
 		scope:actor = {
 			can_sponsor_inspiration = scope:recipient.inspiration
 			gold >= scope:recipient.inspiration.base_inspiration_gold_cost
+			trigger_if = {
+				limit = {
+					is_ai = yes
+				}
+				NOT = { has_character_flag = recently_fund_inspiration }
+			}
 		}
 	}
 	
@@ -131,7 +138,7 @@ fund_inspiration_interaction = {
 		}
 	}
 
-	ai_frequency = 10
+	ai_frequency = 6
 
 	ai_targets = {
 		ai_recipients = guests
@@ -144,14 +151,8 @@ fund_inspiration_interaction = {
 
 	ai_potential = {
 		is_at_war = no
-		OR = {
-			has_royal_court = yes
-			government_has_flag = government_is_landless_adventurer
-		}
+		has_royal_court = yes
 		gold > ai_inspiration_desired_gold_value
-		NOT = { has_character_flag = recently_fund_inspiration }
-		ai_has_conqueror_personality = no
-		ai_should_focus_on_building_in_their_capital = no
 	}
 
 	ai_will_do = {
@@ -222,16 +223,6 @@ fund_inspiration_interaction = {
 					}
 				}
 			}
-		}
-		modifier = { # Warlike AI's only sponsor if they've been at peace for a long time
-			factor = 0
-			ai_has_warlike_personality = yes
-			days_of_continuous_peace < 1825 # 5 years
-		}
-		modifier = { # Cautious AI's only sponsor if they feel safe enough
-			factor = 0
-			ai_has_cautious_personality = yes
-			war_chest_gold < cautious_ai_minimum_war_chest_gold
 		}
 	}
 }
@@ -327,7 +318,6 @@ indebt_guest_interaction = {
 		# Send a toast.
 		scope:actor = {
 			send_interface_toast = {
-				type = event_toast_effect_bad
 				title = indebt_guest_interaction.tt.failure
 				left_icon = scope:recipient
 				# On decline, scope:recipient leaves your court...
@@ -438,7 +428,7 @@ indebt_guest_interaction = {
 				}
 				any_scheme = {
 					count >= 1
-					scheme_target_character = {
+					scheme_target = {
 						any_relation = {
 							type = nemesis
 							count >= 1

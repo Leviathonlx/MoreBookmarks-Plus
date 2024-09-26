@@ -1,14 +1,13 @@
 ﻿activity_hunt = {
 	is_shown = {
 		highest_held_title_tier > tier_barony
-		is_playable_character = yes
+		is_landed = yes
 		trigger_if = {
 			limit = {
 				is_ai = yes
 			}
 			years_from_game_start >= 3
 			is_at_war = no
-			ai_should_focus_on_building_in_their_capital = no
 			OR = {
 				has_character_flag = hunts_a_lot
 				short_term_gold >= hunt_activity_base_cost
@@ -23,26 +22,13 @@
 	can_start_showing_failures_only = {
 		is_available_adult = yes
 		can_hunt_trigger = yes
-		trigger_if = {
-			limit = {
-				is_landless_adventurer = yes
-			}
-			custom_tooltip = {
-				text = adventurer_3_courtiers
-				any_courtier = {
-					count >= 3
-					is_available_adult = yes
-					can_hunt_trigger = yes
-				}
-			}
-		}
 	}
 
 	is_valid = {
 		scope:host = {
 			is_alive = yes
 			is_imprisoned = no
-			is_playable_character = yes
+			is_landed = yes 
 			NOT = { is_incapable = yes }
 		}
 		NOT = { has_variable = hunt_invalidated }
@@ -127,9 +113,7 @@
 			# Host becomes unlanded
 			else_if = {
 				limit = {
-					scope:host = {
-						is_playable_character = no
-					}
+					scope:host = { is_landed = no }
 				}
 				scope:activity = {
 					activity_type = { save_scope_as = activity_type }
@@ -188,24 +172,6 @@
 				}
 				if = {
 					limit = {
-						domicile ?= { has_domicile_parameter = estate_cheaper_hunt_cost }
-					}
-					subtract = {
-						value = 0
-						add = {
-							value = hunt_activity_base_cost
-							add = {
-								value = hunt_activity_base_cost
-								multiply = activity_cost_scale_by_era
-								subtract = hunt_activity_base_cost
-							}
-						}
-						multiply = estate_cheaper_hunt_cost_value
-						desc = estate_cheaper_hunt_cost_desc
-					}
-				}
-				if = {
-					limit = {
 						dynasty ?= {
 							has_dynasty_perk = law_legacy_1
 						}
@@ -229,16 +195,6 @@
 						has_character_flag = free_hunt
 					}
 					multiply = 0
-				}
-				#court.8140
-				if = {
-					limit = {
-						has_character_flag = court_event_discount_hunt
-					}
-					multiply = {
-						value = 0.5
-						desc = court_event_discount_desc
-					}
 				}
 			}
 		}
@@ -283,23 +239,6 @@
 					value = hunt_activity_base_cost
 					multiply = law_legacy_cost_reduction_mult
 				}
-			}
-
-			#court.8140
-			if = {
-				limit = {
-					has_character_flag = court_event_discount_feast
-				}
-				multiply = {
-					value = 0.5
-				}
-			}
-			
-			
-			# Adventurer
-			if = {
-				limit = { is_landless_adventurer = yes }
-				multiply = 0.25
 			}
 			
 			# Make it a multiple of 5 (rounded up)
@@ -712,39 +651,6 @@
             	desc = "hunts a lot"
             }
         }
-        if = {
-        	limit = {
-				ai_has_conqueror_personality = yes
-				OR = {
-					AND = {
-						prestige_level < 4
-						can_use_conquest_cbs_trigger = yes
-					}
-					prestige < 1000
-				}
-			}
-        	add = {
-            	value = 1000
-            	desc = "conqueror looking for prestige"
-            }
-        }
-		if = {
-			limit = {
-				ai_has_conqueror_personality = yes
-				trigger_if = {
-					limit = {
-						prestige_level >= 4
-						can_use_conquest_cbs_trigger = yes
-					}
-					prestige_level >= 4
-				}
-				prestige >= 1000
-			}
-        	add = {
-            	value = -5000
-            	desc = "conqueror sated for prestige"
-            }
-		}
 		# Legitimacy
 		if = {
 			limit = {
@@ -849,7 +755,6 @@
 		triggered_desc = {
 			trigger = {
 				has_dlc_feature = legends
-				NOT = { has_game_rule = historical_legends_only }
 			}
 			desc = activity_legend_seed_tt
 		}
@@ -877,21 +782,12 @@
 		}
 		triggered_desc = {
 			trigger = {
-				is_landless_adventurer = no
 				NOT = { employs_court_position = master_of_hunt_court_position }
 			}
 			desc = activity_hunt_host_desc_moh
 		}
 		triggered_desc = {
 			trigger = {
-				is_landless_adventurer = yes
-				NOT = { employs_court_position = huntperson_camp_officer }
-			}
-			desc = activity_hunt_host_desc_huntsperson
-		}
-		triggered_desc = {
-			trigger = {
-				is_landed = yes
 				NOT = {
 					any_held_county = {
 						any_county_province = {
@@ -1009,8 +905,8 @@
 	# LOCATION
 	###################
 
-	province_filter = domicile_realm
-	ai_province_filter = domicile_domain
+	province_filter = realm
+	ai_province_filter = domain
 
 	province_description = {
 		desc = activity_hunt_province_desc
@@ -1157,12 +1053,6 @@
 		}
 		triggered_desc = {
 			trigger = {
-				county ?= { has_county_modifier = ep3_abundant_game_modifier }
-			}
-			desc = activity_hunt_province_desc_abundant_game
-		}
-		triggered_desc = {
-			trigger = {
 				OR = {
 					terrain = hills
 					terrain = wetlands
@@ -1253,12 +1143,6 @@
 		}
 		triggered_desc = {
 			trigger = {
-				county ?= { has_county_modifier = ep3_wild_predators_modifier }
-			}
-			desc = activity_hunt_province_desc_wild_predators
-		}
-		triggered_desc = {
-			trigger = {
 				has_building_or_higher = logging_camps_01
 				NOT = { has_building_or_higher = logging_camps_03 }
 			}
@@ -1328,7 +1212,6 @@
 		trigger = {
 			activity_location.culture = {
 				OR = {
-					has_graphical_iranian_culture_group_trigger = yes
 					has_graphical_mena_culture_group_trigger = yes
 					has_graphical_steppe_culture_group_trigger = yes
 					has_graphical_african_culture_group_trigger = yes
@@ -1686,10 +1569,6 @@
 									this = scope:host.court_position:master_of_hunt_court_position
 								}
 								AND = {
-									exists = scope:host.court_position:huntperson_camp_officer
-									this = scope:host.court_position:huntperson_camp_officer
-								}
-								AND = {
 									exists = var:animal_slayer
 									this = var:animal_slayer
 								}
@@ -1826,7 +1705,6 @@
 								NOR = {
 									this = scope:host
 									has_court_position = master_of_hunt_court_position
-									has_court_position = huntperson_camp_officer
 								}
 							}
 							add_to_list = characters
@@ -1938,10 +1816,7 @@
 			effect = {
 				if = {
 					limit = {
-						OR = {
-							scope:host.location = scope:activity.activity_location
-							scope:host.location = { is_sea_province = yes }
-						}
+						scope:host.location = scope:activity.activity_location
 					}
 					scope:host = {
 						add_to_list = characters
@@ -1949,12 +1824,6 @@
 				}
 			}
 			scripted_animation = {
-				triggered_animation = {
-					trigger = {
-						scope:character.location = { is_sea_province = yes }
-					}
-					animation = survey
-				}
 				triggered_animation = {
 					trigger = {
 						scope:activity = {
@@ -1979,10 +1848,7 @@
 						}
 						NOT = {
 							scope:host = {
-								OR = {
-									employs_court_position = master_of_hunt_court_position
-									employs_court_position = huntperson_camp_officer
-								}
+								employs_court_position = master_of_hunt_court_position
 								can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:host }
 							}
 						}
@@ -2004,10 +1870,7 @@
 							NOT = { exists = var:hunt_success }
 						}
 						scope:host = {
-							OR = {
-								employs_court_position = master_of_hunt_court_position
-								employs_court_position = huntperson_camp_officer
-							}
+							employs_court_position = master_of_hunt_court_position
 							can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:host }
 						}
 					}
@@ -2028,10 +1891,7 @@
 							NOT = { exists = var:hunt_success }
 						}
 						scope:host = {
-							OR = {
-								employs_court_position = master_of_hunt_court_position
-								employs_court_position = huntperson_camp_officer
-							}
+							employs_court_position = master_of_hunt_court_position
 							can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:host }
 						}
 					}
@@ -2043,14 +1903,13 @@
 		}
 		
 		travel_host = {
-			camera = camera_activity_horse
+			camera = camera_event_center
 			
 			effect = {
 				if = {
 					limit = {
-						NOR = {
+						NOT = {
 							scope:host.location = scope:activity.activity_location
-							scope:host.location = { is_sea_province = yes }
 						}
 					}
 					scope:host = {
@@ -2060,6 +1919,12 @@
 			}
 
 			scripted_animation = {
+				triggered_animation = {
+					trigger = {
+						scope:character.location = { is_sea_province = yes }
+					}
+					animation = { idle }
+				}
 				triggered_animation = {
 					trigger = { scope:character = { has_trait = impatient } }
 					animation = { jockey_gallop }
@@ -2073,16 +1938,6 @@
 			
 			effect = {
 				scope:host.court_position:master_of_hunt_court_position ?= {
-					if = {
-						limit = {
-							scope:host.location = scope:activity.activity_location
-							is_participant_in_activity = scope:activity
-							location = scope:activity.activity_location
-						}
-						add_to_list = characters
-					}
-				}
-				scope:host.court_position:huntperson_camp_officer ?= {
 					if = {
 						limit = {
 							scope:host.location = scope:activity.activity_location
@@ -2203,7 +2058,6 @@
 								NOR = {
 									this = scope:host
 									has_court_position = master_of_hunt_court_position
-									has_court_position = huntperson_camp_officer
 								}
 							}
 							add_to_list = characters
@@ -2395,7 +2249,6 @@
 								NOR = {
 									this = scope:host
 									has_court_position = master_of_hunt_court_position
-									has_court_position = huntperson_camp_officer
 								}
 							}
 							add_to_list = characters
@@ -2696,14 +2549,9 @@
 				is_valid = {
 					custom_tooltip = {
 						text = hunt_any_county_legendary_sighting_tt
-						OR = {
-							root.domicile.domicile_location.county ?= {
-								has_county_modifier = hunt_sighting_legendary_modifier
-							}
-							any_sub_realm_county = {
-								has_county_modifier = hunt_sighting_legendary_modifier
-								var:sighting_owner ?= root
-							}
+						any_sub_realm_county = {
+							has_county_modifier = hunt_sighting_legendary_modifier
+							var:sighting_owner ?= root
 						}
 					}
 				}
@@ -2817,7 +2665,6 @@
 				cost = {
 					gold = {
 						add = {
-							desc = hunt_attendants_normal
 							add = {
 								value = hunt_normal_option_cost
 								desc = hunt_attendants_normal
@@ -2893,7 +2740,6 @@
 				cost = {
 					gold = {
 						add = {
-							desc = hunt_attendants_many
 							add = {
 								value = hunt_good_option_cost #Base level
 								desc = hunt_attendants_many
@@ -2968,9 +2814,8 @@
 		#########
 		# GUEST NUMBER
 		#########
-		hunt_option_party_size = {
+		hunt_option_party_size = { # TODO_CD_EP2 awaiting code support TIT-43076
 			hunt_party_size_few = {
-				default = yes
 				is_shown = { has_dlc_feature = advanced_activities }
 
 				# Entourage option grabbing suitable bodyguards & maybe someone from court who really likes you, + randos.
@@ -3017,23 +2862,11 @@
 				}
 			}
 			hunt_party_size_normal = {
-				
-				is_valid = {
-					trigger_if = {
-						limit = {
-							is_landless_adventurer = yes
-						}
-						custom_tooltip = {
-							text = I_AM_LANDLESS_ADVENTURER_TRIGGER
-							is_landless_adventurer = no
-						}
-					}
-				}
+				default = yes
 
 				cost = {
 					gold = {
 						add = {
-							desc = hunt_party_size_normal
 							add = {
 								value = hunt_normal_option_cost
 								desc = hunt_party_size_normal
@@ -3080,23 +2913,10 @@
 			}
 			hunt_party_size_many = {
 				is_shown = { has_dlc_feature = advanced_activities }
-				
-				is_valid = {
-					trigger_if = {
-						limit = {
-							is_landless_adventurer = yes
-						}
-						custom_tooltip = {
-							text = I_AM_LANDLESS_ADVENTURER_TRIGGER
-							is_landless_adventurer = no
-						}
-					}
-				}
 
 				cost = {
 					gold = {
 						add = {
-							desc = hunt_party_size_many
 							add = {
 								value = hunt_good_option_cost
 								desc = hunt_party_size_many
@@ -3389,6 +3209,7 @@
 			2 = activity_invite_rule_lovers
 			3 = activity_invite_rule_close_family
 			3 = activity_invite_rule_extended_family
+			3 = activity_invite_rule_knights
 			4 = activity_invite_rule_guests
 			
 			# MP 
@@ -3400,10 +3221,8 @@
 			1 = activity_invite_rule_friends
 			2 = activity_invite_rule_glory_hounds
 			1 = activity_invite_rule_hunters
-			3 = activity_invite_rule_knights
 			4 = activity_invite_rule_courtiers
 			4 = activity_invite_rule_fellow_vassals
-			1 = activity_invite_rule_landless_adventurers_restricted_range
 		}
 	}
 
@@ -3431,7 +3250,7 @@
 	guest_join_chance = {
 		base = 10
 		base_activity_modifier = yes
-		
+
 		# Scripted Modifiers
 		activity_guest_shared_ai_accept_modifier = yes 
 		activity_guest_hunt_ai_accept_modifier = yes
@@ -3555,7 +3374,6 @@
 		if = {
 			limit = {
 				this = scope:host
-				is_landless_adventurer = no
 				NOT = { employs_court_position = master_of_hunt_court_position }
 				involved_activity = {
 					any_attending_character = {
@@ -3569,27 +3387,6 @@
 			trigger_event = {
 				id = hunt.0540
 				days = { 3 9 }
-			}
-		}
-		if = {
-			limit = {
-				this = scope:host
-				is_landless_adventurer = yes
-				can_employ_court_position_type = huntperson_camp_officer
-				NOT = { employs_court_position = huntperson_camp_officer }
-			}
-			trigger_event = {
-				id = hunt.0540
-				days = 1
-			}
-		}
-		if = {
-			limit = {
-				this = scope:host
-				is_landless_adventurer = yes
-			}
-			trigger_event = {
-				id = hunt.1337
 			}
 		}
 		if = {

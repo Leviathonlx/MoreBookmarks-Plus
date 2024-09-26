@@ -55,7 +55,7 @@ norman_conquest_cb = {
 		}
 	}
 	
-	on_invalidated = { set_global_variable = norman_conquest_cb_concluded }
+	on_invalidated = {}
 	on_invalidated_desc = msg_claim_war_invalidated_message
 
 	on_victory_desc = {
@@ -87,7 +87,7 @@ norman_conquest_cb = {
 			save_scope_as = change
 			add_claim_on_loss = yes
 		}
-
+		
 		# Transfer landed titles to the attacker.
 		setup_claim_cb = {
 			titles = target_titles
@@ -97,41 +97,6 @@ norman_conquest_cb = {
 			change = scope:change
 		}
 
-		# EP3 Laamp possibility warning
-		scope:defender = { ep3_war_loss_adventurer_tt_effect = yes }
-
-		#Hereward the Wake departs for the Fenlands
-		character:90028 = { save_scope_as = hereward }
-
-		if = {
-			limit = {
-				exists = scope:hereward
-			}
-
-			scope:hereward = {
-				trigger_event = {
-					id = ep3_laamps.6000
-					days = { 1 2 }
-				}
-			}
-		}
-
-		#Eadgar becomes a LAAMP
-		character:112 = { save_scope_as = eadgar }
-
-		if = {
-			limit = {
-				exists = scope:eadgar
-			}
-
-			scope:eadgar = {
-				trigger_event = {
-					id = ep3_laamps.7000
-					days = { 1 2 }
-				}
-			}
-		}
-	
 		every_in_list = {
 			list = target_titles
 
@@ -234,7 +199,7 @@ norman_conquest_cb = {
 					}
 				}
 			}
-		}
+		}				
 
 		resolve_title_and_vassal_change = scope:change
 		
@@ -272,8 +237,6 @@ norman_conquest_cb = {
 
 		# FP1: note the victory for future memorialisation via stele (if applicable).
 		scope:attacker = { fp1_remember_recent_conquest_victory_effect = yes }
-
-		set_global_variable = norman_conquest_cb_concluded
 	}
 
 	on_white_peace_desc = {
@@ -362,8 +325,6 @@ norman_conquest_cb = {
 
 		# Truce
 		add_truce_white_peace_effect = yes
-
-		set_global_variable = norman_conquest_cb_concluded
 	}
 
 	on_defeat_desc = {
@@ -444,8 +405,6 @@ norman_conquest_cb = {
 			save_temporary_scope_as = loser
 		}
 		on_lost_aggression_war_discontent_loss = yes
-
-		set_global_variable = norman_conquest_cb_concluded
 	}
 	
 	on_primary_attacker_death = inherit
@@ -535,7 +494,8 @@ norwegian_invasion_cb = {
 	
 	on_invalidated_desc = msg_claim_war_invalidated_message
 
-	on_invalidated = { set_global_variable = norwegian_invasion_cb_concluded }
+	on_invalidated = {
+	}
 
 	on_victory_desc = {
 		first_valid = {
@@ -567,70 +527,42 @@ norwegian_invasion_cb = {
 		title:d_lancaster = { save_scope_as = lancaster}
 		custom_tooltip = norwegian_invasion_cb_victory_with_tostig_desc
 		# Set land acquisition type to conquest.
-		create_title_and_vassal_change = {
-			type = conquest
-			save_scope_as = change
-			add_claim_on_loss = yes
-		}
-		
-		# Transfer landed titles to the attacker.
-		setup_claim_cb = {
-			titles = target_titles
-			attacker = scope:attacker
-			defender = scope:defender
-			claimant = scope:claimant
-			change = scope:change
-		}
+		hidden_effect = {
+			create_title_and_vassal_change = {
+				type = conquest
+				save_scope_as = change
+				add_claim_on_loss = yes
+			}
+			
+			# Transfer landed titles to the attacker.
+			setup_claim_cb = {
+				titles = target_titles
+				attacker = scope:attacker
+				defender = scope:defender
+				claimant = scope:claimant
+				change = scope:change
+			}
+			
+			every_in_list = {
+				list = target_titles
 
-		# EP3 Laamp possibility warning
-		scope:defender = { ep3_war_loss_adventurer_tt_effect = yes }
-		
-		every_in_list = {
-			list = target_titles
+				#Remove elective succession law from k_england.
+				clear_title_laws = yes	
 
-			#Remove elective succession law from k_england.
-			clear_title_laws = yes	
-
-			# Personally seize all duchy titles in Northern England AND all duchy titles personally held by the King of England.
-			every_in_de_jure_hierarchy = {
-				limit = {
-					tier = tier_duchy
-					special_invasion_cb_seize_land_in_region_trigger = {
-						TARGET_REGION = custom_northern_england
-						TARGET_KINGDOM = title:k_england
-					}
-				}
-				if = {
+				# Personally seize all duchy titles in Northern England AND all duchy titles personally held by the King of England.
+				every_in_de_jure_hierarchy = {
 					limit = {
-						exists = holder
-						holder = {
-							exists = top_liege
-							top_liege = scope:defender
-
-							# Vassal players in England get to keep their holdings, so they can play as vassals of the new king instead of game-overing.
-							NAND = {
-								NOT = { this = top_liege }
-								is_ai = no
-							}
+						tier = tier_duchy
+						special_invasion_cb_seize_land_in_region_trigger = {
+							TARGET_REGION = custom_northern_england
+							TARGET_KINGDOM = title:k_england
 						}
 					}
-					custom_description = {
-						text = custom_seize_title_and_below_de_jure
-						subject = scope:attacker
-						object = this
-						change_title_holder = {
-							holder = scope:attacker
-							change = scope:change
-							take_baronies = no
-						}
-					}
-
-					# Grab the counties that go with the duchies, too.
-					every_in_de_jure_hierarchy = {
+					if = {
 						limit = {
-							tier = tier_county
 							exists = holder
 							holder = {
+								exists = top_liege
 								top_liege = scope:defender
 
 								# Vassal players in England get to keep their holdings, so they can play as vassals of the new king instead of game-overing.
@@ -640,7 +572,69 @@ norwegian_invasion_cb = {
 								}
 							}
 						}
-						hidden_effect = {
+						custom_description = {
+							text = custom_seize_title_and_below_de_jure
+							subject = scope:attacker
+							object = this
+							change_title_holder = {
+								holder = scope:attacker
+								change = scope:change
+								take_baronies = no
+							}
+						}
+
+						# Grab the counties that go with the duchies, too.
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								exists = holder
+								holder = {
+									top_liege = scope:defender
+
+									# Vassal players in England get to keep their holdings, so they can play as vassals of the new king instead of game-overing.
+									NAND = {
+										NOT = { this = top_liege }
+										is_ai = no
+									}
+								}
+							}
+							hidden_effect = {
+								change_title_holder = {
+									holder = scope:attacker
+									change = scope:change
+									take_baronies = no
+								}
+							}
+						}
+					}
+				}
+				# Personally seize every county title in the Northern England AND county titles personally held by the King of England.
+				every_in_de_jure_hierarchy = {
+					limit = {
+						tier = tier_county
+						special_invasion_cb_seize_land_in_region_trigger = {
+							TARGET_REGION = custom_northern_england
+							TARGET_KINGDOM = title:k_england
+						}
+					}
+					if = {
+						limit = {
+							exists = holder
+							holder = {
+								exists = top_liege
+								top_liege = scope:defender
+
+								# Vassal players in England get to keep their holdings, so they can play as vassals of the new king instead of game-overing.
+								NAND = {
+									NOT = { this = top_liege }
+									is_ai = no
+								}
+							}
+						}
+						custom_description = {
+							text = custom_seize_title
+							subject = scope:attacker
+							object = this
 							change_title_holder = {
 								holder = scope:attacker
 								change = scope:change
@@ -649,44 +643,9 @@ norwegian_invasion_cb = {
 						}
 					}
 				}
-			}
-			# Personally seize every county title in the Northern England AND county titles personally held by the King of England.
-			every_in_de_jure_hierarchy = {
-				limit = {
-					tier = tier_county
-					special_invasion_cb_seize_land_in_region_trigger = {
-						TARGET_REGION = custom_northern_england
-						TARGET_KINGDOM = title:k_england
-					}
-				}
-				if = {
-					limit = {
-						exists = holder
-						holder = {
-							exists = top_liege
-							top_liege = scope:defender
-
-							# Vassal players in England get to keep their holdings, so they can play as vassals of the new king instead of game-overing.
-							NAND = {
-								NOT = { this = top_liege }
-								is_ai = no
-							}
-						}
-					}
-					custom_description = {
-						text = custom_seize_title
-						subject = scope:attacker
-						object = this
-						change_title_holder = {
-							holder = scope:attacker
-							change = scope:change
-							take_baronies = no
-						}
-					}
-				}
-			}
-		}				
-		resolve_title_and_vassal_change = scope:change
+			}				
+			resolve_title_and_vassal_change = scope:change
+		}
 
 		#If Tostig is still alive, and in Harold's court, give him back his northern lands, and give Hardrada a reward.
 		scope:attacker = {
@@ -736,17 +695,17 @@ norwegian_invasion_cb = {
 						}
 					}
 					resolve_title_and_vassal_change = scope:change
+				}
 				
-					#A hook for Harold.
-					add_hook = {
-						type = loyalty_hook
-						target = character:124
-					}
-					#And some opinion.
-					reverse_add_opinion = {
-						target = character:124
-						modifier = loyal_servant
-					}
+				#A hook for Harold.
+				add_hook = {
+					type = loyalty_hook
+					target = character:124
+				}
+				#And some opinion.
+				reverse_add_opinion = {
+					target = character:124
+					modifier = loyal_servant
 				}
 			}
 		}
@@ -839,8 +798,6 @@ norwegian_invasion_cb = {
 
 		# FP1: note the victory for future memorialisation via stele (if applicable).
 		scope:attacker = { fp1_remember_recent_conquest_victory_effect = yes }
-
-		set_global_variable = norwegian_invasion_cb_concluded
 	}
 
 	on_white_peace_desc = {
@@ -930,8 +887,6 @@ norwegian_invasion_cb = {
 
 		# Truce
 		add_truce_white_peace_effect = yes
-
-		set_global_variable = norwegian_invasion_cb_concluded
 	}
 
 	on_defeat_desc = {
@@ -1012,8 +967,6 @@ norwegian_invasion_cb = {
 			save_temporary_scope_as = loser
 		}
 		on_lost_aggression_war_discontent_loss = yes
-
-		set_global_variable = norwegian_invasion_cb_concluded
 	}
 	
 	on_primary_attacker_death = inherit
@@ -1442,9 +1395,9 @@ hungarian_migration_cb = {
 						culture = culture:mogyer
 						faith = { has_doctrine_parameter = unreformed }
 					}
-					#Give scope:attacker back their ability to declare a migration in the event of invalidation.
-					add_character_flag = undertaking_hungarian_migration
 				}
+				#Give scope:attacker back their ability to declare a migration in the event of invalidation.
+				add_character_flag = undertaking_hungarian_migration
 			}
 		}
 	}
@@ -1455,10 +1408,16 @@ hungarian_migration_cb = {
 	
 	on_declaration = {
 		on_declared_war = yes
+		#If this was fired by the AI.
 		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_launched_hungarian_migration
+			if = {
+				limit = {
+					##
+				}
+				add_to_global_variable_list = {
+					name = unavailable_unique_decisions
+					target = flag:flag_launched_hungarian_migration
+				}
 			}
 		}
 		#Give scope:attacker some armies to ensure success & use up their free invasion.
