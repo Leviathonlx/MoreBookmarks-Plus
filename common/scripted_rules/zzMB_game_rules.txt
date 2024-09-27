@@ -1,0 +1,217 @@
+﻿##### Changed from Vanilla: Tied in with limitation_on_divergence_hybridization_culture_head
+
+# Is this character allowed to diverge their culture?
+# root: Character
+can_diverge_culture = {
+	culture = { culture_age >= culture_divergence_cooldown }
+	custom_description = {
+		text = culture_present_in_realm_for_divergence
+		any_sub_realm_county = {
+			culture = root.culture
+		}
+	}
+	##### Changed from Vanilla vvvvv
+	custom_description = {
+		text = must_not_be_under_culture_head_tradition
+		NAND = {
+			culture = { has_cultural_parameter = monolithic_culture_feature }
+			root = {
+				OR = {
+					any_liege_or_above = { this = root.culture.culture_head }
+					any_liege_or_above = { this = root.culture.culture_head.liege }
+				}
+			}
+		}
+	}
+	custom_description = {
+		text = head_of_culture_cannot_diverge
+		NOT = { root = root.culture.culture_head }
+	}
+	##### Changed from Vanilla ^^^^^
+}
+
+##### Changed from Vanilla: Tied in with limitation_on_divergence_hybridization_culture_head
+
+# Is this character allowed to hybridize their culture with the target culture?
+# root: Character
+# scope:culture: The culture they want to hybridize with
+can_hybridize_culture = {
+	can_hybridize_culture_trigger = {
+		CULTURE = scope:culture
+		CHARACTER = root
+	}
+	##### Changed from Vanilla vvvvv
+	custom_description = {
+		text = must_not_be_under_culture_head_tradition
+		NAND = {
+			culture = { has_cultural_parameter = monolithic_culture_feature }
+			root = {
+				OR = {
+					any_liege_or_above = { this = root.culture.culture_head }
+					any_liege_or_above = { this = root.culture.culture_head.liege }
+				}
+			}
+		}
+	}
+	##### Changed from Vanilla ^^^^^
+}
+
+# Determines if a character can convert faith via the convert faith UI, on top of the piety requirement
+# Root is the faith creator
+# scope:new_faith is the faith they want to convert to
+faith_conversion = {
+	is_adult = yes
+	NOT = { faith.religious_head = root }
+	is_in_ongoing_great_holy_war = no
+	# Can't (or shouldn't) convert to faiths that are meant to be resurrected via decision, event, etc.
+	custom_tooltip = {
+		text = faith_conversion_cost_conversion_blocked_till_decision_taken
+		NOT = {
+			scope:new_faith = { has_variable = block_conversion_till_decision_taken }
+		}
+	}
+	custom_tooltip = {
+		text = faith_conversion_cost_conversion_blocked_till_nebulous_circumstances
+		NOT = {
+			scope:new_faith = { has_variable = block_conversion_till_nebulous_circumstances }
+		}
+	}
+	#Can't re-convert to faith which prohibits schismatics
+#	custom_tooltip = {
+#		text = faith_conversion_cost_conversion_blocked_lapsi
+#		NAND = {
+#			scope:new_faith = { has_doctrine = doctrine_lapsi_prohibit }
+#			scope:old_faith = scope:new_faith
+#		}
+#	}
+	#Can't convert to faith which prohibits apostates
+#	custom_tooltip = {
+#		text = faith_conversion_cost_conversion_blocked_apostate
+#		NAND = {
+#			scope:new_faith = { has_doctrine = doctrine_apostate_prohibit }
+#			scope:old_faith.religion = scope:new_faith.religion
+#		}
+#	}
+	#Can't convert if they don't want converts
+#	custom_tooltip = {
+#		text = faith_conversion_cost_conversion_blocked_convert
+#		NOT = {
+#			scope:new_faith = { has_doctrine = doctrine_conversion_prohibit }
+#		}
+#	}
+}
+																																					  
+cares_about_powerful_vassal_council_position = { # root is powerful vassal, minor change
+	can_be_councillor_basics_trigger = yes
+	NOT = { this = liege.diarch }
+	is_designated_diarch = no
+	NAND = { # If faith has eldership powerful vassal adjustment, they don't care when below age 50
+		faith = { has_doctrine_parameter = mz_eldership_powerful_vassal_adjustment }
+		age < 50
+	}
+}
+
+# Can this character cross water (sea, rivers) while on raid?
+# root: the potential raider
+can_raid_across_water = { can_raid_across_water_trigger = yes }
+
+# Can this character traverse rivers using boats?
+# root: the owner of the army
+can_traverse_river = {
+	OR = {
+		culture = {
+			OR = {
+				has_innovation = innovation_longboats
+				has_innovation = innovation_african_canoes
+				has_innovation = innovation_outrigger_boats
+				has_cultural_parameter = can_travel_along_rivers									
+			}
+		}
+		AND = {
+			exists = dynasty
+			dynasty = { has_dynasty_modifier = fp1_legacy_of_piracy_modifier }
+		}
+	}
+}
+
+# Is the alliance reason still valid
+# Root = First character of alliance reason
+# scope:second = Second character of alliance reason
+is_alliance_valid = {
+	OR = {
+		any_spouse = {
+			this = scope:second
+		}
+		betrothed = scope:second
+		is_parent_of = scope:second
+		is_child_of = scope:second
+		is_sibling_of = scope:second
+		is_grandparent_of = scope:second
+		is_great_grandparent_of = scope:second
+		is_grandchild_of = scope:second
+		is_great_grandchild_of = scope:second
+		is_uncle_or_aunt_of = scope:second
+		is_nibling_of = scope:second
+		scope:second = {
+			OR = {
+				has_opinion_modifier = {
+					modifier = perk_negotiated_alliance_opinion
+					target = root
+				}
+				has_opinion_modifier = {
+					modifier = event_negotiated_alliance_opinion
+					target = root
+				}
+				has_opinion_modifier = {
+					modifier = mandala_negotiated_alliance_opinion
+					target = root
+				}
+				has_opinion_modifier = {
+					modifier = steppe_negotiated_alliance_opinion
+					target = root
+				}
+			}
+		}
+		#childhood friendship with hostage event, where they swear to be friends forever
+		AND = {
+			OR = {
+				has_relation_friend = scope:second
+				has_relation_best_friend = scope:second
+			}
+			OR = {
+				any_memory = {
+					has_memory_type = hostage_oath_of_friendship
+					has_memory_participant = scope:second
+				}
+				scope:second = {
+					any_memory = {
+						has_memory_type = hostage_oath_of_friendship
+						has_memory_participant = root
+					}
+				}
+			}
+		}
+		# FP3 struggle case
+		has_character_flag = fp3_is_a_loyalist_puppet
+		scope:second = { has_character_flag = fp3_is_a_loyalist_puppet }
+	}
+}
+
+# Can a language be adopted as the court language
+# Only used by the AI
+# Native language bypasses this
+# root = ruler
+# scope:target = ruler to copy language from
+# scope:my_language_counties = counties in the AI's realm with a culture with their native language
+# scope:their_language_counties = counties in the AI's realm with a culture with the target court language
+# scope:total_counties = counties in the AI's realm
+# See also the court_language_ai_score value
+# scope:courts_with_language = how many royal courts use the same court language? Includes the target
+# scope:checking_native_language = are we scoring our own language?
+can_adopt_court_language = {
+	OR = {
+		highest_held_title_tier >= tier_kingdom
+		is_vassal_or_below_of = scope:target
+	}
+	in_diplomatic_range = scope:target
+}
