@@ -1,0 +1,267 @@
+﻿namespace = ep3_yearly
+
+scripted_effect transfer_warhorse_story_effect = {
+	$OWNER$ = {
+		random_owned_story = {
+			limit = { story_type = story_cycle_martial_lifestyle_warhorse }
+			make_story_owner = $TARGET$
+		}
+	}
+	$TARGET$ = {
+		add_character_modifier = { modifier = horse_story_modifier }
+		add_character_flag = had_warhorse_story
+		set_variable = {
+			name = warhorse_modifier_level
+			value = $OWNER$.var:warhorse_modifier_level
+		}
+	}
+	$OWNER$ = {
+		hidden_effect = {
+			remove_character_modifier = horse_story_modifier
+			remove_variable = warhorse_modifier_level
+		}
+	}
+}
+
+# Jealous of another governor with the Warhorse event chain
+ep3_yearly.1010 = {
+	type = character_event
+	title = ep3_yearly.1010.t
+	desc = {
+		desc = ep3_yearly.1010.intro
+		triggered_desc = {
+			trigger = { culture = culture:greek }
+			desc = ep3_yearly.1010.greek_flavor
+		}
+		desc = ep3_yearly.1010.outro
+	}
+	theme = administrative
+	override_background = { reference = courtyard }
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:horse_owner
+		animation = jockey_walk
+		camera = camera_event_horse_right
+	}
+	lower_left_portrait = cp:councillor_spymaster
+
+	trigger = {
+		is_ai = no
+		is_governor = yes
+		NOT = { owns_story_of_type = story_cycle_martial_lifestyle_warhorse }
+		liege = {
+			any_vassal = {
+				NOT = { this = root }
+				is_available_ai_adult = yes
+				is_governor = yes
+				any_owned_story = {
+					story_type = story_cycle_martial_lifestyle_warhorse
+					exists = var:horse_gender
+					exists = var:story_cycle_horse_name
+				}
+			}
+		}
+	}
+
+	immediate = {
+		liege = {
+			random_vassal = {
+				limit = {
+					NOT = { this = root }
+					is_available_ai_adult = yes
+					owns_story_of_type = story_cycle_martial_lifestyle_warhorse
+				}
+				save_scope_as = horse_owner
+			}
+		}
+		cp:councillor_spymaster ?= { save_scope_as = spymaster }
+	}
+
+	option = { # Offer to buy the horse
+		name = ep3_yearly.1010.a
+		show_as_unavailable = {
+			gold >= 75
+		}
+		random_list = {
+			50 = {
+				show_chance = no
+				desc = ep3_yearly.1010.a.tt.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = ep3_yearly.1010.a.tt.success
+					left_icon = root
+					right_icon = scope:horse_owner
+					remove_short_term_gold = major_gold_value
+					custom_tooltip = ep3_yearly.1010.tt
+					transfer_warhorse_story_effect = {
+						OWNER = scope:horse_owner
+						TARGET = root
+					}
+				}
+			}
+			50 = {
+				show_chance = no
+				desc = ep3_yearly.1010.a.tt.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = ep3_yearly.1010.a.tt.failure
+					left_icon = root
+					right_icon = scope:horse_owner
+					change_influence = medium_influence_loss
+					add_prestige = medium_prestige_loss
+				}
+			}
+		}
+	}
+
+	option = { # Convince the governor that you deserve the horse because of your influence
+		name = ep3_yearly.1010.b
+		change_influence = massive_influence_loss
+		if = {
+			limit = { influence_level >= 3 }
+			transfer_warhorse_story_effect = {
+				OWNER = scope:horse_owner
+				TARGET = root
+			}
+		}
+		else = {
+			duel = {
+				skill = diplomacy
+				value = high_skill_rating
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					desc = ep3_yearly.1010.b.tt.success
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = ep3_yearly.1010.b.tt.success
+						left_icon = root
+						right_icon = scope:horse_owner
+						custom_tooltip = ep3_yearly.1010.tt
+						transfer_warhorse_story_effect = {
+							OWNER = scope:horse_owner
+							TARGET = root
+						}
+						add_diplomacy_lifestyle_xp = medium_lifestyle_xp
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					desc = ep3_yearly.1010.b.tt.failure
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = ep3_yearly.1010.b.tt.failure
+						left_icon = root
+						right_icon = scope:horse_owner
+					}
+				}
+			}
+		}
+	}
+	
+	option = { # Ask your spymaster to steal the horse for you 
+		trigger = { exists = cp:councillor_spymaster }
+		name = ep3_yearly.1010.c
+		flavor = ep3_yearly.1010.c.flavor
+		cp:councillor_spymaster = {
+			duel = {
+				skill = intrigue
+				value = scope:horse_owner.intrigue
+				40 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					desc = ep3_yearly.1010.c.tt.success
+					root = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							title = ep3_yearly.1010.c.tt.success
+							left_icon = root
+							right_icon = scope:horse_owner
+							custom_tooltip = ep3_yearly.1010.tt
+							transfer_warhorse_story_effect = {
+								OWNER = scope:horse_owner
+								TARGET = root
+							}
+							add_intrigue_lifestyle_xp = medium_lifestyle_xp
+						}
+					}
+				}
+				60 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					desc = ep3_yearly.1010.c.tt.failure
+					root = {
+						send_interface_toast = {
+							type = event_toast_effect_bad
+							title = ep3_yearly.1010.c.tt.failure
+							left_icon = root
+							right_icon = scope:horse_owner
+							progress_towards_rival_effect = {
+								REASON = rival_lands_stolen
+								CHARACTER = scope:horse_owner
+								OPINION = default_rival_opinion
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	option = { # If I can't have it, neither can you
+		name = ep3_yearly.1010.d
+		flavor = ep3_yearly.1010.d.tt
+		random_list = {
+			50 = {
+				desc = ep3_yearly.1010.d.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = ep3_yearly.1010.d.success
+					custom_tooltip = ep3_yearly.1010.d.dead_horse
+					scope:horse_owner = {
+						random_owned_story = {
+							limit = { story_type = story_cycle_martial_lifestyle_warhorse }
+							end_story = yes
+						}
+					}
+				}
+			}
+			50 = {
+				desc = ep3_yearly.1010.d.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = ep3_yearly.1010.d.failure
+					custom_tooltip = ep3_yearly.1010.d.dead_horse
+					scope:horse_owner = {
+						random_owned_story = {
+							limit = { story_type = story_cycle_martial_lifestyle_warhorse }
+							end_story = yes
+						}
+					}
+					progress_towards_rival_effect = {
+						REASON = rival_lands_stolen
+						CHARACTER = scope:horse_owner
+						OPINION = default_rival_opinion
+					}
+				}
+			}
+		}
+	}
+}

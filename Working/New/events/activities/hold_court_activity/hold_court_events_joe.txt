@@ -1,0 +1,2094 @@
+﻿namespace = hold_court
+
+##################################################
+# City Charter
+# by Joe Parkin
+# 8290
+##################################################
+
+scripted_trigger hold_court_8290_province_trigger = {
+	has_holding_type = city_holding
+	OR = {
+		num_buildings >= 2
+		free_building_slots = 0
+	}
+	save_temporary_scope_as = province_temp
+	barony.holder ?= {
+		highest_held_title_tier = tier_barony
+		NOR = {
+			has_relation_friend = liege
+			has_relation_lover = liege
+			is_spouse_of = liege
+			is_close_family_of = liege
+			root = {
+				any_targeting_faction = {
+					any_faction_member = { this = scope:province_temp.barony.holder }
+				}
+			}
+		}
+		opinion = {
+			target = liege
+			value < 25
+		}
+		any_held_title = { count = 1 }
+		culture = scope:county_temp.culture
+		faith = scope:county_temp.faith
+	}
+}
+
+scripted_trigger hold_court_8290_county_trigger = {
+	development_level >= terrible_development_level
+	save_temporary_scope_as = county_temp
+	any_county_province = { hold_court_8290_province_trigger = yes }
+}
+
+scripted_trigger hold_court_8290_vassal_trigger = {
+	OR = {
+		government_has_flag = government_is_feudal
+		government_has_flag = government_is_clan
+	}
+	culture = { has_innovation = innovation_development_02 }
+	save_temporary_scope_as = vassal_temp
+	any_sub_realm_county = { hold_court_8290_county_trigger = yes }
+}
+
+scripted_effect hold_court_8290_grant_effect = {
+	# Revoke
+	custom_tooltip = {
+		text = hold_court_8290_grant_tooltip
+		create_title_and_vassal_change = {
+			type = revoked
+			save_scope_as = change
+		}
+		scope:city_county = {
+			change_title_holder = {
+				holder = scope:city_mayor
+				change = scope:change
+				take_baronies = no
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+	}
+	scope:city_province.barony = { set_capital_barony = yes }
+	# Opinion
+	save_scope_as = actor
+	every_vassal = {
+		limit = {
+			OR = {
+				this = scope:city_vassal
+				has_vassal_stance = glory_hound
+			}
+			NOR = {
+				this = scope:city_mayor
+			}
+		}
+		custom = every_glory_hound_and_owner_actor
+		add_opinion = {
+			target = root
+			modifier = angry_opinion
+			opinion = -20
+		}
+	}
+	# Tyranny
+	add_tyranny = medium_tyranny_gain
+}
+
+hold_court.8290 = {
+	type = court_event
+	title = hold_court.8290.t
+	desc = hold_court.8290.desc
+	theme = realm
+	cooldown = { years = 15 }
+
+	court_scene = {
+		button_position_character = scope:city_mayor
+		court_event_force_open = yes
+		show_timeout_info = no
+		should_pause_time = yes
+		roles = {
+			scope:city_mayor = {
+				group = petitioners_group
+				animation = beg
+			}
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_event_chain_progress"
+		container = "custom_widgets_container"
+		controller = event_chain_progress
+	}
+
+	trigger = {
+		NOR = {
+			has_character_flag = has_had_county_request_event
+			has_character_flag = has_had_government_request_event
+		}
+		culture = { has_innovation = innovation_development_02 }
+		any_vassal_or_below = { hold_court_8290_vassal_trigger = yes }
+		# Not too many republic vassals already
+		NOT = {
+			any_sub_realm_county = {
+				percent > 0.1
+				holder ?= { government_has_flag = government_is_republic }
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		# Court weightings.
+		ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_administrative }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = has_had_county_request_event
+			years = 15
+		}
+		add_character_flag = {
+			flag = has_had_government_request_event
+			years = 15
+		}
+		save_scope_as = actor
+		random_vassal_or_below = {
+			limit = { hold_court_8290_vassal_trigger = yes }
+			weight = {
+				base = 1
+				hold_court_8290_vassal_modifiers = yes
+				hold_court_8290_county_modifiers = yes
+				hold_court_8290_province_modifiers = yes
+			}
+			save_scope_as = city_vassal
+			court_event_character_flag_effect = yes
+			random_sub_realm_county = {
+				limit = { hold_court_8290_county_trigger = yes }
+				weight = {
+					base = 1
+					hold_court_8290_county_modifiers = yes
+					hold_court_8290_province_modifiers = yes
+				}
+				save_scope_as = city_county
+				random_county_province = {
+					limit = { hold_court_8290_province_trigger = yes }
+					weight = {
+						base = 1
+						hold_court_8290_province_modifiers = yes
+					}
+					save_scope_as = city_province
+					barony.holder = {
+						save_scope_as = city_mayor
+						court_event_character_flag_effect = yes
+					}
+				}
+			}
+		}
+		# Trigger next event in chain.
+		hold_court_queue_next_event_effect = yes
+	}
+
+	option = { # Grant charter...
+		name = hold_court.8290.a
+		add_hook = {
+			target = scope:city_mayor
+			type = loyalty_hook
+		}
+		hold_court_8290_grant_effect = yes
+		# Modifier
+		scope:city_county = {
+			add_county_modifier = {
+				modifier = hold_court_8080_granted_modifier
+				years = 20
+			}
+		}
+		stress_impact = {
+			callous = minor_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+   				ai_greed = 1
+   				ai_compassion = -1
+			}
+		}
+	}
+
+	option = { # ...for money
+		name = hold_court.8290.b
+		scope:city_mayor = {
+			pay_short_term_gold = {
+				target = root
+				gold = root.medium_gold_value
+			}
+		}
+		hold_court_8290_grant_effect = yes
+		stress_impact = {
+			generous = minor_stress_impact_gain
+			arrogant = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+   				ai_greed = 1
+   				ai_compassion = -1
+			}
+		}
+	}
+
+	option = { # Dismiss
+		name = hold_court.8290.c
+		every_vassal = {
+			limit = { has_vassal_stance = parochial }
+			custom = every_parochial_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = disappointed_opinion
+				opinion = -15
+			}
+		}
+		stress_impact = {
+			generous = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+   				ai_boldness = 2
+   				ai_energy = 1
+   				ai_honor = -1
+			}
+		}
+	}
+
+	after = {
+		scope:city_vassal = { clear_court_event_participation = yes }
+		scope:city_mayor = { clear_court_event_participation = yes }
+		# Finish up the chain if relevant.
+		hold_court_queue_post_event_effect = yes
+	}
+}
+
+##################################################
+# Relinquishing Rights
+# by Joe Parkin
+# 8300
+##################################################
+
+scripted_trigger hold_court_8300_province_trigger = {
+	has_holding_type = city_holding
+	OR = {
+		num_buildings >= 2
+		free_building_slots = 0
+	}
+	save_temporary_scope_as = province_temp
+}
+
+scripted_trigger hold_court_8300_vassal_trigger = {
+	OR = {
+		government_has_flag = government_is_feudal
+		government_has_flag = government_is_clan
+	}
+	save_temporary_scope_as = vassal_temp
+	highest_held_title_tier = tier_county
+	is_powerful_vassal = no
+	is_councillor = no
+	NOT = { root.diarch ?= this }
+	culture = { has_innovation = innovation_development_02 }
+	domain_size = 1
+	any_held_county = {
+		count = 1
+		culture = scope:vassal_temp.culture
+		faith = scope:vassal_temp.faith
+		any_county_province = { hold_court_8300_province_trigger = yes }
+	}
+	NOR = {
+		has_trait = arrogant
+		has_trait = ambitious
+		has_relation_rival = root
+		is_close_family_of = root
+		is_spouse_of = root
+		has_relation_friend = root
+		has_relation_lover = root
+		root = {
+			any_targeting_faction = {
+				any_faction_member = { this = scope:vassal_temp }
+			}
+		}
+	}
+	# Unimportant family
+	dynasty = {
+		any_dynasty_member = {
+			is_alive = yes
+			count < 10
+		}
+		dynasty_prestige_level < medium_dynasty_prestige_level
+		NOT = {
+			any_dynasty_member = {
+				NOT = { this = scope:vassal_temp }
+				highest_held_title_tier >= tier_county
+			}
+		}
+	}
+}
+
+hold_court.8300 = {
+	type = court_event
+	title = hold_court.8300.t
+	desc = hold_court.8300.desc
+	theme = realm
+	cooldown = { years = 15 }
+
+	court_scene = {
+		button_position_character = scope:city_vassal
+		court_event_force_open = yes
+		show_timeout_info = no
+		should_pause_time = yes
+		roles = {
+			scope:city_vassal = {
+				group = petitioners_group
+				animation = thinking
+			}
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_event_chain_progress"
+		container = "custom_widgets_container"
+		controller = event_chain_progress
+	}
+
+	trigger = {
+		NOR = {
+			has_character_flag = has_had_county_request_event
+			has_character_flag = has_had_government_request_event
+		}
+		any_vassal_or_below = { hold_court_8300_vassal_trigger = yes }
+		# Not too many republic vassals already
+		NOT = {
+			any_sub_realm_county = {
+				percent > 0.1
+				holder ?= { government_has_flag = government_is_republic }
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		# Court weightings.
+		ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_administrative }
+		# Culture
+		modifier = {
+			any_vassal_or_below = {
+				hold_court_8300_vassal_trigger = yes
+				culture = {
+					OR = {
+						has_cultural_parameter = can_make_republican_vassals
+						has_cultural_parameter = city_buildings_more_powerful
+						has_cultural_parameter = city_buildings_less_control
+						has_cultural_parameter = republican_vassals_pay_more
+						has_cultural_parameter = more_parochial_vassals
+					}
+				}
+			}
+			add = 1
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = has_had_county_request_event
+			years = 15
+		}
+		add_character_flag = {
+			flag = has_had_government_request_event
+			years = 15
+		}
+		save_scope_as = actor
+		random_vassal_or_below = {
+			limit = {
+				has_trait = content
+				has_trait = humble
+				hold_court_8300_vassal_trigger = yes
+			}
+			alternative_limit = {
+				has_trait = content
+				hold_court_8300_vassal_trigger = yes
+			}
+			alternative_limit = {
+				has_trait = humble
+				hold_court_8300_vassal_trigger = yes
+			}
+			alternative_limit = { hold_court_8300_vassal_trigger = yes }
+			weight = {
+				base = 1
+				ai_value_modifier = {
+					ai_boldness = -0.1
+					ai_energy = 0.1
+				}
+				modifier = {
+					has_trait = education_stewardship
+					add = 5
+				}
+				modifier = {
+					is_healthy = no
+					add = 5
+				}
+				modifier = {
+					NOT = { exists = player_heir }
+					add = 10
+				}
+				modifier = {
+					age > 30
+					add = 5
+				}
+				modifier = {
+					age > 60
+					add = 5
+				}
+				modifier = {
+					culture = {
+						OR = {
+							has_cultural_parameter = can_make_republican_vassals
+							has_cultural_parameter = city_buildings_more_powerful
+							has_cultural_parameter = city_buildings_less_control
+							has_cultural_parameter = republican_vassals_pay_more
+							has_cultural_parameter = more_parochial_vassals
+						}
+					}
+					add = 25
+				}
+			}
+			save_scope_as = city_vassal
+			court_event_character_flag_effect = yes
+			primary_title = {
+				save_scope_as = city_county
+				ordered_county_province = {
+					limit = { hold_court_8300_province_trigger = yes }
+					order_by = num_buildings
+					save_scope_as = city_province
+				}
+			}
+		}
+		# Trigger next event in chain.
+		hold_court_queue_next_event_effect = yes
+	}
+
+	option = { # Grant charter
+		name = hold_court.8300.a
+		scope:city_vassal = { change_government = republic_government }
+		create_title_and_vassal_change = {
+			type = granted
+			save_scope_as = change
+		}
+		scope:city_province.barony = {
+			change_title_holder = {
+				holder = scope:city_vassal
+				change = scope:change
+				take_baronies = no
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+		scope:city_province.barony = { set_capital_barony = yes }
+		every_vassal = {
+			limit = {
+				has_vassal_stance = parochial
+				NOT = { this = scope:city_vassal }
+			}
+			custom = every_parochial_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 15
+			}
+		}
+		stress_impact = {
+			callous = minor_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_compassion = 0.5
+				ai_honor = 0.5
+			}
+		}
+	}
+
+	option = { # Revoke
+		name = hold_court.8300.b
+		add_prestige = minor_prestige_gain
+		add_dread = miniscule_dread_gain
+		reverse_add_opinion = {
+			target = scope:city_vassal
+			modifier = angry_opinion
+			opinion = -15
+		}
+		create_title_and_vassal_change = {
+			type = revoked
+			save_scope_as = change
+		}
+		scope:city_county = {
+			change_title_holder = {
+				holder = root
+				change = scope:change
+				take_baronies = no
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+		add_tyranny = minor_tyranny_gain
+		every_vassal = {
+			limit = {
+				has_vassal_stance = glory_hound
+				NOT = { this = scope:city_vassal }
+			}
+			custom = every_glory_hound_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 15
+			}
+		}
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_greed = 1
+				ai_compassion = -1
+			}
+		}
+	}
+
+	option = { # Dismiss
+		name = hold_court.8300.c
+		every_vassal = {
+			limit = {
+				has_vassal_stance = courtly
+				NOT = { this = scope:city_vassal }
+			}
+			custom = every_courtly_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 15
+			}
+		}
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			diligent = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+   				ai_boldness = -0.5
+   				ai_energy = -0.5
+			}
+		}
+	}
+
+	after = {
+		scope:city_vassal = { clear_court_event_participation = yes }
+		# Finish up the chain if relevant.
+		hold_court_queue_post_event_effect = yes
+	}
+}
+
+##################################################
+# Cementing the Realm
+# by Joe Parkin
+# 8310
+##################################################
+
+scripted_trigger hold_court_8310_duchy_trigger = {
+	# Save scopes for comparison
+	save_temporary_scope_as = duchy_temp
+	root = {
+		any_held_title = {
+			tier = tier_kingdom
+			save_temporary_scope_as = kingdom_temp
+		}
+	}
+	# Duchy drifting into held kingdom
+	de_jure_drifting_towards = scope:kingdom_temp
+	# Duchy borders integrated
+	any_de_jure_county = {
+		any_neighboring_county = { kingdom = scope:kingdom_temp }
+	}
+	# Duchy not too early or late in drifting progress
+	de_jure_drift_progress = { target = scope:kingdom_temp value > 10 }
+	de_jure_drift_progress = { target = scope:kingdom_temp value < 80 }
+	# Relevant vassal holds duchy or counties within
+	OR = {
+		hold_court_8310_holder_trigger = { DUCHY = scope:duchy_temp }
+		any_de_jure_county = {
+			hold_court_8310_holder_trigger = { DUCHY = scope:duchy_temp }
+		}
+	}
+}
+
+scripted_trigger hold_court_8310_holder_trigger = {
+	holder = {
+		is_available_ai_adult = yes
+		is_vassal_of = root
+		save_temporary_scope_as = holder_temp
+		# Does not despise liege
+		NOR = {
+			has_relation_rival = root
+			root = {
+				any_targeting_faction = {
+					any_faction_member = { this = scope:holder_temp }
+				}
+			}
+		}
+		# Has a reason to be nice
+		OR = {
+			opinion = {
+				target = root
+				value >= 25
+			}
+			has_dread_level_towards = {
+				target = root
+				level >= 1
+			}
+			any_held_title = {
+				any_claimant = { this = root }
+			}
+		}
+		# Valid land holder of the duchy
+		any_sub_realm_county = {
+			duchy = $DUCHY$
+			# If vassal is not same culture as liege, culture is same as or not hostile to liege's culture
+			trigger_if = {
+				limit = { holder.culture != root.culture }
+				culture = {
+					this = scope:holder_temp.culture
+					OR = {
+						cultural_acceptance = {
+							target = root.culture
+							value >= 25
+						}
+						has_same_culture_heritage = root.culture
+					}
+				}
+			}
+			# If vassal is not same faith as liege, faith is not hostile to liege's faith
+			trigger_if = {
+				limit = { holder.faith != root.faith }
+				faith = {
+					this = scope:holder_temp.faith
+					faith_hostility_level = {
+						target = root.faith
+						value <= faith_astray_level
+					}
+				}
+			}
+		}
+	}
+}
+
+hold_court.8310 = {
+	type = court_event
+	title = hold_court.8310.t
+	desc = {
+		desc = hold_court.8310.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:drifting_vassal.culture != root.culture
+					scope:drifting_vassal.faith != root.faith
+				}
+				desc = hold_court.8310.faith_culture
+			}
+			triggered_desc = {
+				trigger = { scope:drifting_vassal.culture != root.culture }
+				desc = hold_court.8310.culture
+			}
+			triggered_desc = {
+				trigger = { scope:drifting_vassal.faith != root.faith }
+				desc = hold_court.8310.faith
+			}
+			desc = hold_court.8310.fallback
+		}
+		desc = hold_court.8310.body
+	}
+	theme = realm
+	cooldown = { years = 15 }
+
+	court_scene = {
+		button_position_character = scope:drifting_vassal
+		court_event_force_open = yes
+		show_timeout_info = no
+		should_pause_time = yes
+		roles = {
+			scope:drifting_vassal = {
+				group = petitioners_group
+				animation = thinking
+			}
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_event_chain_progress"
+		container = "custom_widgets_container"
+		controller = event_chain_progress
+	}
+
+	trigger = {
+		any_sub_realm_county = {
+			duchy = { hold_court_8310_duchy_trigger = yes }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		# Court weightings.
+		ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_administrative }
+	}
+
+	immediate = {
+		random_sub_realm_county = {
+			limit = {
+				duchy = { hold_court_8310_duchy_trigger = yes }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					culture != root.culture
+					add = 2
+				}
+				modifier = {
+					faith != root.faith
+					add = 2
+				}
+				modifier = {
+					holder.culture != root.culture
+					add = 2
+				}
+				modifier = {
+					holder.faith != root.faith
+					add = 2
+				}
+				modifier = {
+					add = {
+						value = duchy.active_de_jure_drift_progress
+						divide = 5
+					}
+				}
+			}
+			duchy = {
+				save_scope_as = drifting_duchy
+				root = {
+					random_held_title = {
+						limit = {
+							tier = tier_kingdom
+							save_temporary_scope_as = kingdom_temp # We don't go to PREVenholm anymore
+							scope:drifting_duchy = { de_jure_drifting_towards = scope:kingdom_temp }
+						}
+						save_scope_as = drifting_kingdom
+					}
+				}
+				if = {
+					limit = {
+						hold_court_8310_holder_trigger = { DUCHY = scope:drifting_duchy }
+					}
+					holder = { save_scope_as = drifting_vassal }
+				}
+				else = {
+					random_de_jure_county = {
+						limit = {
+							hold_court_8310_holder_trigger = { DUCHY = scope:drifting_duchy }
+						}
+						weight = {
+							base = 1
+							modifier = {
+								culture != root.culture
+								add = 2
+							}
+							modifier = {
+								faith != root.faith
+								add = 2
+							}
+							modifier = {
+								holder.culture != root.culture
+								culture = holder.culture
+								add = 2
+							}
+							modifier = {
+								holder.faith != root.faith
+								faith = holder.faith
+								add = 2
+							}
+							modifier = { add = holder.domain_size }
+						}
+						holder = {
+							save_scope_as = drifting_vassal
+							court_event_character_flag_effect = yes
+						}
+					}
+				}
+			}
+		}
+		# Trigger next event in chain.
+		hold_court_queue_next_event_effect = yes
+	}
+
+	option = { # Dread
+		name = hold_court.8310.a
+		add_dread = medium_dread_gain
+		reverse_add_opinion = {
+			target = scope:drifting_vassal			
+			modifier = irritated_opinion
+			opinion = -25
+		}
+		scope:drifting_duchy = {
+			every_de_jure_county = {
+				custom = hold_court.8310.county_tooltip
+				limit = { holder.top_liege = root.top_liege }
+				add_county_modifier = {
+					modifier = hold_court_8310_harsh_integration_county_modifier
+					years = 10
+				}
+			}
+		}
+		scope:drifting_duchy = {
+			change_de_jure_drift_progress = {
+				target = scope:drifting_kingdom
+				value = 15
+			}
+		}
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			just = minor_stress_impact_gain
+			patient = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_honor = -0.5
+				ai_compassion = -0.5
+			}
+		}
+	}
+
+	option = { # Pay
+		name = hold_court.8310.b
+		pay_short_term_gold = {
+			gold = medium_gold_value
+			target = scope:drifting_vassal
+		}
+		scope:drifting_duchy = {
+			change_de_jure_drift_progress = {
+				target = scope:drifting_kingdom
+				value = 10
+			}
+		}
+		stress_impact = {
+			greedy = minor_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_greed = -0.5
+				ai_energy = -0.5
+			}
+		}
+	}
+
+	option = { # Nerd
+		name = hold_court.8310.c
+		duel = {
+			skill = stewardship
+			value = high_skill_rating
+			8 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = 1
+				}
+				desc = hold_court.8310.c.success
+				send_interface_toast = {
+					title = hold_court.8310.c.success
+					left_icon = scope:drifting_vassal
+					right_icon = scope:drifting_duchy
+					scope:drifting_duchy = {
+						change_de_jure_drift_progress = {
+							target = scope:drifting_kingdom
+							value = 15
+						}
+					}
+				}
+			}
+			12 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = 1
+				}
+				desc = hold_court.8310.c.failure
+				send_interface_toast = {
+					title = hold_court.8310.c.failure
+					left_icon = scope:drifting_vassal
+					right_icon = scope:drifting_duchy
+					scope:drifting_duchy = {
+						change_de_jure_drift_progress = {
+							target = scope:drifting_kingdom
+							value = -10
+						}
+					}
+				}
+			}
+		}
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+			lazy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_energy = 0.5
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	option = { # Do nothing
+		name = hold_court.8310.d
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			impatient = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+   				ai_boldness = -0.5
+   				ai_energy = -0.5
+			}
+		}
+	}
+
+	after = {
+		scope:drifting_vassal = { clear_court_event_participation = yes }
+		# Finish up the chain if relevant.
+		hold_court_queue_post_event_effect = yes
+	}
+}
+
+##################################################
+# Problematic Probate
+# by Joe Parkin
+# 8320
+##################################################
+
+scripted_trigger hold_court_8320_province_trigger = {
+	has_holding_type = church_holding
+	OR = {
+		num_buildings >= 2
+		free_building_slots = 0
+	}
+	save_temporary_scope_as = province_temp
+}
+
+scripted_trigger hold_court_8320_county_trigger = {
+	any_county_province = { hold_court_8320_province_trigger = yes }
+	faith = $FAITH$
+}
+
+scripted_trigger hold_court_8320_vassal_trigger = {
+	OR = {
+		is_available_ai_adult = yes
+		AND = {
+			exists = diarch
+			diarch ?= { is_available_ai_adult = yes }
+		}
+	}
+	NOT = { is_close_family_of = root }
+	# At least two counties
+	any_held_county = { count >= 2 }
+	save_temporary_scope_as = vassal_temp
+	# Predecessor is relative and fits monastic bill
+	primary_title = {
+		exists = previous_holder
+		previous_holder ?= {
+			is_alive = no
+			is_close_family_of = scope:vassal_temp
+			NOR = {
+				has_trait = cynical
+				has_trait = greedy
+			}
+			faith = {
+				NOT = { has_doctrine = doctrine_theocracy_lay_clergy }
+			}
+			save_temporary_scope_as = dead_temp
+		}
+	}
+	# Valid templish monastic county
+	any_held_county = {
+		hold_court_8320_county_trigger = { FAITH = scope:dead_temp.faith }
+	}
+}
+
+hold_court.8320 = {
+	type = court_event
+	title = hold_court.8320.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:probate_rep = scope:probate_vassal }
+				desc = hold_court.8320.self
+			}
+			desc = hold_court.8320.regent
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:probate_vassal.faith = { has_doctrine = tenet_monasticism }
+				}
+				desc = hold_court.8320.monk
+			}
+			desc = hold_court.8320.priest
+		}
+		desc = hold_court.8320.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:probate_vassal.faith = { has_doctrine = tenet_monasticism }
+				}
+				desc = hold_court.8320.monk_2
+			}
+			desc = hold_court.8320.priest_2
+		}
+		desc = hold_court.8320.body
+	}
+	theme = realm
+	cooldown = { years = 15 }
+
+	court_scene = {
+		button_position_character = scope:probate_rep
+		court_event_force_open = yes
+		show_timeout_info = no
+		should_pause_time = yes
+		roles = {
+			scope:probate_rep = {
+				group = petitioners_group
+				animation = rage
+			}
+			scope:probate_priest = {
+				group = petitioners_group
+				animation = schadenfreude
+			}
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_event_chain_progress"
+		container = "custom_widgets_container"
+		controller = event_chain_progress
+	}
+
+	trigger = {
+		any_vassal = { hold_court_8320_vassal_trigger = yes }
+		# Not too many theocratic vassals already
+		NOT = {
+			any_sub_realm_county = {
+				percent > 0.1
+				holder ?= { government_has_flag = government_is_theocracy }
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		# Court weightings.
+		ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_administrative }
+		modifier = {
+			faith = { has_doctrine = tenet_monasticism }
+			factor = 2
+		}
+	}
+
+	immediate = {
+		save_scope_as = actor
+		random_vassal = {
+			limit = { hold_court_8320_vassal_trigger = yes }
+			weight = {
+				base = 1
+				modifier = {
+					primary_title.previous_holder = { has_trait = improvident }
+					add = 10
+				}
+				modifier = {
+					primary_title.previous_holder = { has_trait = generous }
+					add = 5
+				}
+				modifier = {
+					primary_title.previous_holder = { has_trait = zealous }
+					add = 5
+				}
+				modifier = {
+					primary_title.previous_holder = { has_trait = flagellant }
+					add = 5
+				}
+				modifier = {
+					add = {
+						value = ai_greed
+						divide = 10
+					}
+				}
+				modifier = {
+					add = {
+						value = ai_zeal
+						divide = 10
+						multiply = -1
+					}
+				}
+			}
+			save_scope_as = probate_vassal
+			court_event_character_flag_effect = yes
+			if = {
+				limit = {
+					NOT = { is_available_ai_adult = yes }
+				}
+				diarch = { save_scope_as = probate_rep }
+			}
+			else = { save_scope_as = probate_rep }
+			primary_title.previous_holder = { save_scope_as = probate_dead }
+			random_held_county = {
+				limit = {
+					NOT = { this = scope:probate_vassal.capital_county }
+					hold_court_8320_county_trigger = { FAITH = scope:probate_dead.faith }
+				}
+				alternative_limit = {
+					hold_court_8320_county_trigger = { FAITH = scope:probate_dead.faith }
+				}
+				save_scope_as = probate_county
+				ordered_county_province = {
+					limit = { hold_court_8320_province_trigger = yes }
+					order_by = num_buildings
+					save_scope_as = probate_province
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:probate_vassal.faith = { has_doctrine = tenet_monasticism }
+			}
+			create_character = {
+				template = monk_character_template
+				dynasty = none
+				location = root.location
+				faith = scope:probate_county.faith
+				culture = scope:probate_county.culture
+				trait = ambitious
+				save_scope_as = probate_priest
+			}
+		}
+		else = {
+			create_character = {
+				template = priest_character_template
+				dynasty = none
+				location = root.location
+				faith = scope:probate_county.faith
+				culture = scope:probate_county.culture
+				trait = ambitious
+				save_scope_as = probate_priest
+			}
+		}
+		scope:probate_priest = { court_event_character_flag_effect = yes }
+		# Trigger next event in chain.
+		hold_court_queue_next_event_effect = yes
+	}
+
+	option = { # Confiscate
+		name = hold_court.8320.a
+		if = {
+			limit = { faith = scope:probate_county.faith }
+			add_piety = major_piety_gain
+		}
+		# Revoke
+		custom_tooltip = {
+			text = hold_court_8320_grant_tooltip
+			create_title_and_vassal_change = {
+				type = revoked
+				save_scope_as = change
+			}
+			scope:probate_county = {
+				change_title_holder = {
+					holder = scope:probate_priest
+					change = scope:change
+					take_baronies = no
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+			scope:probate_priest = { change_government = theocracy_government }
+		}
+		scope:probate_province.barony = { set_capital_barony = yes }
+		add_hook = {
+			type = loyalty_hook
+			target = scope:probate_priest
+		}
+		reverse_add_opinion = {
+			target = scope:probate_priest
+			modifier = grateful_opinion
+			opinion = 30
+		}
+		scope:probate_vassal = {
+			add_opinion = {
+				target = root		
+				modifier = angry_opinion
+				opinion = -30
+			}
+			every_close_family_member ={
+				limit = {
+					NOT = { this = scope:probate_vassal }
+				}
+				custom = every_close_family_hold_court_8320_tooltip
+				add_opinion = {
+					target = root
+					modifier = angry_opinion
+					opinion = -15
+				}
+			}
+		}
+		every_vassal = {
+			limit = {
+				has_vassal_stance = glory_hound
+				NOR = {
+					this = scope:probate_vassal
+					is_close_family_of = scope:probate_vassal
+				}
+			}
+			custom = every_glory_hound_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = angry_opinion
+				opinion = -15
+			}
+		}
+		if = {
+			limit = { faith = scope:probate_county.faith }
+			stress_impact = {
+				cynical = minor_stress_impact_gain
+				callous = minor_stress_impact_gain
+				greedy = minor_stress_impact_gain
+			}
+		}
+		else = {
+			stress_impact = {
+				zealous = minor_stress_impact_gain
+				callous = minor_stress_impact_gain
+				greedy = minor_stress_impact_gain
+			}
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_honor = -0.5
+				ai_compassion = -0.5
+			}
+		}
+	}
+
+	option = { # Demand payment
+		name = hold_court.8320.b
+		if = {
+			limit = { faith = scope:probate_county.faith }
+			add_piety = medium_piety_gain
+		}
+		scope:probate_vassal = { remove_short_term_gold = medium_gold_value }
+		reverse_add_opinion = {
+			modifier = annoyed_opinion
+			opinion = -10
+			target = scope:probate_vassal
+		}
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			fickle = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_greed = -0.5
+				ai_energy = -0.5
+			}
+		}
+	}
+
+	option = { # Take land
+		name = hold_court.8320.c
+		if = {
+			limit = { faith = scope:probate_county.faith }
+			add_piety = major_piety_loss
+		}
+		create_title_and_vassal_change = {
+			type = revoked
+			save_scope_as = change
+		}
+		scope:probate_county = {
+			change_title_holder = {
+				holder = root
+				change = scope:change
+				take_baronies = no
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+		add_tyranny = medium_tyranny_gain
+		reverse_add_opinion = {
+			modifier = angry_opinion
+			opinion = -25
+			target = scope:probate_vassal
+		}
+		every_vassal = {
+			limit = {
+				faith = scope:probate_county.faith
+				NOT = { this = scope:probate_vassal }
+				has_vassal_stance = zealot
+			}
+			custom = every_zealot_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = disappointed_opinion
+				opinion = -10
+			}
+		}
+		if = {
+			limit = { faith = scope:probate_county.faith }
+			stress_impact = {
+				compassionate = minor_stress_impact_gain
+				generous = minor_stress_impact_gain
+				just = minor_stress_impact_gain
+				honest = minor_stress_impact_gain
+				zealous = minor_stress_impact_gain
+				content = minor_stress_impact_gain
+			}
+		}
+		else = {
+			stress_impact = {
+				compassionate = minor_stress_impact_gain
+				generous = minor_stress_impact_gain
+				just = minor_stress_impact_gain
+				honest = minor_stress_impact_gain
+				content = minor_stress_impact_gain
+			}
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_greed = -0.5
+				ai_energy = -0.5
+			}
+		}
+	}
+
+	option = { # Dismiss
+		name = hold_court.8320.d
+		reverse_add_opinion = {
+			modifier = grateful_opinion
+			opinion = 15
+			target = scope:probate_vassal
+		}
+		every_vassal = {
+			limit = {
+				has_vassal_stance = zealot
+				NOT = { this = scope:probate_vassal }
+			}
+			custom = every_zealot_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = disappointed_opinion
+				opinion = -10
+			}
+		}
+		stress_impact = {
+			greedy = minor_stress_impact_gain
+			zealous = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_energy = 0.5
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	after = {
+		scope:probate_vassal = { clear_court_event_participation = yes }
+		# Finish up the chain if relevant.
+		hold_court_queue_post_event_effect = yes
+		scope:probate_priest = {
+			clear_court_event_participation = yes
+			if = {
+				limit = { is_landed = no }
+				silent_disappearance_effect = yes
+			}
+		}	
+	}
+}
+
+##################################################
+# A Rift in Title
+# by Joe Parkin
+# 8330
+##################################################
+
+scripted_trigger hold_court_8330_vassal_valid_trigger = {
+	highest_held_title_tier >= tier_county
+	has_vassal_stance = $STANCE$
+	NOT = { has_relation_rival = root }
+	opinion = {
+		target = root
+		value >= -25
+	}
+}
+
+scripted_trigger hold_court_8330_minimum_stancers_trigger = {
+	any_vassal = {
+		count >= 2
+		hold_court_8330_vassal_valid_trigger = { STANCE = $STANCE$ }
+	}
+}
+
+scripted_effect hold_court_8330_save_stancers_effect = {
+	every_vassal = {
+		limit = { hold_court_8330_vassal_valid_trigger = { STANCE = $STANCE$ } }
+		add_to_list = $STANCE$_list
+	}
+}
+
+scripted_trigger hold_court_8330_save_vassal_trigger = {
+	trigger_if = {
+		limit = { exists = scope:vassal_1 }
+		NOT = { scope:vassal_1 = { has_vassal_stance = $STANCE$ } }
+	}
+	trigger_if = {
+		limit = { exists = scope:vassal_2 }
+		NOT = { scope:vassal_2 = { has_vassal_stance = $STANCE$ } }
+	}
+	any_in_list = { list = $STANCE$_list }
+}
+
+scripted_effect hold_court_8330_save_vassal_effect = {
+	random_in_list = {
+		list = $STANCE$_list
+		limit = {
+			is_powerful_vassal = yes
+			is_councillor = yes
+		}
+		alternative_limit = { is_powerful_vassal = yes }
+		alternative_limit = { is_councillor = yes }
+		alternative_limit = { always = yes }
+		weight = {
+			base = 1
+			modifier = { add = max_military_strength }
+		}
+		save_scope_as = vassal_$NUM$
+		court_event_character_flag_effect = yes
+	}
+}
+
+scripted_effect hold_court_8330_save_random_vassal_effect = {
+	random_list = {
+		1 = {
+			trigger = { hold_court_8330_save_vassal_trigger = { STANCE = courtly } }
+			modifier = { add = "list_size(courtly_list)" }
+			hold_court_8330_save_vassal_effect = { STANCE = courtly NUM = $NUM$ }
+		}
+		1 = {
+			trigger = { hold_court_8330_save_vassal_trigger = { STANCE = glory_hound } }
+			modifier = { add = "list_size(glory_hound_list)" }
+			hold_court_8330_save_vassal_effect = { STANCE = glory_hound NUM = $NUM$ }
+		}
+		1 = {
+			trigger = { hold_court_8330_save_vassal_trigger = { STANCE = parochial } }
+			modifier = { add = "list_size(parochial_list)" }
+			hold_court_8330_save_vassal_effect = { STANCE = parochial NUM = $NUM$ }
+		}
+		1 = {
+			trigger = { hold_court_8330_save_vassal_trigger = { STANCE = zealot } }
+			modifier = { add = "list_size(zealot_list)" }
+			hold_court_8330_save_vassal_effect = { STANCE = zealot NUM = $NUM$ }
+		}
+		1 = {
+			trigger = { hold_court_8330_save_vassal_trigger = { STANCE = minority } }
+			modifier = { add = "list_size(minority_list)" }
+			hold_court_8330_save_vassal_effect = { STANCE = minority NUM = $NUM$ }
+		}
+	}
+}
+
+scripted_effect hold_court_8330_remove_opinion_effect = {
+	scope:actor = {
+		every_vassal = {
+			limit = { has_vassal_stance = $STANCE$ }
+			custom = every_$STANCE$_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = angry_opinion
+				opinion = -15
+			}
+		}
+	}
+}
+
+scripted_effect hold_court_8330_remove_opinion_stance_effect = {
+	switch = {
+		trigger = has_vassal_stance
+		courtly = { hold_court_8330_remove_opinion_effect = { STANCE = courtly } }
+		glory_hound = { hold_court_8330_remove_opinion_effect = { STANCE = glory_hound } }
+		parochial = { hold_court_8330_remove_opinion_effect = { STANCE = parochial } }
+		zealot = { hold_court_8330_remove_opinion_effect = { STANCE = zealot } }
+		minority = { hold_court_8330_remove_opinion_effect = { STANCE = minority } }
+	}
+}
+
+scripted_effect hold_court_8330_add_opinion_effect = {
+	scope:actor = {
+		every_vassal = {
+			limit = { has_vassal_stance = $STANCE$ }
+			custom = every_$STANCE$_vassal_actor
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 10
+			}
+		}
+	}
+}
+
+scripted_effect hold_court_8330_add_opinion_stance_effect = {
+	switch = {
+		trigger = has_vassal_stance
+		courtly = { hold_court_8330_add_opinion_effect = { STANCE = courtly } }
+		glory_hound = { hold_court_8330_add_opinion_effect = { STANCE = glory_hound } }
+		parochial = { hold_court_8330_add_opinion_effect = { STANCE = parochial } }
+		zealot = { hold_court_8330_add_opinion_effect = { STANCE = zealot } }
+		minority = { hold_court_8330_add_opinion_effect = { STANCE = minority } }
+	}
+}
+
+scripted_effect hold_court_8330_stress_effect = {
+	$VASSAL$ = {
+		switch = {
+			trigger = has_vassal_stance
+			# Effect for agreeing with this stance
+			courtly = {
+				stress_impact = {
+					humble = minor_stress_impact_gain
+				}
+			}
+			glory_hound = {
+				stress_impact = {
+					craven = minor_stress_impact_gain
+				}
+			}
+			parochial = {
+				stress_impact = {
+					fickle = minor_stress_impact_gain
+				}
+			}
+			zealot = {
+				stress_impact = {
+					cynical = minor_stress_impact_gain
+				}
+			}
+			minority = {
+				stress_impact = {
+					arrogant = minor_stress_impact_gain
+				}
+			}
+		}
+	}
+}
+
+hold_court.8330 = {
+	type = court_event
+	title = hold_court.8330.t
+	desc = {
+		desc = hold_court.8330.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:vassal_2 = { has_vassal_stance = courtly } }
+				desc = hold_court.8330.intro.courtly
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_2 = { has_vassal_stance = glory_hound } }
+				desc = hold_court.8330.intro.glory_hound
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_2 = { has_vassal_stance = parochial } }
+				desc = hold_court.8330.intro.parochial
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_2 = { has_vassal_stance = zealot } }
+				desc = hold_court.8330.intro.zealot
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_2 = { has_vassal_stance = minority } }
+				desc = hold_court.8330.intro.minority
+			}
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:vassal_1 = { has_vassal_stance = courtly } }
+				desc = hold_court.8330.outro.courtly
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_1 = { has_vassal_stance = glory_hound } }
+				desc = hold_court.8330.outro.glory_hound
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_1 = { has_vassal_stance = parochial } }
+				desc = hold_court.8330.outro.parochial
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_1 = { has_vassal_stance = zealot } }
+				desc = hold_court.8330.outro.zealot
+			}
+			triggered_desc = {
+				trigger = { scope:vassal_1 = { has_vassal_stance = minority } }
+				desc = hold_court.8330.outro.minority
+			}
+		}
+		desc = hold_court.8330.end
+	}
+	theme = realm
+	cooldown = { years = 15 }
+
+	court_scene = {
+		button_position_character = scope:vassal_1
+		court_event_force_open = yes
+		show_timeout_info = no
+		should_pause_time = yes
+		roles = {
+			scope:vassal_1 = {
+				group = petitioners_group
+				animation = rage
+			}
+			scope:vassal_2 = {
+				group = petitioners_group
+				animation = disapproval
+			}
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_event_chain_progress"
+		container = "custom_widgets_container"
+		controller = event_chain_progress
+	}
+
+	trigger = {
+		# At least two vassal stance groups have relevance
+		calc_true_if = {
+			amount >= 2
+			hold_court_8330_minimum_stancers_trigger = { STANCE = courtly }
+			hold_court_8330_minimum_stancers_trigger = { STANCE = glory_hound }
+			hold_court_8330_minimum_stancers_trigger = { STANCE = parochial }
+			hold_court_8330_minimum_stancers_trigger = { STANCE = zealot }
+			hold_court_8330_minimum_stancers_trigger = { STANCE = minority }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		# Court weightings.
+		ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_diplomatic }
+	}
+
+	immediate = {
+		save_scope_as = actor
+		if = {
+			limit = { hold_court_8330_minimum_stancers_trigger = { STANCE = courtly } }
+			hold_court_8330_save_stancers_effect = { STANCE = courtly }
+		}
+		if = {
+			limit = { hold_court_8330_minimum_stancers_trigger = { STANCE = glory_hound } }
+			hold_court_8330_save_stancers_effect = { STANCE = glory_hound }
+		}
+		if = {
+			limit = { hold_court_8330_minimum_stancers_trigger = { STANCE = parochial } }
+			hold_court_8330_save_stancers_effect = { STANCE = parochial }
+		}
+		if = {
+			limit = { hold_court_8330_minimum_stancers_trigger = { STANCE = zealot } }
+			hold_court_8330_save_stancers_effect = { STANCE = zealot }
+		}
+		if = {
+			limit = { hold_court_8330_minimum_stancers_trigger = { STANCE = minority } }
+			hold_court_8330_save_stancers_effect = { STANCE = minority }
+		}
+		hold_court_8330_save_random_vassal_effect = { NUM = 1 }
+		hold_court_8330_save_random_vassal_effect = { NUM = 2 }
+		# Trigger next event in chain.
+		hold_court_queue_next_event_effect = yes
+	}
+
+	option = { # Diplo king
+		name = hold_court.8330.c
+		duel = {
+			skill = diplomacy
+			value = high_skill_rating
+			10 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = 1
+				}
+				desc = hold_court.8330.c.success
+				send_interface_toast = {
+					title = hold_court.8330.c.success
+					left_icon = scope:vassal_1
+					right_icon = scope:vassal_2
+					reverse_add_opinion = {
+						target = scope:vassal_1
+						modifier = flattered_opinion
+						opinion = 15
+					}
+					reverse_add_opinion = {
+						target = scope:vassal_2
+						modifier = flattered_opinion
+						opinion = 15
+					}
+				}
+			}
+			10 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = 1
+				}
+				desc = hold_court.8330.c.failure
+				send_interface_toast = {
+					title = hold_court.8330.c.failure
+					left_icon = scope:vassal_1
+					right_icon = scope:vassal_2
+					scope:vassal_1 = { hold_court_8330_remove_opinion_stance_effect = yes }
+					scope:vassal_2 = { hold_court_8330_remove_opinion_stance_effect = yes }
+				}
+			}
+		}
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			lazy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_energy = 0.5
+				ai_sociability = 0.5
+			}
+		}
+	}
+
+	option = { # Agree 1st
+		name = {
+			trigger = { scope:vassal_1 = { has_vassal_stance = courtly } }
+			text = hold_court.8330.a.courtly
+		}
+		name = {
+			trigger = { scope:vassal_1 = { has_vassal_stance = glory_hound } }
+			text = hold_court.8330.a.glory_hound
+		}
+		name = {
+			trigger = { scope:vassal_1 = { has_vassal_stance = parochial } }
+			text = hold_court.8330.a.parochial
+		}
+		name = {
+			trigger = { scope:vassal_1 = { has_vassal_stance = zealot } }
+			text = hold_court.8330.a.zealot
+		}
+		name = {
+			trigger = { scope:vassal_1 = { has_vassal_stance = minority } }
+			text = hold_court.8330.a.minority
+		}
+		reverse_add_opinion = {
+			target = scope:vassal_1
+			modifier = pleased_opinion
+			opinion = 10
+		}
+		scope:vassal_2 = { hold_court_8330_remove_opinion_stance_effect = yes }
+		hold_court_8330_stress_effect = { VASSAL = scope:vassal_2 }
+		ai_chance = {
+			base = 1
+			opinion_modifier = {
+				opinion_target = scope:vassal_1
+				multiplier = 0.5
+			}
+		}
+	}
+
+	option = { # Agree 2nd
+		name = {
+			trigger = { scope:vassal_2 = { has_vassal_stance = courtly } }
+			text = hold_court.8330.a.courtly
+		}
+		name = {
+			trigger = { scope:vassal_2 = { has_vassal_stance = glory_hound } }
+			text = hold_court.8330.a.glory_hound
+		}
+		name = {
+			trigger = { scope:vassal_2 = { has_vassal_stance = parochial } }
+			text = hold_court.8330.a.parochial
+		}
+		name = {
+			trigger = { scope:vassal_2 = { has_vassal_stance = zealot } }
+			text = hold_court.8330.a.zealot
+		}
+		name = {
+			trigger = { scope:vassal_2 = { has_vassal_stance = minority } }
+			text = hold_court.8330.a.minority
+		}
+		reverse_add_opinion = {
+			target = scope:vassal_2
+			modifier = pleased_opinion
+			opinion = 10
+		}
+		scope:vassal_1 = { hold_court_8330_remove_opinion_stance_effect = yes }
+		hold_court_8330_stress_effect = { VASSAL = scope:vassal_1 }
+		ai_chance = {
+			base = 1
+			opinion_modifier = {
+				opinion_target = scope:vassal_1
+				multiplier = 0.5
+			}
+		}
+	}
+
+	after = {
+		scope:vassal_1 = { clear_court_event_participation = yes }
+		scope:vassal_2 = { clear_court_event_participation = yes }
+		# Finish up the chain if relevant.
+		hold_court_queue_post_event_effect = yes	
+	}
+}
+
+##################################################
+# Looking for Work
+# by Joe Parkin
+# 8340
+##################################################
+
+scripted_effect hold_court_8340_create_seeker_effect = {
+	create_character = {
+		culture = scope:birthplace.culture
+		faith = scope:birthplace.faith
+		dynasty = none
+		location = root.location
+		template = $TYPE$_court_position_holder_template
+		save_scope_as = candidate
+	}
+}
+
+hold_court.8340 = {
+	type = court_event
+	title = hold_court.8340.t
+	desc = {
+		desc = hold_court.8340.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:diplomacy }
+				desc = hold_court.8340.diplomacy
+			}
+			triggered_desc = {
+				trigger = { exists = scope:stewardship }
+				desc = hold_court.8340.stewardship
+			}
+			triggered_desc = {
+				trigger = { exists = scope:intrigue }
+				desc = hold_court.8340.intrigue
+			}
+			triggered_desc = {
+				trigger = { exists = scope:learning }
+				desc = hold_court.8340.learning
+			}
+			desc = hold_court.8340.prowess
+		}
+		desc = hold_court.8340.outro
+	}
+	theme = realm
+	cooldown = { years = 15 }
+
+	court_scene = {
+		button_position_character = scope:candidate
+		court_event_force_open = yes
+		show_timeout_info = no
+		should_pause_time = yes
+		roles = {
+			scope:candidate = {
+				group = petitioners_group
+				animation = throne_room_bow_1
+			}
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_event_chain_progress"
+		container = "custom_widgets_container"
+		controller = event_chain_progress
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_employed_any_court_position = no
+		}
+		# Court weightings.
+		ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_diplomatic }
+	}
+
+	immediate = {
+		save_scope_as = actor
+		random_sub_realm_county = {
+			limit = {
+				NOT = { holder = root }
+			}
+			alternative_limit = { always = yes }
+			save_scope_as = birthplace
+		}
+		hidden_effect = {
+			random_list = {
+				1 = {
+					ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_diplomatic }
+					save_scope_as = diplomacy
+					hold_court_8340_create_seeker_effect = { TYPE = diplomacy }
+				}
+				1 = {
+					ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_warlike }
+					ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_tribal }
+					save_scope_as = prowess
+					hold_court_8340_create_seeker_effect = { TYPE = prowess }
+				}
+				1 = {
+					ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_administrative }
+					save_scope_as = stewardship
+					hold_court_8340_create_seeker_effect = { TYPE = stewardship }
+				}
+				0.25 = {
+					modifier = {
+						OR = {
+							can_employ_court_position_type = chief_eunuch_court_position
+							can_employ_court_position_type = master_assassin_court_position
+						}
+						add = 1
+					}
+					ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_intrigue }
+					save_scope_as = intrigue
+					hold_court_8340_create_seeker_effect = { TYPE = intrigue }
+				}
+				1 = {
+					ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_scholarly }
+					save_scope_as = learning
+					hold_court_8340_create_seeker_effect = { TYPE = learning }
+				}
+			}
+		}
+		scope:candidate ?= {
+			save_scope_as = recipient
+			court_event_character_flag_effect = yes
+			court_position_generator_effect = { VAR = target EMPLOYER = root }
+			court_position_generator_effect = { VAR = second EMPLOYER = root }
+			court_position_generator_effect = { VAR = backup EMPLOYER = root }
+		}
+		# Trigger next event in chain.
+		hold_court_queue_next_event_effect = yes
+	}
+
+	option = { # Hire
+		name = hold_court.8340.a
+		trigger = { exists = scope:candidate.var:target_court_position }
+		pay_short_term_gold = {
+			gold = {
+				value = bribe_value
+				multiply = 0.5
+			}
+			target = scope:candidate
+		}
+		court_position_generator_assignment_effect = {
+			VAR = target
+			CANDIDATE = scope:candidate
+			EMPLOYER = root
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_greed = -0.5
+			}
+		}
+	}
+
+	option = { # Hire for second
+		name = hold_court.8340.b
+		trigger = {
+			exists = scope:candidate.var:second_court_position
+			NOT = { scope:candidate.var:second_court_position ?= scope:candidate.var:target_court_position }
+		}
+		pay_short_term_gold = {
+			gold = {
+				value = bribe_value
+				multiply = 0.5
+			}
+			target = scope:candidate
+		}
+		court_position_generator_assignment_effect = {
+			VAR = second
+			CANDIDATE = scope:candidate
+			EMPLOYER = root
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_greed = -0.5
+			}
+		}
+	}
+
+	option = { # Hire for backup
+		name = hold_court.8340.c
+		trigger = {
+			exists = scope:candidate.var:backup_court_position
+			NOR = {
+				scope:candidate.var:backup_court_position ?= scope:candidate.var:target_court_position
+				scope:candidate.var:backup_court_position ?= scope:candidate.var:second_court_position
+			}
+		}
+		pay_short_term_gold = {
+			gold = {
+				value = bribe_value
+				multiply = 0.5
+			}
+			target = scope:candidate
+		}
+		court_position_generator_assignment_effect = {
+			VAR = backup
+			CANDIDATE = scope:candidate
+			EMPLOYER = root
+		}
+		ai_chance = {
+			base = 1
+			ai_value_modifier = {
+				ai_greed = -0.5
+			}
+		}
+	}
+
+	option = { # Dismiss
+		name = hold_court.8340.d
+		ai_chance = {
+			base = 5
+			ai_value_modifier = {
+				ai_greed = 0.5
+			}
+		}
+	}
+
+	after = {
+		scope:candidate = { clear_court_event_participation = yes }
+		# Finish up the chain if relevant.
+		hold_court_queue_post_event_effect = yes
+	}
+}

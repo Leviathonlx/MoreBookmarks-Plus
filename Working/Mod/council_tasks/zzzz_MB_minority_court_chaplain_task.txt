@@ -1,0 +1,695 @@
+﻿
+task_conversion = {
+	position = councillor_court_chaplain
+
+	task_type = task_type_county
+	county_target = realm
+	ai_county_target = realm
+	task_progress = task_progress_percentage
+	restart_on_finish = yes
+	highlight_own_realm = yes
+
+	effect_desc = {
+		desc = task_conversion_effect_desc
+		triggered_desc = {
+			trigger = {
+				scope:councillor_liege = {
+					any_vassal = {
+						has_vassal_stance = minority
+					}
+				}
+			}
+			desc = minority_disapproves_conversion_tooltip
+		}
+		desc = {
+			desc = council_task_possible_side_effects
+			triggered_desc = {
+				trigger = {
+					learning > mediocre_skill_rating
+				}
+				desc = task_conversion_opinion_gain
+			}
+			triggered_desc = {
+				trigger = {
+					learning > mediocre_skill_rating
+				}
+				desc = task_conversion_development_gain
+			}
+			triggered_desc = {
+				trigger = {
+					learning > mediocre_skill_rating
+				}
+				desc = task_conversion_levy_gain
+			}
+			triggered_desc = {
+				trigger = {
+					learning < high_skill_rating
+				}
+				desc = task_conversion_resistance_to_conversion
+			}
+			triggered_desc = {
+				trigger = {
+					learning < high_skill_rating
+				}
+				desc = task_conversion_opinion_loss
+			}
+		}
+	}
+
+	progress = {
+		value = 0
+		#Base conversion speed
+		add = {
+			value = court_chaplain_conversion_base
+			desc = COURT_CHAPLAIN_PROGRESS_BASE
+		}
+		add = {
+			value = scope:councillor.court_chaplain_conversion_monthly_increase
+			desc = SCALED_COUNCILLOR_LEARNING_VALUE
+		}
+		#Fervor of Court Chaplain's Faith
+		if = {
+			limit = { # Conditional in order to not mess up the preview-tooltip
+				exists = scope:county
+				exists = scope:councillor.faith
+				exists = scope:county.faith
+			}
+			add = {
+				add = {
+					add = scope:councillor.court_chaplain_progress_percentage
+					multiply = scope:councillor.faith.fervor
+					multiply = convert_faith_fervor_modifier_scale
+				}
+				subtract = {
+					add = scope:councillor.court_chaplain_progress_percentage
+					multiply = scope:county.faith.fervor
+					multiply = convert_faith_fervor_modifier_scale
+				}
+				if = {
+					limit = {
+						scope:councillor_liege = { has_perk = religious_icon_perk }
+					}
+					min = 0
+				}
+				desc = COURT_CHAPLAIN_CONVERSION_FERVOR_IMPACT
+			}
+		}
+		add = court_chaplain_conversion_contextual_bonuses
+
+		# Faster conversion for certain special doctrines
+		if = {
+			limit = {
+				scope:councillor_liege.faith = { has_doctrine_parameter = adoptionists_attractively_intuitive_theology }
+				exists = scope:county
+				scope:county.faith.religion = religion:christianity_religion
+			}
+			add = {
+				value = fp2_lyonese_monk_conversion_bonus_actual_value
+				desc = fp2_lyonese_monk_faith_conversion_task_desc
+			}
+		}
+		
+		#Morven Mod
+		
+		if = {
+			limit = {
+				exists = scope:county
+				scope:county = { has_county_modifier = county_increased_opinion_modifier }
+			}
+			add = {
+				value = scope:councillor.religion_local_population_pacified_mod 
+				desc = county_increased_opinion_modifier
+			}
+		}
+
+		if = {
+			limit = {
+				exists = scope:county
+				scope:county = { has_county_modifier = county_increased_opinion_modifier_crusade }
+			}
+			add = {
+				value = scope:councillor.religion_local_population_pacified_crusade_mod
+				desc = county_increased_opinion_modifier
+			}
+		}
+		
+		###
+
+		# Development reduces the speed. Should be the last non-multiply modifier applied to avoid negative values
+		if = {
+			limit = {
+				exists = scope:county
+				scope:county = {
+					development_level > 0
+				}
+			}
+			add = {
+				value = scope:county.convert_faith_development_penalty
+				desc = STEWARD_PROMOTE_CULTURE_DEVELOPMENT_PENALTY
+			}
+		}
+
+		if = {
+			limit = {
+				scope:councillor.faith = {
+					has_doctrine_parameter = unreformed
+				}
+			}
+			multiply = {
+				value = conversion_unreformed_faith_penalty
+				desc = COURT_CHAPLAIN_CONVERSION_UNREFORMED_FAITH_PENALTY
+			}
+		}
+
+		# Faster conversion for FP2 Hostility ending, if county is in Iberia and faith was involved
+		if = {
+			limit = {
+				exists = scope:councillor.liege.house
+				scope:councillor.liege.house = {
+					OR = {
+						has_house_modifier = fp2_struggle_hostility_house_faith_modifier
+						has_house_modifier = fp2_struggle_hostility_house_combined_modifier
+					}
+				}
+				any_in_global_list = {
+					variable = fp2_struggle_ending_faith_list
+					this = scope:county.faith
+				}
+				scope:county.title_province = { geographical_region = world_europe_west_iberia }
+			}
+			multiply = {
+				value = fp2_struggle_hostility_conversion_value
+				desc = fp2_struggle_hostility_faith_conversion_task_desc
+			}
+		}
+		# Faster conversion of infidels for FP2 Council Toledo Conversion
+		if = {
+			limit = {
+				scope:councillor.liege = { has_character_modifier = fp2_council_conversion_modifier }
+				NOT = { scope:county.religion = scope:councillor.liege.religion }
+			}
+			multiply = {
+				value = council_toledo_conversion_modifier_value
+				desc = council_toledo_conversion_task_desc
+			}
+		}
+		# Faster conversion of heretics for FP2 Council Toledo Heresies
+		if = {
+			limit = {
+				scope:councillor.liege = { has_character_modifier = fp2_council_conversion_modifier }
+				scope:county.faith = {
+					religion = scope:councillor.liege.religion
+					fp2_struggle_faith_is_mozarabic_trigger = no
+					NOT = { exists = religious_head }
+				}
+			}
+			multiply = {
+				value = council_toledo_conversion_modifier_value
+				desc = council_toledo_heresies_task_desc
+			}
+		}
+
+		# Faster conversion of Persian counties with the FP3 Promote Persian Scripture decision
+		if = {
+			limit = {
+				scope:councillor.liege = { 
+					has_character_modifier = fp3_promoted_persian_scripture_modifier 
+					is_ai = no #this is so that we don't get AI converting and homogenizing Persia too quickly
+				}
+				scope:county.culture = { has_cultural_pillar = heritage_iranian } 
+			}
+			multiply = {
+				value = promote_persian_scripture_conversion_modifier_value
+				desc = fp3_promote_persian_scripture_task_desc
+			}
+		}
+
+		# FP3 faster conversion struggle ending rewards
+		if = {
+			limit = {
+				exists = global_var:fp3_struggle_ending_assertion_school
+				switch = {
+					trigger = global_var:fp3_struggle_ending_assertion_school
+					flag:sunni = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_sunni_doctrine }
+					}
+					flag:shia = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_sunni_doctrine }
+					}
+					flag:muhakkima = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_muhakkima_doctrine }
+					}
+					flag:zandaqa = {
+						scope:councillor.liege.faith = { has_doctrine = muhammad_succession_zandaqa_doctrine }
+					}
+				}
+			}
+			multiply = {
+				value = fp3_struggle_ending_conversion_modifier_value
+				desc = fp3_struggle_ending_conversion_modifier_desc
+			}
+		}
+
+		# Conversion speed game rules
+		if = {
+			limit = {
+				has_game_rule = slower_faith_conversion_speed
+			}
+			multiply = {
+				value = slower_game_rule_value
+				desc = GAME_RULE_SLOWER_REASON
+			}
+		}
+		if = {
+			limit = {
+				has_game_rule = significantly_slower_faith_conversion_speed
+			}
+			multiply = {
+				value = significantly_slower_game_rule_value
+				desc = GAME_RULE_SIGNIFICANTLY_SLOWER_REASON
+			}
+		}
+		if = {
+			limit = {
+				has_game_rule = faster_faith_conversion_speed
+			}
+			multiply = {
+				value = faster_game_rule_value
+				desc = GAME_RULE_FASTER_REASON
+			}
+		}
+		if = {
+			limit = {
+				has_game_rule = significantly_faster_faith_conversion_speed
+			}
+			multiply = {
+				value = significantly_faster_game_rule_value
+				desc = GAME_RULE_SIGNIFICANTLY_FASTER_REASON
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:county
+				OR = {
+					AND = {
+						scope:councillor.faith = { has_doctrine_parameter = unreformed_syncretic_actor_opinion_active }
+						scope:county.faith = { has_doctrine_parameter = unreformed }
+					}
+					AND = {
+						scope:councillor.faith = { has_doctrine_parameter = christian_syncretic_actor_opinion_active }
+						scope:county.faith = { religion_tag = christianity_religion }
+					}
+					AND = {
+						scope:councillor.faith = { has_doctrine_parameter = islamic_syncretic_actor_opinion_active }
+						scope:county.faith = { religion_tag = islam_religion }
+					}
+					AND = {
+						scope:councillor.faith = { has_doctrine_parameter = jewish_syncretic_actor_opinion_active }
+						scope:county.faith = { religion_tag = judaism_religion }
+					}
+				}
+			}
+			min = {
+				value = 0.1
+				desc = minimum_conversion
+			}
+		}
+
+		# Because the task needs to complete 3 times with the minority system
+		multiply = 3
+
+		if = {
+			limit = { scope:county.faith = scope:councillor_liege.faith }
+			multiply = {
+				value = 0.5
+				desc = converting_minority_desc
+			}
+		}
+	}
+
+	county_modifier = {
+		name = court_chaplain_convert_county_modifier
+		county_opinion_add = -10
+	}
+	potential_county = {
+		scope:county = {
+			### Minority stuff ###
+			scope:councillor_liege = { has_realm_law_flag = may_convert_faith }
+			trigger_if = {
+				limit = { faith = scope:councillor_liege.faith }
+				trigger_if = {
+					limit = {
+						county_has_astray_or_worse_minority_faith_trigger = { FAITH = scope:councillor.faith }
+					}
+					custom_tooltip = {
+						text = "not_has_expel_minorities_unlocked"
+						scope:councillor_liege = { has_realm_law_flag = unlock_expel_religious_minorities }
+					}
+				}
+				trigger_else = {
+					NOT = { faith = scope:councillor_liege.faith }
+				}
+			}
+			### End Minority stuff ###
+
+			trigger_if = {
+				limit = {
+					scope:councillor_liege = {
+						is_alive = yes
+						has_variable = hold_court_8120_religion_block
+					}
+				}
+				custom_tooltip = {
+					text = hold_court_8120_conversion_tt
+					NOT = { faith = scope:councillor_liege.var:hold_court_8120_religion_block }
+				}
+			}
+			custom_description = {
+				text = "is_protected_via_contract_self_or_liege"
+				subject = holder
+				NAND = { # Vassal Contract forbids meddling by liege
+					exists = holder.liege
+					holder = {
+						OR = {
+							AND = {
+								liege = scope:councillor_liege
+								is_ruler = yes
+								is_independent_ruler = no
+								vassal_contract_has_flag = religiously_protected
+							}
+							any_liege_or_above = {
+								exists = liege
+								liege = scope:councillor_liege
+								is_ruler = yes
+								is_independent_ruler = no
+								vassal_contract_has_flag = religiously_protected
+							}
+						}
+					}
+				}
+			}
+			trigger_if = {
+				limit = {	
+					AND = {
+						has_variable = cannot_be_converted_by_value
+						var:cannot_be_converted_by_value = scope:councillor_liege		
+					}
+				}
+				custom_tooltip = {
+					text = promised_to_not_convert_county	
+					NOR = {
+						has_variable = cannot_be_converted_by_value
+						var:cannot_be_converted_by_value = scope:councillor_liege	
+					}
+				}
+			}
+			# Unreformed Pagans do not tend to even try conversion of non-unreformed faiths unless zealous
+			trigger_if = {
+				limit = {
+					scope:councillor_liege = {
+						is_ai = yes
+						faith = {
+							has_doctrine_parameter = unreformed
+						}
+					}
+				}
+				OR = {
+					scope:councillor_liege = { ai_zeal >= 50 }
+					scope:county.faith = { has_doctrine_parameter = unreformed }
+					scope:county = { # Always convert holy sites
+						any_county_province = {
+							barony = {
+								is_holy_site_of = scope:councillor_liege.faith
+							}
+						}
+					}
+				}
+			}
+			# Do not convert Righteous faiths, unless disturbingly zealous
+			trigger_if = {
+				limit = {
+					scope:councillor_liege = {
+						is_ai = yes
+						faith = {
+							faith_hostility_level = {
+								target = scope:county.faith
+								value <= faith_fully_accepted_level
+							}
+						}
+					}
+				}
+				OR = {
+					scope:councillor_liege = { ai_zeal >= 100 }
+					scope:county = { # Always convert holy sites
+						any_county_province = {
+							barony = {
+								is_holy_site_of = scope:councillor_liege.faith
+							}
+						}
+					}
+				}
+			}
+			# Converting Astray faiths only happens during certain circumstances
+			trigger_if = {
+				limit = {
+					scope:councillor_liege = {
+						is_ai = yes
+						faith = {
+							faith_hostility_level = {
+								target = scope:county.faith
+								value <= faith_astray_level
+							}
+						}
+					}
+				}
+				trigger_if = {
+					limit = {
+						scope:councillor_liege = {
+							has_tolerant_faith_or_culture_trigger = yes
+						}
+					}
+					OR = {
+						scope:councillor_liege = { ai_zeal >= 50 }
+						scope:county = { county_opinion <= -20 }
+						scope:county = { # Always convert holy sites
+							any_county_province = {
+								barony = {
+									is_holy_site_of = scope:councillor_liege.faith
+								}
+							}
+						}
+					}
+				}
+				trigger_else_if = {
+					limit = {
+						scope:councillor_liege = {
+							faith = { has_doctrine = doctrine_pluralism_fundamentalist }
+						}
+					}
+					OR = {
+						scope:councillor_liege = { ai_zeal >= 0 }
+						scope:county = { county_opinion <= -10 }
+						scope:county = { # Always convert holy sites
+							any_county_province = {
+								barony = {
+									is_holy_site_of = scope:councillor_liege.faith
+								}
+							}
+						}
+					}
+				}
+				trigger_else = {
+					OR = {
+						scope:councillor_liege = { ai_zeal >= 10 }
+						scope:county = { county_opinion <= -15 }
+						scope:county = { # Always convert holy sites
+							any_county_province = {
+								barony = {
+									is_holy_site_of = scope:councillor_liege.faith
+								}
+							}
+						}
+					}
+				}
+			}
+			# Ash'ari in Spain tend to not convert Muwhalladi often
+			trigger_if = {
+				limit = {
+					scope:councillor_liege = {
+						is_ai = yes
+						faith = faith:ashari
+						capital_province ?= { geographical_region = world_europe_west_iberia }
+						scope:county.faith = faith:muwalladi
+					}
+					scope:county = {
+						title_province = { geographical_region = world_europe_west_iberia }
+					}
+				}
+				OR = {
+					scope:councillor_liege = { ai_zeal >= 50 }
+					scope:county = { county_opinion <= -20 }
+					scope:county = { # Always convert holy sites
+						any_county_province = {
+							barony = {
+								is_holy_site_of = scope:councillor_liege.faith
+							}
+						}
+					}
+				}
+			}
+			# If a ruler has Jizya tax, they'll only convert the same *religious family* when ai_zeal is really high, they're converting unreformed pagans, counties in a kingdom with a Holy Site, or others of the same religion
+			trigger_if = {
+				limit = {
+					scope:councillor_liege = {
+						is_ai = yes
+						faith = {
+							has_doctrine = tenet_tax_nonbelievers
+						}
+					}
+					OR = {
+						AND = {
+							scope:councillor_liege.religion = { is_in_family = rf_pagan }
+							scope:county.religion = { is_in_family = rf_pagan }
+						}
+						AND = {
+							scope:councillor_liege.religion = { is_in_family = rf_eastern }
+							scope:county.religion = { is_in_family = rf_eastern }
+						}
+						AND = {
+							scope:councillor_liege.religion = { is_in_family = rf_abrahamic }
+							scope:county.religion = { is_in_family = rf_abrahamic }
+						}
+					}
+				}
+				OR = {
+					scope:councillor_liege = { ai_zeal >= 50 }
+					scope:county.faith = { has_doctrine_parameter = unreformed }
+					scope:councillor_liege.faith = {
+						any_holy_site = {
+							county = {
+								kingdom = scope:county.kingdom
+							}
+						}
+					}
+					#scope:county.religion = scope:councillor_liege.religion # Excluded, as tax nonbelievers actually works for different faiths within the same religion
+					AND = { # Islamic heartlands, to help fend off encroaching faiths
+						scope:councillor_liege.religion = religion:islam_religion
+						scope:county.title_province = {
+							geographical_region = islamic_heartlands
+						}
+					}
+				}
+			}
+			# Struggle phases may sometimes restrict targets for involved characters.
+			trigger_if = {
+				# Give an exception for pre-existing conversions: these can take a while and it's not fair to lose years or decades of progress to a phase change.
+				limit = {
+					NOT = {
+						scope:county = { is_target_of_council_task = task_conversion }
+					}
+				}
+				NOT = {
+					scope:councillor_liege = {
+						custom_tooltip = {
+							text = task_conversion.tt.forbidden.due_to_struggle_phase
+							any_character_struggle = {
+								involvement = involved
+								is_struggle_parameter_active_secondary_county_trigger = {
+									PARAMETER = county_conversion_disabled_for_involved_faiths_within_region
+									COUNTY = scope:county
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	on_start_task_county = {
+		# Message for vassals
+		scope:county = { save_scope_as = set_county }
+		trigger_event = {
+			id = court_chaplain_task.8000
+			days = 2 # To ensure it fires after the halted message
+		}
+	}
+
+	on_cancel_task_county = {
+		# Message for vassals
+		trigger_event = {
+			id = court_chaplain_task.8001
+			days = 1 # To ensure it does not fire at the same time as the finish message (both cancel and finish are fired on_finish_task_county)
+		}
+	}					 
+	on_finish_task_county = {
+		scope:county.faith = { save_scope_as = old_faith }
+		scope:councillor_liege = {
+			if = {
+				limit = {
+					any_vassal = {
+						has_vassal_stance = minority
+					}
+									 
+								   
+				}
+				custom_tooltip = minority_disapproves_conversion
+				hidden_effect = {
+					every_vassal = {
+						limit = {
+							has_vassal_stance = minority
+						}
+						add_opinion = {
+							target = scope:councillor_liege
+							modifier = minority_disapproves_of_conversion_opinion
+						}
+					}
+				}
+			}
+		}
+		scope:county = {
+			if = {
+				limit = { scope:county.faith = scope:councillor.faith }
+				demote_random_faith_minority_effect = yes
+			}
+			else = {
+				promote_faith_minority_effect = {
+					FAITH = scope:councillor.faith
+				}
+				if = {
+					limit = { scope:county.faith = scope:councillor.faith }
+					scope:councillor = { start_default_task = yes }
+					# Struggle parameters
+					scope:councillor_liege = {
+						if = {
+							limit = {
+								any_character_struggle = {
+									involvement = involved
+									has_struggle_phase_parameter = piety_from_converting_county
+								}
+							}
+							add_piety = medium_piety_gain
+						}
+					}
+					# Message for vassals
+					trigger_event = court_chaplain_task.8002
+				}
+			}
+		}
+	}
+
+	monthly_on_action = task_convert_side_effects
+
+	ai_will_do = {
+		value = 1000 # Always convert if possible
+
+		if = {	#Unless you're a crypto-religionist.
+			limit = {
+				scope:councillor_liege = {
+					any_secret = { secret_type = secret_crypto_religionist }
+				}
+			}
+			multiply = 0
+		}
+	}
+}

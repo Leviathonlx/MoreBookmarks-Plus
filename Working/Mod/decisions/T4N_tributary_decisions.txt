@@ -1,0 +1,243 @@
+﻿##### TODO: Make interface with tributaries.6 event chain
+summon_tributaries_to_war = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+
+	ai_check_interval = 1
+
+	desc = summon_tributaries_to_war_desc
+
+	is_shown = {
+		is_suzerain = yes
+		is_at_war = yes
+		
+		#Need to have a tributary that's not part of your wars that *could* be part of your wars
+		any_in_list = {
+			variable = all_tributaries
+			this.var:can_call_to_war_suzerain = flag:yes
+			save_temporary_scope_as = temp_trib_war
+			
+			root = {
+				any_character_war = {
+					save_temporary_scope_as = temp_war
+					NOT = { scope:temp_trib_war = { is_participant_in_war = scope:temp_war } }
+				}
+			}
+		}
+	}
+	
+	is_valid = {
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	is_valid_showing_failures_only = {
+		is_independent_ruler = yes
+	}
+
+	cost = {
+		prestige = 1000 #Having to rely on your tributaries should cost more prestige
+	}
+
+	effect = {
+		every_in_list = {
+			variable = all_tributaries
+			limit = {
+				exists = var:can_call_to_war_suzerain
+				var:can_call_to_war_suzerain = flag:yes
+			}
+			save_temporary_scope_as = temp_trib_war
+			
+			root = {
+				every_character_war = {
+					save_temporary_scope_as = temp_war
+					
+					if = {
+						limit = { NOT = { scope:temp_trib_war = { is_participant_in_war = scope:temp_war } } }
+						if = {
+							limit = { root = { is_attacker_in_war = scope:temp_war } }
+							scope:temp_war = { add_attacker = scope:temp_trib_war }
+						}
+						else = { scope:temp_war = { add_defender = scope:temp_trib_war } }
+					}
+				}
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+	
+	#Keep this from being spammed
+	cooldown = { years = 1 }
+	
+	# Score above 0 means the AI will call this ally. Note that DESIRED_WAR_SIDE_STRENGTH still applies and can prevent calling the ally
+	ai_will_do = {
+		base = 50
+		
+		modifier = {
+			factor = -25
+			has_trait = lazy
+		}
+		modifier = {
+			factor = -25
+			has_trait = deceitful
+		}
+		modifier = {
+			factor = -25
+			has_trait = callous
+		}
+		modifier = {
+			factor = -25
+			has_trait = arbitrary
+		}
+		
+		modifier = {
+			factor = 15
+			has_trait = just
+		}
+		modifier = {
+			factor = 15
+			has_trait = honest
+		}
+		
+		modifier = { # An emperor should never feel they require a tributaries aid
+			add = -75
+			primary_title.tier = tier_empire
+		}
+		modifier = { # A King shouldn't feel he needs to rely on his tributaries for a war
+			add = -25
+			primary_title.tier = tier_kingdom
+		}
+		modifier = { # But a small duke should be more willing
+			add = 10
+			primary_title.tier = tier_duchy
+		}
+		
+		#Remove chance of Carolingian Empire having half of Europe attack you
+		modifier = {
+			add = -50
+			any_held_title = {
+					this = title:e_france
+				}
+		}
+		
+		# Has enough gold.
+		short_term_gold >= ai_war_chest_desired_gold_value
+	}	
+	
+}
+
+##### TODO: Make interface with tributaries.13 event chain
+summon_suzerain_to_war = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	major = yes
+
+	ai_check_interval = 1
+
+	desc = summon_suzerain_to_war_desc
+
+	is_shown = {
+		is_tributary = yes
+		is_at_war = yes
+
+		is_at_war_as_defender = yes #Don't want tributaries calling their suzerains to war in offensive wars
+		#Don't use alliances as a way to call suzerain
+		#NOT = {
+		#	scope:actor = {
+		#		is_allied_in_war = no
+		#	}
+		#}
+		
+		
+		#The below doesn't work and just causes massive error spam. Who knows if it'll ever get fixed
+		##Suzerain must not be part of your current war
+		#exists = root.var:my_suzerain
+		#exists = var:can_call_to_war_tributary
+		#var:can_call_to_war_tributary = yes
+		#any_character_war = {
+		#	save_temporary_scope_as = temp_war
+		#	NOT = { root.var:my_suzerain = { is_participant_in_war = scope:temp_war } }
+		#}
+	}
+	
+	is_valid = {
+	
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+		
+		is_in_civil_war = no
+		is_at_war_with_liege = no
+		
+		
+		
+		
+	}
+
+	is_valid_showing_failures_only = {
+	
+		
+			
+	}
+
+	cost = {
+		prestige = 500 #Having to rely on your suzerain should cost some prestige
+	}
+
+	effect = {
+		every_character_war = {
+			save_temporary_scope_as = temp_war
+			
+			if = {
+				limit = { NOT = { root.var:my_suzerain = { is_participant_in_war = scope:temp_war } } }
+				if = {
+					limit = { root = { is_attacker_in_war = scope:temp_war } }
+					scope:temp_war = { add_attacker = root.var:my_suzerain }
+				}
+				else = { scope:temp_war = { add_defender = root.var:my_suzerain } }
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+	
+	#Keep this from being spammed
+	cooldown = { years = 1 }
+	
+	ai_will_do = {
+		base = 70
+		modifier = {
+			factor = -50
+			has_trait = arrogant
+		}
+		modifier = {
+			factor = -50
+			has_trait = wrathful
+		}
+		
+		modifier = {
+			factor = 10
+			has_trait = craven
+		}
+		
+		modifier = { # An emperor should never need aid
+			add = -75
+			primary_title.tier = tier_empire
+		}
+		modifier = { # A King should be less likely to call for aid
+			add = -25
+			primary_title.tier = tier_kingdom
+		}
+		modifier = { # But a small duke should be more willing but not guaranteed
+			add = 15
+			primary_title.tier = tier_duchy
+		}
+		
+		is_at_war = yes
+		# Has enough gold.
+		short_term_gold >= ai_war_chest_desired_gold_value
+	}
+}

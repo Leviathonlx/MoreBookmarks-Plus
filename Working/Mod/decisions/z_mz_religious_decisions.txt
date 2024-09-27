@@ -1,0 +1,232 @@
+﻿mz_burial_rites_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_burial_rites.dds"
+	major = yes
+
+	desc = mz_burial_rites_decision_desc
+	selection_tooltip = mz_burial_rites_decision_tooltip
+
+	cooldown = { years = 50 }
+
+	is_shown = {
+		is_landed = yes
+		primary_title.tier > tier_barony
+		faith = { has_doctrine_parameter = mz_burial_rites_active }
+		has_variable = ancestor_to_bury
+		NOT = { culture = culture:guanches }
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes # Standard checks.
+		is_at_war = no # Shouldn't be at war.
+	}
+
+	cost = { gold = massive_gold_value }
+
+	ai_check_interval = 12
+	
+	ai_potential = { short_term_gold >= massive_gold_value }
+
+	ai_will_do = { base = 100 } # The penalties for failing to do this are pretty harsh, so the AI should try to do it if they have the gold
+
+	effect = {
+		# custom_description_no_bullet = { text = raise_runestone_decision_warning }
+		show_as_tooltip = {
+			every_held_title = {
+				custom = mz_if_pyramids_true
+				add_county_modifier = {
+					modifier = mz_burial_rites_bonus_county_strong_modifier
+					years = 50
+				}
+			}
+			every_held_title = {
+				custom = mz_if_pyramids_false
+				add_county_modifier = {
+					modifier = mz_burial_rites_bonus_county_weak_modifier
+					years = 50
+				}
+			}
+			if = {
+				limit = { has_character_modifier = mz_burial_rites_penalty_minor_modifier }
+				remove_character_modifier = mz_burial_rites_penalty_minor_modifier
+			}
+			if = {
+				limit = { has_character_modifier = mz_burial_rites_penalty_major_modifier }
+				remove_character_modifier = mz_burial_rites_penalty_major_modifier
+			}
+			add_character_modifier = { modifier = mz_burial_rites_bonus_character_modifier }
+			if = { 
+				limit = { exists = dynasty }
+				dynasty = {
+					every_dynasty_member = {
+						custom = mz_every_dynasty_member
+						limit = { 
+							NOT = { this = root }
+						}
+						add_opinion = {
+							target = root
+							modifier = mz_burial_rites_opinion
+						}
+					}
+				}
+			}
+		}
+		trigger_event = mz_faith_tenet_specific.2001 # Moved ahead to selection.
+		stress_impact = {
+			greedy = major_stress_impact_gain
+			cynical = minor_stress_impact_gain
+		}
+	}
+}
+
+mz_build_pyramids_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_build_a_pyramid.dds"
+	major = yes
+
+	desc = mz_build_pyramids_decision_desc
+	selection_tooltip = mz_build_pyramids_decision_tooltip
+
+	cooldown = { years = 100 }
+
+	is_shown = {
+		is_landed = yes
+		primary_title.tier > tier_barony
+		faith = { has_doctrine_parameter = mz_pyramid_builders_active }
+		NOT = { has_character_flag = mz_pyramid_built }
+	}
+
+	is_valid = {
+		prestige_level >= 3 # Reasonably high prestige
+		piety_level >= 1 # Not excessively sinful
+		custom_description = {
+			text = mz_pyramid_building_requirements
+			any_sub_realm_barony = {
+				holder = root
+				is_leased_out = no
+				county.faith = { has_doctrine_parameter = mz_pyramid_builders_active }
+				title_province = { has_special_building_slot = no }
+				NOR = { #A place where universities historically existed early
+					this = title:b_fes
+					this = title:b_cairo
+					this = title:b_bologna
+					this = title:b_salamanca
+					this = title:b_madrid
+					this = title:b_oxford
+					this = title:b_cambridge
+					this = title:b_padua
+					this = title:b_siena
+					this = title:b_coimbra
+					this = title:b_napoli
+					this = title:b_tirakka
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = { is_available_adult = yes } # Standard checks.
+
+	effect = {
+		trigger_event = mz_faith_tenet_specific.2101 # Moved ahead to selection.
+		custom_description = {
+			text = mz_build_pyramids_decision_effect_1
+		}
+		custom_description_no_bullet = {
+			text = mz_build_pyramids_decision_effect_2
+		}
+	}
+
+	ai_check_interval = 12
+	
+	ai_potential = {
+		is_landed = yes
+		primary_title.tier > tier_barony
+		faith = { has_doctrine_parameter = mz_pyramid_builders_active }
+		NOT = { has_character_flag = mz_pyramid_built }
+	}
+
+	ai_will_do = { 
+		base = 0
+		modifier = { 
+			piety >= 350
+			add = 100
+		}
+	}
+}
+
+mz_sacred_grove_decision = {
+	picture = "gfx/interface/illustrations/decisions/decision_choose_orisha.dds"
+	major = no
+
+	desc = mz_sacred_grove_decision_desc
+	selection_tooltip = mz_sacred_grove_decision_tooltip
+
+	cooldown = { years = 10 }
+
+	is_shown = {
+		is_landed = yes
+		primary_title.tier > tier_barony
+		faith = { has_doctrine_parameter = mz_grove_dedication_active }	
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes # Standard checks.
+		is_at_war = no # Shouldn't be at war.
+	}
+
+	is_valid = {
+		custom_description = {
+			text = mz_not_over_domain_limit_requirement
+			domain_size <= domain_limit # Not over domain limit
+		}
+		custom_description = {
+			text = mz_sacred_grove_requirements
+			any_sub_realm_county = { # If you have any province with forest, taiga, jungle, or any empty holding slot this is valid.
+				holder = root
+				faith = { has_doctrine_parameter = mz_grove_dedication_active }
+				any_county_province = {
+					OR = {
+						terrain = taiga
+						terrain = forest
+						terrain = jungle
+						terrain = drylands
+						terrain = hills
+						has_holding = no
+					}
+				}
+			}
+		}
+	}
+
+	cost = { piety = major_piety_value }
+
+	effect = {
+		custom_description_no_bullet = { text = mz_sacred_grove_decision_effect_header }
+		custom_description = { text = mz_sacred_grove_decision_effect_minor_modifier }
+		custom_description = { text = mz_sacred_grove_decision_effect_major_modifier }
+		if = {
+			limit = { mz_has_grove_modifier = yes }
+			remove_all_character_modifier_instances = mz_grove_martial_major_modifier
+			remove_all_character_modifier_instances = mz_grove_martial_minor_modifier
+			remove_all_character_modifier_instances = mz_grove_health_major_modifier
+			remove_all_character_modifier_instances = mz_grove_health_minor_modifier
+			remove_all_character_modifier_instances = mz_grove_wealth_major_modifier
+			remove_all_character_modifier_instances = mz_grove_wealth_minor_modifier
+		}
+		trigger_event = mz_faith_tenet_specific.2201
+	}
+
+	ai_check_interval = 36 # Three years
+	
+	ai_potential = {
+		is_landed = yes
+		primary_title.tier > tier_barony
+		faith = { has_doctrine_parameter = mz_grove_dedication_active }
+	}
+
+	ai_will_do = { 
+		base = 0
+		modifier = { 
+			piety >= major_piety_value
+			add = 100
+		}
+	}
+}
