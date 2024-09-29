@@ -47,7 +47,7 @@ mandala_alliance_interaction = {
 		}
 
 		scope:recipient = {
-			is_landed = yes
+			is_playable_character = yes
 			is_at_war = no
 			is_imprisoned = no
 		}
@@ -440,7 +440,7 @@ steppe_alliance_interaction = {
 		}
 
 		scope:recipient = {
-			is_landed = yes
+			is_playable_character = yes
 			is_at_war = no
 			is_imprisoned = no
 		}
@@ -802,6 +802,12 @@ call_ally_interaction = {
 	is_shown = {
 		scope:actor = {
 			is_at_war = yes
+			trigger_if = { # Avoid calling Adventurers without armies or landed rulers who have been devastated
+				limit = {
+					is_ai = yes
+				}
+				scope:recipient.current_military_strength >= 100
+			}
 		}
 		scope:recipient = {
 			OR = {
@@ -1143,7 +1149,27 @@ call_ally_interaction = {
 
 	ai_accept = {
 		base = 20
+		
+		modifier = {  # Conquerors do not help anyone but themselves
+			add = -1000
+			desc = NO_FRIVOLOUS_ACTIVITIES_REASON
+			scope:recipient = { ai_has_conqueror_personality = yes }
+		}
 
+		modifier = {  # AI's that need to save gold will not help their lesser AI allies, unless it's a player war
+			add = -1000
+			desc = NO_FRIVOLOUS_ACTIVITIES_REASON
+			scope:actor = {
+				is_ai = yes
+				primary_title.tier < scope:recipient.primary_title.tier
+			}
+			scope:target.casus_belli = {
+				primary_attacker = { is_ai = yes }
+				primary_defender = { is_ai = yes }
+			}
+			scope:recipient = { ai_should_focus_on_building_in_their_capital = yes }
+		}
+		
 		modifier = {  # Refuse call to conflicts of little benefit
 			add = -1000
 			desc = WONT_FIGHT_MEANINGLESS_REASON
@@ -1227,6 +1253,7 @@ call_ally_interaction = {
 			trigger = {
 				scope:actor = {
 					has_royal_court = yes
+					has_dlc_feature = royal_court
 					NOT = { knows_court_language_of = this }
 				}
 				NOT = {
@@ -1314,6 +1341,7 @@ call_ally_interaction = {
 			trigger = {
 				scope:actor = {
 					has_royal_court = yes
+					has_dlc_feature = royal_court
 					knows_court_language_of = this
 				}
 				NOT = {
@@ -1486,6 +1514,7 @@ call_ally_interaction = {
 			trigger_else = {
 				has_relation_friend = scope:target.casus_belli.primary_defender
 			}
+			desc = WONT_FIGHT_FRIEND
 		}
 
 		modifier = { # Reluctant to join against Best Friends
@@ -1499,6 +1528,7 @@ call_ally_interaction = {
 			trigger_else = {
 				has_relation_best_friend = scope:target.casus_belli.primary_defender
 			}
+			desc = WONT_FIGHT_BEST_FRIEND
 		}
 		modifier = { # Reluctant to join against Lovers
 			add = -100
@@ -1511,6 +1541,7 @@ call_ally_interaction = {
 			trigger_else = {
 				has_relation_lover = scope:target.casus_belli.primary_defender
 			}
+			desc = WONT_FIGHT_LOVER
 		}
 		modifier = { # Reluctant to join against Soul mate
 			add = -200
@@ -1523,6 +1554,7 @@ call_ally_interaction = {
 			trigger_else = {
 				has_relation_soulmate = scope:target.casus_belli.primary_defender
 			}
+			desc = WONT_FIGHT_SOULMATE
 		}
 		modifier = {  # Refuse call for hostages' safety
 			any_home_court_hostage = {
@@ -1994,7 +2026,7 @@ call_house_member_to_war_interaction = {
 		}
 
 		scope:recipient = {
-			is_landed = yes
+			is_playable_character = yes
 		}
 
 		scope:recipient = {

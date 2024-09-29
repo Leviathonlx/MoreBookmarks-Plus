@@ -18,6 +18,7 @@ diarch_subsidise_crown_authority_interaction = {
 			# If you're not in a diarchy, we don't care.
 			exists = liege
 			is_diarch_of_target = liege
+			liege_has_co_emperorship_trigger = no
 		}
 		# Same sub-realm only.
 		OR = {
@@ -34,8 +35,10 @@ diarch_subsidise_crown_authority_interaction = {
 			text = custom_description.tt.must_target_liege
 			scope:recipient = scope:actor.liege
 		}
+		# Diarch must be able to act.
+		diarch_cannot_be_disabled_trigger = { DIARCH = scope:actor }
 		# Diarchs must have unlocked the appropriate power.
-		scope:actor.liege = { has_diarchy_parameter = diarch_can_subsidise_liege_authority }
+		scope:actor.liege = { has_diarchy_active_parameter = diarch_can_subsidise_liege_authority }
 		# Can't subisidise past the point needed.
 		custom_tooltip = {
 			text = diarch_subsidise_crown_authority_interaction.tt.cannot_subsidise_past_necessary
@@ -68,6 +71,10 @@ diarch_subsidise_crown_authority_interaction = {
 				can_pass_law_ca3_trigger = yes
 			}
 		}
+		# Cannot be at war with your liege.
+		NOT = {
+			scope:actor = { is_at_war_with = scope:actor.liege }
+		}
 	}
 
 	# Why the hell not? If your liege dies several times in quick succession, sure, centralise all the power you like. That'll go well.
@@ -83,13 +90,14 @@ diarch_subsidise_crown_authority_interaction = {
 	on_accept = {
 		scope:actor = {
 			send_interface_toast = {
+				type = event_toast_effect_good
 				title = diarch_subsidise_crown_authority_interaction.tt.accepted
 				left_icon = scope:recipient
 				scope:recipient = {
 					# Try to change authority.
 					increase_crown_authority_effect = yes
 					increase_tribal_authority_effect = yes
-					increase_mandala_authority_effect = yes
+					increase_imperial_bureaucracy_effect = yes
 					# No one blames the liege for this.
 					add_character_modifier = {
 						modifier = liege_authority_boost_has_scapegoat_modifier
@@ -105,6 +113,7 @@ diarch_subsidise_crown_authority_interaction = {
 	on_decline = {
 		scope:actor = {
 			send_interface_toast = {
+				type = event_toast_effect_bad
 				title = diarch_subsidise_crown_authority_interaction.tt.declined
 				left_icon = scope:recipient
 				add_opinion = {
