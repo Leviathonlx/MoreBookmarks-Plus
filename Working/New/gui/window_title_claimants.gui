@@ -1,0 +1,195 @@
+######################################################
+################# CLAIMANTS WINDOW ###################
+######################################################
+
+window = {
+	name = "claimants_window"
+	widgetanchor = top
+	size = { 580 90% }
+	resizable = no
+	layer = middle
+
+	using = Window_Movable
+	using = title_view_window_side_pop_out
+	using = Window_Decoration
+	using = Window_Background
+
+	# Sort dropdown
+	vbox = {
+		using = Window_Margins
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = "TITLE_CLAIMANTS_HEADER"
+			}
+
+			blockoverride "button_close"
+			{
+				onclick = "[ClaimantsWindow.Close]"
+			}
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			vbox_character_list = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				blockoverride "sort_buttons" {
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						margin_left = 10
+						margin_right = 20
+						margin_top = 5
+						spacing = 5
+
+						text_single = {
+							text = "TITLE_SORT_BY"
+							align = nobaseline
+						}
+
+						dropdown_menu_standard =
+						{
+							name = "sort_dropdown"
+
+							blockoverride "dropdown_active_item_properties"
+							{
+								text = "[ClaimantSortOption.GetName]"
+							}
+
+							blockoverride "dropdown_item_properties"
+							{
+								text = "[ClaimantSortOption.GetName]"
+							}
+						}
+
+						expand = {}
+					}
+				}
+
+				blockoverride "container_implementation" {
+					fixedgridbox = {
+						addcolumn = 470
+						addrow = 160
+						name = "claimants_scroll_area"
+						datamodel = "[ClaimantsWindow.GetClaimants]"
+
+						item = {
+							widget = {
+								size = { 470 160 }
+
+								vbox = {
+									datacontext = "[GuiClaimant.GetCharacter]"
+
+									background = {
+										using = Background_Area_With_Header
+									}
+
+									text_single = {
+										name = "holder_name"
+										layoutpolicy_horizontal = expanding
+										margin_left = 15
+										margin_top = 3
+										text = "[Character.GetUINameNotMeNoTooltip]"
+									}
+
+									hbox = {
+										layoutpolicy_horizontal = expanding
+
+										portrait_head = {}
+
+										vbox = {
+											layoutpolicy_horizontal = expanding
+											layoutpolicy_vertical = expanding
+											margin = { 10 10 }
+
+											hbox = {
+												layoutpolicy_horizontal = expanding
+
+												text_single = {
+													name = "unpressed"
+													visible = "[And(Not(GuiClaimant.IsPressed), Not(GuiClaimant.IsImplicit))]"
+													text = "WEAK_CLAIM"
+												}
+
+												text_single = {
+													name = "pressed"
+													visible = "[And(GuiClaimant.IsPressed, Not(GuiClaimant.IsImplicit))]"
+													text = "STRONG_CLAIM"
+												}
+
+												text_single = {
+													name = "implicit"
+													visible = "[GuiClaimant.IsImplicit]"
+													text = "IMPLICIT_CLAIM"
+												}
+
+												icon = {
+													name = "not_threat"
+													visible = "[GuiClaimant.IsAlly]"
+													texture = "gfx/interface/icons/icon_retreat.dds"
+													size = { 30 30 }
+													tooltip = "CLAIMANT_NOT_A_THREAT"
+													using = tooltip_ne
+												}
+
+												expand = {}
+											}
+
+											hbox = {
+												layoutpolicy_horizontal = expanding
+												margin_left = -10
+												margin_top = 10
+
+												strength_balance = {
+													name = "strength_balance"
+													datacontext = "[GuiClaimant.GetMilitaryStrengthInfo]"
+													using = tooltip_ne
+												}
+
+												expand = {}
+											}
+
+											expand = {}
+										}
+
+										vbox = {
+											layoutpolicy_horizontal = expanding
+											maximumsize = { 0 -1 }
+											margin_right = 10
+
+											visible = "[Character.HasDynasty]"
+
+											coa_house_small = {
+												datacontext = "[Character.GetHouse]"
+											}
+
+											text_multi = {
+												name = "type"
+												text = "[Character.GetHouse.GetNameNoTooltip]"
+												layoutpolicy_horizontal = expanding
+												align = top|hcenter
+												minimumsize = { 100 0 }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				blockoverride "character_count" {}
+
+				#this window cannot be openend if there are no claimants
+				blockoverride "scrollbox_empty_visibility" {}
+			}
+		}
+	}
+}

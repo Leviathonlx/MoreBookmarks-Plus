@@ -1,0 +1,559 @@
+### RAID WINDOW
+window = {
+	name = "raid_window"
+	size = { 625 480 }
+	parentanchor = bottom|left
+	movable = no
+	layer = middle
+	datacontext = "[RaidWindow.GetRaid]"
+	datacontext = "[Raid.GetArmy]"
+	datacontext = "[Raid.GetProvince]"
+
+	background = {
+		texture = "gfx/interface/component_tiles/tile_window_background_subwindow.dds"
+		spriteType = Corneredtiled
+		spriteborder = { 18 18 }
+		margin = { -23 -17 }
+		margin_left = 20
+		margin_bottom = 20
+		texture_density = 2
+		
+		modify_texture = {
+			name = "overlay"
+			texture = "gfx/interface/component_overlay/overlay_effect.dds"
+			spriteType = Corneredstretched
+			spriteborder = { 0 0 }
+			blend_mode = overlay
+		}
+	}
+
+	state = {
+		name = _show
+		on_start = "[GetVariableSystem.Set( 'hide_bottom_left_HUD', 'true' )]"
+
+		using = Animation_FadeIn_Standard
+		using = Sound_WindowShow_Standard
+		using = Animation_FadeIn_BottomLeft
+	}
+
+	state = {
+		name = _hide
+		on_start = "[GetVariableSystem.Clear( 'hide_bottom_left_HUD' )]"
+
+		using = Animation_FadeOut_Standard
+		using = Sound_WindowHide_Standard
+		using = Animation_FadeOut_BottomLeft
+	}
+
+	vbox = {
+		name = "window_content"
+		margin_right = 35
+		margin_top = 30
+
+		##Header###
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			margin_right = 15
+			margin_left = 5
+			margin_top = 5
+			margin_bottom = 5
+
+			background = {
+				using = Background_Area_Dark
+				margin_left = 5
+			}
+
+			### RAIDING ARMY SELECT
+			highlight_icon = {
+				size = { 40 40 }
+				name = "blocked_icon"
+				texture = "gfx/interface/icons/map_icons/icon_raid.dds"
+			}
+
+			text_single = {
+				name = "title"
+				text = "[Raid.GetName]"
+				margin_left = 5
+				margin_bottom = 4
+				using = Font_Size_Big
+				font = TitleFont
+			}
+
+			expand = {}
+
+			### RAIDING ARMIES SELECT
+			button_group = {
+				onclick = "[RaidWindow.OpenArmyWindow]"
+				visible = "[Army.GetOwner.IsLocalPlayer]"
+				tooltip = "SW_TT_OPEN_ARMY_WINDOW"
+				using = tooltip_ws
+				oversound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_pointer_over"
+				clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
+
+				highlight_icon = {
+					parentanchor = vcenter
+					widgetanchor = vcenter
+					size = { 40 40 }
+					name = "blocked_icon"
+					texture = "gfx/interface/icons/map_icons/onmap_army_icon.dds"
+				}
+			}
+
+			button_group = {
+				onclick = "[RaidWindow.OpenHoldingView]"
+				tooltip = "SW_TT_SHOW_HOLDING"
+				using = tooltip_ne
+				oversound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_pointer_over"
+				clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
+
+				highlight_icon = {
+					parentanchor = vcenter
+					widgetanchor = vcenter
+					size = { 40 40 }
+					name = "blocked_icon"
+					texture = "gfx/interface/icons/map_icons/onmap_holding_icon.dds"
+				}
+			}
+
+			buttons_window_control = {
+
+				blockoverride "button_go_to"
+				{
+					onclick = "[DefaultOnCoatOfArmsRightClick(Province.GetCounty.GetTitle.GetID)]"
+					tooltip = "GOTO_PROVINCE_TT"
+					using = tooltip_ne
+					oversound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_pointer_over"
+					clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
+				}
+
+				blockoverride "button_close"
+				{
+					onclick = "[RaidWindow.Close]"
+				}
+			}
+		}
+
+		####################################
+		########### RAID INFO ############
+		####################################
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+
+			#### DARK AREA ###
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				margin_top = 10
+
+				background = {
+					using = Background_Area
+				}
+
+				text_label_center = {
+					name = "time_left"
+					visible = "[Not(Raid.IsBlocked)]"
+					text = "RW_TIME_LEFT"
+					tooltip = "RW_TIME_LEFT_TT"
+				}
+
+				#### PROGRESSBAR ###
+				hbox = {
+					name = "progressbar_area"
+					margin = { 10 0 }
+					allow_outside = yes
+
+					datacontext = "[Army.GetOwner]"
+
+					widget = {
+						size = { 64 50 }
+						allow_outside = yes
+
+						coa_realm_medium = {
+							name = "raider_realm"
+							tooltip = "RW_TT_RAIDING_REALM_TOOLTIP"
+							using = tooltip_ws
+							parentanchor = top
+						}
+					}
+
+					vbox = {
+						layoutpolicy_vertical = expanding
+
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							margin_top = 5
+							tooltip = "RAID_PROGRESS_TOOLTIP"
+							using = tooltip_above
+
+							widget = {
+								size = { 370 45 }
+
+								progressbar = {
+									name = "progress_bar_attacker"
+									visible = "[And(Character.IsLocalPlayer, Not(Raid.IsBlocked))]"
+
+									parentanchor = top
+									size = { 370 35 }
+									position = { 0 8 }
+
+									progresstexture = "gfx/interface/progressbars/war_progress_blue.dds"
+									noprogresstexture = "gfx/interface/progressbars/war_progress_noprogress.dds"
+
+									value = "[Raid.GetProgressPercent]"
+
+									direction = horizontal
+									alwaystransparent = yes
+								}
+
+								progressbar = {
+									name = "progress_bar_defender"
+									visible = "[And(Not(Character.IsLocalPlayer), Not(Raid.IsBlocked))]"
+									parentanchor = top
+									size = { 370 35 }
+									position = { 0 8 }
+
+									progresstexture = "gfx/interface/progressbars/war_progress_red.dds"
+									noprogresstexture = "gfx/interface/progressbars/war_progress_noprogress.dds"
+
+									value = "[Raid.GetProgressPercent]"
+
+									direction = horizontal
+									alwaystransparent = yes
+								}
+
+								progressbar = {
+									name = "progress_bar_blocked"
+									visible = "[Raid.IsBlocked]"
+									parentanchor = top
+									size = { 370 35 }
+									position = { 0 8 }
+
+									progresstexture = "gfx/interface/progressbars/war_progress_blue.dds"
+
+									noprogresstexture = "gfx/interface/progressbars/war_progress_noprogress.dds"
+
+									value = "[Raid.GetProgressPercent]"
+
+									direction = horizontal
+									alwaystransparent = yes
+								}
+
+								widget = {
+									name = "power_bar_frame"
+									parentanchor = top
+									size = { 100% 100% }
+									alwaystransparent = yes
+
+									background = {
+										texture = "gfx/interface/progressbars/siege_frame.dds"
+										spriteType = Corneredstretched
+										spriteborder = { 30 40 }
+										margin = { 5 0 }
+										margin_bottom = 10
+										texture_density = 2
+									}
+								}
+							}
+						}
+
+						expand = {}
+					}
+
+					widget = {
+						size = { 58 50 }
+						allow_outside = yes
+
+						coa_realm_medium = {
+							name = "defending_realm"
+							datacontext = "[Raid.GetProvince.GetTitle.GetHolder]"
+							tooltip = "RW_TT_DEFENDING_REALM_TOOLTIP"
+							parentanchor = top
+							position = { -5 0}
+						}
+					}
+				}
+
+				#### Textstring info ####
+				vbox = {
+					name = "time"
+					ignoreinvisible = yes
+					margin = { 0 3 }
+
+					expand = {
+						minimumsize = { 0 26 }
+						visible = "[Not(Raid.IsBlocked)]"
+					}
+
+					text_single = {
+						name = "desc"
+						text = "RAID_BLOCKED_BY_COMBAT"
+						visible = "[Raid.IsBlocked]"
+					}
+				}
+			}
+
+			divider = {
+				layoutpolicy_horizontal = expanding
+			}
+
+			### GARRISON
+			hbox = {
+				spacing = 10
+				margin = { 0 5 }
+				minimumsize = { 0 50 }
+
+				tooltip = "RAID_TROOPS_TOOLTIP"
+				using = tooltip_above
+
+				hbox = {
+					spacing = 5
+
+					icon = {
+						texture = "gfx/interface/icons/icon_soldier.dds"
+						size = { 35 35 }
+					}
+
+					text_single = {
+						name = "attacker_side"
+						text = "[Raid.GetAttackerMen]"
+					}
+				}
+
+				container = {
+					name = "men_balance"
+
+					progressbar_standard_transparent = {
+						size = { 200 20 }
+						value = "[Raid.GetRaidMenBalance]"
+						parentanchor = center
+					}
+
+					progress_threshold = {
+						parentanchor = top|hcenter
+						size = { 5 20 }
+					}
+				}
+
+				hbox = {
+					spacing = 5
+
+					text_single = {
+						name = "defender_side"
+						text = "[Raid.GetDefenderMen]"
+					}
+
+					icon = {
+						texture = "gfx/interface/icons/icon_garrison.dds"
+						size = { 45 45 }
+					}
+				}
+			}
+		}
+
+		####################################
+		########### HOLDING INFO ###########
+		####################################
+
+		margin_widget = {
+			name = "holding_info"
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			minimumsize = { 0 200 }
+			scissor = yes
+
+			background = {
+				using = Background_Area_Dark
+				margin_left = 5
+				margin_top = 3
+			}
+
+			background = {
+				texture = "[Province.GetIllustration]"
+
+				modify_texture = {
+					texture = "gfx/interface/window_county/mask_holding_illustration.dds"
+					blend_mode = alphamultiply
+					alpha = 0.95
+				}
+			}
+
+			### TOP LEFT
+			flowcontainer = {
+				ignoreinvisible = yes
+				spacing = 5
+				margin = { 5 5 }
+
+				coa_title_medium = {
+					datacontext = "[Province.GetTitle]"
+				}
+
+				flowcontainer = {
+					direction = vertical
+					ignoreinvisible = yes
+					margin_top = 5
+
+					flowcontainer = {
+						ignoreinvisible = yes
+
+						text_single = {
+							text = "[Province.GetHolding.GetName]"
+							tooltip = "[Province.GetTitle.GetNameNoTierNoTooltip]"
+							default_format = "#high"
+							align = nobaseline
+							using = Font_Size_Big
+							max_width = 190
+							fontsize_min = 16
+						}
+
+						spacer = {
+							size = { 3 3 }
+						}
+
+						widget = {
+							size = { 32 32 }
+
+							icon = {
+								name = "county_capital_icon"
+								visible = "[Province.GetTitle.IsCountyCapital]"
+
+								size = { 40 40 }
+								texture = "gfx/interface/icons/icon_capital.dds"
+								framesize = { 63 63 }
+								frame = 1
+							}
+						}
+					}
+
+					text_label_left = {
+						text = "[Province.GetHolding.GetType.GetName]"
+					}
+				}
+			}
+
+
+
+			hbox = {
+				margin_left = 10
+				margin_top = 10
+
+				vbox = {
+					margin_top = 5
+					margin_right = 5
+					layoutpolicy_vertical = expanding
+					layoutpolicy_horizontal = expanding
+				
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						expand = {}
+
+						icon = {
+							datacontext = "[Province.GetTerrain]"
+							texture = "[Terrain.GetIcon]"
+							tooltip = "HOLDING_TERRAIN_TOOLTIP"
+							size = { 35 35 }
+						}
+					}
+					
+					expand = {}
+				}
+
+				vbox = {
+					layoutpolicy_vertical = expanding
+					margin_left = 10
+					spacing = 5
+					min_width = 150
+					margin_right = 15
+
+					background = {
+						using = Background_Area_Dark
+						alpha = 0.7
+						margin_right = -5
+					}
+
+					vbox = {
+						margin_left = 10
+						layoutpolicy_horizontal = expanding
+						margin = { 2 0 }
+						spacing = 3
+
+						### Raid loot
+						hbox = {
+							name = "tutorial_highlight_holding_view_loot_box"
+							layoutpolicy_horizontal = expanding
+							tooltip = "[Province.GetRaidLootTooltip]"
+
+							text_single = {
+								layoutpolicy_horizontal = expanding
+								text = "HOLDING_LOOT"
+								default_format = "#high"
+							}
+
+							text_single = {
+								raw_text = "@gold_icon! [Province.GetRaidLoot|0]"
+								default_format = "#high"
+							}
+						}
+
+						### Garrison
+						vbox = {
+							layoutpolicy_horizontal = expanding
+							spacing = 2
+
+							hbox = {
+								layoutpolicy_horizontal = expanding
+
+								text_single = {
+									layoutpolicy_horizontal = expanding
+									text = "HOLDING_GARRISON"
+									default_format = "#high"
+								}
+
+								icon = {
+									name = "icon_garrison"
+									texture = "gfx/interface/icons/icon_garrison.dds"
+									size = { 30 30 }
+								}
+
+								text_single = {
+									default_format = "#high"
+									name = "defender_side"
+									text = "[Raid.GetDefenderMen]"
+								}
+							}
+						}
+
+						### Fort Info
+						hbox = {
+							layoutpolicy_horizontal = expanding
+
+							text_single = {
+								layoutpolicy_horizontal = expanding
+								text = "HOLDING_FORT_LEVEL"
+								default_format = "#high"
+							}
+
+							hbox = {
+								spacing = 7
+								tooltip = "[Province.GetFortLevelTooltip]"
+
+								icon = {
+									name = "icon_fort"
+									texture = "gfx/interface/window_siege/fort_icon.dds"
+									size = { 30 25 }
+								}
+
+								text_single = {
+									text = "[Province.GetFortLevel]"
+									default_format = "#high"
+									align = nobaseline
+								}
+							}
+						}
+					}
+
+					expand = {}
+				}
+			}
+		}
+	}
+}

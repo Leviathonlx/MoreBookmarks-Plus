@@ -1,0 +1,247 @@
+######################################################
+################## TITLE LAW WINDOW ####################
+######################################################
+
+window = {
+	name = "title_add_law_window"
+	parentanchor = bottom
+	position = { 590 -100 }
+	size = { 680 70% }
+	layer = middle
+	using = Window_Decoration
+	using = Window_Background
+	using = title_view_window_side_pop_out
+
+	vbox = {
+		using = Window_Margins
+		restrictparent_min = yes
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = "TITLE_VIEW_TITLE_ADD_LAW_LABEL"
+			}
+
+			blockoverride "button_close"
+			{
+				onclick = "[TitleAddLawWindow.Close]"
+			}
+		}
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+
+			vbox = {
+				spacing = 15
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin = { 10 15 }
+
+				hbox = {
+					name = "title_info"
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					datacontext = "[TitleAddLawWindow.GetTitle]"
+
+					text_multi = {
+						text = "TITLE_VIEW_TITLE_ADD_LAW_INFO"
+						align = top|left
+						autoresize = yes
+						max_width = 250
+						default_format = "#weak"
+
+						text_occluder = {
+							size = { 85 110 }
+							position = { 0 -15 }
+							coa_title_medium_crown = {
+								size = { 100% 100% }
+							}
+						}
+					}
+				}
+
+				vbox = {
+					margin = { 10 10 }
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+
+					text_label_center = {
+						autoresize = yes
+						max_width = 245
+						text = "TITLE_VIEW_TITLE_ADD_LAW_POSSIBLE_LAWS"
+					}
+
+					spacer = {
+						size = { 5 5 }
+					}
+
+					scrollarea = {
+						name = "laws"
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+						minimumsize = { 250 350 }
+
+						scrollbarpolicy_vertical = as_needed
+						scrollbarpolicy_horizontal = always_off
+
+						scrollbar_vertical = {
+							using = Scrollbar_Vertical
+						}
+
+						scrollwidget =	{
+							fixedgridbox = {
+								name = "laws_grid"
+								addcolumn = 250
+								addrow = 48
+								datamodel = "[TitleAddLawWindow.GetLawItems]"
+
+								item = {
+									button_standard_list = {
+										name = "law_item"
+										datacontext = "[LawItem.GetLaw]"
+
+										size = { 250 45 }
+
+										gfxtype = togglepushbuttongfx
+
+										down = "[LawItem.IsSelected]"
+
+										button_normal = {
+											size = { 100% 100% }
+											onclick = "[PdxGuiTriggerAllAnimations('law_info_refresh')]"
+											visible = "[Not(LawItem.IsSelected)]"
+
+											state = {
+												name = _mouse_click
+												delay = 0.15
+												on_finish = "[LawItem.OnClick]"
+											}
+										}
+
+										hbox = {
+											margin = { 10 5 }
+
+											text_single = {
+												layoutpolicy_horizontal = expanding
+												text = "[Law.GetNameNoTooltip]"
+												align = left|nobaseline
+												default_format = "#clickable"
+												autoresize = no
+											}
+
+											text_single = {
+												align = nobaseline
+												size = { 80 40 }
+												text = "[Law.GetEnactCostForPlayer]"
+												tooltip = "[Law.GetEnactBreakdownForPlayer]"
+												margin = { 0 5 }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			vbox = {
+				name = "law_info"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				min_width = 380
+				margin = { 15 15 }
+				spacing = 10
+				datacontext = "[TitleAddLawWindow.GetSelectedLaw]"
+
+				background = {
+					using = Background_Area
+				}
+
+				background = {
+					texture = "gfx/interface/illustrations/council/bg_council_chancellor.dds"
+					alpha = 0.5
+					fittype = end
+					using = Mask_Rough_Edges
+
+					modify_texture = {
+						texture = "gfx/interface/component_masks/mask_fade_vertical.dds"
+						blend_mode = alphamultiply
+						mirror = vertical
+					}
+				}
+
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+
+					state = {
+						name = "law_info_refresh"
+						alpha = 0
+						duration = 0.15
+						next = "b"
+						using = Animation_Curve_Default
+					}
+
+					state = {
+						name = "b"
+						alpha = 1
+						duration = 0.15
+						using = Animation_Curve_Default
+					}
+
+					text_label_center = {
+						text = "[Law.GetNameNoTooltip]"
+						size = { 400 30 }
+					}
+
+					text_label_center = {
+						text = "[Law.GetSubName]"
+						visible = "[Law.HasSubName]"
+						default_format = "#low"
+					}
+
+					text_multi = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+						margin = { 10 10 }
+						text = "[Law.GetEffectDescription]"
+					}
+
+					text_multi = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+						margin = { 10 10 }
+						text = "[Law.GetTitleEnactEffectDescriptionForPlayer( TitleAddLawWindow.GetTitle )]"
+					}
+				}
+			}
+		}
+
+		divider_light = {
+			layoutpolicy_horizontal = expanding
+		}
+
+		vbox = {
+			margin_bottom = 10
+			spacing = 5
+
+			text_single = {
+				text = "[TitleAddLawWindow.GetSelectedLaw.GetEnactCostForPlayer]"
+				tooltip = "[TitleAddLawWindow.GetSelectedLaw.GetEnactBreakdownForPlayer]"
+				autoresize = yes
+				minimumsize = { 0 30 }
+			}
+
+			button_primary_big = {
+				name = "add_law_button"
+				text = "TITLE_VIEW_TITLE_ADD_LAW_CONFIRM"
+				tooltip = "[TitleAddLawWindow.GetSelectTooltip]"
+				enabled = "[TitleAddLawWindow.CanSelect]"
+				onclick = "[TitleAddLawWindow.Select]"
+			}
+		}
+	}
+}
