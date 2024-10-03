@@ -1,0 +1,482 @@
+
+######################################################
+#################### WAR RESULTS #####################
+######################################################
+window = {
+	name = "war_results"
+	parentanchor = hcenter
+	layer = middle
+	allow_outside = yes
+	
+	using = Window_Decoration_Warfare
+	blockoverride "frame_bottom" {}
+
+	background = {
+        texture = "gfx/interface/window_war_results/war_end_bg_center.dds"
+        spriteType = Corneredstretched
+        spriteborder_top = 10
+        spriteborder_right = 8
+        spriteborder_left = 8
+        margin_top = -8
+
+        margin_bottom = 80
+
+        modify_texture = {
+            texture = "gfx/interface/illustrations/event_scenes/battlefield.dds"
+            spriteType = Corneredstretched
+            spriteborder = { 0 0 }
+            blend_mode = overlay
+            spriteborder_top = 420
+            alpha = 0.5
+        }
+
+        modify_texture = {
+            name = "overlay"
+            texture = "gfx/interface/component_overlay/overlay_effect.dds"
+            spriteType = Corneredstretched
+            blend_mode = overlay
+            alpha = 0.8
+        }
+
+    }
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+
+		position = { 0 120 }
+	}
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+		position_y = -50
+	}
+
+	state = {
+		name = dismiss
+		using = Animation_FadeOut_Quick
+		position_y = 50
+	}
+
+	vbox = {
+		name = "war_results_center"
+		set_parent_size_to_minimum = yes
+		margin = { 30 20 }
+		spacing = 5
+		minimumsize = { -1 700 }
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text" {
+				name = "outcome"
+				text = "[WarResultsWindow.GetOutcome]"
+				using = Font_Type_Flavor
+				fontsize = 30
+				position = { 0 0 }
+			}
+
+			blockoverride "button_close"
+			{
+				visible = no
+			}
+
+			blockoverride "button_minimize"
+			{
+				onclick = "[WarResultsWindow.Close]"
+			}
+		}
+
+
+		header_with_divider = {
+
+			blockoverride "header_with_divider_text_multi" {
+				max_width = 750
+				text = "[WarResultsWindow.GetWarName]"
+			}
+
+			blockoverride "header_with_divider_text_single" {
+
+				text = "WAR_RESULTS_DATES"
+
+			}
+		}
+
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+
+			vbox = {
+				name = "portrait"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin_left = 10
+				
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					datacontext = "[WarResultsWindow.GetOpponent]"
+					margin_bottom = 10
+					spacing = 25
+
+					background = {
+						visible = "[Or(WarResultsWindow.IsWhitePeace, WarResultsWindow.IsInvalidated)]"
+						texture = "gfx/interface/window_war_results/war_end_bg_default.dds"
+						spriteType = Corneredstretched
+						spriteborder_top = 5
+						spriteborder_bottom = -300
+						margin_bottom = 170
+
+						modify_texture = {
+							name = "overlay"
+							texture = "gfx/interface/component_overlay/overlay_effect_frame.dds"
+							spriteType = Corneredstretched
+							spriteborder = { 0 0 }
+							blend_mode = overlay
+						}
+
+					}
+
+					background = {
+						visible = "[Not(WarResultsWindow.IsPlayerWon)]"
+						texture = "gfx/interface/window_war_results/war_end_bg_default.dds"
+						spriteType = Corneredstretched
+						spriteborder_top = 5
+						spriteborder_bottom = -300
+						margin_bottom = 170
+
+						modify_texture = {
+							name = "overlay"
+							texture = "gfx/interface/component_overlay/overlay_effect_frame.dds"
+							spriteType = Corneredstretched
+							spriteborder = { 0 0 }
+							blend_mode = overlay
+						}
+
+					}
+
+					background = {
+						visible = "[WarResultsWindow.IsPlayerWon]"
+						texture = "gfx/interface/window_war_results/war_end_bg_defeat.dds"
+						spriteType = Corneredstretched
+						spriteborder_top = 0
+						spriteborder_bottom = -300
+						margin_bottom = 170
+
+						modify_texture = {
+							name = "overlay"
+							texture = "gfx/interface/component_overlay/overlay_effect_frame.dds"
+							spriteType = Corneredstretched
+							spriteborder = { 0 0 }
+							blend_mode = overlay
+						}
+
+					}
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						minimumsize = { 0 30 }
+
+						background = {
+							margin = { -10 5 }
+
+							using = Background_Area
+						}
+
+						text_single = {
+							text = "[SelectLocalization(WarResultsWindow.IsPlayerAttacker, 'DEFENDER', 'ATTACKER')]"
+						}
+					}
+					
+					portrait_body = {
+						name = "defender_portrait"
+						blockoverride "opinion_box" {}
+						blockoverride "portrait_texture" {
+							portrait_texture = "[Character.GetPortrait('environment_body', 'camera_body', WarResultsWindow.GetOpponentAnimationState, PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+						}
+						blockoverride "coa" {
+							coa_realm_medium_crown = {
+								visible = "[Character.HasLandedTitles]"
+								parentanchor = bottom|right
+								position = { -10 4 }
+							}
+
+							portrait_opinion = {
+								parentanchor = bottom|hcenter
+								position = { 0 -2 }
+							}
+						}
+					}
+				}
+
+				expand = {}
+			}
+
+			vbox = {
+				name ="results"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				margin = { 10 0 }
+				margin_bottom = 20
+				spacing = 5
+
+
+				container = {
+					scrollbox = {
+						name = "results_scrollarea"
+						autoresizescrollarea = yes
+						maximumsize = { -1 400 }
+
+						blockoverride "scrollbox_content"
+						{
+							set_parent_size_to_minimum = yes
+							margin = { 10 10 }
+							spacing = 8
+
+							background = {
+								using = Background_Area
+							}
+
+							vbox = {
+								visible = "[Not( WarResultsWindow.IsInvalidated )]"
+								margin = { 35 30 }
+								spacing = 8
+
+								using = Background_Letter
+
+								text_multi = {
+									autoresize = yes
+									max_width = 430
+									text = "[WarResultsWindow.GetMessage]"
+									using = Font_Size_Medium
+									layoutpolicy_horizontal = expanding
+									default_format = "#light_background"
+									format_override = { high light_background }
+								}
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									spacing = 5
+
+									text_single = {
+										name = "signature"
+										visible = "[Not( WarResultsWindow.IsSecondaryParticipant )]"
+										max_width = 430
+										align = right
+										layoutpolicy_horizontal = expanding
+										default_format = "#light_background"
+
+										text = "WAR_OVER_SIGNATURE"
+										using = Font_Type_Flavor
+										using = Font_Size_Medium
+									}
+
+									expand = {}
+
+									coa_character_sigil = {
+										visible = "[Not( WarResultsWindow.IsSecondaryParticipant )]"
+										datacontext = "[WarResultsWindow.GetOpponent]"
+									}
+								}
+
+								spacer = {
+									size = { 0 8 }
+								}
+
+							}
+
+							divider_light = {
+								layoutpolicy_horizontal = growing
+							}
+
+							vbox = {
+								layoutpolicy_horizontal = expanding
+								margin = { 10 10 }
+
+								text_multi = {
+									name = "simple_desc"
+									autoresize = yes
+									max_width = 430
+									text = "[WarResultsWindow.GetSimpleDescription]"
+									using = Font_Size_Medium
+								}
+							}
+
+							vbox = {
+								visible = "[Not( WarResultsWindow.IsInvalidated )]"
+								layoutpolicy_horizontal = expanding
+								spacing = 10
+
+								divider_light = {
+									layoutpolicy_horizontal = growing
+								}
+
+								vbox = {
+									visible = "[Not( WarResultsWindow.IsInvalidated )]"
+									layoutpolicy_horizontal = expanding
+									spacing = 10
+
+									text_multi = {
+										name = "main_end_war_effect"
+										autoresize = yes
+										max_width = 430
+										text = "[WarResultsWindow.GetPeaceDescription]"
+									}
+
+
+									hbox = {
+										name = "beneficiary"
+										visible = "[WarResultsWindow.HasBeneficiary]"
+										layoutpolicy_horizontal = expanding
+
+										background = {
+											using = Background_Area
+										}
+
+										hbox = {
+											spacing = 5
+
+											portrait_head = {
+												name = "beneficiary_portrait"
+												datacontext = "[WarResultsWindow.GetBeneficiary]"
+												blockoverride "opinion_box" {}
+											}
+
+											vbox = {
+												spacing = 5
+
+												text_label_left = {
+													name = "my_beneficiary"
+													layoutpolicy_horizontal = expanding
+													text = "WAR_RESULTS_GHW_MY_BENEFICIARY"
+													default_format = "#low"
+												}
+
+												text_multi = {
+													name = "beneficiary_rank"
+													text = "[WarResultsWindow.GetGHWRank]"
+													autoresize = yes
+													max_width = 300
+												}
+											}
+										}
+									}
+
+									vbox = {
+										name = "war_contribution"
+										visible = "[And( Not( WarResultsWindow.HasGWHShare ), And( WarResultsWindow.IsSecondaryParticipant, WarResultsWindow.IsContributionShareSetup ))]"
+										layoutpolicy_horizontal = expanding
+										margin = { 0 10 }
+										spacing = 5
+
+										background = {
+											using = Background_Area
+										}
+
+										text_label_center = {
+											text = "WAR_RESULTS_MY_CONTRIBUTION"
+											default_format = "#low"
+										}
+
+										vbox = {
+											text_single = {
+												text = "[WarResultsWindow.GetContributionScore]"
+												autoresize = yes
+												align = center
+												max_width = 400
+											}
+
+											text_multi = {
+												name = "contribution_share"
+												text = "[WarResultsWindow.GetContributionShare]"
+												autoresize = yes
+												align = center
+												max_width = 400
+											}
+										}
+									}
+
+									vbox = {
+										name = "ghw_contribution"
+										visible = "[And( WarResultsWindow.HasGWHShare, WarResultsWindow.IsSecondaryParticipant )]"
+										layoutpolicy_horizontal = expanding
+										margin = { 0 10 }
+										spacing = 5
+
+										background = {
+											using = Background_Area
+										}
+
+										text_label_center = {
+											text = "WAR_RESULTS_MY_WAR_CHEST_SHARE"
+											default_format = "#low"
+										}
+
+										vbox = {
+											text_single = {
+												text = "[WarResultsWindow.GetGHWScore]"
+											}
+
+											text_multi = {
+												name = "contribution_share"
+												text = "[WarResultsWindow.GetGHWShare]"
+												autoresize = yes
+												align = center
+												max_width = 400
+											}
+										}
+									}
+
+
+									hbox = {
+										visible = "[WarResultsWindow.IsInvalidated]"
+										layoutpolicy_horizontal = expanding
+										margin = { 0 10 }
+
+										background = {
+											using = Background_Area
+										}
+
+										text_multi = {
+											name = "contribution_share"
+											autoresize = yes
+											max_width = 400
+											text = "WAR_RESULTS_INVALIDATED_DESC"
+											align = center
+										}
+									}
+								}
+							}
+							divider_light = {
+								layoutpolicy_horizontal = growing
+							}
+						}
+					}
+				}
+
+				expand = {}
+			}
+		}
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+
+			expand = {}
+
+			button_primary_big = {
+				name = "close_button"
+				text = "WAR_RESULTS_DISMISS"
+				onclick = "[WarResultsWindow.Dismiss]"
+			}
+
+			expand = {}
+		}
+		expand = {}
+
+	}
+}
+
+
+
+
+

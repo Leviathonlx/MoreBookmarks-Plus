@@ -1,0 +1,195 @@
+widget = {
+	name = "tournament_my_attending_knights_view"
+	datacontext = "[ActivityLocaleWindow.GetActivity]"
+	visible =  "[CanDisplayLocaleView('my_knights_window')]"
+	parentanchor = top|right
+	position = { -8 0 }
+	size = { 510 740 }
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+
+		position_y = 100
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+
+		position_y = 200
+	}
+
+	vbox = {
+		layoutpolicy_vertical = expanding
+		layoutpolicy_horizontal = expanding
+
+		using = Window_Background_Subwindow
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = locale_window_your_attending_knights_header
+			}
+
+			blockoverride "button_close"
+			{
+				onclick = "[VariableSystem.Clear( 'activity_locale_view' )]"
+			}
+		}
+
+		scrollbox = {
+			name = "tournament_my_attending_knights"
+			visible = "[DataModelHasItems( GetPlayer.GetKnights )]"
+			layoutpolicy_vertical = expanding
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "scrollbox_content"
+			{
+				name = "attedning_characters_list"
+				datamodel = "[GetPlayer.GetKnights]"
+
+				spacing = 8
+				ignoreinvisible = yes
+
+				#TODO_EP2: Replace with same widget as guest list planner
+				item = {
+					widget = {
+						visible = "[ObjectsEqual(Character.GetInvolvedActivity, Activity.Self)]"
+						layoutpolicy_horizontal = expanding
+						size = { 0 130 }
+
+						vbox = {
+							spacing = 8
+
+							hbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+
+								spacing = 8
+
+								portrait_head = {
+									alpha = "[Select_float( Character.IsKnight, '(float)1.0', '(float)0.6' )]"
+								}
+
+								vbox = {
+									layoutpolicy_vertical = expanding
+									layoutpolicy_horizontal = expanding
+
+									hbox = {
+										layoutpolicy_horizontal = expanding
+
+										background = {
+											using = Background_Area_Dark
+											alpha = 0.8
+
+											margin_top = 2
+											margin_bottom = 4
+											margin_left = 14
+										}
+
+										icon = {
+											visible = "[Character.IsKnight]"
+											size = { 40 40 }
+											texture = "gfx/interface/icons/icon_knight_small.dds"
+										}
+
+										vbox = {
+											layoutpolicy_horizontal = expanding
+											layoutpolicy_vertical = expanding
+
+											hbox = {
+												layoutpolicy_horizontal = expanding
+
+												text_single = {
+													layoutpolicy_horizontal = expanding
+													text = "[Character.GetNameNoTooltip]"
+													using = Font_Size_Medium
+												}
+
+												text_single  = {
+													visible = "[InDebugMode]"
+													raw_text = "#D PTV:[Character.MakeScope.Var('progress_to_victory').GetValue|0]#!"
+													default_format = "#high;D"
+
+													raw_tooltip = "#D [Character.GetNamePossessiveNoTooltip] progress towards victory in the upcoming contest.#!"
+												}
+											}
+
+											text_single = {
+												layoutpolicy_horizontal = expanding
+												text = "[Character.GetRelationToString( GetPlayer )]"
+												tooltip = "EXTENDED_RELATIONS_TOOLTIP"
+												default_format = "#low"
+												autoresize = no
+												align = nobaseline
+											}
+										}
+									}
+
+									hbox = {
+										layoutpolicy_horizontal = expanding
+										spacing = 8
+
+										blockoverride "contest_aptitude_level_size"
+										{
+											size = { 8 8 }
+										}
+
+										hbox_character_archery_contest_aptitude = {
+											margin = { 2 2 }
+										}
+
+										hbox_character_foot_contest_aptitude = {
+											margin = { 2 2 }
+										}
+
+										hbox_character_horse_contest_aptitude = {
+											margin = { 2 2 }
+										}
+
+										hbox_character_wit_contest_aptitude = {
+											margin = { 2 2 }
+										}
+
+										expand = {}
+									}
+
+									hbox = {
+										layoutpolicy_horizontal = expanding
+
+										button_contest_spectate = {
+											size = { 90 30 }
+
+											enabled = "[Not(Activity.GetCurrentPhase.IsCharacterInGuestSubset(Character.Self, 'spectator'))]"
+											onclick = "[Activity.AddCharacterToSubset(Character.Self, 'spectator')]"
+											tooltip = locale_window_button_my_knights_force_spectate_tooltip
+										}
+
+										button_contest_participate = {
+											size = { 90 30 }
+
+											enabled = "[Activity.GetCurrentPhase.IsCharacterInGuestSubset(Character.Self, 'spectator')]"
+											onclick = "[Activity.RemoveCharacterFromSubset(Character.Self, 'spectator')]"
+											tooltip = locale_window_button_my_knights_allow_participate_tooltip
+										}
+
+										expand = {}
+									}
+								}
+							}
+
+							divider_light = {
+								layoutpolicy_horizontal = expanding
+
+								alpha = 0.4
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

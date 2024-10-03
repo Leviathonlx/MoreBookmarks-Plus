@@ -1,0 +1,292 @@
+window = {
+	name = "save_ruler_window"
+	size = { 100% 100% }
+	movable = no
+	layer = confirmation
+	filter_mouse = all
+
+	background = {
+		texture = "gfx/interface/colors/black.dds"
+		alpha = 0.6
+	}
+
+	button_normal = {
+		size = { 100% 100% }
+		onclick = "[RulerDesignerSaveWindow.Cancel]"
+	}
+
+	widget = {
+		size = { 520 880 }
+		parentanchor = center
+		alwaystransparent = no
+
+		using = Window_Background
+		using = Window_Decoration_Frontend_Spike
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			spacer = {
+				size = { 38 860 }
+			}
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				spacer = {
+					size = { 444 20 }
+				}
+
+				header_pattern = {
+					layoutpolicy_horizontal = expanding
+
+					blockoverride "header_text"
+					{
+						text = "RULER_DESIGNER_SAVE_WINDOW_TITLE"
+					}
+
+					blockoverride "button_close" {
+						visible = no
+					}
+				}
+
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					hbox = {
+						layoutpolicy_horizontal = expanding
+
+						spacer = {
+							size = { 10 10 }
+						}
+
+						editbox_standard_with_label = {
+							layoutpolicy_horizontal = expanding
+							blockoverride "editbox_label"
+							{
+								text = "SAVE_NAME_LABEL"
+							}
+
+							blockoverride "editbox_properties" {
+								name = "save_name"
+								text = "[RulerDesignerSaveWindow.GetDefaultSaveName]"
+								ontextedited = "[RulerDesignerSaveWindow.UpdateSaveName]"
+								onreturnpressed = "[RulerDesignerSaveWindow.Save]"
+							}
+						}
+
+						spacer = {
+							size = { 10 10 }
+						}
+					}
+					spacer = {
+						size = { 10 10 }
+					}
+				}
+
+				scrollbox = {
+					layoutpolicy_horizontal = growing
+					layoutpolicy_vertical = expanding
+
+					blockoverride "scrollbox_content"
+					{
+						vbox = {
+							datamodel = "[RulerDesignerSaveWindow.GetSavedRulers]"
+							spacing = 3
+
+							item = {
+
+								button_saved_rulers = {
+									size = { 410 120 }
+									blockoverride "down_state" {
+										down = "[RulerDesignerSaveWindow.IsSelectedItem(SaveRulerItem.Self)]"
+									}
+								}
+							}
+						}
+					}
+				}
+
+				spacer = {
+					size = { 414 15 }
+				}
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					button_standard = {
+						name = "cancel_button"
+						text = "CANCEL"
+						onclick = "[RulerDesignerSaveWindow.Cancel]"
+						shortcut = "close_window"
+					}
+
+					button_primary = {
+						name = "save_button"
+						text = "RULER_DESIGNER_SAVE_WINDOW_SAVE"
+						enabled = "[RulerDesignerSaveWindow.CanSaveInFile]"
+						onclick = "[RulerDesignerSaveWindow.Save]"
+						tooltip = "[RulerDesignerSaveWindow.CanSaveInFileTooltip]"
+					}
+				}
+
+				spacer = {
+					size = { 414 30 }
+				}
+			}
+			spacer = {
+				size = { 38 760 }
+			}
+		}
+	}
+}
+
+
+types SaveLoadRulers
+{
+	type button_saved_rulers = button_standard_hover {
+		size = { 390 110 }
+		layoutpolicy_horizontal = expanding
+		onclick = "[SaveRulerItem.Select]"
+		down = "[RulerDesignerSaveWindow.IsSelectedItem(SaveRulerItem.Self)]"
+		block "down_state" {}
+
+		vbox = {
+
+			hbox = {
+				spacing = 10
+				margin = {10 5}
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				portrait_button = {
+					name = "character"
+					using = portrait_base
+					size = { 100 100 }
+					#position = { 0 50 }
+
+					background = {
+						texture = "gfx/interface/colors/grey.dds"
+						margin = { 1 1}
+
+						modify_texture = {
+							texture = "gfx/interface/component_masks/mask_rough_edges.dds"
+							blend_mode = alphaMultiply
+						}
+
+					}
+					background = {
+						texture = "gfx/interface/colors/black.dds"
+						alpha = 0.9
+
+						modify_texture = {
+							texture = "gfx/interface/component_masks/mask_rough_edges.dds"
+							blend_mode = alphaMultiply
+						}
+
+						modify_texture = {
+							texture = "gfx/interface/component_masks/mask_clouds.dds"
+							alpha = 0.1
+							blend_mode = alphaMultiply
+						}
+					}
+
+					portrait_texture = "[SaveRulerItem.GetTexture('environment_head', 'camera_head', PdxGetWidgetScreenSize(PdxGuiWidget.Self) )]"
+					mask = "gfx/portraits/portrait_mask_body.dds"
+
+					blockoverride "grayscale" {}
+					blockoverride "portrait_button_template_onmouseenter" {}
+					blockoverride "portrait_button_template_onmouseleave" {}
+					blockoverride "portrait_button_template_onclick" {}
+					blockoverride "portrait_button_template_onrightclick" {}
+					blockoverride "portrait_button_template_tooltip" {}
+					blockoverride "portrait_transformation"
+					{
+						portrait_scale = { -1 1 }
+						portrait_offset = { 1 0 }
+					}
+					alwaystransparent = yes
+				}
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+
+					vbox = {
+						spacing = 5
+						layoutpolicy_vertical = expanding
+
+						text_single = {
+							name = "filename"
+							text = "[SaveRulerItem.GetFilename]"
+							max_width = 250
+							layoutpolicy_horizontal = growing
+							default_format = "#high;bold"
+						}
+
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							spacing = 5
+
+							text_single = {
+								text = "[SaveRulerItem.GetUsedPoints]"
+								visible = "[LessThanOrEqualTo_int32( SaveRulerItem.GetUsedPoints, GetDefine( 'NRulerDesigner', 'IRONMAN_POINT_MAX' ) )]"
+								default_format = "#P"
+							}
+
+							text_single = {
+								text = "[SaveRulerItem.GetUsedPoints]"
+								visible = "[GreaterThan_int32( SaveRulerItem.GetUsedPoints, GetDefine( 'NRulerDesigner', 'IRONMAN_POINT_MAX' ) )]"
+								default_format = "#N"
+							}
+
+							text_single = {
+								text = "SLASH"
+							}
+
+							text_single = {
+								text = "[GetDefine( 'NRulerDesigner', 'IRONMAN_POINT_MAX' ) ]"
+							}
+
+							text_single = {
+								name = "customisation_points"
+								text = "RULER_DESIGNER_SAVE_LOAD_USED_POINTS_LABEL"
+							}
+
+							expand = {}
+						}
+
+						progressbar_standard = {
+							name = "points_bar"
+							layoutpolicy_horizontal = expanding
+							using = ProgressBar_Achievements_Save
+							visible = "[LessThanOrEqualTo_int32( SaveRulerItem.GetUsedPoints, GetDefine( 'NRulerDesigner', 'IRONMAN_POINT_MAX' ) )]"
+						}
+
+						progressbar_red = {
+							name = "points_bar_over_limit"
+							layoutpolicy_horizontal = expanding
+							using = ProgressBar_Achievements_Save
+							visible = "[GreaterThan_int32( SaveRulerItem.GetUsedPoints, GetDefine( 'NRulerDesigner', 'IRONMAN_POINT_MAX' ) )]"
+						}
+						
+						expand = {}
+					}
+
+					expand = {}
+				}
+			}
+
+			divider_light = {
+				layoutpolicy_horizontal = expanding
+			}
+		}
+	}
+}
+
+template ProgressBar_Achievements_Save
+{
+	size = { 250 20 }
+	value = "[CurrentAndMaxToProgressbarValueInt32( SaveRulerItem.GetUsedPoints, GetDefine( 'NRulerDesigner', 'IRONMAN_POINT_MAX' ) )]"
+}

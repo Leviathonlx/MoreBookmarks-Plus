@@ -1,0 +1,289 @@
+window = {
+	using = editor_window
+	name = "debug_tutorial_window"
+	parentanchor = top|right
+	position = { -10 105 }
+	size = { 500 800 }
+	resizable = yes
+	layer = top
+
+	textbox = {
+		position = { 7 0 }
+		size = { 100% 30 }
+		fontsize = 16
+		raw_text = "Tutorial"
+		align = left|nobaseline
+	}
+	button = {
+		using = editor_button
+		name = "close_button"
+		position = { -4 4 }
+		size = { 20 20 }
+		parentanchor = top|right
+		raw_text = "x"
+		align = center|nobaseline
+		onclick = "[DebugTutorialWindow.Close]"
+		shortcut = "close_window"
+	}
+
+	vbox = {
+		margin = { 3 5 }
+		margin_top = 29
+
+		hbox = {
+			margin = { 6 5 }
+			layoutpolicy_horizontal = expanding
+			spacing = 6
+
+			button = {
+				using = editor_button
+				name = "button_toggle_enabled"
+				size = { 100 20 }
+				text = "[Select_CString( DebugTutorialWindow.IsTutorialEnabled, 'Disable', 'Enable' )]"
+				onclick = "[DebugTutorialWindow.ToggleTutorialEnabled]"
+			}
+			button = {
+				using = editor_button
+				name = "button_reset"
+				size = { 100 20 }
+				raw_text = "Reset"
+				onclick = "[DebugTutorialWindow.ResetTutorial]"
+			}
+
+			expand = {}
+
+			textbox = {
+				raw_text = "Delays"
+				autoresize = yes
+			}
+			checkbutton = {
+				using = editor_checkbutton
+				checked = "[Not(DebugTutorialWindow.IsIgnoringDelays)]"
+				onclick = "[DebugTutorialWindow.ToggleIgnoreDelays]"
+			}
+		}
+
+		scrollbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			blockoverride "scrollbox_content"
+			{
+				vbox = {
+					datamodel = "[DebugTutorialWindow.GetChains]"
+					layoutpolicy_horizontal = expanding
+					item = {
+						debug_tutorial_chain_item = {
+							layoutpolicy_horizontal = expanding
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+types DebugTutorialWindow
+{
+	type debug_tutorial_chain_item = vbox
+	{
+		margin_top = 10
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			hbox = {
+				spacing = 3
+				textbox = {
+					raw_text = "-->"
+					autoresize = yes
+					visible = "[DebugTutorialChainItem.IsCurrent]"
+				}
+				textbox = {
+					raw_text = "prev"
+					autoresize = yes
+					visible = "[And(Not(DebugTutorialChainItem.IsCurrent), DebugTutorialChainItem.IsLast)]"
+				}
+				textbox = {
+					raw_text = "ok"
+					autoresize = yes
+					visible = "[And(Not(DebugTutorialChainItem.IsCompleted), And(Not(DebugTutorialChainItem.IsCurrent), DebugTutorialChainItem.IsValidToTrigger))]"
+				}
+				textbox = {
+					raw_text = "done"
+					autoresize = yes
+					visible = "[DebugTutorialChainItem.IsCompleted]"
+				}
+			}
+
+			text_single = {
+				margin = { 5 0 }
+				layoutpolicy_horizontal = expanding
+				autoresize = no
+				text = "[DebugTutorialChainItem.GetTitle]"
+				tooltip = "[DebugTutorialChainItem.GetTitle]"
+				using = tooltip_ne
+			}
+
+			hbox = {
+				spacing = 3
+
+				button = {
+					using = editor_button
+					name = "button_start"
+					size = { 44 20 }
+					raw_text = "Start"
+					enabled = "[DebugTutorialChainItem.CanStart]"
+					onclick = "[DebugTutorialChainItem.Start]"
+				}
+				button = {
+					using = editor_button
+					name = "button_complete"
+					size = { 50 20 }
+					raw_text = "Finish"
+					enabled = "[DebugTutorialChainItem.CanComplete]"
+					onclick = "[DebugTutorialChainItem.Complete]"
+				}
+				button = {
+					using = editor_button
+					name = "button_reset"
+					size = { 45 20 }
+					raw_text = "Reset"
+					enabled = "[DebugTutorialChainItem.CanReset]"
+					onclick = "[DebugTutorialChainItem.Reset]"
+				}
+			}
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			datamodel = "[DebugTutorialChainItem.GetLessons]"
+			item = {
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					debug_tutorial_list_indentation = {}
+					debug_tutorial_lesson_item = {
+						layoutpolicy_horizontal = expanding
+					}
+				}
+			}
+		}
+	}
+
+	type debug_tutorial_lesson_item = vbox
+	{
+		margin_top = 5
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			hbox = {
+				spacing = 3
+				textbox = {
+					raw_text = "-->"
+					autoresize = yes
+					visible = "[DebugTutorialLessonItem.IsCurrent]"
+				}
+				textbox = {
+					raw_text = "ok"
+					autoresize = yes
+					visible = "[And(Not(DebugTutorialLessonItem.IsCompleted), And(Not(DebugTutorialLessonItem.IsCurrent), DebugTutorialLessonItem.IsValidToTrigger))]"
+				}
+				textbox = {
+					raw_text = "manual"
+					autoresize = yes
+					visible = "[And(Not(DebugTutorialLessonItem.IsCompleted), And(Not(DebugTutorialLessonItem.IsCurrent), Not(DebugTutorialLessonItem.ShouldStartAutomatically)))]"
+				}
+				textbox = {
+					raw_text = "wait"
+					autoresize = yes
+					visible = "[DebugTutorialLessonItem.IsDelayed]"
+				}
+				textbox = {
+					raw_text = "done"
+					autoresize = yes
+					visible = "[DebugTutorialLessonItem.IsCompleted]"
+				}
+			}
+
+			text_single = {
+				margin = { 5 0 }
+				layoutpolicy_horizontal = expanding
+				autoresize = no
+				text = "[DebugTutorialLessonItem.GetTitle]"
+				tooltip = "[DebugTutorialLessonItem.GetTitle]"
+				using = tooltip_ne
+			}
+
+			hbox = {
+				spacing = 3
+
+				button = {
+					using = editor_button
+					name = "button_start"
+					size = { 44 20 }
+					raw_text = "Start"
+					enabled = "[DebugTutorialLessonItem.CanStart]"
+					onclick = "[DebugTutorialLessonItem.Start]"
+				}
+				button = {
+					using = editor_button
+					name = "button_complete"
+					size = { 50 20 }
+					raw_text = "Finish"
+					enabled = "[DebugTutorialLessonItem.CanComplete]"
+					onclick = "[DebugTutorialLessonItem.Complete]"
+				}
+				button = {
+					using = editor_button
+					name = "button_reset"
+					size = { 45 20 }
+					raw_text = "Reset"
+					enabled = "[DebugTutorialLessonItem.CanReset]"
+					onclick = "[DebugTutorialLessonItem.Reset]"
+				}
+			}
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			datamodel = "[DebugTutorialLessonItem.GetSteps]"
+			item = {
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					debug_tutorial_list_indentation = {}
+					debug_tutorial_step_item = {
+						layoutpolicy_horizontal = expanding
+					}
+				}
+			}
+		}
+	}
+
+	type debug_tutorial_step_item = hbox
+	{
+		margin_top = 3
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			hbox = {
+				margin_right = 5
+				spacing = 3
+				textbox = {
+					raw_text = "-->"
+					autoresize = yes
+					visible = "[DebugTutorialStepItem.IsCurrent]"
+				}
+			}
+			text_single = {
+				text = "[DebugTutorialStepItem.GetTitle]"
+				tooltip = "[DebugTutorialStepItem.GetTooltip]"
+				using = tooltip_ne
+			}
+			expand = {}
+		}
+	}
+
+	type debug_tutorial_list_indentation = widget
+	{
+		size = { 15 0 }
+	}
+}

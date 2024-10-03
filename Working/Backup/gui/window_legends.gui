@@ -1,0 +1,1579 @@
+window = {
+	name = "legends_window"
+	widgetid = "legends_window"
+	movable = no
+	layer = windows_layer
+
+	using = Window_Size_Sidebar
+	using = Window_Background_Sidebar
+
+	state = {
+		name = _show
+		position = { 0 0 }
+
+		using = Animation_FadeIn_Quick
+		using = Sound_WindowShow_Standard
+
+		on_start = "[GetVariableSystem.Set( 'hide_bottom_left_HUD', 'true' )]"
+	}
+
+	state = {
+		name = _hide
+		position = { -90 0 }
+
+		using = Animation_FadeOut_Quick
+		using = Sound_WindowHide_Standard
+		using = Window_Position_MainTab_Hide
+
+		on_start = "[GetVariableSystem.Clear( 'hide_bottom_left_HUD' )]"
+	}
+
+	vbox = {
+		using = Window_Margins_Sidebar
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = "LEGENDS_TITLE"
+			}
+
+			blockoverride "button_close"
+			{
+				onclick = "[LegendsWindow.Close]"
+			}
+
+			blockoverride "button_back"
+			{
+				visible = "[HasViewHistory]"
+				onclick = "[OpenFromViewHistory]"
+				tooltip = "[GetViewHistoryTooltip]"
+			}
+
+			blockoverride "button_me"
+			{
+				onclick = "[DefaultOnCharacterClick( GetPlayer.GetID )]"
+			}
+		}
+
+		vbox = {
+			name = "contents"
+			widgetid = "legends_window_legend_tabs" # Used in code
+
+			oncreate = "[BindTabsContext]"
+			oncreate = "[PdxGuiTabs.AddTab( 'realm' )]" # Name used in code
+			oncreate = "[PdxGuiTabs.AddTab( 'distant' )]" # Name used in code
+			oncreate = "[PdxGuiTabs.AddTab( 'library' )]" # Name used in code
+
+			oncreate = "[PdxGuiTabs.ListenFor( 'legend_window_change_tab' )]" # Code can send an event which we can listen for to switch tabs
+
+			datacontext = "[GetPlayer]"
+
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			using = Animation_Tab_Switch
+
+			vbox = {
+				name = "special_cards"
+
+				layoutpolicy_horizontal = expanding
+				spacing = 12
+				margin = { 10 0 }
+				margin_bottom = 15
+
+				vbox_labelled_legend = {
+					name = "focused_legend"
+
+					datacontext = "[LegendsWindow.GetFocusedLegend]"
+					datacontext = "[LegendsWindow.GetFocusedLegend.GetLegend]"
+					visible = "[Legend.IsValid]"
+
+					blockoverride "label"
+					{
+						hbox = {
+							layoutpolicy_horizontal = expanding
+
+							spacing = 20
+
+							widget = {
+								size = { 120 26 }
+							}
+
+							text_label_center = {
+								layoutpolicy_horizontal = expanding
+
+								text = "[SelectLocalization( ObjectsEqual( Legend.Self, LegendsWindow.GetPromotedLegend.GetLegend.Self ), SelectLocalization( ObjectsEqual( Legend.GetOwner.Self, GetPlayer.Self ), 'PROMOTED_OWNED_LEGEND', 'PROMOTED_LEGEND'), 'FOCUSED_LEGEND' )]"
+								margin_left = 30
+								margin_right = 30
+							}
+
+							widget = {
+	                            size = { 120 26 }
+                                button_standard_back = {
+	                                size = { 120 26 }
+	                                onclick = "[LegendsWindow.ClearFocusedLegend()]"
+
+	                                visible = "[And(LegendsWindow.GetPromotedLegend.GetLegend.IsValid, Not( ObjectsEqual( Legend.Self, LegendsWindow.GetPromotedLegend.GetLegend.Self ) ) )]"
+
+	                                tooltip = "RETURN_TO_PROMOTED_LEGEND_TT"
+                                }
+                            }
+						}
+
+					}
+				}
+				vbox = {
+					visible = "[And( Not( LegendsWindow.GetFocusedLegend.GetLegend.IsValid ), Not( LegendsWindow.GetPromotedLegend.GetLegend.IsValid ) )]"
+
+					text_label_center = {
+                        text = "PROMOTED_LEGEND"
+                        margin_left = 30
+                        margin_right = 30
+                    }
+
+					text_single = {
+                        text = "PROMOTED_LEGEND_EMPTY"
+                        default_format = "#low;italic"
+                    }
+
+                    text_single = {
+                        margin_top = 5
+                        text = "PROMOTED_LEGEND_EMPTY_INSTRUCTION"
+                        max_width = 550
+                        default_format = "#P"
+                        align = center
+                    }
+                }
+			}
+
+			hbox_tab_buttons = {
+				name = "tab_buttons"
+
+				blockoverride "tab_name"
+				{
+					text = "[PdxGuiTabItem.LocalizeTab( 'legend_tab' )]"
+				}
+			}
+
+			scrollbox = {
+				name = "realm_legends_scrollbox"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				using = Animation_Tab_Switch
+
+				visible = "[PdxGuiTabs.IsTabSet( 'realm' )]"
+
+				blockoverride "scrollbox_content"
+				{
+					margin = { 4 4 }
+					spacing = 8
+
+					legend_seeds_vbox = {
+                        name = "legend_seeds"
+                    }
+
+					active_legends_vbox = {
+                        name = "realm_legends"
+
+                        blockoverride "text"
+                        {
+                            text = "LEGENDS_REALM_ACTIVE_LEGENDS_SECTION"
+                            using = tooltip_sw
+                        }
+                        blockoverride "empty_text"
+                        {
+                            visible = "[IsDataModelEmpty( LegendsWindow.GetRealmActiveLegends )]"
+                            text = "NO_REALM_ACTIVE_LEGENDS"
+                            margin_top = 5
+                            margin_bottom = 5
+                        }
+                        blockoverride "datamodel"
+                        {
+                            datamodel = "[LegendsWindow.GetRealmActiveLegends]"
+                        }
+                    }
+
+					completed_legends_vbox = {
+						name = "realm_completed_legends"
+
+						visible = "[Not( IsDataModelEmpty( LegendsWindow.GetRealmCompletedLegends ) )]"
+
+						blockoverride "text"
+						{
+							text = "REALM_COMPLETED_LEGENDS"
+						}
+						blockoverride "empty_text"
+						{
+							visible = "[IsDataModelEmpty( LegendsWindow.GetRealmCompletedLegends )]"
+							text = "NO_REALM_COMPLETED_LEGENDS"
+                            margin_top = 5
+                            margin_bottom = 5
+						}
+						blockoverride "datamodel"
+						{
+							datamodel = "[LegendsWindow.GetRealmCompletedLegends]"
+						}
+					}
+				}
+			}
+
+			scrollbox = {
+				name = "distant_legends_scrollbox"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				using = Animation_Tab_Switch
+
+				visible = "[PdxGuiTabs.IsTabSet( 'distant' )]"
+
+				blockoverride "scrollbox_content"
+				{
+					margin = { 4 4 }
+					spacing = 8
+
+					active_legends_vbox = {
+                        name = "distant_legends"
+
+                        blockoverride "text"
+                        {
+                            text = "LEGENDS_DISTANT_ACTIVE_LEGENDS_SECTION"
+                        }
+                        blockoverride "empty_text"
+                        {
+                            visible = "[IsDataModelEmpty( LegendsWindow.GetDistantActiveLegends )]"
+                            text = "NO_DISTANT_ACTIVE_LEGENDS"
+                            margin_top = 5
+                            margin_bottom = 5
+                        }
+                        blockoverride "datamodel"
+                        {
+                            datamodel = "[LegendsWindow.GetDistantActiveLegends]"
+                        }
+                    }
+
+					completed_legends_vbox = {
+						name = "distant_completed_legends"
+
+						blockoverride "text"
+						{
+							text = "DISTANT_COMPLETED_LEGENDS"
+						}
+						blockoverride "empty_text"
+						{
+							visible = "[IsDataModelEmpty( LegendsWindow.GetDistantCompletedLegends )]"
+							text = "NO_DISTANT_COMPLETED_LEGENDS"
+                            margin_top = 5
+                            margin_bottom = 5
+                        }
+						blockoverride "datamodel"
+						{
+							datamodel = "[LegendsWindow.GetDistantCompletedLegends]"
+						}
+					}
+				}
+			}
+
+			scrollbox = {
+				name = "library_legends_scrollbox"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				using = Animation_Tab_Switch
+
+				visible = "[PdxGuiTabs.IsTabSet( 'library' )]"
+
+				blockoverride "scrollbox_content"
+				{
+					margin = { 8 8 }
+					spacing = 8
+
+					vbox = {
+						layoutpolicy_horizontal = expanding
+						spacing = 4
+
+						margin = { 4 4 }
+
+
+						text_multi = {
+							layoutpolicy_horizontal = expanding
+
+							visible = "[IsDataModelEmpty( LegendsWindow.GetLibraryLegends )]"
+
+                            margin_top = 5
+                            text = "LEGEND_LIBRARY_INSTRUCTION"
+                            max_width = 450
+                            autoresize = yes
+                            default_format = "#low;italic"
+                            align = center
+                        }
+
+						fixedgridbox = {
+	                        name = "legend_entries"
+	                        layoutpolicy_horizontal = expanding
+
+	                        addcolumn = 570
+	                        addrow = 70
+
+	                        datamodel = "[LegendsWindow.GetLibraryLegends]"
+
+	                        item = {
+	                            button = {
+	                                size = { 570 70 }
+                                    onclick = "[ToggleGameViewData( 'legend_chronicle', LegendItem.GetLegend )]"
+                                    onclick = "[LegendsWindow.SetFocusedLegend( LegendItem.GetLegend.Self )]"
+
+				                    onrightclick = "[LegendsWindow.SetFocusedLegend( LegendItem.GetLegend.Self )]"
+				                    onrightclick = "[LegendItem.GetLegend.PanCameraTo]"
+
+				                    button_ignore = none
+
+	                                legend_library_entry_vbox = {}
+	                            }
+	                        }
+	                    }
+                    }
+				}
+			}
+
+			hbox_single_court_position_card = {
+				datacontext = "[GetCourtPositionType( 'chronicler_court_position' )]"
+				visible = "[And( GetPlayer.IsValid, Or( PdxGuiTabs.IsTabSet( 'seeds' ), PdxGuiTabs.IsTabSet( 'realm' ) ) ) )]"
+
+				oncreate = "[BindFoldOutContext]"
+				oncreate = "[PdxGuiFoldOut.Unfold]"
+
+				layoutpolicy_horizontal = expanding
+				margin = { 4 8 }
+				margin_top = 12
+
+				blockoverride "header_pre_contents"
+				{
+					hbox = {
+						margin = { 5 2 }
+
+						button_expand_fold_out = {}
+					}
+				}
+				blockoverride "card_visible"
+				{
+					visible = "[PdxGuiFoldOut.IsUnfolded]"
+				}
+			}
+		}
+	}
+}
+
+types LegendTypes
+{
+	type legend_chronicles_round_button = button_round
+	{
+		onclick = "[ToggleGameViewData( 'legend_chronicle', Legend.Self )]"
+		tooltip = "OPEN_CHRONICLE_BUTTON_TT"
+
+		button_history = {
+			parentanchor = center
+			alwaystransparent = yes
+		}
+	}
+
+	type legend_modifiers_hbox = hbox
+	{
+		layoutpolicy_vertical = expanding
+
+		icon_modifier_legend_owner = {
+			visible = "[And(Legend.HasImpactModifiers( 'owner' ), Not( Legend.IsCompleted ))]"
+			tooltip = "LEGEND_OWNER_MODIFIERS_TOOLTIP"
+		}
+
+		icon_modifier_legend_promoter = {
+			visible = "[And(Legend.HasImpactModifiers( 'promoter' ), Not( Legend.IsCompleted ))]"
+			tooltip = "LEGEND_PROMOTER_MODIFIERS_TOOLTIP"
+		}
+
+		icon_modifier_legend_province_and_county = {
+			visible = "[Or( Legend.HasImpactModifiers( 'province' ), Legend.HasImpactModifiers( 'county' ) )]"
+			tooltip = "LEGEND_PROVINCE_AND_COUNTY_MODIFIERS_TOOLTIP"
+		}
+	}
+
+	type legend_promoters_tooltip = object_tooltip_pop_out
+	{
+		blockoverride "title_text"
+		{
+			margin = { 0 8 }
+			text = "LEGEND_PROMOTERS_LABEL"
+			default_format = "#T"
+		}
+
+		blockoverride "concept_link"
+		{
+			visible = no
+		}
+
+		blockoverride "main_description"
+		{
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				datamodel = "[Legend.GetPromoters]"
+
+				item = {
+					cooltip_paragraph = {
+						text = "[Character.GetUIName|U]"
+					}
+				}
+			}
+		}
+	}
+
+	type legend_summary_vbox = vbox
+	{
+		layoutpolicy_horizontal = expanding
+		layoutpolicy_vertical = expanding
+
+		text_single = {
+			name = "no_promoters"
+			layoutpolicy_horizontal = expanding
+			visible = "[IsDataModelEmpty( Legend.GetPromoters )]"
+			text = LEGEND_PROMOTERS
+		}
+
+		text_single = {
+			name = "promoters"
+			layoutpolicy_horizontal = expanding
+			visible = "[DataModelHasItems( Legend.GetPromoters )]"
+
+			text = LEGEND_PROMOTERS
+
+			tooltipwidget = {
+				legend_promoters_tooltip = {}
+			}
+		}
+
+		text_single = {
+			name = "spread"
+			layoutpolicy_horizontal = expanding
+			text = "LEGEND_SPREAD"
+		}
+
+		text_single = {
+			name = "owner"
+			layoutpolicy_horizontal = expanding
+			text = "LEGEND_OWNER_DESCRIPTION"
+		}
+
+		expand = {}
+	}
+
+	type legend_summary_completed_vbox = vbox
+   	{
+    	layoutpolicy_horizontal = expanding
+    	layoutpolicy_vertical = expanding
+
+		text_multi = {
+            layoutpolicy_horizontal = expanding
+            margin_right = 5
+
+            visible = "[GreaterThan_int32( Legend.GetCurrentNumProvinces, '(int32)0' )]"
+
+            name = "completed_text"
+            text = "SUMMARY_LEGEND_IS_COMPLETED"
+        }
+
+	    text_single = {
+            name = "spread"
+            layoutpolicy_horizontal = expanding
+            text = "LEGEND_SPREAD"
+        }
+
+        expand = {}
+   	}
+
+	type legend_library_entry_vbox = vbox_generic_object_card
+    {
+    	datacontext = "[LegendItem.GetLegend]"
+        visible = "[Legend.IsValid]"
+
+        layoutpolicy_horizontal = expanding
+        using = Legend_Mouse_Entry
+
+        blockoverride "header_properties"
+        {
+            layoutpolicy_horizontal = expanding
+            margin = { 10 10 }
+        }
+        blockoverride "header_tooltip"
+        {
+            tooltip = "LEGEND_HEADER_TT"
+        }
+
+        blockoverride "header_background_color"
+        {
+            using = Legend_Quality_Colors
+        }
+
+        blockoverride "header_pre_contents"
+        {
+            icon_legend = {
+                visible = "[Not( Legend.IsCharacterPromotingLegend( GetPlayer ) )]"
+                datacontext = "[Legend.GetType]"
+            }
+
+            icon_legend_highlight = {
+                visible = "[Legend.IsCharacterPromotingLegend( GetPlayer )]"
+                datacontext = "[Legend.GetType]"
+            }
+        }
+        blockoverride "header_top_contents"
+        {
+			layoutpolicy_vertical = expanding
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+	            text_single = {
+	                text = "[Legend.GetNameNoTooltip]"
+	                default_format = "#high"
+
+	                using = Font_Size_Medium
+	                align = nobaseline
+	                max_width = 350
+
+	            }
+	            expand = {}
+            }
+        }
+        blockoverride "header_bottom_contents"
+        {
+			layoutpolicy_vertical = expanding
+
+            text_single = {
+                text = "LEGEND_HEADER_SUBTITLE"
+                default_format = "#weak"
+                align = nobaseline
+                parentanchor = vcenter|left
+                max_width = 350
+            }
+        }
+        blockoverride "header_post_contents"
+        {
+            using = GenericObjectCardDefaultHeaderPostProperties
+
+			vbox = {
+				layoutpolicy_vertical = expanding
+
+				hbox = {
+		            text_single  = {
+		                text = "[Legend.GetQualityLevel]"
+		                default_format = "#weak"
+		                align = nobaseline
+		                margin_right = 5
+		            }
+
+		            hbox = {
+		                spacing = -4
+
+		                icon_flat_standard_gold = {
+		                    size = { 24 24 }
+		                    texture = "gfx/interface/icons/flat_icons/legends.dds"
+		                }
+
+		                icon_flat_standard_gold = {
+		                    visible = "[Legend.HasQuality( 'mythical' )]"
+		                    size = { 24 24 }
+		                    texture = "gfx/interface/icons/flat_icons/legends.dds"
+		                }
+
+
+		                icon_flat_standard_gold = {
+		                    visible = "[Or(Legend.HasQuality( 'illustrious' ), Legend.HasQuality( 'mythical' ))]"
+		                    size = { 24 24 }
+		                    texture = "gfx/interface/icons/flat_icons/legends.dds"
+		                }
+
+		                icon_flat_standard_black = {
+		                    visible = "[Legend.HasQuality( 'famed' )]"
+		                    size = { 24 24 }
+		                    texture = "gfx/interface/icons/flat_icons/legends.dds"
+
+		                    glow = {
+		                        glow_radius = 3
+		                        using = Glow_Standard
+		                        using = Color_White
+		                        alpha = 0.08
+		                    }
+		                }
+
+		                icon_flat_standard_black = {
+		                    visible = "[Or(Legend.HasQuality( 'famed' ), Legend.HasQuality( 'illustrious' ))]"
+		                    size = { 24 24 }
+		                    texture = "gfx/interface/icons/flat_icons/legends.dds"
+
+		                    glow = {
+		                        glow_radius = 3
+		                        using = Glow_Standard
+		                        using = Color_White
+		                        alpha = 0.08
+		                    }
+		                }
+		            }
+	            }
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					expand = {}
+		            text_single  = {
+	                    text = "LEGEND_DURATION_COMPLETED"
+	                    default_format = "#weak"
+	                    align = nobaseline
+	                    margin_right = 5
+	                }
+
+                    button_round =  {
+                        onclick = "[ToggleGameViewData( 'legend_chronicle', Legend.Self )]"
+                        tooltip = "OPEN_CHRONICLE_BUTTON_TT"
+
+                        size = { 20 20 }
+
+                        button_history = {
+                             size = { 16 16 }
+                            parentanchor = center
+                            alwaystransparent = yes
+                        }
+                    }
+
+	                button_go_to_my_location =  {
+                        onclick = "[Legend.PanCameraTo]"
+                        tooltip = "PAN_TO_LEGEND_TT"
+
+                        size = { 25 25 }
+                    }
+                }
+
+	            expand = {}
+	        }
+        }
+    }
+
+	type legend_entry_vbox = vbox_generic_object_card
+	{
+		datacontext = "[LegendItem.GetLegend]"
+		visible = "[Legend.IsValid]"
+
+		layoutpolicy_horizontal = expanding
+		using = Legend_Mouse_Entry
+
+		blockoverride "header_properties"
+		{
+			layoutpolicy_horizontal = expanding
+			margin = { 10 10 }
+		}
+		blockoverride "header_tooltip"
+		{
+			tooltip = "LEGEND_HEADER_TT"
+		}
+
+		blockoverride "header_background_color"
+		{
+			using = Legend_Quality_Colors
+		}
+
+		blockoverride "header_pre_contents"
+		{
+			icon_legend = {
+				visible = "[Not( Legend.IsCharacterPromotingLegend( GetPlayer ) )]"
+				datacontext = "[Legend.GetType]"
+			}
+
+			icon_legend_highlight = {
+				visible = "[Legend.IsCharacterPromotingLegend( GetPlayer )]"
+				datacontext = "[Legend.GetType]"
+			}
+		}
+		blockoverride "header_top_contents"
+		{
+			layoutpolicy_vertical = expanding
+
+			text_single = {
+				text = "[Legend.GetNameNoTooltip]"
+				default_format = "#high"
+
+				using = Font_Size_Medium
+				align = nobaseline
+				max_width = 350
+
+				parentanchor = vcenter|left
+			}
+		}
+		blockoverride "header_bottom_contents"
+		{
+			layoutpolicy_vertical = expanding
+
+            text_single = {
+                text = "LEGEND_HEADER_SUBTITLE"
+                default_format = "#weak"
+                align = nobaseline
+                parentanchor = vcenter|left
+                max_width = 350
+            }
+		}
+		blockoverride "header_post_contents"
+		{
+			using = GenericObjectCardDefaultHeaderPostProperties
+
+			text_single  = {
+				text = "[Legend.GetQualityLevel]"
+				default_format = "#weak"
+				align = nobaseline
+				margin_right = 5
+			}
+
+			hbox = {
+				spacing = -4
+
+				icon_flat_standard_gold = {
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+				}
+
+				icon_flat_standard_gold = {
+					visible = "[Legend.HasQuality( 'mythical' )]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+				}
+
+
+				icon_flat_standard_gold = {
+					visible = "[Or(Legend.HasQuality( 'illustrious' ), Legend.HasQuality( 'mythical' ))]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+				}
+
+				icon_flat_standard_black = {
+					visible = "[Legend.HasQuality( 'famed' )]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+
+					glow = {
+						glow_radius = 3
+						using = Glow_Standard
+						using = Color_White
+						alpha = 0.08
+					}
+				}
+
+				icon_flat_standard_black = {
+					visible = "[Or(Legend.HasQuality( 'famed' ), Legend.HasQuality( 'illustrious' ))]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+
+					glow = {
+						glow_radius = 3
+						using = Glow_Standard
+						using = Color_White
+						alpha = 0.08
+					}
+				}
+			}
+		}
+		blockoverride "card_contents"
+		{
+			datacontext = "[Legend.GetOwner]"
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin_right = 5
+
+				Background = {
+					spriteType = Corneredtiled
+					alpha = 0.15
+					texture = "gfx/interface/colors/gold.dds"
+					using = Mask_Rough_Edges
+
+					modify_texture = {
+						name = "mask"
+						texture = "gfx/interface/component_masks/mask_fade_horizontal_middle_inverse.dds"
+						spriteborder = { 0 0 }
+						blend_mode = alphamultiply
+					}
+
+					modify_texture = {
+						texture = "gfx/interface/component_masks/patterns/mask_pattern_floral.dds"
+						spriteType = Corneredtiled
+						blend_mode = alphamultiply
+						alpha = 0.8
+						texture_density = 2
+					}
+				}
+
+				widget = {
+					datacontext = "[Legend.GetProtagonist]"
+					size = { 95 140 }
+					portrait_head_small_legend = {
+						parentanchor = top
+						position = { 10 6 }
+					}
+				}
+
+				vbox = {
+					datacontext = "[GetPlayer]"
+
+					layoutpolicy_vertical = expanding
+					layoutpolicy_horizontal = expanding
+
+					min_width = 240
+					maximumsize = { 250 -1 }
+					margin_left = 24
+					margin_bottom = 5
+					margin_top = 5
+
+					legend_summary_vbox = {
+						visible = "[Not( Legend.IsCompleted )]"
+					}
+					legend_summary_completed_vbox = {
+                        visible = "[Legend.IsCompleted]"
+                    }
+
+                    expand = {}
+
+					text_single = {
+						text = AFFECTING_MODIFIERS_LABEL
+						layoutpolicy_horizontal = expanding
+					}
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						spacing = 3
+
+						legend_modifiers_hbox = {}
+
+						fixedgridbox = {
+							name = "modifiers_grid"
+							datamodel = "[LegendItem.GetModifiers]"
+							addcolumn = 25
+							addrow = 23
+							datamodel_wrap = 4
+							flipdirection = yes
+							maxverticalslots = 2
+
+							item = {
+								modifier_item_icon = {
+									size = { 22 22 }
+								}
+							}
+						}
+						expand = {}
+					}
+
+					expand = {}
+				}
+
+				expand = {}
+
+				divider_light = {
+					layoutpolicy_vertical = expanding
+					modify_texture = {
+						texture = "gfx/interface/component_masks/mask_fade_horizontal_middle_thick_vertical.dds"
+						blend_mode = alphamultiply
+					}
+				}
+
+				vbox = {
+					datacontext = "[GetPlayer]"
+
+					layoutpolicy_vertical = expanding
+
+					visible = "[Not( Legend.IsCompleted )]"
+
+					margin = { 2 18 }
+					spacing = -4
+
+					expand = {}
+
+					text_label_right = {
+						visible = "[ObjectsEqual( Legend.GetOwner.Self, GetPlayer.Self )]"
+						layoutpolicy_horizontal = expanding
+
+						text = "LEGEND_UPGRADE_LABEL"
+						margin_left = 10
+						margin_right = 10
+						max_width = 170
+					}
+
+					text_single = {
+						visible = "[ObjectsEqual( Legend.GetOwner.Self, GetPlayer.Self )]"
+						layoutpolicy_horizontal = expanding
+
+						text = "LEGEND_UPGRADE_COST"
+						align = right|nobaseline
+						margin_left = 10
+						margin_right = 10
+						max_width = 160
+						margin_bottom = 20
+					}
+
+					text_label_right = {
+						layoutpolicy_horizontal = expanding
+
+						visible = "[Or( Legend.IsCharacterPromotingLegend( GetPlayer ), IsValidCommand( GetPlayer.StartPromotingLegend( Legend.Self ) ) )]"
+
+						text = "LEGEND_MAINTENANCE_LABEL"
+						align = right|nobaseline
+						margin_left = 10
+						margin_right = 10
+						max_width = 170
+					}
+
+					text_single = {
+						layoutpolicy_horizontal = expanding
+
+						visible = "[Or( Legend.IsCharacterPromotingLegend( GetPlayer ), IsValidCommand( GetPlayer.StartPromotingLegend( Legend.Self ) ) )]"
+
+						text = "LEGEND_MAINTENANCE_COST"
+						align = right|nobaseline
+						margin_left = 10
+						margin_right = 10
+						max_width = 170
+					}
+
+					expand = {}
+				}
+
+				widget = {
+					size = { 45 120 }
+
+					icon = {
+						size = { 40 110 }
+						position = { -5 0 }
+						texture = "gfx/interface/window_legend_chronicle/legend_button_frame.dds"
+						parentanchor = right|vcenter
+						alpha = 0.8
+					}
+
+					legend_chronicles_round_button = {
+						parentanchor = right|vcenter
+						position = { -3 0 }
+					}
+				}
+			}
+		}
+	}
+
+	type vbox_labelled_legend = vbox
+	{
+		layoutpolicy_horizontal = expanding
+		spacing = 5
+
+		block "label" {}
+
+		vbox = {
+			name = "no_legend"
+			visible = "[Not( LegendItem.GetLegend.IsValid )]"
+
+			block "no_legend" {}
+		}
+
+		legend_entry_vbox = {}
+	}
+
+	type active_legends_vbox = vbox {
+		layoutpolicy_horizontal = expanding
+		spacing = 4
+
+		using = Create_Resetting_Fold_Out
+
+		hbox_expandable_toggle_field = {}
+
+		vbox = {
+            layoutpolicy_horizontal = expanding
+
+            visible = "[PdxGuiFoldOut.IsUnfolded]"
+
+            text_single = {
+                block "empty_text"
+                {
+                }
+                default_format = "#low;italic"
+            }
+
+            margin_left = 6
+
+			fixedgridbox = {
+				name = "legends_in_realm"
+				layoutpolicy_horizontal = expanding
+
+				addcolumn = 570
+				addrow = 210
+
+				block "datamodel"
+				{
+					datamodel = "[LegendsWindow.GetRealmActiveLegends]"
+				}
+
+				item = {
+	                button = {
+	                    size = { 570 200 }
+
+	                    onclick = "[ToggleGameViewData( 'legend_chronicle', LegendItem.GetLegend )]"
+	                    onclick = "[LegendsWindow.SetFocusedLegend( LegendItem.GetLegend.Self )]"
+
+	                    onrightclick = "[LegendsWindow.SetFocusedLegend( LegendItem.GetLegend.Self )]"
+	                    onrightclick = "[LegendItem.GetLegend.PanCameraTo]"
+
+	                    button_ignore = none
+
+	                    legend_entry_vbox = {}
+	                }
+				}
+			}
+		}
+	}
+
+	type completed_legends_vbox = vbox
+	{
+		layoutpolicy_horizontal = expanding
+		spacing = 4
+
+		using = Create_Resetting_Fold_Out
+
+		hbox_expandable_toggle_field = {}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+
+			visible = "[PdxGuiFoldOut.IsUnfolded]"
+
+			text_single = {
+				block "empty_text"
+				{
+				}
+				default_format = "#low;italic"
+			}
+
+			margin_left = 6
+
+			fixedgridbox = {
+				name = "legend_entries"
+				layoutpolicy_horizontal = expanding
+
+				addcolumn = 570
+				addrow = 70
+
+				block "datamodel"
+				{
+				}
+
+				item = {
+                    button = {
+                        size = { 570 70 }
+
+	                    onclick = "[ToggleGameViewData( 'legend_chronicle', LegendItem.GetLegend )]"
+	                    onclick = "[LegendsWindow.SetFocusedLegend( LegendItem.GetLegend.Self )]"
+
+	                    onrightclick = "[LegendsWindow.SetFocusedLegend( LegendItem.GetLegend.Self )]"
+	                    onrightclick = "[LegendItem.GetLegend.PanCameraTo]"
+
+	                    button_ignore = none
+
+                        legend_library_entry_vbox = {
+
+                        }
+                    }
+				}
+			}
+		}
+	}
+}
+
+template Legend_Seed_Quality_Colors
+{
+	modify_texture = {
+		visible = "[LegendSeed.HasQuality( 'famed' )]"
+		using = Color_Blue
+		blend_mode = normal
+	}
+	modify_texture = {
+		visible = "[LegendSeed.HasQuality( 'illustrious' )]"
+		using = Color_Intense_Purple
+		blend_mode = normal
+	}
+	modify_texture = {
+		visible = "[LegendSeed.HasQuality( 'mythical' )]"
+		using = Color_Intense_Orange
+		blend_mode = normal
+	}
+}
+
+template Legend_Quality_Colors
+{
+	modify_texture = {
+		visible = "[Legend.HasQuality( 'famed' )]"
+		using = Color_Blue
+		blend_mode = normal
+	}
+	modify_texture = {
+		visible = "[Legend.HasQuality( 'illustrious' )]"
+		using = Color_Intense_Purple
+		blend_mode = normal
+	}
+	modify_texture = {
+		visible = "[Legend.HasQuality( 'mythical' )]"
+		using = Color_Intense_Orange
+		blend_mode = normal
+	}
+}
+
+types LegendSeedTypes
+{
+	type legend_seed_modifiers_hbox = hbox
+	{
+		layoutpolicy_horizontal = expanding
+		layoutpolicy_vertical = expanding
+		margin_top = -2
+
+		icon_modifier_legend_owner = {
+			visible = "[LegendSeed.HasImpactModifiers( 'owner' )]"
+			tooltip = "LEGEND_SEED_OWNER_MODIFIERS_TOOLTIP"
+		}
+
+		icon_modifier_legend_promoter = {
+			visible = "[LegendSeed.HasImpactModifiers( 'promoter' )]"
+			tooltip = "LEGEND_SEED_PROMOTER_MODIFIERS_TOOLTIP"
+		}
+
+		icon_modifier_legend_province_and_county = {
+			visible = "[Or( LegendSeed.HasImpactModifiers( 'province' ), LegendSeed.HasImpactModifiers( 'county' ) )]"
+			tooltip = "LEGEND_SEED_PROVINCE_AND_COUNTY_MODIFIERS_TOOLTIP"
+		}
+
+		expand = {}
+	}
+
+	type legend_seed_cost_hbox = hbox
+	{
+		layoutpolicy_vertical = expanding
+		spacing = 15
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			spacing = -5
+
+			text_label_right = {
+				text = "LEGEND_CREATION_LABEL"
+				margin_left = 10
+				
+				block "text_properties"
+				{
+					layoutpolicy_horizontal = expanding
+					align = right|nobaseline
+					max_width = 100
+				}
+			}
+
+			text_single = {
+				text = "LEGEND_CREATION_COST"
+				
+				block "text_properties"
+				{
+					layoutpolicy_horizontal = expanding
+					align = right|nobaseline
+					max_width = 100
+				}
+			}
+		}
+
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			spacing = -5
+
+			text_label_right = {
+				text = "LEGEND_MAINTENANCE_LABEL"
+				margin_left = 10
+
+				block "text_properties"
+				{
+					layoutpolicy_horizontal = expanding
+					align = right|nobaseline
+					max_width = 150
+				}
+			}
+
+			text_single = {
+				text = "LEGEND_SEED_MAINTENANCE_COST"
+
+				block "text_properties"
+				{
+					layoutpolicy_horizontal = expanding
+					align = right|nobaseline
+					max_width = 150
+				}
+			}
+		}
+	}
+
+	type base_legend_seed_entry_vbox = vbox_generic_object_card
+	{
+		layoutpolicy_horizontal = expanding
+		alwaystransparent = no
+
+		blockoverride "header_properties"
+		{
+			layoutpolicy_horizontal = expanding
+			margin = { 10 10 }
+		}
+
+		blockoverride "header_background_color"
+		{
+			using = Legend_Seed_Quality_Colors
+		}
+
+		blockoverride "header_pre_contents"
+		{
+			icon_legend = {}
+		}
+
+		blockoverride "header_top_contents"
+		{
+			text_single = {
+				block "legend_seed_name"
+				{
+					text = "[LegendSeed.GetName( Character.Self )]"
+				}
+				default_format = "#high"
+				max_width = 380
+
+				using = Font_Size_Medium
+				align = nobaseline
+
+				parentanchor = vcenter|left
+			}
+		}
+
+		blockoverride "header_bottom_contents"
+		{
+			text_single = {
+				text = "[LegendSeed.GetType.GetName]"
+				default_format = "#weak"
+
+				using = Font_Size_Small
+				align = nobaseline
+
+				parentanchor = vcenter|left
+			}
+		}
+
+		blockoverride "header_post_contents"
+		{
+			using = GenericObjectCardDefaultHeaderPostProperties
+
+			text_single  = {
+				text = "[LegendSeed.GetQualityLevel]"
+				default_format = "#weak"
+				align = nobaseline
+			}
+
+			hbox = {
+				spacing = -4
+
+				icon_flat_standard_gold = {
+					visible = "[LegendSeed.HasQuality( 'famed' )]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+				}
+
+				icon_flat_standard_gold = {
+					visible = "[LegendSeed.HasQuality( 'illustrious' )]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+				}
+
+				icon_flat_standard_gold = {
+					visible = "[LegendSeed.HasQuality( 'mythical' )]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+				}
+
+				icon_flat_standard_black = {
+					visible = "[Not(LegendSeed.HasQuality( 'famed' ))]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+
+					glow = {
+						glow_radius = 3
+						using = Glow_Standard
+						using = Color_White
+						alpha = 0.08
+					}
+				}
+
+				icon_flat_standard_black = {
+					visible = "[Not(LegendSeed.HasQuality( 'illustrious' ))]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+
+					glow = {
+						glow_radius = 3
+						using = Glow_Standard
+						using = Color_White
+						alpha = 0.08
+					}
+				}
+
+				icon_flat_standard_black = {
+					visible = "[Not(LegendSeed.HasQuality( 'mythical' ))]"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/legends.dds"
+
+					glow = {
+						glow_radius = 3
+						using = Glow_Standard
+						using = Color_White
+						alpha = 0.08
+					}
+				}
+			}
+		}
+
+		blockoverride "card_contents"
+		{
+			Background = {
+				spriteType = Corneredtiled
+				alpha = 0.15
+				texture = "gfx/interface/colors/gold.dds"
+				using = Mask_Rough_Edges
+
+				modify_texture = {
+					name = "mask"
+					texture = "gfx/interface/component_masks/mask_fade_horizontal_middle_inverse.dds"
+					spriteborder = { 0 0 }
+					blend_mode = alphamultiply
+				}
+
+				modify_texture = {
+					texture = "gfx/interface/component_masks/patterns/mask_pattern_floral.dds"
+					spriteType = Corneredtiled
+					blend_mode = alphamultiply
+					alpha = 0.8
+					texture_density = 2
+				}
+
+				modify_texture = {
+					texture = "gfx/interface/colors/grey.dds"
+					blend_mode = normal
+
+					block "can_not_create"
+					{
+					}
+				}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				margin_left = 20
+				margin_right = 10
+				spacing = 5
+
+				vbox = {
+					spacing = 5
+
+					text_single = {
+						layoutpolicy_horizontal = expanding
+						text = AFFECTING_MODIFIERS_LABEL
+						fontsize = 14
+						align = nobaseline|left
+					}
+
+					legend_seed_modifiers_hbox = {
+						layoutpolicy_horizontal = expanding
+					}
+				}
+
+				expand = {}
+
+				divider_light = {
+					layoutpolicy_vertical = expanding
+					
+					modify_texture = {
+						texture = "gfx/interface/component_masks/mask_fade_horizontal_middle_thick_vertical.dds"
+						blend_mode = alphamultiply
+					}
+				}
+
+				legend_seed_cost_hbox = {}
+
+				widget = {
+					size = { 60 80 }
+
+					block "create_button" {}
+				}
+			}
+		}
+	}
+
+	type create_legend_round_button = button_round
+	{
+		name = legends_button_tutorial_uses_this
+
+		onclick = "[ToggleGameViewData( 'legend_creation', LegendSeed.Self )]"
+		enabled = "[Character.CanCreateLegend( LegendSeed.Self )]"
+
+		tooltip = "CREATE_LEGEND_TOOLTIP"
+		using = tooltip_below
+
+		button_plus = {
+			size = { 80% 80% }
+			parentanchor = center
+			alwaystransparent = yes
+		}
+	}
+
+	type create_triggered_legend_round_button = button_round
+	{
+		name = legends_button_tutorial_uses_this
+
+		onclick = "[ToggleGameViewData( 'legend_creation', TriggeredLegendSeed.Self )]"
+		enabled = "[Character.CanCreateTriggeredLegend( TriggeredLegendSeed.Self )]"
+
+		tooltip = "CREATE_TRIGGERED_LEGEND_TOOLTIP"
+		using = tooltip_below
+
+		button_plus = {
+			parentanchor = center
+			alwaystransparent = yes
+		}
+	}
+
+	type legend_seed_entry_vbox = base_legend_seed_entry_vbox
+	{
+		datacontext = "[LegendSeed.GetType]"
+
+		blockoverride "header_tooltip"
+		{
+			tooltip = "SEED_LEGEND_HEADER_TT"
+		}
+		blockoverride "create_frame"
+		{
+			enabled = "[Character.CanCreateLegend( LegendSeed.Self )]"
+		}
+		blockoverride "can_not_create"
+		{
+			visible = "[Not( Character.CanCreateLegend( LegendSeed.Self ) )]"
+		}
+		blockoverride "create_button"
+		{
+			create_legend_round_button = {
+				parentanchor = right|vcenter
+				position = { -3 0 }
+			}
+		}
+	}
+
+	type triggered_legend_seed_entry_vbox = base_legend_seed_entry_vbox
+	{
+		datacontext = "[TriggeredLegendSeed.GetSeed]"
+		datacontext = "[LegendSeed.GetType]"
+
+		blockoverride "header_tooltip"
+		{
+			tooltip = "TRIGGERED_LEGEND_SEED_HEADER_TT"
+		}
+		blockoverride "legend_seed_name"
+		{
+			text = "[TriggeredLegendSeed.GetName( Character.Self )]"
+		}
+		blockoverride "create_frame"
+		{
+			enabled = "[Character.CanCreateTriggeredLegend( TriggeredLegendSeed.Self )]"
+		}
+		blockoverride "can_not_create"
+		{
+			visible = "[Not( Character.CanCreateTriggeredLegend( TriggeredLegendSeed.Self ) )]"
+		}
+		blockoverride "create_button"
+		{
+			create_triggered_legend_round_button = {
+				parentanchor = right|vcenter
+				position = { -3 0 }
+			}
+		}
+	}
+
+	type legend_seeds_vbox = vbox
+	{
+		layoutpolicy_horizontal = expanding
+		spacing = 4
+
+		using = Create_Resetting_Fold_Out
+
+		datacontext = "[AccessLocalPlayerCachedData]"
+
+		hbox_expandable_toggle_field = {
+			blockoverride "text"
+			{
+				text = "LEGEND_SEEDS"
+			}
+		}
+
+
+		vbox = {
+			visible = "[PdxGuiFoldOut.IsUnfolded]"
+            layoutpolicy_horizontal = expanding
+            margin_left = 5
+
+			text_single = {
+				visible = "[And( IsDataModelEmpty( Character.GetLegendSeeds ), IsDataModelEmpty( LocalPlayerCachedData.GetTriggeredLegendSeeds ) )]"
+				margin_top = 5
+				margin_bottom = 5
+				text = "LEGEND_SEEDS_EMPTY"
+				default_format = "#low;italic"
+			}
+
+			fixedgridbox = {
+				name = "legend_seed_entries"
+				layoutpolicy_horizontal = expanding
+
+				addcolumn = 570
+				addrow = 170
+
+				datamodel = "[Character.GetLegendSeeds]"
+
+				item = {
+					widget = {
+						size = { 570 160 }
+
+						legend_seed_entry_vbox = {
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = expanding
+						}
+					}
+				}
+			}
+
+			fixedgridbox = {
+				name = "triggered_legend_seed_entries"
+				layoutpolicy_horizontal = expanding
+
+				addcolumn = 570
+				addrow = 170
+
+				datamodel = "[LocalPlayerCachedData.GetTriggeredLegendSeeds]"
+
+				item = {
+					widget = {
+						size = { 570 160 }
+						
+						triggered_legend_seed_entry_vbox = {
+							layoutpolicy_horizontal = expanding
+						}
+					}
+				}
+			}
+		}
+	}
+}

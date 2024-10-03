@@ -1,0 +1,302 @@
+﻿types RoyalCourtTypes
+{
+	type widget_inspiration_details = widget
+	{
+		datacontext = "[InspirationsWindow.GetSelectedInspiration]"
+		datacontext = "[Inspiration.GetOwner]"
+		visible = "[InspirationsWindow.HasSelectedInspiration]"
+
+		using = Window_Background_Subwindow
+
+		state = {
+			name = _show
+			using = Animation_FadeIn_Quick
+			using = Sound_WindowShow_Standard
+		}
+
+		state = {
+			name = _hide
+			using = Animation_FadeOut_Quick
+			using = Sound_WindowHide_Standard
+		}
+
+		using = tooltip_above
+
+		vbox = {
+			name = "selected_inspiration"
+			set_parent_size_to_minimum = yes
+			margin = { 4 4 }
+			margin_bottom = 20
+			spacing = 5
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+
+				header_pattern = {
+					layoutpolicy_horizontal = expanding
+
+					blockoverride "header_text"
+					{
+						text = "SELECTED_INSPIRATION_HEADER"
+					}
+
+					blockoverride "button_close"
+					{
+						onclick = "[InspirationsWindow.ClearSelectedInspiration]"
+					}
+
+					blockoverride "button_back"
+					{
+						visible = no
+					}
+				}
+			}
+
+			hbox = {
+				name = "selected_inspiration_data"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin_left = 20
+
+				background = {
+					using = Background_Area
+					layoutpolicy_horizontal = expanding
+					margin_top = 14
+				}
+
+				portrait_shoulders = {
+					name = "inspiration_owner_portrait"
+
+					blockoverride "inspiration_status_icons"
+					{
+					}
+				}
+
+				vbox = {
+					name = "text"
+					layoutpolicy_horizontal = expanding
+					margin_left = 10
+					margin_bottom = 10
+					margin_top = -14
+
+					text_multi = {
+						name = "inspiration_text"
+						min_width = 300
+						max_width = 300
+						autoresize = yes
+						text = "SELECTED_INSPIRATION_TEXT"
+						margin_right = 10
+					}
+
+					spacer = { 
+						size = { 0 6 }
+					}
+
+					hbox = {
+						name = "recuirt_owner"
+						layoutpolicy_horizontal = expanding
+						spacing = 5
+
+						text_single = {
+							text = "[Character.GetRelationToString( RoyalCourtWindow.GetCharacter )]"
+							tooltip = "EXTENDED_RELATIONS_TOOLTIP"
+						}
+
+						button_recruit_character = {}
+
+						warning_icon = {
+							name = "wants_to_leave"
+							visible = "[And( Character.CourtierWantsToLeaveCourt, Not( Character.IsImprisoned))]"
+							size = { 20 20 }
+							tooltip = "[Character.GetCourtierLeaveDescription]"
+						}
+
+						expand = {}
+					}
+
+					text_single = {
+						name = "gold_invested"
+						visible = "[Inspiration.GetSponsor.IsLocalPlayer]"
+						layoutpolicy_horizontal = expanding
+						text = INSPIRATION_INVESTED_GOLD
+					}
+				}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				margin_top = 4
+
+				button_primary = {
+					name = "sponsor_inspiration_tutorial_uses_this"
+					widgetid = "sponsor_inspiration_tutorial_uses_this"
+					text = START_SPONSOR_INSPIRATION
+					visible = "[Not( Inspiration.GetSponsor.IsValid )]"
+
+					enabled = "[Character.IsPlayerInteractionValid( 'fund_inspiration_interaction' )]"
+					onclick = "[Character.OpenPlayerInteraction( 'fund_inspiration_interaction' )]"
+					tooltip = "[Character.GetPlayerInteractionTooltip( 'fund_inspiration_interaction' )]"
+				}
+			}
+
+			vbox = {
+				name = "inspiration_progress"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin_bottom = -8
+				margin_top = -10
+				spacing = 5
+
+				visible = "[Inspiration.GetSponsor.IsValid]"
+
+				text_single = {
+					text = INSPIRATION_IN_PROGRESS
+				}
+
+				progressbar_segmented_chance = {
+					name = "progress_bar"
+					tooltip = "INSPIRATION_ITEM_PROGRESS_TOOLTIP"
+					datamodel = "[GetSegmentedProgressChanceBar( GetDefine( 'NInspiration', 'MAX_PROGRESS' ), GetDefine( 'NInspiration', 'PROGRESS_FRAMES' ), Inspiration.GetProgress, Inspiration.GetProgressChance )]"
+				}
+
+				text_single = {
+					text = INSPIRATION_ESTIMATED_REMAINING
+					tooltip = INSPIRATION_ESTIMATED_TIME_TOOLTIP
+				}
+
+				expand = {
+					layoutpolicy_vertical = expanding
+				}
+			}
+		}
+	}
+
+	type flowcontainer_inspiration_list_item = flowcontainer
+	{
+		button_normal = {
+			datacontext = "[Inspiration.GetOwner]"	
+			size = { 60 60 }
+			tooltip = "TT_INSPIRATION_WIDGET"
+			onclick = "[InspirationsWindow.ToggleInspiration( Inspiration.Self )]"
+			onclick = "[InspirationsWindow.RemoveNewInspiration( Inspiration.Self )]"
+
+			icon = {
+				size = { 60 60 }
+				texture = "gfx/interface/component_masks/mask_circle.dds"
+				visible = "[InspirationsWindow.IsNewInspiration( Inspiration.Self ) ]"
+
+				glow = {
+					glow_radius = 20
+					using = Glow_Standard
+					using = Color_Bright_Yellow
+				}
+
+				using = Animation_Glow_Pulse
+			}
+
+			icon = {
+				texture = "gfx/interface/buttons/button_lifestyles_base.dds"
+				size = { 100% 100% }
+			}
+
+			icon = {
+				visible = "[ObjectsEqual( InspirationsWindow.GetSelectedInspiration, Inspiration.Self )]"
+				texture = "gfx/interface/buttons/button_lifestyles_active_frame.dds"
+				size = { 100% 100% }
+			}
+
+			icon = {
+				name = "progress_frame"
+				texture = "gfx/interface/progressbars/action_progress_frame.dds"
+				size = { 100% 100% }
+				parentanchor = center
+				alpha = 0.5
+			}
+
+			progresspie = {
+				name = "progress"
+				visible = "[And( Inspiration.GetSponsor.IsValid, Not( Inspiration.IsComplete ) )]"
+
+				size = { 52 52 }
+				texture = "gfx/interface/progressbars/action_progress_thin.dds"
+				framesize = { 128 128 }
+				frame = 2
+
+				widgetanchor = center
+				parentanchor = center
+
+				min = 0
+				max = 100
+
+				value = "[Select_float( GreaterThan_int32( Inspiration.GetProgress, '(int32)0' ), CurrentAndMaxToProgressbarValueInt32( Inspiration.GetProgress, GetDefine( 'NInspiration', 'MAX_PROGRESS' ) ), '(float)2' )]"
+			}
+
+			highlight_icon = {
+				texture = "[Inspiration.GetType.GetIcon]"
+				alwaystransparent = yes
+				size = { 45 45 }
+				position = { 1 1 }
+				parentanchor = center
+			}
+		}
+	}
+
+	type flowcontainer_inspirations_list = flowcontainer
+	{
+		name = "inspirations_list"
+		allow_outside = yes
+
+		flowcontainer = {
+			direction = vertical
+			margin_right = 10
+			allow_outside = yes
+
+			widget = {
+				visible = "[RoyalCourtWindow.GetCharacter.IsLocalPlayer]"
+				size = { 50 30 }
+				allow_outside = yes
+
+				text_label_center = {
+					layoutpolicy_horizontal = expanding
+					position = { -14 -4	 }
+					text = "[inspirations|E]"
+					margin = { 18 4 }
+					align = nobaseline
+				}
+			}
+
+			flowcontainer = {
+				direction = vertical
+				visible = "[RoyalCourtWindow.GetCharacter.IsLocalPlayer]"
+				name = "potential_inspirations"
+				datamodel = "[InspirationsWindow.GetPotentialInspirations]"
+				spacing = 5
+
+				item = {
+					flowcontainer_inspiration_list_item = {
+						name = "inspiration_item"
+					}
+				}
+			}
+
+			spacer = {
+				size = { 0 5 }
+			}
+
+			flowcontainer = {
+				direction = vertical
+				name = "sponsored_inspirations"
+				datamodel = "[InspirationsWindow.GetSponsoredInspirations]"
+				spacing = 5
+
+				item = {
+					flowcontainer_inspiration_list_item = {
+						name = "sponsored_item"
+					}
+				}
+			}
+		}
+
+		widget_inspiration_details = {}
+	}
+}

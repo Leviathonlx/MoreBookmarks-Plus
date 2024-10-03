@@ -1,0 +1,203 @@
+margin_widget = {
+    name = "JominiCreditsWindow"
+    parentanchor = vcenter|hcenter
+    size = { 100% 100% }
+    allow_outside = yes
+    alwaystransparent = yes
+    margin = { 150 0 }
+
+    state = {
+        name = _show
+        on_start = "[CreditsWindow.OnSlower]"
+        next = "auto_scrollbar"
+    }
+
+    state = {
+        name = "auto_scrollbar"
+        delay = 1
+        on_finish = "[CreditsWindow.OnTogglePause]"
+    }
+
+    scrollarea = {
+        name = "credits_scroll_area"
+        parentanchor = center
+        size = { 100% 100% }
+
+        scrollbarpolicy_horizontal = always_off
+
+        scrollbar_vertical = {
+            scrollbar = {
+                name = "vertical_scrollbar"
+                wheelstep = 60
+                direction = vertical
+
+                track = {
+                    button = {}
+                }
+
+                slider = {
+                    button = {}
+                }
+
+                dec_button = {
+                    button = {}
+                }
+
+                inc_button = {
+                    button = {}
+                }
+            }
+        }
+
+        scrollwidget = {
+            container = {
+                parentanchor = top|hcenter
+
+                state = {
+                    name = a
+                    next = b
+                    trigger_on_create = yes
+
+                    alpha = 0
+                }
+
+                state = {
+                    name = b
+
+                    delay = 1.5
+                    duration = 2
+                    alpha = 1
+                }
+
+                gridbox_credits_portraits = {
+                    position = { 100 400 }
+                    datamodel = "[GetCreditPortraitsForGroup( 'left' )]"
+
+                    state = {
+                        name = a
+                        next = b
+                        trigger_on_create = yes
+
+                        alpha = 0
+                    }
+
+                    state = {
+                        name = b
+
+                        delay = 4
+                        duration = 2
+                        alpha = 1
+                    }
+                }
+
+                gridbox_credits_portraits = {
+                    position = { 850 700 }
+                    datamodel = "[GetCreditPortraitsForGroup( 'right' )]"
+
+                    state = {
+                        name = a
+                        next = b
+                        trigger_on_create = yes
+
+                        alpha = 0
+                    }
+
+                    state = {
+                        name = b
+
+                        delay = 4
+                        duration = 2
+                        alpha = 1
+                    }
+                }
+
+                # The single textbox that contains the entire credits
+                textbox = {
+                    parentanchor = top|hcenter
+                    position = { -0 100 }
+                    font = StandardGameFont
+                    default_format = "#credits_entries"
+                    align = center
+                    autoresize = yes
+                    multiline = yes
+                    max_width = 1400
+                    text = "[CreditsWindow.GetCredits]"
+                }
+            }
+        }
+    }
+
+    button_tertiary = {
+        visible = "[Not( CreditsWindow.HasReachedEnd )]"
+        name = "toggle_pause_button"
+        parentanchor = bottom|left
+        position = { 0 -20 }
+        size = { 120 25 }
+        text = "[SelectLocalization(CreditsWindow.IsPaused,'CREDITS_CONTINUE','CREDITS_PAUSE')]"
+
+        onclick = "[CreditsWindow.OnTogglePause]"
+    }
+}
+
+types FrontEndCreditsView
+{
+    # This widget is the background, it's added by code magic
+    type JominiFrontEndCreditsView = widget {
+        name = "JominiFrontEndCreditsView"
+        parentanchor = center
+        size = { 1920 1200 }
+
+        state = {
+            name = _show
+            using = Animation_FadeIn_Quick
+        }
+
+        state = {
+            name = _hide
+            using = Animation_FadeOut_Quick
+        }
+
+        background = {
+            texture = "gfx/interface/illustrations/frontend/credits.dds"
+            fittype = centercrop
+        }
+
+        button_primary = {
+            name = "back_button"
+            parentanchor = bottom|left
+            position = { 20 -20 }
+            size = { 120 25 }
+            text = "CREDITS_BACK"
+            shortcut = "close_window"
+            onclick = "[FrontEndCreditsView.OnBack]"
+        }
+    }
+
+    type gridbox_credits_portraits = fixedgridbox {
+        addcolumn = 500
+        addrow = 500
+
+        item = {
+            widget = {
+                size = { 450 450 }
+
+                icon = {
+                    size = { 100% 95% }
+                    texture = "[CreditPortraitData.GetBookmarkPortrait.GetPortrait( 'environment_body', 'camera_body', PdxGetWidgetScreenSize(PdxGuiWidget.Self ) )]"
+
+                    modify_texture = {
+                        texture = "gfx/portraits/portrait_mask_event_letter.dds"
+                        blend_mode = alphamultiply
+                    }
+                }
+
+                text_label_center = {
+                    parentanchor = bottom|hcenter
+                    position = { 0 -50 }
+                    text = "[CreditPortraitData.GetText]"
+                    default_format = "#credits_subheader"
+                }
+            }
+        }
+    }
+}

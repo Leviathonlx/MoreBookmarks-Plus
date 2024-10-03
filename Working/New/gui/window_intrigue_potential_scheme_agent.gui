@@ -1,0 +1,215 @@
+window = {
+	name = "potential_agent_window"
+	position = { -630 110 }
+	movable = no
+	parentanchor = right
+	allow_outside = yes
+	layer = middle
+
+	using = Window_Background_Subwindow
+	using = Window_Size_CharacterList_Small
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+
+		position_x = -630
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+
+		position_x = -590
+	}
+
+	vbox = {
+		margin = { 5 5 }
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text" {
+				text = "POTENTIAL_AGENT_HEADER"
+			}
+
+			blockoverride "button_close" {
+				onclick = "[PotentialAgentWindow.Close]"
+			}
+		}
+
+		text_multi = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			margin_top = 10
+
+			text = "[PotentialAgentWindow.GetAgentSlotType.GetDesc]"
+			max_width = 530
+			max_height = 150
+		}
+
+		vbox_character_list = {
+			datacontext = "[PotentialAgentWindow.GetListItems]"
+			layoutpolicy_vertical = expanding
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "skill_sort_buttons" {}
+
+			blockoverride "item_size" {
+				size = { 480 110 }
+				layoutpolicy_horizontal = expanding
+			}
+
+			blockoverride "container_implementation" {
+				fixedgridbox = {
+					name = "characters_grid"
+					datamodel = "[CharacterSelectionList.GetList]"
+					visible = "[Not(CharacterSelectionList.IsBuildingList)]"
+					addcolumn = 535
+					addrow = 110
+
+					item = {
+						widget_character_list_item = {
+							size = { 515 110 }
+
+							datacontext = "[CharacterListItem.GetCharacter]"
+
+							blockoverride "portrait_button"
+							{
+								grayscale = "[Not(CharacterListItem.IsSelectable)]"
+							}
+
+							blockoverride "widget"
+							{
+								background = {
+									visible = "[Not(CharacterListItem.IsSelectable)]"
+									using = Background_Area
+									margin_bottom = -4
+								}
+							}
+
+							blockoverride "button_content"
+							{
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									layoutpolicy_vertical = expanding
+
+									vbox = {
+										layoutpolicy_horizontal = expanding
+										layoutpolicy_vertical = expanding
+										margin = { 10 5 }
+
+										text_single = {
+											name = "name"
+											layoutpolicy_horizontal = expanding
+											text = "[Character.GetUINameNoTooltip]"
+											max_width = 240
+											using = Font_Size_Medium
+											alwaystransparent = yes
+										}
+
+										text_single = {
+											name = "character_relation"
+											layoutpolicy_horizontal = expanding
+											text = "[Character.GetRelationToString( GetPlayer )]"
+											default_format = "#low"
+											align = left
+											max_width = 240
+											alwaystransparent = yes
+
+											tooltip = "EXTENDED_RELATIONS_TOOLTIP"
+										}
+
+										expand = {}
+
+										hbox = {
+											layoutpolicy_horizontal = expanding
+
+											hbox = {
+												spacing = 10
+
+												### Contribution
+												hbox = {
+													layoutpolicy_horizontal = expanding
+													spacing = 5
+
+													tooltip = "[CharacterListItem.GetText( 'contribution_desc' )]"
+
+													icon = {
+														name = contribution_icon
+														size = { 30 30 }
+														texture = "[PotentialAgentWindow.GetContributionTypeIcon]"
+													}
+
+													text_single = {
+														name = "success"
+														layoutpolicy_horizontal = expanding
+														text = "[Abs_int32( CharacterListItem.GetInt( 'contribution' ) )]"
+														default_format = "#high"
+														using = Font_Size_Medium
+														align = nobaseline
+													}
+												}
+											}
+
+											expand = {}
+
+										}
+									}
+
+									vbox = {
+										datacontext = "[CharacterListItem.GetCharacter]"
+										layoutpolicy_vertical = expanding
+										layoutpolicy_horizontal = expanding
+
+										margin_top = 10
+										margin_bottom = 8
+										margin_right = 10
+
+										# Skills
+										hbox = {
+											name = "skills_grid"
+											layoutpolicy_horizontal = expanding
+
+											expand = {}
+
+											datamodel = "[CharacterListItem.GetSkillItems]"
+
+											item = {
+												widget_skill_item_no_icon = {}
+											}
+										}
+
+										expand = {}
+
+										### Acceptance
+										text_single = {
+											name = "acceptance"
+											layoutpolicy_horizontal = expanding
+
+											text = "[CharacterListItem.GetText( 'acceptance' )]"
+											align = nobaseline|right
+
+											tooltip = "[CharacterListItem.GetText( 'acceptance_desc' )]"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	window_character_filter = {
+		datacontext = "[PotentialAgentWindow.GetListItems]"
+
+		blockoverride "addition_filter" {
+			filter_item = {
+				datacontext = "[CharacterSelectionList.GetFilter('hook_filter')]"
+				layoutpolicy_horizontal = expanding
+			}
+		}
+	}
+}

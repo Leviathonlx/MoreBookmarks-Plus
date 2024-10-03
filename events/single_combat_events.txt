@@ -131,7 +131,7 @@ scripted_trigger house_not_allowed_to_yell_motto_trigger = {
 scripted_trigger rocky_locale_trigger = {
 	OR = {
 		terrain = hills
-		terrain = dry_hills
+		terrain = dry_hills			 
 		terrain = mountains
 		terrain = desert_mountains
 	}
@@ -373,7 +373,7 @@ scripted_effect select_special_tier_move_effect = {
 					OR = {
 						terrain = desert
 						terrain = drylands
-						terrain = savanna
+					    terrain = savanna
 						terrain = oasis
 					}
 				}
@@ -483,7 +483,7 @@ scripted_effect select_special_tier_move_effect = {
 				scope:sc_defender.location = {
 					OR = {
 						terrain = hills
-						terrain = dry_hills
+						terrain = dry_hills 
 						terrain = mountains
 						terrain = desert_mountains	#Technically a desert, but not for single combat purposes.
 						terrain = wetlands
@@ -524,7 +524,7 @@ scripted_effect select_special_tier_move_effect = {
 					OR = {
 						terrain = forest
 						terrain = taiga
-						terrain = high_boreal
+						 terrain = high_boreal  
 					}
 				}
 				# Block special moves twice in a row.
@@ -2227,7 +2227,6 @@ scripted_effect finalise_combat_results_effect = {
 					# And they gotta be warlike.
 					faith = {
 						OR = {
-			 
 							has_doctrine_parameter = warmonger
 							has_doctrine_parameter = conquest_cb_enabled
 							has_doctrine_parameter = invasion_cb_enabled
@@ -2235,9 +2234,7 @@ scripted_effect finalise_combat_results_effect = {
 							has_doctrine_parameter = clergy_can_fight
 							has_doctrine_parameter = cheaper_holy_wars_active
 							has_doctrine_parameter = great_holy_wars_active
-		
 						}
-																	 
 					}
 				}
 				save_scope_value_as = {
@@ -2311,6 +2308,8 @@ scripted_effect finalise_combat_results_effect = {
 						has_nickname = nick_genghis_khan
 					}
 				}
+				has_dlc_feature = legends
+				NOT = { has_game_rule = historical_legends_only }
 			}
 			create_legend_seed = {
 				type = heroic
@@ -5914,9 +5913,12 @@ single_combat.0001 = {
 		trigger = { scope:locale = flag:army_camp }
 		reference = army_camp
 	}
+	override_background = {
+		trigger = { scope:locale = flag:ep2_travel_bridge }
+		reference = ep2_travel_bridge
+	}
 
 	immediate = {
-		location = { save_scope_as = background_terrain_scope }
 		play_music_cue = "mx_cue_combat_stinger"
 		# Generate combat options.
 		select_combat_options_from_pool_effect = yes
@@ -7791,7 +7793,14 @@ single_combat.0001 = {
 
 	#Blade Dance
 	option = {
-		name = single_combat.0001.blade_dance
+		name = {
+			text = single_combat.0001.blade_dance
+			trigger = { is_landed = yes }
+		}
+		name = {
+			text = single_combat.0001.blade_dance_unlanded
+			trigger = { is_landed = no }
+		}
 		trigger = { exists = local_var:combat_move_blade_dance_flag }
 
 		#Move clarification
@@ -8020,13 +8029,10 @@ single_combat.0021 = {
 	immediate = {
 		# Check what round we're at, and reduce the threshold variables as appropriate if we're in a late enough round.
 		## Reduce injury thresholds for both characters.
-		#TODO_CD: we're getting some errors logs in the overnight about the variables here, so this debug-stuff is for error-searching!
-		#debug_log = "single combat variable error-check"
-		#debug_log_scopes = yes
 		if = {
 			limit = { scope:sc_defender.var:current_round = round_injury_bonus_lower }
-			#debug_log = "single combat variable error-check: round_injury_bonus_lower"
-			#debug_log_scopes = yes
+			debug_log = "single combat variable error-check: round_injury_bonus_lower"
+			debug_log_scopes = yes
 			change_variable = {
 				name = sc_attacker_injury_bonus
 				add = round_injury_adjustment_lower
@@ -8040,8 +8046,8 @@ single_combat.0021 = {
 		}
 		if = {
 			limit = { scope:sc_defender.var:current_round = round_injury_bonus_lowest }
-			#debug_log = "single combat variable error-check: round_injury_bonus_lowest"
-			#debug_log_scopes = yes
+			debug_log = "single combat variable error-check: round_injury_bonus_lowest"
+			debug_log_scopes = yes
 			change_variable = {
 				name = sc_attacker_injury_bonus
 				add = round_injury_adjustment_lowest
@@ -8056,8 +8062,8 @@ single_combat.0021 = {
 		## Reduce success threshold.
 		if = {
 			limit = { scope:sc_defender.var:current_round = round_success_threshold_lower }
-			#debug_log = "single combat variable error-check: round_success_threshold_lower"
-			#debug_log_scopes = yes
+			debug_log = "single combat variable error-check: round_success_threshold_lower"
+			debug_log_scopes = yes
 			scope:sc_defender = {
 				change_variable = {
 					name = success_threshold
@@ -8067,8 +8073,8 @@ single_combat.0021 = {
 		}
 		if = {
 			limit = { scope:sc_defender.var:current_round = round_success_threshold_lowest }
-			#debug_log = "single combat variable error-check: round_success_threshold_lowest"
-			#debug_log_scopes = yes
+			debug_log = "single combat variable error-check: round_success_threshold_lowest"
+			debug_log_scopes = yes
 			scope:sc_defender = {
 				change_variable = {
 					name = success_threshold
@@ -8082,6 +8088,8 @@ single_combat.0021 = {
 		if = {
 			limit = {
 				scope:sc_attacker.var:sc_attacker_success_check >= scope:sc_defender.var:success_threshold
+				# Excepting things if the match is fixed.
+				NOT = { scope:fixed = flag:sc_defender }
 			}
 			save_scope_value_as = {
 				name = sc_finished
@@ -8095,9 +8103,11 @@ single_combat.0021 = {
 			}
 		}
 		## Then check scope:sc_defender, performing the same calculation in reverse.
-		if = {
+		else_if = {
 			limit = {
 				scope:sc_defender.var:sc_defender_success_check >= scope:sc_defender.var:success_threshold
+				# Excepting things if the match is fixed.
+				NOT = { scope:fixed = flag:sc_attacker }
 			}
 			save_scope_value_as = {
 				name = sc_finished
@@ -8122,6 +8132,8 @@ single_combat.0021 = {
 			if = {
 				limit = {
 					scope:sc_attacker.var:sc_attacker_injury_risk_check >= scope:sc_attacker.var:sc_attacker_duel_success_score
+					# Excepting things if the match is fixed.
+					NOT = { scope:fixed = flag:sc_defender }
 				}
 				random = {
 					chance = {
@@ -8145,6 +8157,8 @@ single_combat.0021 = {
 			if = {
 				limit = {
 					scope:sc_defender.var:sc_defender_injury_risk_check >= scope:sc_defender.var:sc_defender_duel_success_score
+					# Excepting things if the match is fixed.
+					NOT = { scope:fixed = flag:sc_attacker }
 				}
 				random = {
 					chance = {
@@ -8173,8 +8187,37 @@ single_combat.0021 = {
 		# If we don't, and this round is at or over the round_cap_limit, enter into sudden death.
 		else_if = {
 			limit = { scope:sc_defender.var:current_round >= round_cap_limit }
-			# If scope:sc_attacker has the highest prowess, then they win.
+			# Has the match been fixed?
+			## ... for scope:sc_attacker.
 			if = {
+				limit = { scope:fixed = flag:sc_attacker }
+				save_scope_value_as = {
+					name = sc_finished
+					value = yes
+				}
+				scope:sc_attacker = { save_scope_as = sc_victor }
+				scope:sc_defender = { save_scope_as = sc_loser }
+				save_scope_value_as = {
+					name = victory_type
+					value = flag:sudden_death
+				}
+			}
+			## ... for scope:sc_defender.
+			else_if = {
+				limit = { scope:fixed = flag:sc_defender }
+				save_scope_value_as = {
+					name = sc_finished
+					value = yes
+				}
+				scope:sc_defender = { save_scope_as = sc_victor }
+				scope:sc_attacker = { save_scope_as = sc_loser }
+				save_scope_value_as = {
+					name = victory_type
+					value = flag:sudden_death
+				}
+			}
+			# If scope:sc_attacker has the highest prowess, then they win.
+			else_if = {
 				limit = { scope:sc_attacker.prowess > scope:sc_defender.prowess }
 				save_scope_value_as = {
 					name = sc_finished
@@ -9576,7 +9619,6 @@ single_combat.0031 = {
 	}
 
 	immediate = {
-		location = { save_scope_as = background_terrain_scope }
 		#Death/wounding enacted elsewhere.
 		if = {
 			limit = { duel_will_end_in_my_death_trigger = yes }
@@ -9603,19 +9645,9 @@ single_combat.0031 = {
 			add_trait_xp = {
 				trait = tourney_participant
 				track = foot
-				value = tournament_hastiludes_xp_gain_miniscule_value #Unop: was hardcoded to used { 1 3 } but exist as a value
+				value = { 1 3 }
 			}
 		}
-
-		#Unop: Add some xp to blademaster when doing a duel
-		if = {
-			limit = { has_trait = lifestyle_blademaster }
-			add_trait_xp = {
-				trait = lifestyle_blademaster
-				value = lifestyle_blademaster_xp_gain_miniscule_value
-			}
-		}
-
 		#Acknowledge loss of temporary combat modifiers.
 		custom_tooltip = single_combat.result.tt.temporary_modifiers_removed
 		# Damage equipped artifacts for loser
@@ -11127,6 +11159,10 @@ single_combat.0041 = {
 	}
 	right_portrait = {
 		character = scope:sc_loser
+		triggered_animation = {
+			trigger = { is_alive = no }
+			animation = loss_1
+		}
 		animation = fear
 	}
 	# Background Logic
@@ -11192,7 +11228,6 @@ single_combat.0041 = {
 	}
 
 	immediate = {
-		location = { save_scope_as = background_terrain_scope }
 		#Death/wounding enacted elsewhere.
 		if = {
 			limit = {
@@ -11237,6 +11272,21 @@ single_combat.0041 = {
 				value = tournament_hastiludes_xp_gain_minor_value
 			}
 		}
+
+		# Add Hereward killing a Norman XP
+		if = {
+			limit = { 
+				has_trait = the_wake 
+				scope:sc_loser = {
+					culture = culture:norman
+				}
+			}
+			add_trait_xp = {
+				trait = the_wake
+				value = { 5 10 }
+			}
+		}
+
 		# Damage equipped artifacts
 		may_damage_artifact_effect = {
 			TYPE = primary_armament
@@ -11413,6 +11463,24 @@ single_combat.1003 = {
 				name = fatality
 				value = flag:always
 			}
+		}
+		# Match fixing flags
+		hidden_effect = {
+			save_scope_value_as = {
+				name = fixed
+				value = flag:sc_attacker
+			}
+			save_scope_value_as = {
+				name = fixed
+				value = flag:sc_defender
+			}
+		}
+		if = {
+			limit = {
+				scope:fixed = flag:sc_attacker
+				scope:fixed = flag:sc_defender
+			}
+			# Nothing.
 		}
 		# Background flags
 		hidden_effect = {

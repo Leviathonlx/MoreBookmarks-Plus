@@ -91,45 +91,7 @@ window = {
 					}
 				}
 			}
-
-			buttons_window_control = {
-				parentanchor = top|right
-
-				blockoverride "button_close"
-				{
-					onclick = "[CharacterWindow.Close]"
-				}
-
-				blockoverride "button_back"
-				{
-					visible = "[HasViewHistory]"
-					onclick = "[OpenFromViewHistory]"
-					tooltip = "[GetViewHistoryTooltip]"
-				}
-
-				blockoverride "button_me"
-				{
-					visible = "[Not(Character.IsLocalPlayer)]"
-					onclick = "[DefaultOnCharacterClick(GetPlayer.GetID)]"
-				}
-
-				blockoverride "button_pin" {}
-				
-				background = {
-					using = Background_Area_Solid
-					modify_texture = {
-						name = "mask"
-						texture = "gfx/interface/component_masks/mask_fade_horizontal_middle_thick.dds"
-						spriteType = Corneredstretched
-						spriteborder = { 0 0 }
-						blend_mode = alphamultiply
-					}
-					alpha = 0.7
-					margin_left = 30
-					margin_right = 30
-				}
-			}
-
+			
 			### Primary Spouse
 			container_secondary = {
 				visible = "[CharacterWindow.ShouldShowSecondary]"
@@ -150,29 +112,77 @@ window = {
 						size = { 20 20 }
 					}
 				}
-
-				# icon_button_small_round = {
-				# 	name = "interact_button"
-				# 	visible = "[Character.IsAlive]"
-				# 	parentanchor = bottom|right
-				# 	position = { -30 0 }
-				# 	size = { 35 35 }
-
-				# 	onclick = "[DefaultOnCharacterRightClick(Character.GetID)]"
-
-				# 	tooltip = "CV_TT_INTERACT"
-				# 	using = tooltip_ne
-
-				# 	icon = {
-				# 		name = "icon"
-				# 		texture = "gfx/interface/prototype/interact_temp.png"
-				# 		size = {18 18}
-				# 		parentanchor = center
-				# 	}
-				# }
 			}
 
-			expand = {}
+			secondary_widget = {
+				visible = "[CharacterWindow.ShouldShowSecondary]"
+				position = { 250 0 }
+			}
+
+			buttons_window_control = {
+			
+			blockoverride "extra_buttons"
+				{
+					icon = {
+						visible = "[And( InDebugMode, Not( Character.AccessDenied ) )]"
+						size = { 30 30 }
+						texture = "gfx/interface/icons/icon_group_of_characters.dds"
+						tooltip = "CHARACTER_AI_VALUES_DEBUG_TOOLTIP"
+					}
+
+					button_copy = {
+						visible = "[And( InDebugMode, Not( Character.AccessDenied ) )]"
+						size = { 30 30 }
+						onclick = "[Character.CopyCharacterDna]"
+						raw_tooltip = "Copy DNA"
+					}
+
+					button_copy = {
+						visible = "[And( InDebugMode, Not( Character.AccessDenied ) )]"
+						size = { 30 30 }
+						onclick = "[Character.CopyCharacterPersistentDna]"
+						raw_tooltip = "Copy Persistent DNA"
+					}
+				}
+				
+				parentanchor = top|right
+
+				blockoverride "button_close"
+				{
+					onclick = "[CharacterWindow.Close]"
+				}
+
+				blockoverride "button_back"
+				{
+					visible = "[HasViewHistory]"
+					onclick = "[OpenFromViewHistory]"
+					tooltip = "[GetViewHistoryTooltip]"
+				}
+
+				blockoverride "button_me"
+				{
+					visible = "[Not(Character.IsLocalPlayer)]"
+					onclick = "[DefaultOnCharacterClick(GetPlayer.GetID)]"
+				}
+
+				blockoverride "button_pin" {
+					visible = "[Not( Character.AccessDenied )]"
+				}
+				
+				background = {
+					using = Background_Area_Solid
+					modify_texture = {
+						name = "mask"
+						texture = "gfx/interface/component_masks/mask_fade_horizontal_middle_thick.dds"
+						spriteType = Corneredstretched
+						spriteborder = { 0 0 }
+						blend_mode = alphamultiply
+					}
+					alpha = 0.7
+					margin_left = 30
+					margin_right = 30
+				}
+			}
 
 			hbox = {
 				margin_top = 50
@@ -569,45 +579,70 @@ window = {
 			}
 
 			### DEBUG STUFF, please make sure those are visible and usable, especially the watch button, type "watch" into the console to show it
-			flowcontainer = { #UniUI fix for EPE in here
+			widget = {
 				name = "debug_buttons"
+				size = { 200 50 }
 				parentanchor = top|left
-				position = { 200 20 }
-				ignoreinvisible = yes
+				position = { 175 20 }
 				visible = "[InDebugMode]"
+				allow_outside = yes
 
 				# Debug personality
-				text_single = {
-					tooltip = "CHARACTER_AI_VALUES_DEBUG_TOOLTIP"
-					raw_text = "#D AIValue#!"
-					align = nobaseline
-				}
+				vbox = {
+					hbox = {
+						spacing = 15
+						#text_single = {
+						#	visible = "[AIWatchWindowsEnabled]"
+						#	text = "test_difficulty"
+						#	align = nobaseline
+						#	using = Background_Full_Dim
+						#	tooltipwidget = {
+						#		scripted_score_breakdown_tooltip = {
+						#			blockoverride "breakdown_datacontext"
+						#			{
+						#				datacontext = "[Character.GetDestinyScriptedValueBreakdown( 'character_difficulty_value', GetPlayer, GetPlayer.GetPlayerHeir )]"
+						#			}
+						#
+						#			blockoverride "header_text" {
+						#				raw_text = "Difficulty Breakdown"
+						#			}
+						#		}
+						#	}
+						#}
+						#text_single = {
+						#	visible = "[AIWatchWindowsEnabled]"
+						#	text = "test_interest"
+						#	align = nobaseline
+						#	using = Background_Full_Dim
+						#	tooltipwidget = {
+						#		scripted_score_breakdown_tooltip = {
+						#			blockoverride "breakdown_datacontext"
+						#			{
+						#				datacontext = "[Character.GetDestinyScriptedValueBreakdown( 'destiny_score_interest', GetPlayer, GetPlayer.GetPlayerHeir )]"
+						#			}
+						#
+						#			blockoverride "header_text" {
+						#				raw_text = "Interest Breakdown"
+						#			}
+						#		}
+						#	}
+						#}
+						button = {
+							using = editor_button
+							name = "ai_watch_button"
+							size = { 80 20 }
+							raw_text = "AI Watch"
+							align = center|nobaseline
+							onclick = "[CharacterWindow.OnAIWatch]"
+							visible = "[AIWatchWindowsEnabled]"
+							fontcolor = { 1.0 1.0 1.0 1.0 }
+						}
 
-				button = {
-					using = editor_button
-					name = "ai_watch_button"
-					size = { 60 40 }
-					raw_text = "AI Watch"
-					align = center|nobaseline
-					onclick = "[CharacterWindow.OnAIWatch]"
-					visible = "[AIWatchWindowsEnabled]"
-					fontcolor = { 1.0 1.0 1.0 1.0 }
-				}
-
-				watch_window_button = {
-					size = { 60 40 }
-					onclick = "[AddWatchWindow( CharacterWindow.GetCharacter.MakeScope )]"
-				}
-
-				button = {
-					using = editor_button
-					name = "copy_portrait_button"
-					size = { 60 40 }
-					raw_text = "portrait"
-					align = center|nobaseline
-					onclick = "[ExecuteConsoleCommand('pe')]"
-					onclick = "[CharacterWindow.OnCopyPortrait]"
-					fontcolor = { 1.0 1.0 1.0 1.0 }
+						watch_window_button = {
+							size = { 60 40 }
+							onclick = "[AddWatchWindow( CharacterWindow.GetCharacter.MakeScope )]"
+						}
+					}
 				}
 			}
 
@@ -1152,6 +1187,28 @@ window = {
 											text = "[CharacterWindow.GetCharacter.GetProwess|0]"
 											align = nobaseline
 										}
+									}
+								}
+								
+								vbox = {
+									tooltip = "ADMIN_WINDOW_THEME_GOVERNOR_EFFICIENCY_TT"
+									using = tooltip_ne
+									spacing = -3
+									visible = "[Or( Character.GetGovernment.HasRule( 'administrative' ), And( And( Not( Character.HasLandedTitles ), Not( Character.HasLiege ) ), GetPlayer.GetGovernment.HasRule( 'administrative' ) ) )]"
+									margin_right = 3
+		
+									using = Animation_Character_Window_Refresh
+		
+									icon = {
+										name = "char_governor_efficiency_icon"
+										size = { 32 32 }
+										texture = "gfx/interface/icons/icon_skill_governor_efficiency.dds"
+									}
+		
+									text_single = {
+										name = "char_governor_efficiency_value"
+										text = "ADMIN_WINDOW_THEME_GOVERNOR_EFFICIENCY_VALUE"
+										align = nobaseline
 									}
 								}
 		
@@ -2083,7 +2140,7 @@ window = {
 				button_tab = {
 					name = "vassals_button"
 					datacontext = "[CharacterWindow.GetCharacter]"
-					visible = "[Character.IsRuler]"
+					visible = "[And( Character.IsRuler, Not( IsLandlessAdventurer( Character ) ) )]"
 					#	visible = "[And(Character.IsRuler, Not(Character.IsPlayer))]"
 					layoutpolicy_horizontal = expanding
 
@@ -2537,7 +2594,7 @@ window = {
 
 					vbox = {
 						name = "relations_main_view"
-						visible = "[Not(CharacterWindow.AreRelationsExpanded( 'friends', 'rivals', 'lovers' ) ) ]"
+						visible = "[And(Not(CharacterWindow.AreRelationsExpanded( 'friends', 'rivals', 'lovers') ), Not(CharacterWindow.IsRelationExpanded('grudges'))) ]"
 
 						widget = {
 							name = "first_row"
@@ -2649,7 +2706,7 @@ window = {
 									blockoverride "minimum_width" {}
 	
 									blockoverride "gridbox" {
-										portrait_head_small_relationship = {
+										portrait_head_small = {
 	
 											blockoverride "portrait_button"
 											{
@@ -2920,7 +2977,7 @@ window = {
 									}
 								}
 
-								vbox_character_row_item = {
+								vbox_character_row_relationship_item = {
 									name = "bullies"
 									visible = "[Not( CharacterWindow.GetCharacter.IsAdult )]"
 									layoutpolicy_vertical = expanding
@@ -2938,7 +2995,7 @@ window = {
 									blockoverride "expand_button" {}
 								}
 
-								vbox_character_row_item = {
+								vbox_character_row_relationship_item = {
 									name = "victims"
 									visible = "[Not( CharacterWindow.GetCharacter.IsAdult )]"
 									layoutpolicy_vertical = expanding
@@ -2955,6 +3012,32 @@ window = {
 
 									blockoverride "expand_button" {}
 								}
+								
+								vbox_character_row_relationship_item = {
+								name = "grudges"
+								visible = "[GreaterThanOrEqualTo_int32(GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'grudge' ) )), '(int32)1')]"
+								layoutpolicy_vertical = expanding
+
+								blockoverride "portrait_datamodel" {
+									datamodel = "[DataModelFirst(CharacterWindow.GetRelationsOfType( GetRelation( 'grudge' ) ), '(int32)2')]"
+								}
+
+								blockoverride "header_text"
+								{
+									text = "GRUDGES_LABEL"
+								}
+
+								blockoverride "remaining_items"
+								{
+									visible = "[GreaterThan_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'grudge' ) )), '(int32)2' )]"
+									text = "[GetNumberAbove_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'grudge' ) )), '(int32)2' )|=]"
+								}
+
+								blockoverride "expand_button_inside" {
+									visible = "[GreaterThan_int32( GetDataModelSize(CharacterWindow.GetRelationsOfType( GetRelation( 'grudge' ) )), '(int32)2' )]"
+									onclick = "[CharacterWindow.ToggleExpandedRelation( 'grudges' )]"
+								}
+							}
 
 								expand = {}
 							}
@@ -3056,6 +3139,38 @@ window = {
 							}
 						}
 					}
+					
+					### GRUDGES EXPANDED
+					scrollbox = {
+						name = "grudges_expanded"
+						visible = "[CharacterWindow.IsRelationExpanded( 'grudges' )]"
+						size = { 100% 100% }
+	
+						blockoverride "scrollbox_replace_vbox" {
+							vbox_character_row_relationship_item = {
+								name = "grudges"
+								margin_top = 10
+								spacing = 5
+	
+								blockoverride "portrait_datamodel" {
+									datamodel = "[CharacterWindow.GetRelationsOfType( GetRelation( 'grudge' ) )]"
+								}
+	
+								blockoverride "header_text"
+								{
+									text = "GRUDGES_LABEL"
+								}
+	
+								blockoverride "expand_button_inside" {
+									onclick = "[CharacterWindow.ToggleExpandedRelation( 'grudges' )]"
+									down = "[CharacterWindow.IsRelationExpanded( 'grudges' )]"
+								}
+	
+								blockoverride "gridbox_slots" {}
+							}
+						}
+					}
+				
 				}
 
 				####################################
@@ -4509,6 +4624,7 @@ window = {
 						}
 
 						item = {
+						block "portrait_head_widget" {
 							portrait_head_small = {
 								blockoverride "portrait_button"
 								{
@@ -4520,6 +4636,7 @@ window = {
 								}
 							}
 						}
+					}
 					}
 				}
 
@@ -5194,107 +5311,403 @@ window = {
 				}
 	
 				state = {
-					using = Animation_Refresh_FadeIn
+				using = Animation_Refresh_FadeIn
+			}
+		}
+
+
+	}
+
+	type secondary_widget = widget {
+		parentanchor = bottom
+		allow_outside = yes
+		position = { 93 0 }
+		size = { 182 60 }
+		datacontext = "[CharacterWindow.GetSecondaryCharater]"
+		visible = "[Not( GreaterThan_CFixedPoint( GetPlayer.MakeScope.Var('hide_ui_spouse').GetValue, '(CFixedPoint)0' ) )]"
+		using = Animation_ShowHide_Standard
+
+		flowcontainer = {
+			parentanchor = bottom
+			widgetanchor = bottom|left
+			position = { 33 -3 }
+			ignoreinvisible = yes
+																													   
+									  
+
+			flowcontainer = {
+				direction = vertical
+				parentanchor = bottom
+							  
+						
+						 
+
+				portrait_opinion = {
+					block "portrait_opinion" {}
+				}
+
+				flowcontainer = {
+					ignoreinvisible = yes
+						  
+
+					text_label_center = {
+						text = "[CharacterWindow.GetSecondaryText]"
+						max_width = 120
+						align = nobaseline
+					}
+
+					flowcontainer = {
+						visible = "[Or( CharacterWindow.HasPreviousSecondary, CharacterWindow.HasNextSecondary )]"
+						margin_bottom = 4
+						spacing = -5
+						parentanchor = bottom
+
+						using = Animation_ShowHide_Standard
+
+						button_expand = {
+							enabled = "[CharacterWindow.HasPreviousSecondary]"
+							onclick = "[CharacterWindow.PreviousSecondary]"
+							onclick = "[PdxGuiTriggerAllAnimations( 'cw_spouse_cycle' )]"
+							tooltip = "[CharacterWindow.GetPreviousSecondaryTooltip]"
+							mirror = horizontal
+						}
+
+						button_expand = {
+							enabled = "[CharacterWindow.HasNextSecondary]"
+							onclick = "[CharacterWindow.NextSecondary]"
+							onclick = "[PdxGuiTriggerAllAnimations( 'cw_spouse_cycle' )]"
+							tooltip = "[CharacterWindow.GetNextSecondaryTooltip]"
+						}
+					}
 				}
 			}
-	
-			widget = {
-				parentanchor = bottom
-				allow_outside = yes
-				position = { 93 0 }
-				size = { 182 60 }
-	
-				flowcontainer = {
+
+			flowcontainer = {
+				parentanchor = vcenter
+
+				coa_realm_small = {
+					visible = "[Character.HasLandedTitles]"
+					using = Animation_ShowHide_Standard
 					parentanchor = bottom
-					widgetanchor = bottom|left
-					position = { 33 -3 }
-					ignoreinvisible = yes
-	
-					flowcontainer = {
-						direction = vertical
-						parentanchor = bottom
-	
-						portrait_opinion = {
-							block "portrait_opinion" {}
-						}
-	
-						flowcontainer = {
-							ignoreinvisible = yes
-	
-							text_label_center = {
-								text = "[CharacterWindow.GetSecondaryText]"
-								max_width = 120
-								align = nobaseline
-							}
-	
-							flowcontainer = {
-								visible = "[Or( CharacterWindow.HasPreviousSecondary, CharacterWindow.HasNextSecondary )]"
-								margin_bottom = 4
-								spacing = -5
-								parentanchor = bottom
-	
-								using = Animation_ShowHide_Standard
-	
-								button_expand = {
-									enabled = "[CharacterWindow.HasPreviousSecondary]"
-									onclick = "[CharacterWindow.PreviousSecondary]"
-									onclick = "[PdxGuiTriggerAllAnimations( 'cw_spouse_cycle' )]"
-									tooltip = "[CharacterWindow.GetPreviousSecondaryTooltip]"
-									mirror = horizontal
-								}
-	
-								button_expand = {
-									enabled = "[CharacterWindow.HasNextSecondary]"
-									onclick = "[CharacterWindow.NextSecondary]"
-									onclick = "[PdxGuiTriggerAllAnimations( 'cw_spouse_cycle' )]"
-									tooltip = "[CharacterWindow.GetNextSecondaryTooltip]"
-								}
-							}
-						}
-					}
-	
-					flowcontainer = {
-						parentanchor = vcenter
-	
-						coa_realm_small = {
-							visible = "[Character.HasLandedTitles]"
-							using = Animation_ShowHide_Standard
-							parentanchor = bottom
-						}
-	
-						portrait_status_icons = {
-							parentanchor = bottom
-							margin_bottom = 2
-						}
-					}
+																 
+						   
 				}
-				
-				icon = {
-					name = "diarchy_active_icon"
-					visible = "[And(CharacterWindow.GetCharacter.HasActiveDiarchy, Not(CharacterWindow.ShowMarriageIcon))]"
+
+				portrait_status_icons = {
 					parentanchor = bottom
-					position = { 0 -3 }
-					size = { 30 30 }
-					texture = "gfx/interface/icons/scale_of_power.dds"
-					tooltip = IN_ACTIVE_DIARCHY
-					using = tooltip_below
-				}
-	
-				icon = {
-					name = "marriage_type_icon"
-					visible = "[CharacterWindow.ShowMarriageIcon]"
-					parentanchor = bottom
-					position = { 0 -3 }
-					size = { 30 30 }
-					framesize = { 60 60 }
-					texture = "gfx/interface/icons/marriage_types.dds"
-					frame = "[CharacterWindow.GetMarriageIcon]"
-					tooltip = "[CharacterWindow.GetMarriageIconTooltip]"
-					using = tooltip_below
+					margin_bottom = 2
+																	 
+															 
+		
+	   
+	  
 				}
 			}
 		}
+
+		icon = {
+			name = "diarchy_active_icon"
+			visible = "[And(CharacterWindow.GetCharacter.HasActiveDiarchy, Not(CharacterWindow.ShowMarriageIcon))]"
+			parentanchor = bottom
+			position = { 0 -3 }
+			size = { 30 30 }
+			texture = "gfx/interface/icons/scale_of_power.dds"
+			tooltip = IN_ACTIVE_DIARCHY
+			using = tooltip_below
+		}
+
+		icon = {
+			name = "marriage_type_icon"
+			visible = "[CharacterWindow.ShowMarriageIcon]"
+			parentanchor = bottom
+			position = { 0 -3 }
+			size = { 30 30 }
+			framesize = { 60 60 }
+			texture = "gfx/interface/icons/marriage_types.dds"
+			frame = "[CharacterWindow.GetMarriageIcon]"
+			tooltip = "[CharacterWindow.GetMarriageIconTooltip]"
+			using = tooltip_below
+		}
 	}
+
+	type hbox_character_view_secondary_stats_bar = hbox {
+		name = "character_view_secondary_stats_bar"
+		visible = "[Character.IsAlive]"
+		spacing = 8
+		margin_bottom = 6
+		margin_top = 3
+		margin_left = 1
+
+		layoutpolicy_horizontal = expanding
+
+		background = {
+			using = Background_Area_Dark
+			margin_left = 5
+		}
+
+		#Gold
+		widget = {
+			size = { 72 32 }
+
+			hbox = {
+				expand = {}
+
+				tooltip = "[Character.GetGoldTooltipWithBalance]"
+
+				icon = {
+					name = "icon_gold"
+					size = { 30 30 }
+					texture = "gfx/interface/icons/icon_gold.dds"
+				}
+
+				text_single = {
+					name = "total_gold"
+					text = "[Character.GetGold|0]"
+					default_format = "#high"
+					align = center|nobaseline
+					fontsize_min = 12
+					max_width = 50
+				}
+
+				expand = {}
+			}
+		}
+
+		#Prestige
+		widget = {
+			size = { 72 32 }
+
+			hbox = {
+				spacing = 2
+
+				tooltip = "[Character.GetPrestigeTooltipWithBalance]"
+
+				divider_light = {
+					layoutpolicy_vertical = expanding
+				}
+
+				expand = {}
+
+				icon = {
+					name = "icon_prestige"
+					size = { 30 30 }
+					texture = "[Character.GetPrestigeLevelTexture]"
+				}
+
+				text_single = {
+					name = "prestige"
+					text = "[Character.GetPrestige|0]"
+					default_format = "#high"
+					align = center|nobaseline
+					fontsize_min = 12
+					max_width = 50
+				}
+
+				expand = {}
+			}
+		}
+
+		#Piety
+		widget = {
+			size = { 72 32 }
+
+			hbox = {
+
+				tooltip = "[Character.GetPietyTooltipWithBalance]"
+
+				divider_light = {
+					layoutpolicy_vertical = expanding
+				}
+
+				expand = {}
+
+				icon = {
+					name = "icon_piety"
+					size = { 30 30 }
+					texture = "[Character.GetPietyLevelTexture]"
+				}
+
+				text_single = {
+					name = "piety"
+					text = "[Character.GetPiety|0]"
+					default_format = "#high"
+					align = center|nobaseline
+					fontsize_min = 12
+					max_width = 50
+				}
+
+				expand = {}
+			}
+		}
+
+		#Influence
+		widget = {
+			size = { 72 32 }
+
+			hbox = {
+				visible = "[Character.GetGovernment.HasRule( 'administrative' )]"
+
+				tooltip = "[Character.GetInfluenceTooltipWithBalance]"
+
+				divider_light = {
+					layoutpolicy_vertical = expanding
+				}
+
+				expand = {}
+
+				icon = {
+					name = "icon_influence"
+					size = { 30 30 }
+					texture = "[Character.GetInfluenceLevelTexture]"
+				}
+
+				text_single = {
+					name = "influence"
+					text = "[Character.GetInfluence|0]"
+					default_format = "#high"
+					align = center|nobaseline
+					fontsize_min = 12
+					max_width = 50
+				}
+
+				expand = {}
+			}
+		}
+
+		#Legitimacy
+		widget = {
+			layoutpolicy_vertical = expanding
+			size = { 72 32 }
+
+			datacontext = "[Character.GetLegitimacyType]"
+			datacontext = "[Character.GetLegitimacyLevel]"
+
+			using = tooltip_ne
+
+			hbox = {
+				visible = "[And(LegitimacyType.IsValid, Character.GetGovernment.HasRule( 'legitimacy' ))]"
+
+				tooltipwidget = {
+					legitimacy_hud_tooltip = {
+						datacontext = "[CharacterWindow.GetLegitimacyBar]"
+					}
+				}
+
+				divider_light = {
+					layoutpolicy_vertical = expanding
+				}
+
+				expand = {}
+
+				icon = {
+					size = { 32 32 }
+
+					texture = "gfx/interface/icons/legitimacy_level_icon.dds"
+					framesize = { 70 70 }
+					frame = "[IntToFrameIndex( LegitimacyLevel.GetIndex )]"
+				}
+
+				text_single = {
+					text = CHARACTER_WINDOW_LEGITIMACY_LEVEL
+					align = nobaseline
+				}
+
+				expand = {}
+			}
+		}
+
+		#Dread
+		widget = {
+			size = { 72 32 }
+
+			hbox = {
+				visible = "[Character.HasLandedTitles]"
+
+				tooltip = "[Character.GetDreadBreakdown]"
+
+				divider_light = {
+					layoutpolicy_vertical = expanding
+				}
+
+				expand = {}
+
+				icon = {
+					name = "dread_icon"
+					size = { 30 30 }
+					texture = "gfx/interface/icons/icon_dread.dds"
+				}
+
+				text_single = {
+					name = "total_dread"
+					text = "[Character.GetDread|0]"
+					default_format = "#high"
+					align = center|nobaseline
+					fontsize_min = 12
+					max_width = 50
+				}
+
+				expand = {}
+			}
+		}
+
+		divider_light = {
+			visible = "[Character.HasLandedTitles]"
+			layoutpolicy_vertical = expanding
+		}
+
+		widget = {
+			tooltip = "[CharacterWindow.GetMilitaryStrengthTooltip]"
+			size = { 72 32 }
+
+			hbox = {
+				visible = "[Character.HasLandedTitles]"
+				spacing = 2
+
+				expand = {}
+
+				icon = {
+					name = "icon_combat_strength"
+					size = { 30 30 }
+					texture = "gfx/interface/icons/icon_soldier.dds"
+				}
+
+				text_single = {
+					name = "military_total_strength"
+					text = "[CharacterWindow.GetCachedMilitaryStrengthText]"
+					default_format = "#high"
+					align = center|nobaseline
+					fontsize_min = 12
+					max_width = 80
+
+					progressbar_standard = {
+						name = "soldiers_max"
+						visible = "[NotEqualTo_int32(CharacterWindow.GetMaxSoldiers, '(int32)0')]"
+						parentanchor = bottom|hcenter
+						position = { 0 5 }
+						size = { 33 8 }
+						min = 0
+						max = "[IntToFloat(CharacterWindow.GetMaxSoldiers)]"
+						value = "[IntToFloat(CharacterWindow.GetCurrentSoldiers)]"
+					}
+				}
+
+				expand = {}
+			}
+		}
+
+		expand = {}
+	}
+}
+
+template Background_Area_Titles
+{
+	texture = "gfx/interface/component_masks/mask_rough_edges.dds"
+	spriteType = Corneredtiled
+	spriteborder = { 20 20 }
+	color = { 0 0 0 0.3 }
+	texture_density = 2
+}
+
 
 	template Animation_Character_Window_Refresh
 	{
