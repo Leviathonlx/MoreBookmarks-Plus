@@ -1,0 +1,623 @@
+﻿
+#There is currently an issue making all NPC thinking they cannot equip the artifact (https://forum.paradoxplaza.com/forum/threads/game-claims-artifact-is-useless-to-recipient-when-its-not.1583999/)
+
+unop_can_equip_artifact_trigger = {
+	trigger_if = {
+		limit = {
+			$ARTIFACT$ = {
+				OR = {
+					# child_toy_template
+					has_variable = playdate_trinket
+					has_variable = miniature_collection_tiny_chest
+					has_variable = miniature_collection_tiny_sculpture
+					has_variable = miniature_collection_tiny_cabinet
+					has_variable = miniature_collection_tiny_throne
+					has_variable = miniature_collection_tiny_box
+				}
+			}
+		}
+		age < 16
+	}
+	trigger_else_if = {
+		limit = {
+			$ARTIFACT$ = {
+				OR = {
+					# adults_only_template: cuckoldry_psalter
+					AND = {
+						has_variable = cursed_artifact
+						has_variable = ai_to_ai_destroy_in_sieges
+						has_artifact_modifier = artifact_monthly_prestige_penalty_modifier
+						has_artifact_modifier = artifact_attraction_opinion_negative_1_modifier
+					}
+					# adults_only_template: chastity_belt
+					AND = {
+						has_variable = cursed_artifact
+						has_variable = ai_to_ai_destroy_in_sieges
+						has_artifact_modifier = artifact_fertility_negative_modifier
+					}
+					# adults_only_template: worm_on_a_string
+					AND = {
+						has_variable = cursed_artifact
+						has_variable = ai_to_ai_destroy_in_sieges
+						has_artifact_modifier = artifact_attraction_opinion_negative_2_modifier
+						has_artifact_modifier = artifact_child_opinion_1_modifier
+					}
+				}
+			}
+		}
+		age > 18
+	}
+	trigger_else_if = {
+		limit = {
+			$ARTIFACT$ = {
+				has_variable = statue_religion
+			}
+		}
+		religion = $ARTIFACT$.var:statue_religion
+	}
+	trigger_else_if = {
+		limit = {
+			$ARTIFACT$ = {
+				has_variable = saint_bone_faith
+			}
+		}
+		$ARTIFACT$ = { save_temporary_scope_as = artifact }
+		saintly_bones_faith_trigger = yes
+	}
+	trigger_else_if = {
+		limit = {
+			$ARTIFACT$ = {
+				category = court
+			}
+		}
+		has_royal_court = yes
+	}
+	trigger_else = {
+		# For other artifact templates it's currently either always equippable
+		# or can_equip is the same as can_benefit
+		always = yes
+	}
+}
+
+unop_player_have_valid_heir_trigger = {
+    is_ai = no
+    AND = {
+        exists = player_heir
+        trigger_if = {
+            limit = { exists = player_heir }
+            player_heir.dynasty = dynasty
+        }
+    }
+}
+
+unop_character_can_be_target_by_harm_events_trigger = {
+    OR = {
+        # Players.
+        AND = {
+            has_game_rule = harm_target_player_only
+            is_ai = no
+        }
+        # The AI.
+        AND = {
+            has_game_rule = harm_target_ai_only
+            is_ai = yes
+        }
+		has_game_rule = harm_target_all
+    }
+    unop_player_have_valid_heir_trigger = yes
+}
+
+#Needs CHARACTER and a DENY_CHASTE flag:yes or flag:no
+unop_is_sexually_compatible_with_character = {
+	AND = {
+		is_adult = yes
+		NOT = { has_trait = celibate }
+		OR = {
+			is_ai = no
+			AND = {
+				might_cheat_on_every_partner_trigger = yes
+				OR = {
+					has_perk = unshackled_lust_perk
+					is_attracted_to_gender_of = $CHARACTER$
+				}
+				#Unop: This is based from freely_accepts_sodomy_with_trigger but with the perk check added
+				trigger_if = {
+					limit = { relation_with_character_is_sodomy_in_my_or_lieges_faith_trigger = { CHARACTER = $CHARACTER$ } }
+					OR = { #Will ignore sodomy consequences (because there are none or they have done this before)
+						has_trait = deviant
+						has_trait = sodomite
+						any_secret = { secret_type = secret_homosexual }
+						has_perk = unshackled_lust_perk
+					}
+				}
+				trigger_if = {
+					limit = { relation_with_character_is_incestuous_in_my_faith_trigger = { CHARACTER = $CHARACTER$ } }
+					OR = {
+						has_perk = subtle_desire_perk
+
+						# Based on accepts_incest_with_trigger
+
+						NOT = { is_close_or_extended_family_of = $CHARACTER$ } #Actually no incest here!
+						NOT = { is_consort_of = $CHARACTER$ }  #Actually no incest here either!
+						is_incestuous_trigger = yes
+						has_relation_potential_lover = $CHARACTER$
+						has_relation_lover = $CHARACTER$
+						has_relation_soulmate = $CHARACTER$
+					}
+				}
+				trigger_if = {
+					limit = { $DENY_CHASTE$ = flag:yes }
+					NOT = { has_trait = chaste }
+				}
+			}
+		}
+	}
+}
+
+unop_can_be_warrior_strict_trigger = { #To make sure clergy fighters does not bypass this
+	unop_can_be_combatant_gender_overall_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	trigger_if = { 
+		limit = { $ARMY_OWNER$.culture = { has_cultural_parameter = high_prowess_ignores_knight_restrictions } }
+		prowess >= 10
+	}
+}
+
+unop_can_be_knight_strict_trigger = {
+	unop_can_be_warrior_strict_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	trigger_if = { 
+		limit = { $ARMY_OWNER$.culture = { has_cultural_parameter = minimum_prowess_for_knights } }
+		prowess >= 12
+	}
+}
+
+unop_can_be_combatant_gender_overall_trigger = {
+	trigger_if = {  # If is member of the clergy allowed to fight and has the same faith as the army owner
+		limit = { is_clergy = yes }
+		unop_can_be_combatant_based_on_clergy_fighter_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	}
+	trigger_else = {
+		OR = {
+			unop_can_be_combatant_based_on_martial_or_faith_custom_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+			# Those bypass the Martial & Faith customs on certain conditions
+			unop_can_be_combatant_based_on_culture_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+			unop_can_be_combatant_based_on_exception_trigger = { ARMY_OWNER = $ARMY_OWNER$ } # Special event case or special trait (like Order_Member)
+		}
+	}
+}
+
+unop_can_be_combatant_based_on_exception_trigger = {
+	OR = {
+		# Event-based special exceptions
+		trigger_if = { 
+			limit = { has_character_modifier = ignores_gender_army_rules }
+			always = yes
+		}
+		# Order members will always fight (as long as they have the same faith as the army owner => As the army commander SHOULD always be an Order GrandMaster this should always be true)
+		trigger_if = {
+			limit = { has_trait = order_member }			
+			faith = $ARMY_OWNER$.faith
+		}
+	}
+}
+
+unop_can_be_combatant_based_on_culture_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { $ARMY_OWNER$ = { culture = { has_cultural_parameter = has_access_to_shieldmaidens } } }
+			has_trait = shieldmaiden
+		}
+		trigger_if = {
+			limit = { $ARMY_OWNER$ = { culture = { has_cultural_parameter = high_prowess_ignores_knight_restrictions } } }
+			prowess >= 10
+		}
+	}
+}
+
+unop_can_be_combatant_based_on_clergy_fighter_trigger = {
+	faith = $ARMY_OWNER$.faith
+	OR = {
+		faith = { has_doctrine_parameter = clergy_can_fight }
+		culture = { has_cultural_parameter = culture_clergy_can_fight }
+	}
+}
+
+unop_can_be_combatant_based_on_martial_or_faith_custom_trigger = {
+	trigger_if = { # Has the Royal Court and thus can modify pillars
+		limit = {
+			has_dlc_feature = diverge_culture # Can modify pillars
+		}
+		custom_description = {
+			text = "can_be_combatant_based_on_martial_custom"
+			object = this
+			subject = $ARMY_OWNER$
+			OR = {
+				$ARMY_OWNER$ = { culture = { has_cultural_parameter = martial_custom_equal_combatant } }
+				AND = {
+					$ARMY_OWNER$ = { culture = { has_cultural_parameter = martial_custom_male_only_combatant } }
+					is_male = yes
+				}
+				AND = {
+					$ARMY_OWNER$ = { culture = { has_cultural_parameter = martial_custom_female_only_combatant } }
+					is_female = yes
+				}
+			}
+		}
+	}
+	trigger_else = { # Does not have the Royal Court and thus combatant is governed by faith
+		custom_description = {
+			text = "can_be_combatant_based_on_faith_custom"
+			object = this
+			subject = $ARMY_OWNER$
+			OR = {
+				$ARMY_OWNER$ = { faith = { has_doctrine_parameter = combatant_can_be_either_gender_if_no_roco } }
+				AND = {
+					$ARMY_OWNER$ = { faith = { has_doctrine_parameter = combatant_must_be_male_if_no_roco } }
+					is_male = yes
+				}
+				AND = {
+					$ARMY_OWNER$ = { faith = { has_doctrine_parameter = combatant_must_be_female_if_no_roco } }
+					is_female = yes
+				}
+			}
+		}
+	}
+}
+
+unop_is_available_travelling_child = {
+	OR = {
+		is_available_travelling = yes
+		is_available_child = yes
+	}
+	is_adult = no
+}
+
+unop_has_any_relation = {
+	OR = {
+		has_relation_friend = $TARGET$
+		has_relation_best_friend = $TARGET$
+		has_relation_rival = $TARGET$
+		has_relation_nemesis = $TARGET$
+		has_relation_mentor = $TARGET$
+		has_relation_student = $TARGET$
+		has_relation_lover = $TARGET$
+		has_relation_soulmate = $TARGET$
+		has_relation_guardian = $TARGET$
+		has_relation_ward = $TARGET$
+		has_relation_bully = $TARGET$
+		has_relation_victim = $TARGET$
+		has_relation_crush = $TARGET$
+		has_relation_oaf = $TARGET$
+		has_relation_soldier_friend = $TARGET$
+		has_relation_intrigue_mentor = $TARGET$
+		has_relation_intrigue_student = $TARGET$
+		has_relation_potential_friend = $TARGET$
+		has_relation_potential_rival = $TARGET$
+		has_relation_potential_lover = $TARGET$
+		has_relation_court_physician = $TARGET$
+		has_relation_antiquarian = $TARGET$
+		has_relation_wedding_very_bad_fertility = $TARGET$
+		has_relation_wedding_bad_fertility = $TARGET$
+		has_relation_wedding_good_fertility = $TARGET$
+		has_relation_wedding_very_good_fertility = $TARGET$
+		has_relation_potential_hook = $TARGET$
+		has_relation_activity_recurrer = $TARGET$
+
+		has_secret_relation_intrigue_student = $TARGET$
+		has_secret_relation_intrigue_mentor = $TARGET$
+		has_secret_relation_oaf = $TARGET$
+		has_secret_relation_student = $TARGET$
+		has_secret_relation_victim = $TARGET$
+		has_secret_relation_rival = $TARGET$
+		has_secret_relation_bully = $TARGET$
+		has_secret_relation_soulmate = $TARGET$
+		has_secret_relation_crush = $TARGET$
+		has_secret_relation_guardian = $TARGET$
+		has_secret_relation_friend = $TARGET$
+		has_secret_relation_best_friend = $TARGET$
+		has_secret_relation_court_physician = $TARGET$
+		has_secret_relation_soldier_friend = $TARGET$
+		has_secret_relation_potential_friend = $TARGET$
+		has_secret_relation_potential_lover = $TARGET$
+		has_secret_relation_potential_rival = $TARGET$
+		has_secret_relation_lover = $TARGET$
+	}
+}
+
+unop_no_relation = {
+	NOR = {
+		has_relation_friend = $TARGET$
+		has_relation_best_friend = $TARGET$
+		has_relation_rival = $TARGET$
+		has_relation_nemesis = $TARGET$
+		has_relation_mentor = $TARGET$
+		has_relation_student = $TARGET$
+		has_relation_lover = $TARGET$
+		has_relation_soulmate = $TARGET$
+		has_relation_guardian = $TARGET$
+		has_relation_ward = $TARGET$
+		has_relation_bully = $TARGET$
+		has_relation_victim = $TARGET$
+		has_relation_crush = $TARGET$
+		has_relation_oaf = $TARGET$
+		has_relation_soldier_friend = $TARGET$
+		has_relation_intrigue_mentor = $TARGET$
+		has_relation_intrigue_student = $TARGET$
+		has_relation_potential_friend = $TARGET$
+		has_relation_potential_rival = $TARGET$
+		has_relation_potential_lover = $TARGET$
+		has_relation_court_physician = $TARGET$
+		has_relation_antiquarian = $TARGET$
+		has_relation_wedding_very_bad_fertility = $TARGET$
+		has_relation_wedding_bad_fertility = $TARGET$
+		has_relation_wedding_good_fertility = $TARGET$
+		has_relation_wedding_very_good_fertility = $TARGET$
+		has_relation_potential_hook = $TARGET$
+		has_relation_activity_recurrer = $TARGET$
+		has_relation_wet_nurse = $TARGET$
+		has_relation_nursed_child = $TARGET$
+
+		has_secret_relation_intrigue_student = $TARGET$
+		has_secret_relation_intrigue_mentor = $TARGET$
+		has_secret_relation_oaf = $TARGET$
+		has_secret_relation_student = $TARGET$
+		has_secret_relation_victim = $TARGET$
+		has_secret_relation_rival = $TARGET$
+		has_secret_relation_bully = $TARGET$
+		has_secret_relation_soulmate = $TARGET$
+		has_secret_relation_crush = $TARGET$
+		has_secret_relation_guardian = $TARGET$
+		has_secret_relation_friend = $TARGET$
+		has_secret_relation_best_friend = $TARGET$
+		has_secret_relation_court_physician = $TARGET$
+		has_secret_relation_soldier_friend = $TARGET$
+		has_secret_relation_potential_friend = $TARGET$
+		has_secret_relation_potential_lover = $TARGET$
+		has_secret_relation_potential_rival = $TARGET$
+		has_secret_relation_lover = $TARGET$
+	}
+}
+
+unop_all_counties_have_recent_sighting = {
+	any_sub_realm_county = {
+		count = all
+		has_variable = recent_sighting
+	}
+}
+
+has_miniscule_renown = {
+	trigger_if = {
+		limit = { exists = dynasty }
+		save_temporary_scope_as = unop_renown_char
+		dynasty = { dynasty_prestige >= scope:unop_renown_char.miniscule_dynasty_prestige_value }
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+has_minor_renown = {
+	trigger_if = {
+		limit = { exists = dynasty }
+		save_temporary_scope_as = unop_renown_char
+		dynasty = { dynasty_prestige >= scope:unop_renown_char.minor_dynasty_prestige_value }
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+has_medium_renown = {
+	trigger_if = {
+		limit = { exists = dynasty }
+		save_temporary_scope_as = unop_renown_char
+		dynasty = { dynasty_prestige >= scope:unop_renown_char.medium_dynasty_prestige_value }
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+# This trigger combine is_diarch_valid_trigger & is_diarch_able_trigger to be usable in basic events
+unop_can_be_diarch_trigger = {
+
+	# Basics.
+	is_alive = yes
+	is_adult = yes
+	# If you're in an entrenched regency for some reason, you can't manage a regency yourself.
+	NOT = { has_diarchy_parameter = diarchy_type_is_entrenched_regency }
+	# You need to be mentally & physically sound, to some degree.
+	regency_for_personal_reasons_trigger = no
+	# You can't possibly manage someone else's realm from prison.
+	is_imprisoned = no
+	# If you're in a temporary regency for any other reason, you need to chill.
+	NOT = { has_diarchy_active_parameter = diarchy_type_is_temporary_regency }
+	# You'd clearly be preoccupied.
+	trigger_if = {
+		limit = { exists = involved_activity }
+		save_temporary_scope_as = diarch_temp
+		involved_activity.activity_location.county.holder = {
+			NOR = {
+				this = scope:diarch_temp.liege
+				NOT = {
+					any_liege_or_above = { this = scope:diarch_temp.liege }
+				}
+			}
+		}
+	}
+
+	# If you have somehow managed to get invited to/start an activity outside of your realm (e.g., you're the spouse in a grand wedding), then yeah, you forfeit your position.
+	NAND = {
+		# Is it redundant to check twice?
+		## Yes.
+		### Do the machine spirits demand this thoroughness of us?
+		#### Also yes.
+		##### Do not ask why the God-Machine commands it, merely be glad that it commanded it of you.
+		is_travelling = yes
+		exists = current_travel_plan
+		# We check your liege so that you can attend business within the realm easily.
+		## Schemes are their own special lil guys so we take care of them separately.
+		trigger_if = {
+			limit = { exists = current_travel_plan }
+			trigger_if = {
+				limit = {
+					exists = scope:owner
+					exists = scope:target
+				}
+				travel_would_cause_regency_trigger = { REALM_HOLDER = scope:owner.liege }
+			}
+			## Else, we're an ordinary, gods-fearing root scope, so use that.
+			trigger_else = {
+				travel_would_cause_regency_trigger = { REALM_HOLDER = this.liege }
+			}
+		}
+	}
+
+	# We cannot be at war with our liege.
+	OR = {
+		is_independent_ruler = yes
+		AND = {
+			exists = liege
+			NOT = { is_at_war_with = liege }
+		}
+	}
+
+	## Viziers.
+	trigger_if = {
+		limit = {
+			liege ?= { government_has_flag = may_appoint_viziers }
+		}
+		# Must match their liege's gender preference.
+		diarch_matches_liege_faith_gender_preference_trigger = yes
+		# Viziers aren't big land-owners.
+		## Not in this way, at least.
+		highest_held_title_tier <= tier_barony
+	}
+
+	# Event blocks.
+	OR = {
+		is_ai = no
+		NOT = { has_character_flag = cannot_be_diarch }
+	}
+}
+
+unop_is_elderly_trigger = {
+    OR = {
+        AND = {
+            is_male = yes
+            OR = {
+                AND = {
+                    is_immortal = no
+                    age >= define:NCharacter|MALE_ELDERLY_AGE
+                }
+                effective_age >= define:NCharacter|MALE_ELDERLY_AGE
+            }
+        }
+        AND = {
+            is_female = yes
+            OR = {
+                AND = {
+                    is_immortal = no
+                    age >= define:NCharacter|FEMALE_ELDERLY_AGE
+                }
+                effective_age >= define:NCharacter|FEMALE_ELDERLY_AGE
+            }
+        }
+    }
+}
+
+unop_could_perform_dangerous_legendary_hunt = {
+	OR = {
+		#Disabled for now since effect to get the animal are not handlings lunatics. TODO: Add lunatics animals
+		#trigger_if = { #Unop: Lunatic bypass all (Unicorn & Dragon for them !)
+		#	limit = { root = { has_trait = lunatic } }
+		#	custom_tooltip = {
+		#		text = "can_hunt_unicorn_or_dragon"
+		#		always = yes
+		#	}
+		#}
+		# Big dog
+		custom_tooltip = {
+			text = "can_hunt_big_dog"
+			hunt_animal_wolf_trigger = yes
+			hunt_animal_hyena_trigger = yes
+			hunt_animal_lynx_trigger = yes
+		}
+		# Big cat
+		custom_tooltip = {
+			text = "can_hunt_big_cat"
+			hunt_animal_lion_trigger = yes
+			hunt_animal_tiger_trigger = yes
+			hunt_animal_leopard_trigger = yes
+		}
+		# Bear
+		custom_tooltip = {
+			text = "can_hunt_bear"
+			hunt_animal_bear_trigger = yes
+		}
+		# Boar
+		trigger_if = {
+			limit = {
+				NOR = {
+					root.faith = {
+						religion_tag = islam_religion
+						religion_tag = judaism_religion
+					}
+				}
+			}
+			custom_tooltip = {
+				text = "can_hunt_boar"
+				hunt_animal_boar_trigger = yes
+			}
+		}
+	}
+}
+
+unop_could_perform_standard_legendary_hunt = {
+	# Legendary hunt are always using big_local_game so I removed every other animal
+	OR = {
+		#Disabled for now since effect to get the animal are not handlings lunatics. TODO: Add lunatics animals
+		#trigger_if = { #Unop: Lunatic bypass all (hare for them !)
+		#	limit = { root = { has_trait = lunatic } }
+		#	custom_tooltip = {
+		#		text = "can_hunt_hare"
+		#		always = yes
+		#	}
+		#}
+		# Boar
+		trigger_if = {
+			limit = {
+				NOR = {
+					root.faith = {
+						religion_tag = islam_religion
+						religion_tag = judaism_religion
+					}
+				}
+			}
+			custom_tooltip = {
+				text = "can_hunt_boar"
+				hunt_animal_boar_trigger = yes
+			}
+		}
+		AND = {
+			custom_tooltip = {
+				text = "can_hunt_deer_antelope"
+				hunt_animal_deer_antelope_trigger = yes
+				OR = {
+					hunt_animal_deer_trigger = yes
+					hunt_animal_antelope_trigger = yes
+				}
+			}
+		}
+		custom_tooltip = {
+			text = "can_hunt_bison"
+			hunt_animal_bison_trigger = yes
+		}
+		custom_tooltip = {
+			text = "can_hunt_aurochs"
+			AND = {
+				hunt_animal_aurochs_trigger = yes
+				NOT = { root.religion = religion:hinduism_religion }
+			}
+		}
+	}
+}

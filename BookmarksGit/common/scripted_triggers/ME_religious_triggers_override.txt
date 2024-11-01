@@ -1,0 +1,162 @@
+﻿trait_is_criminal_in_faith_trigger = {
+	save_temporary_scope_value_as = {
+		name = criminal_trait_check
+		value = flag:$TRAIT$
+	}
+	OR = {
+		## ME Addition - Alcohol Consumption ##
+		AND = {
+			scope:criminal_trait_check = flag:drunkard
+			$FAITH$ = { has_doctrine_parameter = me_intoxication_illegal }
+		}
+
+		#KINSLAYER
+		AND = {
+			OR = {
+				scope:criminal_trait_check = flag:kinslayer_3
+				scope:criminal_trait_check = flag:kinslayer_2
+				scope:criminal_trait_check = flag:kinslayer_1
+			}
+			$FAITH$ = { has_doctrine_parameter = kinslaying_any_dynasty_member_crime }
+		}
+		AND = {
+			OR = {
+				scope:criminal_trait_check = flag:kinslayer_3
+				scope:criminal_trait_check = flag:kinslayer_2
+			}
+			$FAITH$ = { has_doctrine_parameter = kinslaying_extended_family_crime }
+		}
+		AND = {
+			scope:criminal_trait_check = flag:kinslayer_3
+			$FAITH$ = { has_doctrine_parameter = kinslaying_close_kin_crime }
+		}
+		#WITCH
+		AND = {
+			scope:criminal_trait_check = flag:witch
+			$FAITH$ = { has_doctrine_parameter = witchcraft_illegal }
+		}
+		#CANNIBAL
+		AND = {
+			scope:criminal_trait_check = flag:cannibal
+			NOT = {
+				$FAITH$ = { has_doctrine_parameter = cannibalism_legal }
+			}
+		}
+		#SODOMITE
+		AND = {
+			scope:criminal_trait_check = flag:sodomite
+			$FAITH$ = { has_doctrine_parameter = homosexuality_illegal }
+		}
+		#DEVIANT
+		AND = {
+			scope:criminal_trait_check = flag:deviant
+			$FAITH$ = { has_doctrine_parameter = deviancy_illegal }
+		}
+		#INCEST
+		AND = {
+			scope:criminal_trait_check = flag:incestuous
+			$FAITH$ = { NOT = { has_doctrine_parameter = consanguinity_unrestricted_incest } }
+		}
+		#ADULTERER/FORNICATOR
+		AND = {
+			OR = {
+				scope:criminal_trait_check = flag:adulterer
+				scope:criminal_trait_check = flag:fornicator
+			}
+			OR = {
+				AND = {
+					$FAITH$ = { has_doctrine_parameter = adultery_female_crime }
+					$GENDER_CHARACTER$ = { is_female = yes }
+				}
+				AND = {
+					$FAITH$ = { has_doctrine_parameter = adultery_male_crime }
+					$GENDER_CHARACTER$ = { is_male = yes }
+				}
+			}
+		}
+	}	
+}
+
+## Overriden to include Quraysh trait
+has_strong_religious_conviction_trigger = {
+	NOR = {
+		has_trait = cynical
+		has_trait = excommunicated
+	}
+	OR = {
+		has_trait = zealous
+		has_trait = pilgrim
+		has_trait = devoted
+		has_trait = sayyid
+		has_trait = quraysh
+		has_trait = saoshyant
+		has_trait = savior
+		has_trait = divine_blood
+		has_trait = blood_of_prophet
+		has_trait = faith_warrior
+		has_trait = saint
+	}
+}
+
+can_afford_create_head_of_faith_title_cost_trigger = {
+	trigger_if = {
+		limit = {
+			faith = {
+				has_doctrine_parameter = temporal_head_of_faith
+				OR = {
+					has_doctrine = muhammad_succession_sunni_doctrine
+					has_doctrine = muhammad_succession_shia_doctrine
+				}
+			}		
+		}
+		trigger_if = {
+			limit = { NOT = { 
+				has_trait = sayyid
+				has_trait = quraysh
+			} }
+			piety >= massive_piety_value
+		}
+	}
+	trigger_else_if = {
+		limit = {
+			faith = {
+				has_doctrine_parameter = temporal_head_of_faith
+			}
+		}
+		piety >= major_piety_value
+	}
+	trigger_else = {
+		limit = {
+			faith = {
+				has_doctrine_parameter = spiritual_head_of_faith
+			}
+		}
+		gold >= medium_gold_max_value
+	}
+}
+
+## Muhakkima do not care about lineage
+fp3_valid_muhakkima_head = {
+	calc_true_if = {
+		amount >= 2
+
+##		# Sayyids get a free pass. (NO)
+##		has_trait = sayyid
+		piety_level >= very_high_piety_level
+		# Having many faithful counties
+		custom_description = {
+			text = claim_the_imamate_decision.need_at_least_fifteen_same_faith_counties
+			any_sub_realm_county = {
+				count >= claim_the_imamate_decision_same_faith_greater_county_count
+				faith = root.faith
+			}
+		}
+		# Famed
+		prestige_level >= 4
+		# #Muhakkima cares about justified warfare - and a justified cause.
+		OR = {
+			has_trait = faith_warrior #mujahid really
+			has_trait = theologian
+		}
+	}
+}
