@@ -2,264 +2,229 @@ import sys
 import os
 import re
 from collections import Counter
-
 import glob
-
 from math import floor
 
-'''
-Searches your CK3 mod landed titles to generate the various colour storage items in the folder CK3CS.
-The items in CK3CS/ folder
-
-NOTE:
-This code uses regular expressions and thus if you're code isn't properly matched, it'll fail to find
-titles. Alternatively, it is possible that non-titles will be caught, so parse the results with some care.
-
-All titles should match one of the following patterns:
-    ([e|k|d|c|b]_[A-z_\-]+)[ ]*=[ ]*\{
-In natural language:
-    Starts with one of e,k,d,c,b, followed by A-Z,a-z, underscores, or hyphens and is followed by one
-        of these patterns:  " = {","= {"," ={","={"
-    And remove the trailing pattern
-
-A few known failures:
-* e_on_partition
-* d_emblem
-* e_names
-
-Meant to be launched from your top level git folder with structure
-
-i.e., ./MOD/, where
-
-./MOD/
-    |- MOD/
-        |- common/
-        |- events/
-        |- gfx/
-        |- gui/
-        |- localization
-        |- music/
-
-is the expected sort of underlying structure. Will need some tweaks to run under other directory structures.
-
-Arg 1 is mod folder name
-
-Additional arguments specify which title tiers for which the code *will not* generate colour storage
-dummy titles. Acceptable inputs are:
-
-    baronies
-    counties
-    duchies
-    kingdoms
-    empires
-
-No entry, therefore, means all titles will have colour storage dummy titles generated.
-
-Example run command: "python3 .CK3_Color_Storage/generate_submod_files.py MY_MOD_NAME baronies counties"
-
-The above will check your mod structure and will create dummy titles for duchies, kingdoms, and empires
-Duplicates will have no effect, so additional arguments should be considered a set
-'''
-
-''' License: BSD Zero Clause
-Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
-OF THIS SOFTWARE.
-'''
-
-#TODO:
-# Remove WtWSMS *in toto*
-# Remove Color_Submod_Files, except for top folder
-
-acceptable_tiers = ['baronies','counties','duchies','kingdoms','empires']
-
-##### Helper Routines
-
-#Wrapper Class for building a list of items for which to search the database
-class BuildItemDatabaseFromFolder:
-    '''
-    Arguments:
-      root_dir: Directory Root Dir
-      dir_name: Directory we're search
-    Desc
-      Pulls the list of items from the database folder
-    '''
-    def action(self,file):
-        item_list = []
-        file_text = []
-        with open(file,'r') as f:
-            file_text = ''.join(f.readlines())
-        return re.findall('([e|k|d|c|b]_[A-z_\-]+)[ ]*=[ ]*\{',file_text)
-
-def task_progress_meter(workDone,totalWork):
+def task_progress_meter(workDone, totalWork):
     progress_meter_len = 20
     fracWorkDone = floor((workDone/totalWork)*progress_meter_len)
     progress_meter_string = '['+'*'*fracWorkDone+' '*(progress_meter_len-fracWorkDone)+']'
-    print('\r'+progress_meter_string,end='')
+    print('\r'+progress_meter_string, end='')
 
-def compare_file_path_with_item(file_path,re_pattern):
-    found_item = False
-    file_path = file_path.split('/')
-    file_path = file_path[:-1]
-    
-    for folder in file_path:
-        if ( re.search('^'+re_pattern+'$',folder) ):
-            found_item |= True
-    
-    return found_item
+class BuildItemDatabaseFromFolder:
+    def action(self, file):
+        print(f"Analyzing file: {file}")
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                file_text = ''.join(f.readlines())
+            found_items = re.findall(r'^\s*([ekdcb]_[A-Za-z_\-]+)\s*=\s*\{', file_text, re.MULTILINE)
+            print(f"Found {len(found_items)} titles in {file}")
+            found_items = list(dict.fromkeys(found_items))
+            return found_items
+        except Exception as e:
+            print(f"Error processing file {file}: {str(e)}")
+            return []
 
-'''
-search_over_mod_structure
-Arguments:
-  root_dir: Directory Root Dir
-  file_keyword: file keyword to search for in the file name (e.g., either the item type or '.+' 
-    (everything in the database)
-  file_action_object: class building the data object (a dictionary or a list, depending). Must have method action
-    which takes a file name as an argument
-  database: Which database to search; default is "common/", "events/", and "history/" top level folders
-  check_localization: if the *.yml files should be searched; default is False
-Desc:
-  Finds a list of text files based on comparison of dir_name to item_type and does file_action
-  (making a list of items to search over OR a dictionary of database instance counts)
-  
-  Note 1:
-  Why wouldn't we add localization files? Because removal of other database items might void localization
-  items. So stuff that's used in only in localization (like 'clan_government_levies_max_possible') should
-  be an exclusion instead
-'''
-def search_over_mod_structure(root_dir,file_keyword,file_action_object,data_object,console_output,\
-                              database=['common'],\
-                              check_localization=False):
-    if ( len(database)== 0): RuntimeError("Did not provide a database to search in search_over_mod_structure(); failing")
+def search_over_mod_structure(root_dir, file_keyword, file_action_object, data_object, console_output,
+                            database=['common'],
+                            check_localization=False):
+    if len(database) == 0:
+        raise RuntimeError("Did not provide a database to search in search_over_mod_structure(); failing")
     
-    database_items = '('
-    for item in database:
-        database_items += item
-        database_items += '|'
-    database_items = database_items[:-1] #Remove the last '|'
-    database_items += ')'
+    print(f"\nSearch parameters:")
+    print(f"Root directory: {os.path.abspath(root_dir)}")
     
-    file_list = [y for x in os.walk(root_dir) for y in glob.glob(os.path.join(x[0], '*.txt'))]
+    landed_titles_dir = os.path.join(root_dir, 'common', 'landed_titles')
+    if not os.path.exists(landed_titles_dir):
+        print(f"Warning: Landed titles directory not found at {landed_titles_dir}")
+        return []
+        
+    print(f"Searching in: {landed_titles_dir}")
     
-    if ( check_localization ):
-        file_list.extend([y for x in os.walk(root_dir) for y in glob.glob(os.path.join(x[0], '*.yml'))])
-    for file,index in zip(file_list,range(len(file_list))):
-        if ( console_output ): task_progress_meter(index,len(file_list))
-        if ( re.search(file_keyword,file) and \
-             compare_file_path_with_item(file,database_items) ):
-            if ( isinstance(data_object,list) ):
-                data_object.extend(file_action_object.action(file))
-            else:
-                data_object = file_action_object.action(file)
-    if ( console_output ): task_progress_meter(len(file_list),len(file_list))
-    return data_object
+    file_list = glob.glob(os.path.join(landed_titles_dir, '*.txt'))
+    print(f"Found {len(file_list)} landed titles files")
+    
+    title_dict = {}
+    
+    for file, index in zip(file_list, range(len(file_list))):
+        if console_output:
+            task_progress_meter(index, len(file_list))
+        found_titles = file_action_object.action(file)
+        for title in found_titles:
+            if title not in title_dict:
+                title_dict[title] = []
+            title_dict[title].append(os.path.basename(file))
+    
+    print("\nTitle sources:")
+    duplicate_titles = {title: sources for title, sources in title_dict.items() if len(sources) > 1}
+    if duplicate_titles:
+        print("\nTitles found in multiple files:")
+        for title, sources in duplicate_titles.items():
+            print(f"  {title}: {', '.join(sources)}")
+    
+    return list(title_dict.keys())
 
-#argument_list should be sys.argv
-def console_input_parsing(argument_list):
-    argument_list.pop(0) #Don't need "python"
-    
-    # root_dir needs a trailing slash (i.e. /root/dir/)
-    root_dir = ''
-    #General case of modname/modname/common structure
-    if os.path.isdir( './'+str(argument_list[0])+'/' ):
-        root_dir = argument_list[0]
-    #Case of modname/common
-    elif ( os.path.basename(os.getcwd())==argument_list[0] ):
-        root_dir = './'
-    else:
-        print('No folder named '+str(argument_list[0])+' exists; stopping execution')
-        sys.exit(1)
-    argument_list.pop(0) #Remove the root dir from the list
-    #Get exclusions (if any)
-    exclusion_list = []
-    for item in argument_list:
-        if item in acceptable_tiers:
-            exclusion_list.append(item)
-    exclusion_list = list(set(exclusion_list))
-    return root_dir, exclusion_list
+def ensure_directory_exists(filepath):
+    directory = os.path.dirname(filepath)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-def get_titles_to_keep(title_list,exclusion_list):
-    barony_list  = [item for item in title_list if item[0]=='b']
-    county_list  = [item for item in title_list if item[0]=='c']
-    duchy_list   = [item for item in title_list if item[0]=='d']
-    kingdom_list = [item for item in title_list if item[0]=='k']
-    empire_list  = [item for item in title_list if item[0]=='e']
-    #Catch obvious errors
-    duchy_list  = [item for item in duchy_list if item != 'd_emblem']
+def get_titles_to_keep(title_list, exclusion_list):
+    print(f"\nProcessing {len(title_list)} total titles found")
+    
+    filtered_titles = []
+    excluded_variants = []
+    
+    variant_suffixes = ['_dan', '_fin', '_nor', '_swe', '_color', '_crusader', 
+                       '_nordic', '_norman', '_norse', '_titular', '_french',
+                       '_spanish', '_islam', '_meroving', '_slovien', '_band',
+                       '_company', '_league', '_republic', '_east', '_west']
+    
+    for title in title_list:
+        if any(suffix in title for suffix in variant_suffixes):
+            excluded_variants.append(title)
+            continue
+        filtered_titles.append(title)
+    
+    print(f"Excluded {len(excluded_variants)} variant titles")
+    if excluded_variants:
+        print("Sample of excluded titles:")
+        for title in excluded_variants[:5]:
+            print(f"  - {title}")
+    
+    barony_list = [item for item in filtered_titles if item[0]=='b']
+    county_list = [item for item in filtered_titles if item[0]=='c']
+    duchy_list = [item for item in filtered_titles if item[0]=='d']
+    kingdom_list = [item for item in filtered_titles if item[0]=='k']
+    empire_list = [item for item in filtered_titles if item[0]=='e']
+    
+    print(f"\nFound by tier after filtering:")
+    print(f"  Baronies: {len(barony_list)}")
+    print(f"  Counties: {len(county_list)}")
+    print(f"  Duchies: {len(duchy_list)}")
+    print(f"  Kingdoms: {len(kingdom_list)}")
+    print(f"  Empires: {len(empire_list)}")
+    
+    duchy_list = [item for item in duchy_list if item != 'd_emblem']
     empire_list = [item for item in empire_list if item not in ['e_on_partition','e_names']]
-    #Build new list without exclusions
+    
     titles_to_process = []
     if 'baronies' not in exclusion_list: titles_to_process.extend(barony_list)
     if 'counties' not in exclusion_list: titles_to_process.extend(county_list)
     if 'duchies' not in exclusion_list: titles_to_process.extend(duchy_list)
     if 'kingdoms' not in exclusion_list: titles_to_process.extend(kingdom_list)
     if 'empires' not in exclusion_list: titles_to_process.extend(empire_list)
+    
+    print(f"\nProcessing {len(titles_to_process)} titles after exclusions")
     return titles_to_process
 
 def generate_output_files(titles_to_process):
+    if not titles_to_process:
+        print("No titles to process! Output files will be empty.")
+        return
+        
+    print(f"\nGenerating output files for {len(titles_to_process)} titles")
     languages = ['english','french','german','korean','russian','simp_chinese','spanish']
     
-    #common/coat_of_arms/coat_of_arms/CK3CS_titles.txt
-    with open('./CK3_Color_Storage/CK3CS/common/coat_of_arms/coat_of_arms/CK3CS_titles.txt','w') as f:
+    base_dir = './CK3_Color_Storage/CK3CS'
+
+    filepath = f'{base_dir}/common/coat_of_arms/coat_of_arms/CK3CS_titles.txt'
+    ensure_directory_exists(filepath)
+    print(f"Writing coat of arms file: {filepath}")
+    with open(filepath, 'w', encoding='utf-8') as f:
         for title in titles_to_process:
-            f.write('d_'+title+'_color = { pattern = "pattern_solid.dds" color1 = "white"  color2 = "white" }\n')
-    #common/landed_titles/CK3CS_titles.txt
-    with open('./CK3_Color_Storage/CK3CS/common/landed_titles/CK3CS_titles.txt','w') as f:
+            f.write(f'd_{title}_color = {{ pattern = "pattern_solid.dds" color1 = "white" color2 = "white" }}\n')
+    
+    filepath = f'{base_dir}/common/landed_titles/CK3CS_titles.txt'
+    ensure_directory_exists(filepath)
+    print(f"Writing landed titles file: {filepath}")
+    with open(filepath, 'w', encoding='utf-8') as f:
         for title in titles_to_process:
-            f.write('d_'+title+'_color = { definite_form = yes color ={0 0 0} can_create = { always = no } }\n')
-    #localization/*/CK3CS_titles_l_*.yml
+            f.write(f'd_{title}_color = {{ definite_form = yes color ={{0 0 0}} can_create = {{ always = no }} }}\n')
+    
+    print("Writing localization files...")
     for language in languages:
-        with open('./CK3_Color_Storage/CK3CS/localization/'+language+'/CK3CS_titles_l_'+language+'.yml','w') as f:
-            f.write('l_'+language+':\n')
+        filepath = f'{base_dir}/localization/{language}/CK3CS_titles_l_{language}.yml'
+        ensure_directory_exists(filepath)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(f'l_{language}:\n')
             for title in titles_to_process:
-                f.write('d_'+title+'_color: ""\n')
-    #common/on_action/000_CK3CS_titles.txt
-    with open('./CK3_Color_Storage/CK3CS/common/on_action/CK3CS_titles.txt','w') as f:
-        f.write('#NB: prepended with 000 because this needs to fire off before things like tributaries are assigned\n')
-        f.write('\n')
+                f.write(f'd_{title}_color: ""\n')
+    
+    filepath = f'{base_dir}/common/on_action/CK3CS_titles.txt'
+    ensure_directory_exists(filepath)
+    print(f"Writing on_action file: {filepath}")
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write('#NB: prepended with 000 because this needs to fire off before things like tributaries are assigned\n\n')
+        
         f.write('on_game_start = {\n')
-        f.write('\ton_actions = {\n')
-        f.write('\t\tCK3CS_build_color_variable_refs\n')
-        f.write('\t\tCK3CS_set_color_title_colors\n')
-        f.write('\t}\n')
-        f.write('}\n')
-        f.write('\n')
+        f.write('    on_actions = {\n')
+        f.write('        CK3CS_build_color_variable_refs\n')
+        f.write('        CK3CS_set_color_title_colors\n')
+        f.write('    }\n')
+        f.write('}\n\n')
+        
         f.write('#Associate every title in question with a color storage title\n')
-        f.write('\tCK3CS_build_color_variable_refs = {\n')
-        f.write('\teffect = {\n')
+        f.write('CK3CS_build_color_variable_refs = {\n')
+        f.write('    effect = {\n')
         for title in titles_to_process:
-            f.write('\t\ttitle:'+title+' = { set_variable = { name = color_storage value = title:d_'+title+'_color } }\n')
-        f.write('\t}\n')
-        f.write('}\n')
-        f.write('\n')
+            f.write(f'        title:{title} = {{ if = {{ limit = {{ exists = this }} }} set_variable = {{ name = color_storage value = title:d_{title}_color }} }}\n')
+        f.write('    }\n')
+        f.write('}\n\n')
+        
         f.write('#Reset the actual color storage title\n')
-        f.write('\tCK3CS_set_color_title_colors = {\n')
-        f.write('\teffect = {\n')
+        f.write('CK3CS_set_color_title_colors = {\n')
+        f.write('    effect = {\n')
         for title in titles_to_process:
-            f.write('\t\ttitle:d_'+title+'_color = { set_color_from_title = title:'+title+' }\n')
-        f.write('\t}\n')
+            f.write(f'        title:d_{title}_color = {{ set_color_from_title = title:{title} }}\n')
+        f.write('    }\n')
         f.write('}\n')
-        f.write('\n')
 
-##### Main Code
+def console_input_parsing(argument_list):
+    argument_list.pop(0)
+    
+    print(f"Arguments received: {argument_list}")
+    
+    if len(argument_list) == 0:
+        print("No arguments provided! Please provide mod folder name.")
+        sys.exit(1)
+        
+    root_dir = ''
+    if os.path.isdir('./'+str(argument_list[0])+'/'):
+        root_dir = argument_list[0]
+    elif os.path.basename(os.getcwd()) == argument_list[0]:
+        root_dir = './'
+    else:
+        print('No folder named '+str(argument_list[0])+' exists; stopping execution')
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Looking for: {os.path.abspath('./' + str(argument_list[0]))}")
+        sys.exit(1)
+        
+    argument_list.pop(0)
+    print(f"Using root directory: {os.path.abspath(root_dir)}")
+    
+    acceptable_tiers = ['baronies', 'counties', 'duchies', 'kingdoms', 'empires']
+    exclusion_list = [item for item in argument_list if item in acceptable_tiers]
+    exclusion_list = list(set(exclusion_list))
+    
+    print(f"Excluding tiers: {exclusion_list}")
+    
+    return root_dir, exclusion_list
 
-def generate_files(root_dir,exclusion_list,console_output=False):
-    print(os.getcwd())
-    #Get the list of all items in the database requested
+def generate_files(root_dir, exclusion_list, console_output=False):
+    print(f"Current working directory: {os.getcwd()}")
+    
     if(console_output): print('Building Database')
     database_build = BuildItemDatabaseFromFolder()
-    title_list = search_over_mod_structure(root_dir,'landed_titles',database_build,[],console_output)
-    if(console_output): print('\n')
-    #Split list by tiers
+    title_list = search_over_mod_structure(root_dir, 'landed_titles', database_build, [], console_output)
+    
     title_list.sort()
-    titles_to_process = get_titles_to_keep(title_list,exclusion_list)
-    del title_list #Don't need these anymore...
+    titles_to_process = get_titles_to_keep(title_list, exclusion_list)
+    del title_list
+    
     generate_output_files(titles_to_process)
+    print("\nFile generation complete!")
 
 if __name__ == '__main__':
-    root_dir,exclusion_list = console_input_parsing(sys.argv)
-    generate_files(root_dir,exclusion_list,True)
+    root_dir, exclusion_list = console_input_parsing(sys.argv)
+    generate_files(root_dir, exclusion_list, True)
