@@ -2,6 +2,117 @@
 # REALM CULTURAL TRADITIONS #
 #############################
 
+tradition_isolationist = {
+	category = realm
+
+	layers = {
+		0 = intrigue
+		1 = mediterranean
+		4 = noble.dds
+	}
+	
+	parameters = {
+		courtiers_less_likely_to_leave_same_culture_court = yes
+		dislikes_marrying_outside_of_culture = yes
+		ai_doesnt_marry_outside_culture = yes
+		less_likely_to_culture_convert = yes
+		less_plague_spread_culture = yes
+		cultrad_unlocks_t3_strengthen_sentries = yes
+		cultrad_unlocks_t3_redouble_guards = yes
+	}
+	culture_modifier = {
+		cultural_acceptance_gain_mult = -0.35
+	}
+	character_modifier = {
+		diplomatic_range_mult = -0.45 #Was .0.25
+		same_culture_opinion = 5
+		#max_naval_distance = 500
+		ai_war_chance = -0.5
+		ai_war_cooldown = 5
+	}
+	county_modifier = {
+		monthly_county_control_growth_add = 0.5
+	}
+	
+	cost = {
+		prestige = {
+			add = {
+				value = tradition_base_cost
+				desc = BASE
+				format = "BASE_VALUE_FORMAT"
+			}
+			if = {
+				limit = {
+					NOR = {
+						culture_pillar:ethos_communal = { is_in_list = traits }
+						culture_pillar:ethos_spiritual = { is_in_list = traits }
+						culture_pillar:ethos_stoic = { is_in_list = traits }
+					}
+				}
+				add = {
+					value = tradition_incompatible_ethos_penalty
+					desc = not_communal_spiritual_or_stoic_desc
+				}
+			}
+			if = {
+				limit = {
+					scope:character = {
+						any_sub_realm_county = {
+							culture = scope:character.culture
+							any_neighboring_county = {
+								NOT = {
+									culture = scope:character.culture
+								}
+								culture = {
+									cultural_acceptance = { target = scope:character.culture value >= 40 }
+								}
+							}
+						}
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = non_tolerated_cultures_desc
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_variable = defensive_traditionalist_discount
+						has_variable = aggressive_traditionalist_discount
+					}
+				}
+				add = {
+					value = traditionalist_discount
+					desc = traditionalist_discount_desc
+				}
+			}
+			
+			multiply = tradition_replacement_cost_if_relevant
+		}
+	}
+	
+	ai_will_do = {
+		value = 100
+		if = {
+			limit = {
+				NOT = {
+					is_divergent_culture = yes
+				}
+			}
+			multiply = 0
+		}
+		if = {
+			limit = {
+				culture_pillar:ethos_egalitarian = { is_in_list = traits }
+			}
+			multiply = 0
+		}
+	}
+}
+
+#IBTP
+
 tradition_hill_dwellers = {
 	category = realm
 
@@ -324,3 +435,140 @@ tradition_ancient_miners = {
 		}
 	}
 }
+
+#RoA
+
+tradition_maritime_mercantilism = {
+	category = realm
+
+	layers = {
+		0 = diplo
+		1 = mediterranean
+		4 = ship.dds
+	}
+
+	can_pick = {
+		custom_description = {
+			text = culture_on_coast_desc
+			any_culture_county = {
+				any_county_province = {
+					is_coastal = yes
+				}
+			}
+		}
+		NOT = { has_cultural_tradition = tradition_thalassocratic }
+	}
+
+	parameters = {
+		next_level_trade_ports = yes
+		maritime_mercantilism_coastal_holdings = yes
+		maritime_mercantilism_avaricious_bonus = yes									  
+	}
+	character_modifier = {
+		republic_government_vassal_opinion = 10
+		sea_travel_danger = low_sea_danger_reduction									  
+	}
+
+	cost = {
+		prestige = {
+			add = {
+				value = tradition_base_cost
+				desc = BASE
+				format = "BASE_VALUE_FORMAT"
+			}
+			# Ethos requirement.
+			if = {
+				limit = {
+					NOR = {
+						culture_pillar:ethos_egalitarian = { is_in_list = traits }
+						culture_pillar:ethos_stoic = { is_in_list = traits }
+						culture_pillar:ethos_bureaucratic = { is_in_list = traits }
+					}
+				}
+				add = {
+					value = tradition_incompatible_ethos_penalty
+					desc = not_egalitarian_stoic_or_bureaucratic_desc
+				}
+			}
+			# Coastal requirement.
+			if = {
+				limit = {
+					NOT = {
+						any_culture_county = {
+							percent >= 0.3
+							any_county_province = {
+								is_coastal = yes
+							}
+						}
+					}
+				}
+				add = {
+					value = tradition_unfulfilled_criteria_penalty
+					desc = coastal_percentage_desc
+				}
+			}
+
+			multiply = tradition_replacement_cost_if_relevant
+		}
+	}
+
+	ai_will_do = {
+		value = 100
+		if = {
+			limit = {
+				scope:character = {
+					any_sub_realm_county = {
+						percent >= 0.6
+						any_county_province = {
+							is_coastal = yes
+						}
+					}
+				}
+			}
+			add = 50
+		}
+		if = { # Make stacking a bit less common
+			limit = {
+				OR = {
+					culture_tradition:tradition_seafaring = { is_in_list = traits }
+					culture_tradition:tradition_fishermen = { is_in_list = traits }
+				}
+			}
+			multiply = 0.75
+		}
+		if = {
+			limit = {
+				NOT = {
+					scope:character = {
+						any_sub_realm_county = {
+							percent >= 0.3
+							any_county_province = {
+								is_coastal = yes
+							}
+						}
+					}
+				}
+			}
+			multiply = 0
+		}
+		else_if = {
+			limit = {
+				any_culture_county = {
+					percent >= 0.6
+					any_county_province = {
+						is_coastal = yes
+					}
+				}
+			}
+			multiply = 2
+		}
+	}
+}
+
+
+
+
+################################	NEW		################################
+
+
+
