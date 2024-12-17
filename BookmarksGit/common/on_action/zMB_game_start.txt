@@ -8,7 +8,6 @@ on_game_start = {
 		MB_struggle_setup							# Setup struggle phases/cultures/religions
 		MB_culture_traditions						# Setup culture traditions
 		MB_culture_innovations						# Setup culture innovations
-		MB_culture_setup							# Setup cultures for characters/counties, culture languages and cultural acceptance by script
 		MB_religion_setup							# Setup faiths for characters/counties by script
 		MB_holy_site_fix							# Setup church holdings in holy sites
 		MB_succexpstart								# Setup succession laws that aren't otherwise properly setup
@@ -16,11 +15,9 @@ on_game_start = {
 		MB_add_right_to_rule_doctrines				# Setup doctrines related to government adoption
 		MB_add_syncretic_doctrines					# Setup syncretic doctrines for various faiths
 		MB_set_ablution_doctrines					# Setup ablution doctrine for various faiths that ME does not
-		MB_set_noble_families						# Setup for admin government noble families
 		MB_set_clan_unity							# Setup clan unity
 		MB_set_landless_adventurers					# Setup adventurers
 		MB_set_regencies							# Setup regencies/viziers/co-emperors
-		MB_set_legitimacy							# Setup legitimacy
 		MB_set_government							# Setup governments by script
 		MB_set_de_jure								# Setup de_jure changes by script
 		MB_set_buildings							# Setup special buildings and add building slots
@@ -39,9 +36,12 @@ on_game_start = {
 
 on_game_start_after_lobby = {
     on_actions = {
+		MB_culture_setup							# Setup cultures for characters/counties, culture languages and cultural acceptance by script
         MB_set_court_languages						# Setup court languages for Kingdoms/Empires
 		MB_set_catholic_doctrines					# Removes unavailable_doctrine at historical dates for historical faiths
 		MB_contracts								# Setup contracts for themata, marches, palatinates, and other contracts like levies, taxes, and title revocation
+		MB_set_noble_families						# Setup for admin government noble families
+		MB_set_legitimacy							# Setup legitimacy
 		
 		#set_global_variablesMB
 		#on_yearly_assign_culture_faith				# In MB_on_actions - Related to RoA minority system
@@ -1024,6 +1024,44 @@ MB_culture_innovations = {
 MB_culture_setup = {
 
 	effect = {
+		
+		
+		########################################################################################### CULTURE NAMES ###########################################################################################
+		
+		if = {
+			limit = {
+				game_start_date > 1065.1.1
+			}
+			# Culture Name Changes
+			culture:nitravan = {
+				set_culture_name = {
+					noun = "slovak"
+					collective_noun = "slovak_collective_noun"
+					prefix = "slovak_prefix"
+				}
+			}
+			culture:slovien = {
+				set_culture_name = {
+					noun = "moravian_noun"
+					collective_noun = "moravian_c_noun"
+					prefix = "moravian_prefix"
+				}
+			}
+			culture:slavonian = {
+				set_culture_name = {
+					noun = "n_slavonian_noun"
+					collective_noun = "n_slavonian_collective_noun"
+					prefix = "n_slavonian_prefix"
+				}
+			}
+			culture:carantanian = {
+				set_culture_name = {
+					noun = "slovene"
+					collective_noun = "slovene_collective_noun"
+					prefix = "slovene_prefix"
+				}
+			}
+		}
 	
 		########################################################################################### CULTURE LANGUAGES/NAMELISTS ###########################################################################################
 		
@@ -1039,10 +1077,6 @@ MB_culture_setup = {
 		}
 		culture:volhynian = {
 			set_name_list = name_list_old_east_slavic
-		}
-		
-		culture:uyghur = {
-			set_culture_pillar = language_siberian_turkic
 		}
 		
 		if = {
@@ -1115,6 +1149,9 @@ MB_culture_setup = {
 			}
 			culture:icelandic = {
 				set_culture_pillar = language_old_icelandic
+			}
+			culture:jamts = {
+				set_culture_pillar = language_jamt
 			}
 		}
 		
@@ -1747,20 +1784,133 @@ MB_culture_setup = {
 			set_culture = culture:great_russian
 		}
 		
+		#Anatolian Turks
 		every_living_character = {
 			limit = {
-				game_start_date > 1150.1.1
+				game_start_date > 1080.1.1
 				culture = {
 					has_cultural_pillar = heritage_turkic
 				}
-
+				NOT = { culture = culture:persian_turkish }
+				NOT = {
+					any_realm_county = {
+						OR = {
+							empire = title:e_egypt
+							empire = title:e_persia
+							empire = title:e_bengal
+							empire = title:e_rajastan
+						}
+					}
+				}
 				any_realm_county = {
 					any_county_province = { geographical_region = ghw_region_anatolia }
 				}
 			}
 			set_culture = culture:anatolian_turkish
 		}
-	
+		
+		# A script without the heritage limit to convert Turkish dynasties that were made 'Persian'
+		every_living_character = {
+			limit = {
+				game_start_date > 1050.1.1
+				NOT = { culture = culture:hindustani_proper }
+				NOT = { culture = culture:anatolian_turkish }
+				NOT = { religion = religion:tengrism_religion }
+				OR = {
+					dynasty = dynasty:790			#Ghaznavid
+					dynasty = dynasty:7336			#Ghuzz
+					dynasty = dynasty:101876		#Eldiguzids
+					house = house:house_anushtigar	#Anushtegin 
+
+				}
+			}
+			set_culture = culture:persian_turkish
+		}
+		
+		#Persian Turks
+		every_living_character = {
+			limit = {
+				game_start_date > 1050.1.1
+				culture = {
+					has_cultural_pillar = heritage_turkic
+				}
+				NOT = { culture = culture:hindustani_proper }
+				NOT = { culture = culture:anatolian_turkish }
+				NOT = { culture = culture:karluk } # They weren't really Turco-Persian like the others further south
+				NOT = { religion = religion:tengrism_religion }
+				NOT = {
+					any_realm_county = {
+						OR = {
+							any_county_province = { geographical_region = world_steppe_tarim }
+							any_county_province = { geographical_region = world_steppe_west }
+							any_county_province = { geographical_region = world_steppe_east }
+						}
+					}
+				}
+				any_realm_county = {
+					OR = {
+						any_county_province = { geographical_region = ghw_region_caucasus }
+						any_county_province = { geographical_region = world_middle_east_persia }
+						any_county_province = { geographical_region = world_middle_east_arabia }
+						any_county_province = { geographical_region = world_middle_east_jerusalem }
+						any_county_province = { geographical_region = world_india_rajastan }
+						any_county_province = { geographical_region = world_india_bengal }
+						any_county_province = { geographical_region = ghw_region_egypt }
+					}
+				}
+			}
+			set_culture = culture:persian_turkish
+		}
+		
+		#Tunisian Arabic
+		
+		every_living_character = {
+			limit = {
+				game_start_date > 1150.1.1
+				OR = {
+					culture = culture:bedouin
+					culture = culture:maghrebi
+				}
+				any_realm_county = {
+					any_county_province = { geographical_region = custom_tunisia_culture }
+				}
+			}
+			set_culture = culture:tunisian
+		}
+		
+		#Algerian Arabic
+		
+		every_living_character = {
+			limit = {
+				game_start_date > 1150.1.1
+				OR = {
+					culture = culture:bedouin
+					culture = culture:maghrebi
+				}
+				any_realm_county = {
+					any_county_province = { geographical_region = custom_algeria_culture }
+				}
+			}
+			set_culture = culture:algerian
+		}
+		
+		#Moroccan Arabic
+		
+		every_living_character = {
+			limit = {
+				game_start_date > 1150.1.1
+				OR = {
+					culture = culture:bedouin
+					culture = culture:maghrebi
+				}
+				any_realm_county = {
+					any_county_province = { geographical_region = custom_morocco_culture }
+				}
+			}
+			set_culture = culture:moroccan
+		}
+		
+		
 		if = {
             limit = {
                 exists = title:e_cathay.holder
@@ -1786,45 +1936,19 @@ MB_culture_setup = {
         }
 		
         # Flip Kara-Khitans to Qitai culture
+		# Much simpler script than what RoA used
 		
-        if = {
-            limit = {
-                exists = title:e_turan.holder
-				culture = culture:khitan 
-            }
-
-            title:e_turan.holder = {
-
-                set_culture = culture:qitai
-
-                every_close_or_extended_family_member = {
-                    limit = { culture = culture:khitan }
-                    set_culture = culture:qitai
-                }
-				
-				every_courtier_or_guest = {
-                       limit = { culture = culture:khitan }
-                       set_culture = culture:qitai
+		every_living_character = {
+			limit = {
+				game_start_date >= 1140.1.1
+				culture = culture:khitan
+				any_realm_county = {
+					any_county_province = { geographical_region = chagatai_de_jure_region }
 				}
-					
-                every_vassal_or_below = {
-                    if = {
-                        limit = { culture = culture:khitan }
-                        set_culture = culture:qitai
-                    }
-
-                    every_close_or_extended_family_member = {
-                        limit = { culture = culture:khitan }
-                        set_culture = culture:qitai
-                    }
-
-                    every_courtier_or_guest = {
-                        limit = { culture = culture:khitan }
-                        set_culture = culture:qitai
-                    }
-                }
-            }
-        }
+			}
+			set_culture = culture:qitai
+		}
+		
 		
 		
 		########################################################################################### COUNTY CULTURE CHANGES ###########################################################################################
@@ -1994,7 +2118,7 @@ MB_religion_setup = {
 						game_start_date >= 1211.1.1
 						culture = {
 							OR = {
-								has_cultural_pillar = language_south_slavic
+								has_cultural_pillar = language_serbo
 							}
 						}
 					}
@@ -2386,6 +2510,16 @@ MB_set_court_languages = {
 		if = {
             limit = { exists = title:k_madurai.holder game_start_date >= 1337.1.1 }
             title:k_madurai.holder = { set_court_language = language_iranian
+        	if = {
+					limit = { NOT = { knows_court_language_of = this } }
+					learn_court_language_of = this
+				}
+			}
+        }
+		
+		if = {
+            limit = { exists = title:k_delhi.holder game_start_date >= 1195.1.1 }
+            title:k_delhi.holder = { set_court_language = language_iranian
         	if = {
 					limit = { NOT = { knows_court_language_of = this } }
 					learn_court_language_of = this
@@ -3178,7 +3312,7 @@ MB_set_court_languages = {
 			}
         }
 		if = {
-            limit = { exists = title:k_delhi.holder game_start_date < 1206.1.1 }
+            limit = { exists = title:k_delhi.holder game_start_date < 1190.1.1 }
             title:k_delhi.holder = { set_court_language = language_sanskrit
         	if = {
 					limit = { NOT = { knows_court_language_of = this } }
@@ -8880,7 +9014,24 @@ MB_contracts = {
 					level = 5
 				}
 			}
-			
+			title:d_tohchen_china.holder ?= {
+				vassal_contract_set_obligation_level = {
+					type = administrative_themes
+					level = 2
+				}
+			}
+			title:d_malgal_china.holder ?= {
+				vassal_contract_set_obligation_level = {
+					type = administrative_themes
+					level = 1
+				}
+			}
+			title:d_xarmoron_china.holder ?= {
+				vassal_contract_set_obligation_level = {
+					type = administrative_themes
+					level = 2
+				}
+			}
 			
 		}
 		
@@ -9338,12 +9489,6 @@ MB_contracts = {
 					level = 1
 				}
 			}
-			title:d_weibo_china.holder ?= {
-				vassal_contract_set_obligation_level = {
-					type = administrative_themes
-					level = 1
-				}
-			}
 			title:d_ziqing_china.holder ?= {
 				vassal_contract_set_obligation_level = {
 					type = administrative_themes
@@ -9381,12 +9526,6 @@ MB_contracts = {
 				}
 			}
 			title:d_binning_china.holder ?= {
-				vassal_contract_set_obligation_level = {
-					type = administrative_themes
-					level = 3
-				}
-			}
-			title:d_jingyuan_china.holder ?= {
 				vassal_contract_set_obligation_level = {
 					type = administrative_themes
 					level = 3
@@ -15822,6 +15961,15 @@ MB_set_regencies = {
 			limit = { game_start_date = 1211.6.16 }
 			
 			
+			#Thessalonika
+			
+			character:31346 = { designate_diarch = character:205528 }
+
+			remove_generated_diarch_consequences_effect = {
+				NEW_DIARCH = character:205528
+				LIEGE = character:31346
+			}
+			
 			## Ghurids
 			
 			character:144143 = { designate_diarch = character:170302 }
@@ -17423,6 +17571,7 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 			if = {
 				limit = {
 					game_start_date <= 1204.1.1 
+					exists = title:e_byzantium.holder
 				}
 				
 				title:e_byzantium.holder = { change_government = administrative_government }
@@ -18121,7 +18270,7 @@ MB_set_de_jure = {
 			
 			title:c_yamashiro = { set_de_jure_liege_title = title:d_yamato_imperial }
 			
-			#Caucaus given to Transcaucasia. Made by decision in CE but decision removed and title just outright added. Gets rid of the blank empire I put there while at the same time making sure the ERE doesn't 'de-jure' conquer the Caucasus
+			#Caucasus given to Transcaucasia. Made by decision in CE but decision removed and title just outright added. Gets rid of the blank empire I put there while at the same time making sure the ERE doesn't 'de-jure' conquer the Caucasus
 			title:k_georgia = { set_de_jure_liege_title = title:e_transcaucasia } 
 			title:k_armenia = { set_de_jure_liege_title = title:e_transcaucasia } 
 			title:k_old_armenia = { set_de_jure_liege_title = title:e_transcaucasia }
@@ -18356,6 +18505,35 @@ MB_set_de_jure = {
 
 			title:d_ostmark = { set_de_jure_liege_title = title:k_saxony }
 			
+		}
+		
+		#France
+		
+		#Initial conquest by Philippe
+		
+		if = {
+			limit = {
+				game_start_date >= 1200.1.1
+			}
+
+			title:d_poitou = { set_de_jure_liege_title = title:k_france }
+			title:d_limousin = { set_de_jure_liege_title = title:k_france }
+			title:d_auvergne = { set_de_jure_liege_title = title:k_france }
+		}
+		
+		#Give the rest of Aquitaine
+		
+		if = {
+			limit = {
+				game_start_date >= 1250.1.1
+			}
+
+			title:d_languedoc = { set_de_jure_liege_title = title:k_france }
+			title:d_gevaudan = { set_de_jure_liege_title = title:k_france }
+			title:d_toulouse = { set_de_jure_liege_title = title:k_france }
+			title:d_armagnac = { set_de_jure_liege_title = title:k_france }
+			title:d_gascogne = { set_de_jure_liege_title = title:k_france }
+			title:d_aquitaine = { set_de_jure_liege_title = title:k_france }
 		}
 		
 		#HRE setup
