@@ -174,10 +174,10 @@ select_local_animal_effect = {
 				}
 				5 = { # Big Cat
 					trigger = {
-						scope:animal_location = { hunt_animal_big_cat_trigger = yes }
 						NOT = { exists = scope:small_local_game }
 						NOT = { exists = scope:harmless_local_game }
 						scope:animal_location = {
+							hunt_animal_big_cat_trigger = yes			
 							OR = {
 								hunt_animal_lion_trigger = yes
 								hunt_animal_tiger_trigger = yes
@@ -373,6 +373,19 @@ end_hunt_mystical_animal_story_cycle_effect = {
 		ANIMAL = scope:activity.var:animal_type
 	}
 	add_stress = medium_stress_loss
+	#Unop ck3-tiger Ensure that scope:story exists
+	if = {
+		limit = {
+			NOT = { exists = scope:story }
+		}
+		random_owned_story = {
+			limit = {
+				story_type = story_cycle_hunt_mystical_animal
+				var:legendary_county ?= scope:activity.activity_location.county
+			}
+			save_temporary_scope_as = story
+		}
+	}
 	scope:story = {
 		hidden_effect = { end_story = yes }
 	}
@@ -391,6 +404,14 @@ end_hunt_mystical_animal_story_cycle_effect = {
 }
 
 hunt_activity_standard_game_effect = {
+	#Unop ck3-tiger Ensure correct scope for hunt_activity_master_aptitude_positive_modifier
+	if = {
+		limit = { exists = scope:story }
+		scope:story.story_owner = { save_temporary_scope_as = liege }
+	}
+	else = {
+		root = { save_temporary_scope_as = liege }
+	}
 	random_list = {
 		10 = { # Boar
 			trigger = {
@@ -480,7 +501,14 @@ hunt_activity_standard_game_effect = {
 }
 
 hunt_activity_deer_game_effect = {
-	save_scope_as = root_char_scope #Unop: As "root" directly can be either a "story cycle", an "activity" or a "character"
+	#Unop ck3-tiger Ensure correct scope for hunt_activity_master_aptitude_positive_modifier
+	if = {
+		limit = { exists = scope:story }
+		scope:story.story_owner = { save_temporary_scope_as = liege }
+	}
+	else = {
+		root = { save_temporary_scope_as = liege }
+	}
 	random_list = {
 		5 = { # Deer - Europe, Middle East, India, Steppe
 			trigger = {
@@ -584,6 +612,11 @@ hunt_activity_deer_game_effect = {
 				}
 			}
 		}
+	}
+	# Fallback
+	if = {
+		limit = { NOT = { exists = var:animal_type } }
+		set_variable = { name = animal_type value = flag:stag years = 3 }
 	}
 }
 
@@ -3528,12 +3561,12 @@ hunt_gift_trophy_opinion_effect = {
 			hunt_dharmic_pacificist_trigger = yes
 			NOT = { $RECIPIENT$ = scope:host }
 		}
-		$RECIPIENT$ = {
-			reverse_add_opinion = {
-				target = scope:host
-				modifier = hunt_dharmic_mercy_opinion
-				opinion = -10
-			}
+				 
+		reverse_add_opinion = {
+			target = scope:host
+			modifier = hunt_dharmic_mercy_opinion
+			opinion = -10
+	
 		}
 	}
 	else_if = {
@@ -3542,13 +3575,13 @@ hunt_gift_trophy_opinion_effect = {
 				has_activity_option = { category = special_type option = hunt_type_legendary }
 			}
 		}
-		scope:host = {
-			activity_improve_relations_intent_effect = {
-				CHARACTER = $RECIPIENT$
-				REASON = friend_gave_hunt_trophy_reason
-				OPINION = 20
-				MODIFIER = hunt_gifted_trophy_opinion
-			}
+				
+		activity_improve_relations_intent_effect = {
+			CHARACTER = scope:host
+			REASON = friend_gave_hunt_trophy_reason
+			OPINION = 20
+			MODIFIER = hunt_gifted_trophy_opinion
+	
 		}
 	}
 	else_if = {
@@ -3564,13 +3597,13 @@ hunt_gift_trophy_opinion_effect = {
 				hunt_animal_type_predator_trigger = { VAR = scope:activity.var:animal_type }
 			}
 		}
-		scope:host = {
-			activity_improve_relations_intent_effect = {
-				CHARACTER = $RECIPIENT$
-				REASON = friend_gave_hunt_trophy_reason
-				OPINION = 5
-				MODIFIER = hunt_gifted_trophy_opinion
-			}
+				
+		activity_improve_relations_intent_effect = {
+			CHARACTER = scope:host
+			REASON = friend_gave_hunt_trophy_reason
+			OPINION = 5
+			MODIFIER = hunt_gifted_trophy_opinion
+	
 		}
 	}
 	else_if = {
@@ -3580,23 +3613,23 @@ hunt_gift_trophy_opinion_effect = {
 				hunt_activity_large_game_trigger = { VAR = var:animal_type }
 			}
 		}
-		scope:host = {
-			activity_improve_relations_intent_effect = {
-				CHARACTER = $RECIPIENT$
-				REASON = friend_gave_hunt_trophy_reason
-				OPINION = 15
-				MODIFIER = hunt_gifted_trophy_opinion
-			}
+				
+		activity_improve_relations_intent_effect = {
+			CHARACTER = scope:host
+			REASON = friend_gave_hunt_trophy_reason
+			OPINION = 15
+			MODIFIER = hunt_gifted_trophy_opinion
+	
 		}
 	}
 	else = {
-		scope:host = {
-			activity_improve_relations_intent_effect = {
-				CHARACTER = $RECIPIENT$
-				REASON = friend_gave_hunt_trophy_reason
-				OPINION = 10
-				MODIFIER = hunt_gifted_trophy_opinion
-			}
+				
+		activity_improve_relations_intent_effect = {
+			CHARACTER = scope:host
+			REASON = friend_gave_hunt_trophy_reason
+			OPINION = 10
+			MODIFIER = hunt_gifted_trophy_opinion
+	
 		}
 	}
 }
@@ -3951,10 +3984,13 @@ hunt_create_trophy_effect = {
 							hunt_activity_deer_game_trigger = { VAR = var:animal_type }
 							exists = scope:activity.var:female_quarry
 						}
-						# This is already check above, leftover code ?
-						#NOT = {
-						#	has_activity_option = { category = special_type option = hunt_type_falconry }
-						#}
+						NOT = {
+							has_activity_option = { category = special_type option = hunt_type_falconry }
+						}
+													
+			  
+																					 
+		
 					}
 				}
 				create_artifact_animal_trinket_effect = {
@@ -3987,10 +4023,10 @@ hunt_create_trophy_effect = {
 				}
 			}
 		}
-		else = {
-			#debug_log = "UNOP: hunt_create_trophy_effect no trophy created"
-			#unop_log_hunt_activity_effect = yes
-		}
+		  
+																   
+									   
+   
 	}
 }
 
@@ -4093,10 +4129,10 @@ hunt_invalidation_event_effect = {
 
 # Unified effect for adding sightings to counties
 hunt_create_sighting_effect = {
-	if = { #Unop: To ensure the sighting_county exists, so the modifier tooltip is not broken !
-		limit = { NOT = { exists = scope:sighting_county } }
-		save_scope_as = sighting_county
-	}
+	if = {
+        limit = { NOT = { exists = scope:sighting_county } }
+        save_scope_as = sighting_county
+    }
 	# Track who can use the sighting
 	set_variable = {
 		name = animal_type
