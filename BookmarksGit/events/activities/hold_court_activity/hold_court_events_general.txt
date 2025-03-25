@@ -2896,12 +2896,19 @@ hold_court.3080 = {
 				add = 5
 			}
 		}
-		stress_impact = {
-			greedy = medium_stress_loss
-			arrogant = medium_stress_loss
-			generous = medium_stress_gain
-			humble = medium_stress_gain
-		}
+				   
+							  
+								
+								
+							  
+   
+		#Unop: duplicated stress_impact block with same value just above
+		#stress_impact = {
+		#	greedy = medium_stress_loss
+		#	arrogant = medium_stress_loss
+		#	generous = medium_stress_gain
+		#	humble = medium_stress_gain
+		#}
 	}
 
 	# Option B: Gain Prestige 
@@ -5126,6 +5133,7 @@ scripted_trigger hold_court_5030_courtier_basic_trigger = {
 	faith = root.faith
 	is_imprisoned = no
 	NOT = { has_trait = incapable }
+	NOT = { has_court_position = court_tutor_court_position } # Unop: Add this so our court tutor is free to be selected for option B 
 	OR = {
 		AND = {
 			OR = {
@@ -5322,6 +5330,7 @@ hold_court.5030 = {
 		trigger = {
 			exists = scope:court_tutor
 		}
+		reason = unop_employ_tutor #Unop: To show that this option is available because we have a court tutor (like in adventurers events)
 		#If you're part of the gender minority you get a boost as well
 		if = {
 			limit = {
@@ -9076,10 +9085,10 @@ hold_court.6110 = {
 	}
 
 	after = {
-		scope:6100_vassal_1 = {
+		scope:6110_vassal_1 = { #Unop: Was 6100_vassal_1
 			clear_court_event_participation = yes
 		}
-		scope:6100_vassal_2 = {
+		scope:6110_vassal_2 = { #Unop: Was 6100_vassal_2
 			clear_court_event_participation = yes
 		}
 		scope:6110_rep = {
@@ -9283,32 +9292,42 @@ hold_court.6120 = {
 				short_term_gold >= major_gold_value
 			}
 		}
+		#Unop Add option B
+		scope:steward = {
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 20
+			}
+		}
 		remove_short_term_gold = major_gold_value
 		add_character_flag = {
 			flag = 6120_has_domesday_book_flag
 			years = 50
 		}
+
+		custom_tooltip = hold_court.6120.a.tt #Unop
 		show_as_tooltip = {
-			random_list = {
-				100 = {
-					show_chance = no
-					desc = hold_court.6120.a.tt
-					hold_court_6120_rewards = yes
-				}
-			}
+				  
+		   
+					 
+								
+			hold_court_6120_rewards = yes
+	 
+	
 		}
-		hidden_effect = {
-			scope:steward = {
-				add_opinion = {
-					target = root
-					modifier = pleased_opinion
-					opinion = 20
-				}
-			}
-			trigger_event = {
-				id = hold_court.6121
-				days = 185
-			}
+		#Unop Add missing options
+					
+				   
+				  
+							   
+				 
+	 
+	
+		trigger_event = {
+			id = hold_court.6121
+			days = 185
+	
 		}
 		stress_impact = {
 			lazy = major_stress_impact_gain
@@ -9324,6 +9343,76 @@ hold_court.6120 = {
 				ai_energy = 0.25
 				ai_rationality = 0.5
 				ai_greed = -0.25
+			}
+			modifier = {
+				has_trait = lazy
+				add = -75
+			}
+			modifier = {
+				has_trait = content
+				add = -75
+			}
+		}
+	}
+
+	#Unop Option B: yes but with seneschal
+	option = {
+		name = hold_court.6120.b
+		trigger = {
+			exists = scope:seneschal
+			trigger_if = {
+				limit = {
+					is_ai = yes
+				}
+				short_term_gold >= major_gold_value
+			}
+		}
+		reason = unop_employ_seneschal
+		scope:steward = {
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 20
+			}
+		}
+		scope:seneschal = {
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 20
+			}
+		}
+		remove_short_term_gold = major_gold_value
+
+
+		custom_tooltip = hold_court.6120.a.tt
+		show_as_tooltip = {
+			hold_court_6120_rewards = yes
+		}
+		trigger_event = {
+			id = hold_court.6121
+			days = 185
+		}
+		add_character_flag = {
+			flag = 6120_has_domesday_book_flag
+			years = 50
+		}
+
+		stress_impact = {
+			lazy = major_stress_impact_gain
+			content = major_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 150
+			ai_value_modifier = {
+				ai_energy = 0.25
+				ai_rationality = 0.5
+				ai_greed = -0.25
+			}
+			modifier = {
+				gold < major_gold_value
+				add = -150
 			}
 			modifier = {
 				has_trait = lazy
@@ -9407,6 +9496,7 @@ hold_court.6120 = {
 		trigger = {
 			exists = scope:jester
 		}
+		reason = unop_employ_jester
 		scope:jester = {
 			add_opinion = {
 				target = root
@@ -9550,6 +9640,11 @@ scripted_effect hold_court_6130_a_rewards = {
 		every_held_county = {
 			custom = custom.every_held_county
 			change_development_progress_with_overflow = 50
+			#Unop Only add this modifier if appropriate
+			add_county_modifier = {
+				modifier = 6131_mapped_wilderness_county_modifier
+				years = 10
+			}
 		}
 	}
 	else_if = {
@@ -9562,18 +9657,22 @@ scripted_effect hold_court_6130_a_rewards = {
 		every_held_county = {
 			custom = custom.every_held_county
 			change_development_progress_with_overflow = 35
+			add_county_modifier = {
+				modifier = 6131_mapped_wilderness_county_modifier
+				years = 10
+			}
 		}
 	}
-	scope:6130_proposer = {
+	scope:6131_proposer = { #Unop Use correct scope
 		add_prestige = minor_prestige_gain
 	}
-	every_held_county = {
-		custom = custom.every_held_county
-		add_county_modifier = {
-			modifier = 6131_mapped_wilderness_county_modifier
-			years = 10
-		}
-	}
+					  
+								   
+						 
+													
+			 
+   
+  
 	add_prestige = medium_prestige_gain
 }
 
@@ -9582,8 +9681,9 @@ hold_court.6130 = {
 	title = hold_court.6130.t
 	desc = hold_court.6130.desc
 	theme = court
-	lower_left_portrait = scope:tutor
-	lower_center_portrait = scope:m_hunt
+	#Unop Remove these portraits
+	#lower_left_portrait = scope:tutor
+	#lower_center_portrait = scope:m_hunt
 	cooldown = { years = 10 }
 	court_scene = {
 		button_position_character = scope:6130_proposer
@@ -9665,24 +9765,27 @@ hold_court.6130 = {
 	option = {
 		name = hold_court.6130.a
 		remove_short_term_gold = major_gold_value
+		custom_tooltip = hold_court.6130.a.tt #Unop Move tooltip here
+
+		scope:6130_proposer = { save_scope_as = 6131_proposer } #Unop Save 6131_proposer as scope
 		show_as_tooltip = {
-			random_list = {
-				100 = {
-					show_chance = no
-					desc = hold_court.6130.a.tt
-					hold_court_6130_a_rewards = yes
-				}
-			}
+				  
+		   
+					 
+								
+			hold_court_6130_a_rewards = yes
+	 
+	
 		}
-		hidden_effect = {
-			trigger_event = {
-				id = hold_court.6131
-				days = { 93 171 }
-			}
-			add_character_flag = {
-				flag = 6130_has_done_cadastre
-				years = 20
-			}
+				   
+		trigger_event = {
+			id = hold_court.6131
+			days = { 93 171 }
+		}
+		add_character_flag = {
+			flag = 6130_has_done_cadastre
+			years = 20
+	
 		}
 		stress_impact = {
 			lazy = minor_stress_gain
@@ -9748,10 +9851,10 @@ hold_court.6130 = {
 			clear_court_event_participation = yes
 		}
 		if = {
-			limit = { exists = scope:m_hunt }
-			scope:m_hunt = {
-				clear_court_event_participation = yes
-			}
+			limit = { exists = scope:6131_proposer  } #Unop Use correct scope
+			clear_saved_scope = 6131_proposer
+										 
+	
 		}
 		# Finish up the chain if relevant.
 		hold_court_queue_post_event_effect = yes
@@ -9869,7 +9972,10 @@ scripted_trigger hold_court_6140_valid_vassal_trigger = {
 }
 
 scripted_trigger hold_court_6140_europe_trigger = {
-	terrain = forest
+	OR = {
+		terrain = forest
+		terrain = taiga #Unop: Bears are in taiga too
+	}
 	geographical_region = world_europe
 }
 
@@ -13837,6 +13943,7 @@ scripted_trigger hold_court_8050_knight_trigger = {
 	NOT = { has_relation_rival = root }
 	NOT = { is_close_family_of = root }
 	court_position_martial_trigger = { EMPLOYER = root }
+	can_be_knight_trigger = { ARMY_OWNER = root } #Unop: Ensure the selected char can be knighted
 }
 
 scripted_trigger hold_court_8050_vassal_trigger = {
@@ -16640,7 +16747,7 @@ scripted_trigger hold_court_8090_can_move_trigger = {
 	trigger_if = { # Unop: This trigger is here so a vassal won't ask his liege to take his daughter who his married to another of our vassal.
 		limit = { is_married = yes }
 		primary_spouse = { is_ruler = no }
-	}																																	   
+	}
 }
 
 scripted_trigger hold_court_8090_candidate_trigger = { # Courtier is not already in a position
@@ -16705,7 +16812,7 @@ hold_court.8090 = {
 		first_valid = {
 			triggered_desc = {
 				trigger = {
-					exists = scope:unop_hold_court_8090_target
+					exists = scope:unop_hold_court_8090_target #Unop
 					scope:vassal = { has_relation_rival = scope:unop_hold_court_8090_target }
 				}
 				desc = hold_court.8090.desc.rival # RIVAL HOLDS POS
@@ -16718,7 +16825,7 @@ hold_court.8090 = {
 				desc = hold_court.8090.desc.other_advocate
 			}
 			triggered_desc = {
-				trigger = { exists = scope:unop_hold_court_8090_target }
+				trigger = { exists = scope:unop_hold_court_8090_target } #Unop
 				desc = hold_court.8090.desc.other
 			}
 			triggered_desc = {
@@ -16737,14 +16844,14 @@ hold_court.8090 = {
 			}
 			triggered_desc = {
 				trigger = {
-					exists = scope:unop_hold_court_8090_target
+					exists = scope:unop_hold_court_8090_target #Unop
 					OR = {
 						AND = { # Stewardship roles
 							scope:vassal.var:target_court_position = flag:royal_architect
 							scope:vassal.var:target_court_position = flag:seneschal
 							scope:vassal.var:target_court_position = flag:court_gardener
 							scope:vassal.var:target_court_position = flag:keeper_of_swans
-							scope:vassal.stewardship > scope:unop_hold_court_8090_target.stewardship
+							scope:vassal.stewardship > scope:unop_hold_court_8090_target.stewardship #Unop
 						}
 						AND = { # Learning roles
 							scope:vassal.var:target_court_position = flag:court_tutor
@@ -16753,7 +16860,7 @@ hold_court.8090 = {
 							scope:vassal.var:target_court_position = flag:antiquarian
 							scope:vassal.var:target_court_position = flag:court_artificer
 							scope:vassal.var:target_court_position = flag:chief_qadi
-							scope:vassal.learning > scope:unop_hold_court_8090_target.learning
+							scope:vassal.learning > scope:unop_hold_court_8090_target.learning #Unop
 						}
 						AND = { # Martial roles
 							scope:vassal.var:target_court_position = flag:master_of_horse
@@ -16761,7 +16868,7 @@ hold_court.8090 = {
 							scope:vassal.var:target_court_position = flag:champion
 							scope:vassal.var:target_court_position = flag:master_of_hunt
 							scope:vassal.var:target_court_position = flag:garuda
-							scope:vassal.martial > scope:unop_hold_court_8090_target.martial
+							scope:vassal.martial > scope:unop_hold_court_8090_target.martial #Unop
 							scope:vassal.var:target_court_position = flag:akolouthos
 						}
 						AND = { # Diplomacy roles
@@ -16770,11 +16877,11 @@ hold_court.8090 = {
 							scope:vassal.var:target_court_position = flag:cupbearer
 							scope:vassal.var:target_court_position = flag:lady_in_waiting
 							scope:vassal.var:target_court_position = flag:cultural_emissary
-							scope:vassal.diplomacy > scope:unop_hold_court_8090_target.diplomacy
+							scope:vassal.diplomacy > scope:unop_hold_court_8090_target.diplomacy #Unop
 						}
 						AND = { # Intrigue roles
 							scope:vassal.var:target_court_position = flag:chief_eunuch
-							scope:vassal.intrigue > scope:unop_hold_court_8090_target.intrigue
+							scope:vassal.intrigue > scope:unop_hold_court_8090_target.intrigue #Unop
 						}
 					}
 				}
@@ -17034,19 +17141,23 @@ hold_court.8090 = {
 				desc = hold_court_8090_interest_bestie
 			}
 			triggered_desc = {
-				trigger = { exists = scope:unop_hold_court_8090_target }
+				trigger = { has_relation_friend = scope:vassal }
+				desc = hold_court_8090_interest_friend
+			}
+			triggered_desc = {
+				trigger = { exists = scope:unop_hold_court_8090_target } #Unop
 				desc = hold_court_8090_interest_other
 			}
 			triggered_desc = {
 				trigger = {
-					NOT = { exists = scope:unop_hold_court_8090_target }
+					NOT = { exists = scope:unop_hold_court_8090_target } #Unop
 				}
 				desc = hold_court_8090_interest_fallback
 			}
 		}
 	}
 	theme = realm
-	lower_right_portrait = scope:unop_hold_court_8090_target
+	lower_right_portrait = scope:unop_hold_court_8090_target #Unop
 	court_scene = {
 		button_position_character = scope:vassal
 		court_event_force_open = yes
@@ -17168,15 +17279,15 @@ hold_court.8090 = {
 			}
 		}
 		scope:vassal = {
-			set_variable = unop_prevent_bad_court_position # So the option D to give a bad position is always available
+			set_variable = unop_prevent_bad_court_position #Unop So the option D to give a bad position is always available
 			court_position_generator_effect = { VAR = target EMPLOYER = root }
-			if = { # Unop: There is a "scope pollution" where old_holder is use in the court_position_generator_assignment_effect and so will conflict if it is already defined here
+			if = { #Unop: There is a "scope pollution" where old_holder is use in the court_position_generator_assignment_effect and so will conflict if it is already defined here
 				limit = { exists = scope:old_holder }
 				scope:old_holder = { save_scope_as = unop_hold_court_8090_target }
 				clear_saved_scope = old_holder
 			}
 			court_position_generator_effect = { VAR = backup EMPLOYER = root }
-			if = { # Unop: There is a "scope pollution" where old_holder will also be defined in the court_position_generator_assignment_effect and so will conflict if it is already defined here
+			if = { #Unop: There is a "scope pollution" where old_holder will also be defined in the court_position_generator_assignment_effect and so will conflict if it is already defined here
 				limit = { exists = scope:old_holder }
 				scope:old_holder = { save_scope_as = unop_hold_court_8090_backup }
 				clear_saved_scope = old_holder
@@ -17189,7 +17300,7 @@ hold_court.8090 = {
 
 	option = { # Grant desired position
 		name = {
-			trigger = { exists = scope:unop_hold_court_8090_target } # Replace
+			trigger = { exists = scope:unop_hold_court_8090_target } #Unop Replace
 			text = hold_court.8090.b
 		}
 		name = { # Lady-in-Waiting Soulmate
@@ -17322,7 +17433,7 @@ hold_court.8090 = {
 			}
 		}
 		if = {
-			limit = { exists = scope:unop_hold_court_8090_target }
+			limit = { exists = scope:unop_hold_court_8090_target } #Unop
 			scope:unop_hold_court_8090_target = {
 				add_opinion = {
 					modifier = grateful_opinion
@@ -17367,10 +17478,10 @@ hold_court.8090 = {
 						CHAR = scope:vassal
 						COURT_POS = executioner_court_position
 					}
-			
-																
-																
-	  
+   
+				
+				
+   
 					#NOR = {
 					#	scope:vassal.var:target_court_position ?= flag:executioner
 					#	scope:vassal.var:backup_court_position ?= flag:executioner
@@ -17381,10 +17492,10 @@ hold_court.8090 = {
 						CHAR = scope:vassal
 						COURT_POS = court_jester_court_position
 					}
-			
-																 
-																 
-	  
+   
+				 
+				 
+   
 					#NOR = {
 					#	scope:vassal.var:target_court_position ?= flag:court_jester
 					#	scope:vassal.var:backup_court_position ?= flag:court_jester
@@ -17420,10 +17531,10 @@ hold_court.8090 = {
 					CHAR = scope:vassal
 					COURT_POS = executioner_court_position
 				}
-		   
-															  
-															  
 	 
+				 
+				 
+  
 				#NOR = {
 				#	scope:vassal.var:target_court_position = flag:executioner
 				#	scope:vassal.var:backup_court_position = flag:executioner
@@ -17470,10 +17581,10 @@ hold_court.8090 = {
 					CHAR = scope:vassal
 					COURT_POS = food_taster_court_position
 				}
-		   
-															  
-															  
 	 
+				 
+				 
+  
 				#NOR = {
 				#	scope:vassal.var:target_court_position = flag:food_taster
 				#	scope:vassal.var:backup_court_position = flag:food_taster
@@ -24702,6 +24813,10 @@ hold_court.8200 = {
 		name = hold_court.8200.c
 		trigger = {
 			NOT = { has_trait = zealous }
+			trigger_if = { #Unop: HoF won't change religion
+				limit = { exists = faith.religious_head }
+				NOT = { root = faith.religious_head }
+			}
 		}
 		if = {
 			limit = { religion = scope:infidel_vassal.religion }
