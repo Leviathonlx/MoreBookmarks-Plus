@@ -1,0 +1,152 @@
+﻿# Called every Jan 1st
+# Root does not exist
+
+Population_Control_Debug = {
+	effect = {
+		add_character_modifier = {
+			modifier = Population_Control_Debug_went
+			days = 1825
+		}
+		trigger_event = {
+			on_action = Population_Control_Debug_lcs
+		}	
+			trigger_event = {
+			on_action = Population_Control_Debug_otherrheir
+		}
+		trigger_event = {
+			on_action = Population_Control_Debug_line
+		}
+		trigger_event = {
+			on_action = Population_Control_Debug_dyna
+		}
+	}
+}
+
+Population_Control_Debug_lcs = { #for debug
+	trigger = {
+		AND = { # Least Child safe						
+			any_close_family_member	 = {
+				trigger_if = {
+					limit = { NOT = { Barony_Safe = 1 } }
+					highest_held_title_tier >= tier_county								
+				}							
+				is_ruler = yes
+				is_alive = yes					
+			}
+			trigger_if = {
+				limit = {
+					root.faith = { has_dominant_ruling_gender = root }
+				}
+				any_sibling = { #male
+					is_alive = yes
+					age >= root.age
+					health >= 3
+					this.faith = { has_dominant_ruling_gender = prev }
+					count <= 1
+				}
+			}
+			trigger_else = {
+				any_sibling = { #female
+					is_alive = yes
+					age >= root.age
+					health >= 3
+					this.faith = { NOT = {has_dominant_ruling_gender = prev} }
+					count <= 1
+				}
+			}
+		}
+	}
+	effect = {
+		add_character_modifier = {
+			modifier = Population_Control_Debug_lcs
+			days = 1825
+		}
+	}
+}
+
+Population_Control_Debug_otherrheir = { #for debug
+	trigger = {
+		OR = {
+			is_ruler = yes
+			any_heir_title = {
+				trigger_if = {
+					limit = { NOT = { Barony_Safe = 1 } }
+					tier >= tier_county								
+				}
+				count >= 1
+			}
+			AND = {
+				age <= 50
+				any_consort = {
+					OR = {
+						is_ruler = yes
+						any_heir_title = {
+							trigger_if = {
+								limit = { NOT = { Barony_Safe = 1 } }
+								tier >= tier_county								
+							}
+							count >= 1
+						}					
+					}
+				}						
+			}
+		}
+	}
+	effect = {
+		add_character_modifier = {
+			modifier = Population_Control_Debug_otherrheir
+			days = 1825
+		}
+	}
+}
+
+Population_Control_Debug_line = { #for debug
+	trigger = {
+		OR = {
+			has_character_flag  = Population_Control_target_is_on_succession_line
+			AND = {
+				age <= 50
+				any_consort = {
+					has_character_flag  = Population_Control_target_is_on_succession_line
+				}
+			}
+		}	
+	}
+	effect = {
+		add_character_modifier = {
+			modifier = Population_Control_Debug_line
+			days = 1825
+		}
+	}
+}
+
+Population_Control_Debug_dyna = { #for debug
+	trigger = {
+		AND = { #DynastyLastStand safe
+			is_lowborn = no
+			age <= 30
+			root.faith = {
+				has_dominant_ruling_gender = root
+			}
+			root.dynasty = {
+				dynasty_prestige_level >= Dynasty_laststand_level
+				any_dynasty_member = {		
+					this.faith = {	has_dominant_ruling_gender = prev	}
+					health >= 3
+					age >= root.age
+					age <= 30
+					count <= Dynasty_laststand_members
+				}
+			}
+			Dynasty_laststand_safe = 1
+		}
+	}
+	effect = {
+		add_character_modifier = {
+			modifier = Population_Control_Debug_dyna
+			days = 1825
+		}
+	}
+}
+
+
