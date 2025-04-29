@@ -56,7 +56,6 @@
 			limit = { 
 				faith = { has_doctrine_parameter = mandatory_hajj }
 				capital_province.barony ?= title:b_makka
-				is_landless_adventurer = no #Unop Enable LAs to pilgrimage to their camp location
 			}
 			custom_tooltip = {
 				text = activity_pilgrimage.is_location_valid.capital_is_mecca
@@ -105,10 +104,7 @@
 			#Invalidate flag, until/unless this is fixed in code
 			NOT = { has_variable = pilgrimage_invalidated_illness }
 			#Don't change your capital to be the holy site destination
-			trigger_if = { #Unop Enable LAs to pilgrimage to their camp location
-				limit = { is_landless_adventurer = no }
-				NOT = { capital_province.barony = scope:activity.activity_location.barony }
-			}
+			NOT = { capital_province.barony = scope:activity.activity_location.barony }
 		}
 		# Converting mid-pilgrimage is a big no-no.
 		scope:activity = {
@@ -235,14 +231,9 @@
 			}
 		}
 		#You can't pilgrimage to your own capital
-		trigger_if = { #Unop Enable LAs to pilgrimage to their camp location
-			limit = {
-				scope:host = { is_landless_adventurer = no }
-			}
-			custom_tooltip = {
-				text = activity_pilgrimage.is_location_valid.capital_is_holy_site
-				NOT = { scope:host.capital_province = root }
-			}
+		custom_tooltip = {
+			text = activity_pilgrimage.is_location_valid.capital_is_holy_site
+			NOT = { scope:host.capital_province = root }
 		}
 
 		# If you are supposed to be the realm's reserve ruler, then you can't take a multi-year foreign trip.
@@ -869,10 +860,13 @@
 						desc = court_event_discount_desc
 					}
 				}
-				#Adventurer
+				#Adventurer & Nomads
 				if = {
 					limit = {
-						is_landless_adventurer = yes
+						OR = {
+							is_landless_adventurer = yes
+							government_has_flag = government_is_nomadic
+						}
 						has_perk = clerical_justifications_perk
 					}
 					multiply = {
@@ -1177,11 +1171,11 @@
 				}
 				is_valid = {
 					# You only get to Hajj every X years.
-					#trigger_if = { #Unop Enable LAs to pilgrimage to their camp location
-					#	limit = {
-					#		exists = capital_province
-					#		NOT = { capital_province.barony = title:b_makka }
-					#	}
+					trigger_if = {
+						limit = {
+							exists = capital_province
+							NOT = { capital_province.barony = title:b_makka }
+						}
 						custom_tooltip = {
 							text = activity_pilgrimage.is_valid.hajjed_recently
 							NOT = {
@@ -1191,7 +1185,7 @@
 								}
 							}
 						}
-					#}
+					}
 					OR = {
 						faith = { has_doctrine_parameter = mandatory_hajj }
 						can_perform_the_hajj_trigger = yes
@@ -1202,7 +1196,6 @@
 						NAND = {
 							exists = capital_province
 							capital_province.barony = title:b_makka
-							is_landless_adventurer = no #Unop Enable LAs to pilgrimage to their camp location
 						}
 					}
 				}
@@ -2601,6 +2594,14 @@
 	#Unique holy sites
 	background = {
 		trigger = {
+			activity_location.county = title:c_roma
+		}
+		texture = "gfx/interface/illustrations/holy_sites/rome.dds"
+		environment = "environment_western_holy_site"
+		ambience = "event:/SFX/Events/Backgrounds/temple_christian"
+	}
+	background = {
+		trigger = {
 			activity_location.county = title:c_mecca
 		}
 		texture = "gfx/interface/illustrations/event_scenes/ep2_holysite_mecca.dds"
@@ -2624,6 +2625,20 @@
 		ambience = "event:/DLC/EP3/SFX/Events/Event_Images/ep3_evn_eventimage_hagia_sophia"
 	}
 	#Generic holy sites
+	background = {
+		trigger = {
+			scope:host = {
+				OR = {
+					religion = religion:tengrism_religion
+					religion = religion:magyar_religion
+					religion = religion:siberian_religion
+				}
+			}
+		}
+		texture = "gfx/interface/illustrations/event_scenes/mpo_temple_steppe.dds"
+		environment = "environment_mpo_temple_steppe" 
+		ambience = "event:/DLC/CE2/Events/Event_Images/mpo_temple_steppe"
+	}
 	background = {
 		trigger = { scope:host.religion = religion:zoroastrianism_religion }
 		texture = "gfx/interface/illustrations/event_scenes/fp3_temple.dds"

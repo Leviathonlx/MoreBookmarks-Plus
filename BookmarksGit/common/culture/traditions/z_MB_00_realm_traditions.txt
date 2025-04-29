@@ -2,570 +2,6 @@
 # REALM CULTURAL TRADITIONS #
 #############################
 
-tradition_isolationist = {
-	category = realm
-
-	layers = {
-		0 = intrigue
-		1 = mediterranean
-		4 = noble.dds
-	}
-	
-	parameters = {
-		courtiers_less_likely_to_leave_same_culture_court = yes
-		dislikes_marrying_outside_of_culture = yes
-		ai_doesnt_marry_outside_culture = yes
-		less_likely_to_culture_convert = yes
-		less_plague_spread_culture = yes
-		cultrad_unlocks_t3_strengthen_sentries = yes
-		cultrad_unlocks_t3_redouble_guards = yes
-	}
-	culture_modifier = {
-		cultural_acceptance_gain_mult = -0.35
-	}
-	character_modifier = {
-		diplomatic_range_mult = -0.45 #Was .0.25
-		same_culture_opinion = 5
-		#max_naval_distance = 500
-		ai_war_chance = -0.5
-		ai_war_cooldown = 5
-	}
-	county_modifier = {
-		monthly_county_control_growth_add = 0.5
-	}
-	
-	cost = {
-		prestige = {
-			add = {
-				value = tradition_base_cost
-				desc = BASE
-				format = "BASE_VALUE_FORMAT"
-			}
-			if = {
-				limit = {
-					NOR = {
-						culture_pillar:ethos_communal = { is_in_list = traits }
-						culture_pillar:ethos_spiritual = { is_in_list = traits }
-						culture_pillar:ethos_stoic = { is_in_list = traits }
-					}
-				}
-				add = {
-					value = tradition_incompatible_ethos_penalty
-					desc = not_communal_spiritual_or_stoic_desc
-				}
-			}
-			if = {
-				limit = {
-					scope:character = {
-						any_sub_realm_county = {
-							culture = scope:character.culture
-							any_neighboring_county = {
-								NOT = {
-									culture = scope:character.culture
-								}
-								culture = {
-									cultural_acceptance = { target = scope:character.culture value >= 40 }
-								}
-							}
-						}
-					}
-				}
-				add = {
-					value = tradition_unfulfilled_criteria_penalty
-					desc = non_tolerated_cultures_desc
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						has_variable = defensive_traditionalist_discount
-						has_variable = aggressive_traditionalist_discount
-					}
-				}
-				add = {
-					value = traditionalist_discount
-					desc = traditionalist_discount_desc
-				}
-			}
-			
-			multiply = tradition_replacement_cost_if_relevant
-		}
-	}
-	
-	ai_will_do = {
-		value = 100
-		if = {
-			limit = {
-				NOT = {
-					is_divergent_culture = yes
-				}
-			}
-			multiply = 0
-		}
-		if = {
-			limit = {
-				culture_pillar:ethos_egalitarian = { is_in_list = traits }
-			}
-			multiply = 0
-		}
-	}
-}
-
-#IBTP
-
-tradition_hill_dwellers = {
-	category = realm
-
-	layers = {
-		0 = steward
-		1 = indian
-		4 = desert_mountains.dds
-	}
-
-	is_shown = { #Cannot be picked if you have access to Highland Farming
-		NOT = { has_cultural_tradition = tradition_amharic_highlanders }
-		NOR = {
-			this = culture:ethiopian
-			any_parent_culture_or_above = {
-				this = culture:ethiopian
-			}
-		}
-	}
-	can_pick = {
-		custom_description = {
-			text = culture_in_hills_desc
-			any_culture_county = {
-				any_county_province = {
-					OR = {
-						terrain = hills
-						terrain = dry_hills
-						terrain = high_boreal
-					}
-				}
-			}
-		}
-	}
-	
-	parameters = {
-		hill_farms_building_bonuses = yes
-		hills_hunt_success_chance = yes
-		windmills_hill_farms_unlock = yes
-	}
-	character_modifier = {
-		hills_travel_danger = hills_medium_danger_reduction
-		dry_hills_travel_danger = dry_hills_low_danger_reduction
-		high_boreal_travel_danger = high_boreal_low_danger_reduction
-	}
-	county_modifier = {
-		hills_development_growth_factor = 0.2
-		dry_hills_development_growth_factor = 0.1
-		high_boreal_development_growth_factor = 0.1
-	}
-	province_modifier = {
-		hills_construction_gold_cost = -0.1
-		dry_hills_construction_gold_cost = -0.05
-		high_boreal_construction_gold_cost = -0.05
-		hills_holding_construction_gold_cost = -0.1
-		dry_hills_holding_construction_gold_cost = -0.05
-		high_boreal_holding_construction_gold_cost = -0.05
-	}
-	
-	cost = {
-		prestige = {
-			add = {
-				value = tradition_base_cost
-				desc = BASE
-				format = "BASE_VALUE_FORMAT"
-			}
-			if = {
-				limit = {
-					culture_pillar:ethos_bellicose = { is_in_list = traits }
-				}
-				add = {
-					value = tradition_incompatible_ethos_penalty
-					desc = culture_not_bellicose
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						any_culture_county = {
-							percent >= 0.3
-							any_county_province = {
-								OR = {
-									terrain = hills
-									terrain = dry_hills
-									terrain = high_boreal
-								}
-							}
-						}
-					}
-				}
-				add = {
-					value = tradition_unfulfilled_criteria_penalty
-					desc = hill_percentage_desc
-				}
-			}
-			
-			multiply = tradition_replacement_cost_if_relevant
-		}
-	}
-	
-	ai_will_do = {
-		value = 100
-		if = {
-			limit = {
-				NOT = {
-					scope:character = {
-						any_sub_realm_county = {
-							percent >= 0.2
-							culture = scope:character.culture
-							any_county_province = {
-								OR = {
-									terrain = hills
-									terrain = dry_hills
-									terrain = high_boreal
-								}
-							}
-						}
-					}
-				}
-			}
-			multiply = 0
-		}
-		else_if = {
-			limit = {
-				any_culture_county = {
-					percent >= 0.6
-					any_county_province = {
-						terrain = hills
-					}
-				}
-			}
-			multiply = 8
-		}
-	}
-}
-
-tradition_dryland_dwellers = {
-	category = realm
-
-	layers = {
-		0 = steward
-		1 = mena
-		4 = desert.dds
-	}
-	
-	can_pick = {
-		custom_description = {
-			text = culture_in_dryland_desc
-			any_culture_county = {
-				any_county_province = {
-					OR = {
-						terrain = drylands
-						terrain = desert
-						terrain = savanna
-						 
-					}
-				}
-			}
-		}
-		custom_tooltip = { #FP3 addition
-			text = cannot_have_tradition_irrigation_experts
-			NOT = { culture_tradition:tradition_fp3_irrigation_experts = { is_in_list = traits } }
-		}
-	}
-	
-	parameters = {
-		plantations_building_bonuses = yes
-		drylands_hunt_success_chance = yes
-	}
-	character_modifier = {
-		desert_travel_danger = desert_medium_danger_reduction
-		drylands_travel_danger = drylands_medium_danger_reduction
-		savanna_travel_danger = savanna_medium_danger_reduction
-		desert_mountains_travel_danger = desert_mountains_medium_danger_reduction
-		dry_hills_travel_danger = dry_hills_medium_danger_reduction
-	}
-	county_modifier = {
-		desert_development_growth_factor = 0.35
-		drylands_development_growth_factor = 0.15
-		savanna_development_growth_factor = 0.15
-	}
-	province_modifier = {
-		desert_construction_gold_cost = -0.1
-		drylands_construction_gold_cost = -0.1
-		savanna_construction_gold_cost = -0.1
-		desert_holding_construction_gold_cost = -0.1
-		drylands_holding_construction_gold_cost = -0.1
-		savanna_holding_construction_gold_cost = -0.1
-	}
-	
-	cost = {
-		prestige = {
-			add = {
-				value = tradition_base_cost
-				desc = BASE
-				format = "BASE_VALUE_FORMAT"
-			}
-			if = {
-				limit = {
-					culture_pillar:ethos_bellicose = { is_in_list = traits }
-				}
-				add = {
-					value = tradition_incompatible_ethos_penalty
-					desc = culture_not_bellicose
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						any_culture_county = {
-							percent >= 0.3
-							any_county_province = {
-								OR = {
-									terrain = drylands
-									terrain = desert
-									terrain = savanna
-									terrain = dry_hills
-								}
-							}
-						}
-					}
-				}
-				add = {
-					value = tradition_unfulfilled_criteria_penalty
-					desc = dry_percentage_desc
-				}
-			}
-			
-			multiply = tradition_replacement_cost_if_relevant
-		}
-	}
-	
-	ai_will_do = {
-		value = 100
-		if = {
-			limit = {
-				NOT = {
-					scope:character = {
-						any_sub_realm_county = {
-							percent >= 0.2
-							culture = scope:character.culture
-							any_county_province = {
-								OR = {
-									terrain = drylands
-									terrain = desert
-									terrain = savanna
-									terrain = dry_hills
-								}
-							}
-						}
-					}
-				}
-			}
-			multiply = 0
-		}
-		else_if = {
-			limit = {
-				any_culture_county = {
-					percent >= 0.6
-					any_county_province = {
-						OR = {
-							terrain = drylands
-							terrain = desert
-						}
-					}
-				}
-			}
-			multiply = 8
-		}
-	}
-}
-
-tradition_ancient_miners = {
-	category = realm
-
-	is_shown = {
-		always = no
-	}
-	
-	layers = {
-		0 = martial
-		1 = mediterranean
-		4 = tools.dds
-	}
-	
-	parameters = {
-		ancient_miners_quarries_building_bonuses = yes
-		can_build_quarries_in_hills = yes
-	}
-	
-	cost = {
-		prestige = {
-			add = {
-				value = tradition_base_cost
-				desc = BASE
-				format = "BASE_VALUE_FORMAT"
-			}
-			
-			multiply = tradition_replacement_cost_if_relevant
-		}
-	}
-	
-	ai_will_do = {
-		value = 400
-		if = {
-			limit = {
-				NOT = {
-					scope:character = {
-						any_sub_realm_county = {
-							culture = scope:character.culture
-							any_county_province = {
-								OR = {
-									terrain = hills
-									terrain = dry_hills
-								}
-							}
-						}
-					}
-				}
-			}
-			multiply = 0
-		}
-	}
-}
-
-#RoA
-
-tradition_maritime_mercantilism = {
-	category = realm
-
-	layers = {
-		0 = diplo
-		1 = mediterranean
-		4 = ship.dds
-	}
-
-	can_pick = {
-		custom_description = {
-			text = culture_on_coast_desc
-			any_culture_county = {
-				any_county_province = {
-					is_coastal = yes
-				}
-			}
-		}
-		NOT = { has_cultural_tradition = tradition_thalassocratic }
-	}
-
-	parameters = {
-		next_level_trade_ports = yes
-		maritime_mercantilism_coastal_holdings = yes
-		maritime_mercantilism_avaricious_bonus = yes									  
-	}
-	character_modifier = {
-		republic_government_vassal_opinion = 10
-		sea_travel_danger = low_sea_danger_reduction									  
-	}
-
-	cost = {
-		prestige = {
-			add = {
-				value = tradition_base_cost
-				desc = BASE
-				format = "BASE_VALUE_FORMAT"
-			}
-			# Ethos requirement.
-			if = {
-				limit = {
-					NOR = {
-						culture_pillar:ethos_egalitarian = { is_in_list = traits }
-						culture_pillar:ethos_stoic = { is_in_list = traits }
-						culture_pillar:ethos_bureaucratic = { is_in_list = traits }
-					}
-				}
-				add = {
-					value = tradition_incompatible_ethos_penalty
-					desc = not_egalitarian_stoic_or_bureaucratic_desc
-				}
-			}
-			# Coastal requirement.
-			if = {
-				limit = {
-					NOT = {
-						any_culture_county = {
-							percent >= 0.3
-							any_county_province = {
-								is_coastal = yes
-							}
-						}
-					}
-				}
-				add = {
-					value = tradition_unfulfilled_criteria_penalty
-					desc = coastal_percentage_desc
-				}
-			}
-
-			multiply = tradition_replacement_cost_if_relevant
-		}
-	}
-
-	ai_will_do = {
-		value = 100
-		if = {
-			limit = {
-				scope:character = {
-					any_sub_realm_county = {
-						percent >= 0.6
-						any_county_province = {
-							is_coastal = yes
-						}
-					}
-				}
-			}
-			add = 50
-		}
-		if = { # Make stacking a bit less common
-			limit = {
-				OR = {
-					culture_tradition:tradition_seafaring = { is_in_list = traits }
-					culture_tradition:tradition_fishermen = { is_in_list = traits }
-				}
-			}
-			multiply = 0.75
-		}
-		if = {
-			limit = {
-				NOT = {
-					scope:character = {
-						any_sub_realm_county = {
-							percent >= 0.3
-							any_county_province = {
-								is_coastal = yes
-							}
-						}
-					}
-				}
-			}
-			multiply = 0
-		}
-		else_if = {
-			limit = {
-				any_culture_county = {
-					percent >= 0.6
-					any_county_province = {
-						is_coastal = yes
-					}
-				}
-			}
-			multiply = 2
-		}
-	}
-}
-
-
 
 ################################	BAP		################################
 
@@ -620,6 +56,16 @@ tradition_joking_relationships_serer_pulaar = { #Serer-Fulbe version
 				add = {
 					value = tradition_incompatible_ethos_penalty
 					desc = culture_not_bellicose
+				}
+			}
+			
+			if = {
+				limit = {
+					culture_tradition_reduction_trigger = { TRADITION = tradition_joking_relationships_serer_pulaar }
+				}
+				multiply = {
+					value = 0.5
+					desc = inspired_by_culture_desc
 				}
 			}
 			
@@ -679,6 +125,16 @@ tradition_joking_relationships_bozo_kibsi = { #Bozo-Kibsi version - Kibsi are ch
 				add = {
 					value = tradition_incompatible_ethos_penalty
 					desc = culture_not_bellicose
+				}
+			}
+			
+			if = {
+				limit = {
+					culture_tradition_reduction_trigger = { TRADITION = tradition_joking_relationships_bozo_kibsi }
+				}
+				multiply = {
+					value = 0.5
+					desc = inspired_by_culture_desc
 				}
 			}
 			
@@ -744,6 +200,17 @@ tradition_culture_conversion = {
 					desc = not_communal_or_egalitarian_desc
 				}
 			}
+			
+			if = {
+				limit = {
+					culture_tradition_reduction_trigger = { TRADITION = tradition_culture_conversion }
+				}
+				multiply = {
+					value = 0.5
+					desc = inspired_by_culture_desc
+				}
+			}
+			
 			multiply = tradition_replacement_cost_if_relevant
 		}
 	}
@@ -838,6 +305,16 @@ tradition_sahel_pastoralists = {
 				add = {
 					value = tradition_unfulfilled_criteria_penalty
 					desc = culture_in_dryland_or_desert_terrain_percentage_desc
+				}
+			}
+			
+			if = {
+				limit = {
+					culture_tradition_reduction_trigger = { TRADITION = tradition_sahel_pastoralists }
+				}
+				multiply = {
+					value = 0.5
+					desc = inspired_by_culture_desc
 				}
 			}
 			
