@@ -674,69 +674,6 @@ unop_change_renown = {
 	}
 }
 
-unop_appoint_char_to_court_position = {
-	if = {
-		limit = {
-			NOT = {
-				unop_can_appoint_char_to_court_position = {
-					CHAR = $CHAR$
-					COURT_POS = $COURT_POS$
-				}
-			}
-		}
-		if = { 
-			limit = { debug_only = yes }
-			debug_log = "Trying to appoint someone to a court position, but it does not fill all conditions."
-			debug_log_scopes = yes
-		}
-	}
-	else = {
-		save_temporary_scope_as = hiring_liege
-		if = {
-			limit = { $CHAR$ = { NOT = { is_courtier_of = scope:hiring_liege } } }
-			add_courtier = $CHAR$
-		}
-		if = { #Checked here because we need to know if there is an available slot for this position, or if all slots are full
-			limit = { can_employ_court_position_type = $COURT_POS$ } 
-			appoint_court_position = { #the $CHAR$ becomes your $COURT_POS$
-				recipient = $CHAR$
-				court_position = $COURT_POS$
-			}
-		}
-		else_if = {
-			limit = { #This mean that we will fire the least capable
-				employs_court_position = $COURT_POS$
-				any_court_position_holder = {
-					type = $COURT_POS$
-				}
-			}
-			ordered_court_position_holder = {
-				type = $COURT_POS$
-				order_by = {
-					value = 0
-					subtract = aptitude:$COURT_POS$
-				}
-				save_scope_as = position_owner_to_replace
-			}
-			replace_court_position = {
-				holder = scope:position_owner_to_replace
-				recipient = $CHAR$
-				court_position = $COURT_POS$
-			}
-		}
-		else = { #extremely unneccesarry, just for error failproofing
-			#$CHAR$ = {
-			#	silent_disappearance_effect = yes
-			#}
-			if = { 
-				limit = { debug_only = yes }
-				debug_log = "Unop: unop_appoint_char_to_court_position we are in the error failproofing case, what are we doing here ?"
-				debug_log_scopes = yes
-			}
-		}
-	}
-}
-
 unop_travel_completion_effect = {
 	
 	traveler_lifestyle_rank_up_check_effect = yes

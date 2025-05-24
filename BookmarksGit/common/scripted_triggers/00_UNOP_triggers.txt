@@ -653,3 +653,83 @@ unop_camp_officer_inner_circle_revoke_trigger = {
 	}
 	trigger_else = { always = no }
 }
+
+# All this taken from adopt_interaction => is_shown so now we have a base-trigger to rule them all (the goal is to use it in event option)
+unop_can_adopt_trigger = {
+	NOT = { has_game_rule = no_adoption }
+	is_adult = yes
+	OR = {
+		# Compassionate people like adopting
+		has_trait = compassionate
+		# Game rule as an overriding factor
+		has_game_rule = adoption_always_allowed
+		# You have no kids and your fertility is low
+		AND = {
+			any_child = {
+				count < 1
+			}
+			fertility <= low_fertility
+		}
+		# You are married to a same-sex partner
+		AND = {
+			is_married = yes
+			# People in bisexual polygamous spheres are not valid for this
+			NOT = {
+				OR = {
+					AND = {
+						any_consort = {
+							is_female = yes
+						}
+						is_male = yes
+					}
+					AND = {
+						any_consort = {
+							is_male = yes
+						}
+						is_female = yes
+					}
+				}
+			}
+		}
+		# You are unmarried and uninterested in having biological children
+		AND = {
+			is_married = no
+			OR = {
+				has_sexuality = asexual
+				has_sexuality = homosexual
+			}
+		}
+		# You have a cultrad that lets you adopt
+		culture = { has_cultural_parameter = allows_adoption }
+	}
+	OR = {
+		# You are unmarried
+		is_married = no
+		# You are the dominant partner in at least one of your marriages
+		AND = {
+			is_female = yes
+			matrilinear_marriage = yes
+		}
+		AND = {
+			is_male = yes
+			matrilinear_marriage = no
+		}
+		# Your marriage is same-sex
+		NOT = {
+			OR = {
+				AND = {
+					any_consort = {
+						is_female = yes
+					}
+					is_male = yes
+				}
+				AND = {
+					any_consort = {
+						is_male = yes
+					}
+					is_female = yes
+				}
+			}
+		}
+	}
+}
