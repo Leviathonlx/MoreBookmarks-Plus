@@ -1,5 +1,7 @@
 ﻿##########################################################More Bookmarks Game Start Effects##########################################################
 
+#The effects in this file set up much of the map for various bookmarks
+
 on_game_start = {
 
 	on_actions = {
@@ -2099,7 +2101,7 @@ MB_culture_setup = {
 			}
 			set_culture = culture:qitai
 		}
-		
+
 		# Mongols post-1204
 		every_living_character = {
 			limit = {
@@ -2381,7 +2383,7 @@ MB_languages_monthly = {
 MB_religion_setup = {
 
 	effect = {
-	
+
 		if = {
             limit = { game_start_date >= 995.1.1 }
 			#The Polabians were unique in that their slavic faith was 'reformed' and was much more organized which made them more resistant to conversion. I'm not going to further split the slavic faiths so just going to do this with west slavic. Don't want to do it in 936 since the Poles, who did convert pretty 'quickly' (they did still have revolts), would actually be impacted then
@@ -2389,7 +2391,7 @@ MB_religion_setup = {
 				set_variable = { name = has_been_reformed }
 			}
         }
-		
+
 
 		#Bulgarian Orthodox in 1066 start date
 
@@ -2664,11 +2666,13 @@ MB_religion_setup = {
 				#East
 				if = {
 					limit = {
+						NOT = { religion = religion:tengrism_religion }
 						culture = {
 							OR = {
 								has_cultural_pillar = heritage_east_slavic
 								has_cultural_pillar = heritage_volga_finnic
 								has_cultural_pillar = heritage_north_germanic
+								has_cultural_pillar = heritage_iranian
 							}
 						}
 					}
@@ -2677,6 +2681,7 @@ MB_religion_setup = {
 				#South
 				if = {
 					limit = {
+						NOT = { religion = religion:tengrism_religion }
 						culture = {
 							OR = {
 								has_cultural_pillar = heritage_south_slavic
@@ -18420,7 +18425,11 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 						capital_county.title_province = { geographical_region = world_luodian }
 					}
 
-					has_government = feudal_government
+					OR = {
+						has_government = feudal_government
+						has_government = clan_government
+					}
+					
 					OR = {
 						culture = { has_cultural_pillar = heritage_chinese }
 						culture = culture:sogdian
@@ -18475,13 +18484,13 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 					has_dlc_feature = roads_to_power
 
 					exists = capital_county
-					NOR = { 
+					NOR = {
 						has_government = nomad_government
 						has_government = herder_government
 						has_government = theocracy_government
-						has_government = landless_adventurer_government 
+						has_government = landless_adventurer_government
 					}
-					NOR = { 
+					NOR = {
 						has_title = title:d_confucius
 					}
 					OR = {
@@ -18761,8 +18770,8 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 
 			}
 		}
-		
-	
+
+
 
 		every_ruler = {
 
@@ -18773,21 +18782,17 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 
 					OR = {
 						# The steppe
-						capital_county.title_province = { geographical_region = world_steppe_west }
-						capital_county.title_province = { geographical_region = world_steppe_east }
-						capital_county.title_province = { geographical_region = world_steppe_central }
-						capital_county.title_province = { geographical_region = dlc_mpo_steppe_eastern_asia } # Not world_manchuria as it covers too large of an area
-						capital_county.title_province = { geographical_region = world_steppe_tarim }
-						capital_county.title_province = { geographical_region = custom_eastern_balkans }
-						capital_county.title_province = { geographical_region = dlc_mpo_steppe_central_siberia_addon }
+						capital_county.title_province = { geographical_region = dlc_mpo_steppe_western_steppe }
+						capital_county.title_province = { geographical_region = dlc_mpo_steppe_central_steppe }
+						capital_county.title_province = { geographical_region = dlc_mpo_steppe_eastern_steppe } # Not world_manchuria as it covers too large of an area
+						capital_county.title_province = { geographical_region = dlc_mpo_steppe_southern_steppe }
 						#Iran
 						capital_county.title_province = { geographical_region = world_middle_east_persia } # The Ilkhanate was nomadic its entire existence
-						#Tibet
 					}
-					
-					
+
+
 					NOT = {
-						
+
 						OR = {
 							culture = { has_cultural_pillar = heritage_ugro_permian }
 							culture = { has_cultural_pillar = heritage_balto_finnic }
@@ -18795,20 +18800,24 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 							culture = { has_cultural_pillar = heritage_volga_finnic }
 							culture = { has_cultural_pillar = heritage_east_slavic }
 							culture = { has_cultural_pillar = heritage_south_slavic }
+							culture = { has_cultural_pillar = heritage_west_slavic }
 							culture = { has_cultural_pillar = heritage_vlach }
 							culture = { has_cultural_pillar = heritage_chinese }
 							culture = { has_cultural_pillar = heritage_tungusic }
 							culture = { has_cultural_pillar = heritage_samoyedic }
 							culture = culture:kurdish
+							culture = culture:tajik
+							culture = culture:buryat
+							culture = culture:yakut
 						}
 
 					}
-					
+
 				}
-				
+
 
 				change_government = nomad_government
-				
+
 				every_held_title = {
 					if = {
 						limit = {
@@ -18823,6 +18832,8 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 				}
 
 			}
+			
+			#Holding Fixes
 			
 			if = { # Make sure herders get their proper holdings without me needing to juggle province files
 				limit = {
@@ -18839,6 +18850,46 @@ MB_set_government = { #Mostly in MB_government_assignment_on_actions. Move over?
 						}
 						title_province = {
 							set_holding_type = herder_holding
+						}
+					}
+				}
+
+			}
+			
+			if = { # Fix any remnant feudals that have tribal holdings. Run this after all the above changes.
+				limit = {
+					has_government = feudal_government
+				}
+
+				every_held_title = {
+					if = {
+						limit = {
+							title_province = {
+								has_holding_type = tribal_holding
+							}
+						}
+						title_province = {
+							set_holding_type = castle_holding
+						}
+					}
+				}
+
+			}
+			
+			if = { # Fix any remnant tribals that have castles. Run this after all the above changes.
+				limit = {
+					has_government = tribal_government
+				}
+
+				every_held_title = {
+					if = {
+						limit = {
+							title_province = {
+								has_holding_type = castle_holding
+							}
+						}
+						title_province = {
+							set_holding_type = tribal_holding
 						}
 					}
 				}
