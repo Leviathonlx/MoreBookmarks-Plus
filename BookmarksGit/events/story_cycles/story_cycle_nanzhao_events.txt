@@ -1,0 +1,999 @@
+﻿
+namespace = nanzhao_collapse
+
+# Find a character to make a claim on
+nanzhao_collapse.0001 = {
+	scope = none
+	hidden = yes
+
+	trigger = {
+		# only valid if Nanzhao still exists
+		exists = title:k_nanzhao.holder
+		title:k_nanzhao = {
+			has_variable = nanzhao
+		}
+	}
+
+	immediate = {
+
+		# Find a vassal to start the whole affair
+		title:k_nanzhao.holder = {
+
+			# If someone plans to, but hasn't yet, wait
+			if = {
+				limit = { any_vassal = { has_character_flag = paused_to_claim_nanzhao_throne } }
+				# Do nothing, yet
+			}
+			# Pick a human player first if there is one
+			else_if = {
+				limit = {
+					any_vassal = {
+						is_ai = no
+						is_adult = yes
+						NOT = { has_character_flag = refused_to_claim_nanzhao_throne }
+					}
+				}
+				random_vassal = {
+					limit = {
+						is_ai = no
+						is_adult = yes
+						NOT = { has_character_flag = refused_to_claim_nanzhao_throne }
+					}
+					save_scope_as = instigator
+				}
+			}
+			# Else Zheng Maisi first
+			else_if = {
+				limit = {
+					any_vassal = {
+						this = character:421200 # Zheng Maisi
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+				}
+				character:421200 = { save_scope_as = instigator }
+			}
+			# Pick any other Zheng dynasty member otherwise
+			else_if = {
+				limit = {
+					any_vassal = {
+						dynasty = dynasty:d_zheng
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+				}
+				random_vassal = {
+					limit = {
+						dynasty = dynasty:d_zheng
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+					save_scope_as = instigator
+				}
+			}
+			# Else pick any other unhappy vassal
+			else = {
+				ordered_vassal = {
+					limit = {
+						NOR = {
+							dynasty = dynasty:d_zheng
+							dynasty = title:k_nanzhao.holder.dynasty
+						}
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+						is_adult = yes
+						highest_held_title_tier >= tier_county
+						NOR = {
+							has_trait = craven
+							has_trait = content
+							has_dread_level_towards = {
+								target = title:k_nanzhao.holder
+								level = 2
+							}
+						}
+					}
+					order_by = max_military_strength
+					save_scope_as = instigator
+				}
+			}
+
+			# If someone was found, give them a claim on k_nanzhao
+			if = {
+				limit = { exists = scope:instigator }
+
+				scope:instigator = {
+					trigger_event = nanzhao_collapse.0002
+				}
+			}
+			# If no one was found do nothing, try again next year
+		}
+	}
+}
+
+# scope:instigator makes a claim on the empire
+nanzhao_collapse.0002 = {
+	type = character_event
+	title = nanzhao_collapse.0002.t
+	desc = nanzhao_collapse.0002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.0002.a
+
+		create_story = nanzhao_collapse_story
+
+		add_unpressed_claim = title:k_nanzhao
+		title:k_nanzhao.holder = {
+			trigger_event = nanzhao_collapse.0003
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.0002.b
+		custom_tooltip = nanzhao_collapse.0002.b.tt
+		add_character_flag = {
+			flag = paused_to_claim_nanzhao_throne
+			years = 3
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.0002.c
+		custom_tooltip = nanzhao_collapse.0002.c.tt
+		add_character_flag = refused_to_claim_nanzhao_throne
+	}
+}
+
+# k_nanzhao.holder is informed of the claim by scope:instigator
+nanzhao_collapse.0003 = {
+	type = character_event
+	title = nanzhao_collapse.0003.t
+	desc = nanzhao_collapse.0003.desc
+	theme = vassal
+
+	immediate = {
+		title:k_nanzhao = {
+			save_scope_as = targeted_title
+		}
+	}
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:instigator
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.0003.a
+	}
+}
+
+# Successful usurpation
+nanzhao_collapse.0004 = {
+	type = character_event
+	title = nanzhao_collapse.0004.t
+	desc = {
+		desc = nanzhao_collapse.0004.desc.1
+		desc = newline.desc
+		desc = nanzhao_collapse.0004.desc.2
+	}
+	theme = dread
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:previous_holder
+		animation = war_over_loss
+	}
+
+	option = {
+		# Kill them, kill them all
+		name = nanzhao_collapse.0004.a
+
+		scope:previous_holder.dynasty = {
+			every_dynasty_member = {
+				limit = { location.province_owner.top_liege = root }
+				death = {
+					death_reason = death_execution
+					killer = root
+				}
+			}
+		}
+		add_dread = 50
+
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# You will be spared
+		name = nanzhao_collapse.0004.b
+		# Gain piety
+	}
+
+	after = {
+		trigger_event = nanzhao_collapse.0005
+	}
+}
+
+# Rename the kingdom
+nanzhao_collapse.0005 = {
+	type = character_event
+	title = nanzhao_collapse.0005.t
+	desc = nanzhao_collapse.0005.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	option = {
+		name = nanzhao_collapse.0005.a
+		title:k_nanzhao = {
+			set_title_name = DACHANGHE
+			set_coa = k_dachanghe
+			remove_variable = nanzhao
+			set_variable = dachanghe
+		}
+		set_realm_capital = title:c_yon_zon_mi
+	}
+}
+
+### Da Tian Xing
+
+# Find a character to make a claim on
+nanzhao_collapse.1001 = {
+	scope = none
+	hidden = yes
+
+	trigger = {
+		# only valid if Dachanghe exists
+		exists = title:k_nanzhao.holder
+		title:k_nanzhao = {
+			has_variable = dachanghe
+		}
+	}
+
+	immediate = {
+
+		# Find a vassal to start the whole affair
+		title:k_nanzhao.holder = {
+
+			# If someone plans to, but hasn't yet, wait
+			if = {
+				limit = { any_vassal = { has_character_flag = paused_to_claim_nanzhao_throne } }
+				# Do nothing, yet
+			}
+			# Pick a human player first if there is one
+			else_if = {
+				limit = {
+					any_vassal = {
+						is_ai = no
+						is_adult = yes
+						NOT = { has_character_flag = refused_to_claim_nanzhao_throne }
+					}
+				}
+				random_vassal = {
+					limit = {
+						is_ai = no
+						is_adult = yes
+						NOT = { has_character_flag = refused_to_claim_nanzhao_throne }
+					}
+					save_scope_as = instigator
+				}
+			}
+			# Else any Zhao dynasty member first
+			else_if = {
+				limit = {
+					any_vassal = {
+						dynasty = dynasty:dali_d013 # Zhao
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+				}
+				random_vassal = {
+					limit = {
+						dynasty = dynasty:dali_d013
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+					save_scope_as = instigator
+				}
+			}
+			# Else pick any other unhappy vassal
+			else = {
+				ordered_vassal = {
+					limit = {
+						NOR = {
+							dynasty = dynasty:dali_d013
+							dynasty = title:k_nanzhao.holder.dynasty
+						}
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+						is_adult = yes
+						highest_held_title_tier >= tier_county
+						NOR = {
+							has_trait = craven
+							has_trait = content
+							has_dread_level_towards = {
+								target = title:k_nanzhao.holder
+								level = 2
+							}
+						}
+					}
+					order_by = max_military_strength
+					save_scope_as = instigator
+				}
+			}
+
+			# If someone was found, give them a claim on k_nanzhao
+			if = {
+				limit = { exists = scope:instigator }
+
+				scope:instigator = {
+					trigger_event = nanzhao_collapse.1002
+				}
+			}
+			# If no one was found do nothing, try again next year
+		}
+	}
+}
+
+# scope:instigator makes a claim on the empire
+nanzhao_collapse.1002 = {
+	type = character_event
+	title = nanzhao_collapse.1002.t
+	desc = nanzhao_collapse.1002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.1002.a
+
+		create_story = nanzhao_collapse_story
+
+		add_unpressed_claim = title:k_nanzhao
+		title:k_nanzhao.holder = {
+			trigger_event = nanzhao_collapse.1003
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.1002.b
+		custom_tooltip = nanzhao_collapse.1002.b.tt
+		add_character_flag = {
+			flag = paused_to_claim_nanzhao_throne
+			years = 3
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.1002.c
+		custom_tooltip = nanzhao_collapse.1002.c.tt
+		add_character_flag = refused_to_claim_nanzhao_throne
+	}
+}
+
+# k_nanzhao.holder is informed of the claim by scope:instigator
+nanzhao_collapse.1003 = {
+	type = character_event
+	title = nanzhao_collapse.1003.t
+	desc = nanzhao_collapse.1003.desc
+	theme = vassal
+
+	immediate = {
+		title:k_nanzhao = {
+			save_scope_as = targeted_title
+		}
+	}
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:instigator
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.1003.a
+	}
+}
+
+# Successful usurpation
+nanzhao_collapse.1004 = {
+	type = character_event
+	title = nanzhao_collapse.1004.t
+	desc = {
+		desc = nanzhao_collapse.1004.desc.1
+		desc = newline.desc
+		desc = nanzhao_collapse.1004.desc.2
+	}
+	theme = dread
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:previous_holder
+		animation = war_over_loss
+	}
+
+	option = {
+		# Kill them, kill them all
+		name = nanzhao_collapse.1004.a
+
+		scope:previous_holder.dynasty = {
+			every_dynasty_member = {
+				limit = { location.province_owner.top_liege = root }
+				death = {
+					death_reason = death_execution
+					killer = root
+				}
+			}
+		}
+		add_dread = 50
+
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# You will be spared
+		name = nanzhao_collapse.1004.b
+		# Gain piety
+	}
+
+	after = {
+		trigger_event = nanzhao_collapse.1005
+	}
+}
+
+# Rename the kingdom
+nanzhao_collapse.1005 = {
+	type = character_event
+	title = nanzhao_collapse.1005.t
+	desc = nanzhao_collapse.1005.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	option = {
+		name = nanzhao_collapse.1005.a
+		title:k_nanzhao = {
+			set_title_name = DATIANXING
+			set_coa = k_datianxing
+			remove_variable = dachanghe
+			set_variable = datianxing
+		}
+		set_realm_capital = title:c_yon_zon_mi
+	}
+}
+
+### Da Yi Ning
+
+# Find a character to make a claim on
+nanzhao_collapse.2001 = {
+	scope = none
+	hidden = yes
+
+	trigger = {
+		# only valid if Datianxing exists
+		exists = title:k_nanzhao.holder
+		title:k_nanzhao = {
+			has_variable = datianxing
+		}
+	}
+
+	immediate = {
+
+		# Find a vassal to start the whole affair
+		title:k_nanzhao.holder = {
+
+			# Pick any Yang dynasty member first
+			if = {
+				limit = {
+					any_vassal = {
+						dynasty = dynasty:dali_d010 # Yang
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+				}
+				random_vassal = {
+					limit = {
+						dynasty = dynasty:dali_d010
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+					save_scope_as = instigator
+				}
+			}
+			# Else pick any other unhappy vassal
+			else = {
+				ordered_vassal = {
+					limit = {
+						NOR = {
+							dynasty = dynasty:dali_d010
+							dynasty = title:k_nanzhao.holder.dynasty
+						}
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+						is_adult = yes
+						highest_held_title_tier >= tier_county
+						NOR = {
+							has_trait = craven
+							has_trait = content
+							has_dread_level_towards = {
+								target = title:k_nanzhao.holder
+								level = 2
+							}
+						}
+					}
+					order_by = max_military_strength
+					save_scope_as = instigator
+				}
+			}
+
+			# If someone was found, give them a claim on k_nanzhao
+			if = {
+				limit = { exists = scope:instigator }
+
+				scope:instigator = {
+					trigger_event = nanzhao_collapse.2002
+				}
+			}
+			# If no one was found do nothing, try again next year
+		}
+	}
+}
+
+# scope:instigator makes a claim on the empire
+nanzhao_collapse.2002 = {
+	type = character_event
+	title = nanzhao_collapse.2002.t
+	desc = nanzhao_collapse.2002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.2002.a
+
+		create_story = nanzhao_collapse_story
+
+		add_unpressed_claim = title:k_nanzhao
+		title:k_nanzhao.holder = {
+			trigger_event = nanzhao_collapse.2003
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.2002.b
+		custom_tooltip = nanzhao_collapse.2002.b.tt
+		add_character_flag = {
+			flag = paused_to_claim_nanzhao_throne
+			years = 3
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.2002.c
+		custom_tooltip = nanzhao_collapse.2002.c.tt
+		add_character_flag = refused_to_claim_nanzhao_throne
+	}
+}
+
+# k_nanzhao.holder is informed of the claim by scope:instigator
+nanzhao_collapse.2003 = {
+	type = character_event
+	title = nanzhao_collapse.2003.t
+	desc = nanzhao_collapse.2003.desc
+	theme = vassal
+
+	immediate = {
+		title:k_nanzhao = {
+			save_scope_as = targeted_title
+		}
+	}
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:instigator
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.2003.a
+	}
+}
+
+# Successful usurpation
+nanzhao_collapse.2004 = {
+	type = character_event
+	title = nanzhao_collapse.2004.t
+	desc = {
+		desc = nanzhao_collapse.2004.desc.1
+		desc = newline.desc
+		desc = nanzhao_collapse.2004.desc.2
+	}
+	theme = dread
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:previous_holder
+		animation = war_over_loss
+	}
+
+	option = {
+		# Kill them, kill them all
+		name = nanzhao_collapse.2004.a
+
+		scope:previous_holder.dynasty = {
+			every_dynasty_member = {
+				limit = { location.province_owner.top_liege = root }
+				death = {
+					death_reason = death_execution
+					killer = root
+				}
+			}
+		}
+		add_dread = 50
+
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# You will be spared
+		name = nanzhao_collapse.2004.b
+		# Gain piety
+	}
+
+	after = {
+		trigger_event = nanzhao_collapse.2005
+	}
+}
+
+# Rename the kingdom
+nanzhao_collapse.2005 = {
+	type = character_event
+	title = nanzhao_collapse.2005.t
+	desc = nanzhao_collapse.2005.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	option = {
+		name = nanzhao_collapse.2005.a
+		title:k_nanzhao = {
+			set_title_name = DAYINING
+			set_coa = k_dayining
+			remove_variable = datianxing
+			set_variable = dayining
+		}
+		set_realm_capital = title:c_yon_zon_mi
+	}
+}
+
+### Dali
+
+# Find a character to make a claim on
+nanzhao_collapse.3001 = {
+	scope = none
+	hidden = yes
+
+	trigger = {
+		# only valid if Dayining exists
+		exists = title:k_nanzhao.holder
+
+		title:k_nanzhao = {
+			has_variable = dayining
+		}
+	}
+
+	immediate = {
+
+		# Find a vassal to start the whole affair
+		title:k_nanzhao.holder = {
+
+			# If someone plans to, but hasn't yet, wait
+			if = {
+				limit = { any_vassal = { has_character_flag = paused_to_claim_nanzhao_throne } }
+				# Do nothing, yet
+			}
+			# Pick a human player first if there is one
+			else_if = {
+				limit = {
+					any_vassal = {
+						is_ai = no
+						is_adult = yes
+						NOT = { has_character_flag = refused_to_claim_nanzhao_throne }
+					}
+				}
+				random_vassal = {
+					limit = {
+						is_ai = no
+						is_adult = yes
+						NOT = { has_character_flag = refused_to_claim_nanzhao_throne }
+					}
+					save_scope_as = instigator
+				}
+			}
+			# Else any Duan dynasty member first
+			else_if = {
+				limit = {
+					any_vassal = {
+						dynasty = dynasty:4210005 # Duan
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+				}
+				random_vassal = {
+					limit = {
+						dynasty = dynasty:4210005
+						is_adult = yes
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+					}
+					save_scope_as = instigator
+				}
+			}
+			# Else pick any other unhappy vassal
+			else = {
+				ordered_vassal = {
+					limit = {
+						NOR = {
+							dynasty = dynasty:4210005
+							dynasty = title:k_nanzhao.holder.dynasty
+						}
+						opinion = {
+							target = title:k_nanzhao.holder
+							value <= -20
+						}
+						is_adult = yes
+						highest_held_title_tier >= tier_county
+						NOR = {
+							has_trait = craven
+							has_trait = content
+							has_dread_level_towards = {
+								target = title:k_nanzhao.holder
+								level = 2
+							}
+						}
+					}
+					order_by = max_military_strength
+					save_scope_as = instigator
+				}
+			}
+
+			# If someone was found, give them a claim on k_nanzhao
+			if = {
+				limit = { exists = scope:instigator }
+
+				scope:instigator = {
+					trigger_event = nanzhao_collapse.3002
+				}
+			}
+			# If no one was found do nothing, try again next year
+		}
+	}
+}
+
+# scope:instigator makes a claim on the empire
+nanzhao_collapse.3002 = {
+	type = character_event
+	title = nanzhao_collapse.3002.t
+	desc = nanzhao_collapse.3002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.3002.a
+
+		create_story = nanzhao_collapse_story
+
+		add_unpressed_claim = title:k_nanzhao
+		title:k_nanzhao.holder = {
+			trigger_event = nanzhao_collapse.3003
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.3002.b
+		custom_tooltip = nanzhao_collapse.3002.b.tt
+		add_character_flag = {
+			flag = paused_to_claim_nanzhao_throne
+			years = 3
+		}
+	}
+
+	option = {
+		name = nanzhao_collapse.3002.c
+		custom_tooltip = nanzhao_collapse.3002.c.tt
+		add_character_flag = refused_to_claim_nanzhao_throne
+	}
+}
+
+# k_nanzhao.holder is informed of the claim by scope:instigator
+nanzhao_collapse.3003 = {
+	type = character_event
+	title = nanzhao_collapse.3003.t
+	desc = nanzhao_collapse.3003.desc
+	theme = vassal
+
+	immediate = {
+		title:k_nanzhao = {
+			save_scope_as = targeted_title
+		}
+	}
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:instigator
+		animation = personality_dishonorable
+	}
+
+	option = {
+		name = nanzhao_collapse.3003.a
+	}
+}
+
+# Successful usurpation
+nanzhao_collapse.3004 = {
+	type = character_event
+	title = nanzhao_collapse.3004.t
+	desc = {
+		desc = nanzhao_collapse.3004.desc.1
+		desc = newline.desc
+		desc = nanzhao_collapse.3004.desc.2
+	}
+	theme = dread
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:previous_holder
+		animation = war_over_loss
+	}
+
+	option = {
+		# Kill only the previous holder
+		name = nanzhao_collapse.3004.a
+
+		scope:previous_holder = {
+			death = {
+				death_reason = death_execution
+				killer = root
+			}
+		}
+		add_dread = 20
+
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# Kill them, kill them all
+		name = nanzhao_collapse.3004.b
+
+		scope:previous_holder.dynasty = {
+			every_dynasty_member = {
+				limit = { location.province_owner.top_liege = root }
+				death = {
+					death_reason = death_execution
+					killer = root
+				}
+			}
+		}
+		add_dread = 50
+
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# You will be spared
+		name = nanzhao_collapse.3004.c
+		# Gain piety
+	}
+
+	after = {
+		trigger_event = nanzhao_collapse.3005
+	}
+}
+
+# Rename the kingdom
+nanzhao_collapse.3005 = {
+	type = character_event
+	title = nanzhao_collapse.3005.t
+	desc = nanzhao_collapse.3005.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	option = {
+		name = nanzhao_collapse.3005.a
+		title:k_nanzhao = {
+			set_title_name = DALI
+			set_coa = k_dali
+			remove_variable = dayining
+		}
+		set_realm_capital = title:c_yon_zon_mi
+	}
+}
