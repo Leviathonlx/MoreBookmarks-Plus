@@ -19,7 +19,8 @@ def parse_character_data(file_content):
     content = re.sub(r'^\s*#.*$', '', file_content, flags=re.MULTILINE)
     
     characters = []
-    char_start_pattern = re.compile(r'^\s*([a-zA-Z0-9_]+)\s*=\s*\{', re.MULTILINE)
+    # *** FIX ***: Added a period '.' to the character set in the regex to find IDs with periods.
+    char_start_pattern = re.compile(r'^\s*([a-zA-Z0-9_.]+)\s*=\s*\{', re.MULTILINE)
     
     cursor = 0
     while cursor < len(content):
@@ -100,7 +101,6 @@ def format_character_block(block_text):
 
         final_lines.append('\t' * indent_level + code + comment)
         
-        # *** FIX ***: Check if the CODE part ends with '{', not the entire line.
         if code.endswith('{'):
             indent_level += 1
             
@@ -151,21 +151,17 @@ def main(input_file, output_file):
             
             culture_dynasties = organized_data[culture]
             
-            # *** FIX ***: Separate "no_dynasty" characters to handle them explicitly.
             no_dynasty_chars = culture_dynasties.pop('no_dynasty', [])
-            no_dynasty_chars.sort(key=lambda c: c['birth_date']) # Ensure they are sorted
+            no_dynasty_chars.sort(key=lambda c: c['birth_date'])
 
-            # First, write all characters that HAVE a dynasty
             sorted_dynasties = sorted(culture_dynasties.keys())
             for dynasty in sorted_dynasties:
                 f.write(f"####################################### Dynasty: {dynasty} #######################################\n")
-                # Sort characters within the dynasty by birth date
                 culture_dynasties[dynasty].sort(key=lambda c: c['birth_date'])
                 for char in culture_dynasties[dynasty]:
                     formatted_block = format_character_block(char['text'])
                     f.write(formatted_block + '\n\n')
 
-            # Then, write all characters WITHOUT a dynasty under a clear header
             if no_dynasty_chars:
                 f.write(f"################################################# No Dynasty #################################################\n")
                 for char in no_dynasty_chars:
