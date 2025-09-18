@@ -1487,6 +1487,10 @@ on_game_start = {
 				try_start_diarchy = regency
 				set_diarch = character:209510
 			}
+			## Kara Khitai, Wolila for Zhilugu
+			character:188912 = {
+				try_start_diarchy = nomad_regency
+				set_diarch = character:188909
 			# Plus remove all the generated opinions.
 			## Richard I and Eleanor of Aquitaine
 			remove_generated_diarch_consequences_effect = {
@@ -1513,6 +1517,11 @@ on_game_start = {
 				NEW_DIARCH = character:209510
 				LIEGE = character:209503
 			}
+			# Wolila and Zhilugu 
+			remove_generated_diarch_consequences_effect = {
+				NEW_DIARCH = character:188909
+				LIEGE = character:188912
+			}			 
 		}
 		# Set up anyone who should be in a regency at start whether we have sources or not.
 		## If you start as a child, incapable, or imprisoned, you get a regency.
@@ -5053,33 +5062,86 @@ on_game_start_after_lobby = {
 			}
 			### EP3 ADMIN SETUP ###
 			every_independent_ruler = {
-				limit = { government_allows = administrative }
-				save_scope_as = top_liege
-				### EP3 NOBLE FAMILIES & DOMICILE SETUP ###
-				random_held_title = { # May be removed once every_noble_family includes liege (TIT-51212)
-					limit = { is_noble_family_title = yes }
-					set_coa = scope:top_liege.house
-				}
-				every_noble_family = {
-					# Ensure Noble Family CoA match House
-					set_coa = holder.house
-					# Ensure holders of historical noble family titles are the default house heads
-					holder ?= {
-						save_scope_as = nf_holder
-						if = {
-							limit = { is_landed = yes }
-							capital_province = { save_scope_as = domicile_location }
-						}
-						# TODO_CD_EP3: remove once TIT-51212 is resolved and confirmed
-						house ?= {	
-							if = {
-								limit = { house_head != scope:nf_holder }
-								set_house_head = scope:nf_holder
-		 
-							}
-						}								   
+				if = {
+					limit = { is_landless_adventurer = yes }
+					# C... food.
+					domicile = { change_provisions = starting_provisions_value }
+					# Contracts
+					if = {
+						limit = { is_ai = no }
+						# Set up additional firing contracts.
+						player_adventurer_contract_generation_on_wait_in_place_effect = yes
+						#generate contracts if you are far away from your previous location
+						player_adventurer_contract_generation_on_domicile_moved_effect = yes
 					}
-					set_color_from_title = scope:nf_holder.capital_county
+					else = {
+						create_story = { type = story_adventurer_ai }
+						trigger_event = {
+							on_action = on_adventurer_ai_new_employer_arrival
+							days = { 10 30 }
+						}
+					}
+					# Sort our starting flavourisation.
+					if = {
+						limit = { has_realm_law = camp_purpose_mercenaries }
+						set_variable = flavourise_camp_purpose_mercenaries
+					}
+					else_if = {
+						limit = { has_realm_law = camp_purpose_wanderers }
+						set_variable = flavourise_camp_purpose_wanderers
+					}
+					else_if = {
+						limit = { has_realm_law = camp_purpose_scholars }
+						set_variable = flavourise_camp_purpose_scholars
+					}
+					else_if = {
+						limit = { has_realm_law = camp_purpose_explorers }
+						set_variable = flavourise_camp_purpose_explorers
+					}
+					else_if = {
+						limit = { has_realm_law = camp_purpose_brigands }
+						set_variable = flavourise_camp_purpose_brigands
+					}
+					else_if = {
+						limit = { has_realm_law = camp_purpose_legitimists }
+						set_variable = flavourise_camp_purpose_legitimists
+					}
+					# And tally our numbers for performance purposes.
+					add_to_global_variable_list = {
+						name = laamps_tally
+						target = this.primary_title
+					}
+				}
+				### EP3 ADMIN SETUP ###
+				if = {
+					limit = { government_allows = administrative }
+					save_scope_as = top_liege
+					### EP3 NOBLE FAMILIES & DOMICILE SETUP ###
+					random_held_title = { # May be removed once every_noble_family includes liege (TIT-51212)
+			
+						limit = { is_noble_family_title = yes }
+						set_coa = scope:top_liege.house
+					}
+					every_noble_family = {
+						# Ensure Noble Family CoA match House
+						set_coa = holder.house
+						# Ensure holders of historical noble family titles are the default house heads
+						holder ?= {
+							save_scope_as = nf_holder
+							if = {
+								limit = { is_landed = yes }
+								capital_province = { save_scope_as = domicile_location }
+							}
+							house ?= {
+								if = {
+									limit = { house_head != scope:nf_holder }
+									set_house_head = scope:nf_holder
+								}
+							}
+						}
+						set_color_from_title = scope:nf_holder.capital_county
+					}
+														  
 				}
 			}
 		}
