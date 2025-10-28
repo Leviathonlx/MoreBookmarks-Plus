@@ -1,5 +1,27 @@
 ﻿doctrine_consanguinity = {
 	group = "marriage"
+	doctrine_consanguinity_dynastic = {
+		piety_cost = {
+			value = faith_doctrine_cost_high
+			if = {
+				limit = { has_doctrine = doctrine_consanguinity_restricted }
+				multiply = faith_unchanged_doctrine_cost_mult
+			}
+			else_if = {
+				limit = { has_doctrine = doctrine_consanguinity_aunt_nephew_and_uncle_niece }
+				multiply = faith_changed_doctrine_cost_mult_two_step
+			}
+			else_if = {
+				limit = { has_doctrine = doctrine_consanguinity_unrestricted }
+				multiply = faith_changed_doctrine_cost_mult_three_step
+			}
+		}
+		parameters = {
+			consanguinity_restricted_dynastic_marriage = yes
+			consanguinity_restricted_marriage = yes
+			consanguinity_restricted_close_kin_incest = yes
+		}
+	}
 	doctrine_consanguinity_restricted = {
 		piety_cost = {
 			value = faith_doctrine_cost_high
@@ -242,7 +264,74 @@ doctrine_mz_syncretism = {
 			same_faith_opinion = 5
 		}
 	}
+	
+	tenet_sinitic_syncretism = {
+		icon = core_tenet_harmonious_society
+		piety_cost = {
+			if = {
+				limit = {
+					OR = {
+						religion_tag = buddhism_religion
+						has_doctrine = pagan_hostility_doctrine
+					}
+				}
+				value = faith_tenet_cost_low
+			}
+			else_if = {
+				limit = {
+					religion_tag = islam_religion
+				}
+				value = faith_tenet_cost_high
+			}
+			else = {
+				value = faith_tenet_cost_mid
+			}
 
+			# Multiplier for keeping same tenet
+			if = {
+				limit = { has_doctrine = tenet_sinitic_syncretism }
+				multiply = faith_unchanged_doctrine_cost_mult
+			}
+		}
+
+		is_shown = {
+			OR = {
+				has_doctrine = abrahamic_hostility_doctrine
+				has_doctrine = pagan_hostility_doctrine
+				has_doctrine = eastern_hostility_doctrine
+			}
+		}
+		can_pick = {
+			custom_description = {
+				text = incompatible_tenet_gnosticism_trigger
+				NOT = {
+					doctrine:tenet_gnosticism = { is_in_list = selected_doctrines }
+				}
+			}
+			custom_description = {
+				text = incompatible_tenet_other_syncretism_trigger
+				NOR = {
+					doctrine:tenet_eastern_syncretism = { is_in_list = selected_doctrines }
+					doctrine:tenet_unreformed_syncretism = { is_in_list = selected_doctrines }
+					doctrine:tenet_christian_syncretism = { is_in_list = selected_doctrines }
+					doctrine:tenet_islamic_syncretism = { is_in_list = selected_doctrines }
+					doctrine:tenet_jewish_syncretism = { is_in_list = selected_doctrines }
+				}
+			}
+		}
+		parameters = {
+			hostility_override_sinitic_hostility_doctrine = 1
+			#For loc:
+			is_eastern_faith_bilateral_loc_override = 1
+			eastern_syncretic_actor_opinion_active = yes
+			opinion_of_eastern_syncretic_recipient_opinion_active = 30 #Sync this to syncretic_mutual_opinion_bonus_value
+		}
+		traits = {
+			virtues = { honest }
+			sins = { wrathful }
+		}
+	}
+	
 	tenet_eastern_syncretism = {
 		piety_cost = {
 			if = {
