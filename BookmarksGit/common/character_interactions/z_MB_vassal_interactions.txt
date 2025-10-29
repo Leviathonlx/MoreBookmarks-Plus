@@ -9,11 +9,12 @@
 	pause_on_receive = yes
 	icon = icon_liege
 
-	interface_priority = 109 #after revoke title										 
+	interface_priority = 109 #after revoke title
+
 	desc = retract_vassal_interaction_desc
 
 	on_decline_summary = general_rebellion_decline_summary
-	
+
 	prompt = RETRACT_VASSAL_SELECT_VASSAL_TO_RETRACT
 
 	notification_text = RETRACT_VASSAL_PROPOSAL
@@ -27,7 +28,7 @@
 	}
 
 	is_shown = {
-		NOT = { scope:recipient = scope:actor }
+		scope:recipient != scope:actor
 		scope:recipient = {
 			highest_held_title_tier > tier_barony
 			liege = scope:actor
@@ -72,11 +73,6 @@
 				}
 			}
 		}
-		scope:recipient = { is_busy_in_events_localised = yes }
-		trigger_if = {
-			limit = { exists = scope:secondary_recipient }
-			scope:secondary_recipient = { is_busy_in_events_localised = yes }
-		}
 		scope:recipient = {
 			NOT = { has_strong_hook = scope:actor }
 		}
@@ -94,7 +90,7 @@
 			}
 		}
 	}
-	
+
 	can_be_picked = {
 		highest_held_title_tier > tier_barony
 	}
@@ -123,7 +119,7 @@
 
 	on_accept = {
 		retract_vassal_interaction_effect = yes
-		
+
 		if = {
 			limit = {
 				scope:actor = { has_character_flag = flag_hostile_actions_disabled_delay }
@@ -178,7 +174,7 @@
 			}
 		}
 	}
-	
+
 	can_be_blocked = {
 		custom_description = { #Hook from Recipient can counteract, but only if Actor is not forcing the action via Strong Hook.
 			text = "spending_hook"
@@ -234,14 +230,14 @@
 			add = 40
 			desc = SCHEME_WEAK_HOOK_USED
 		}
-		
+
 		opinion_modifier = { # Opinion Factor
 			who = scope:recipient
 			opinion_target = scope:actor
 			multiplier = 1.0
 			desc = AI_OPINION_REASON
 		}
-		
+
 		modifier = {
 			add = 25
 			scope:actor = {
@@ -249,7 +245,7 @@
 			}
 			desc = AI_REFUSAL_IS_TREASON
 		}
-		
+
 		modifier = {
 			add = 20
 			scope:recipient = {
@@ -257,7 +253,7 @@
 			}
 			desc = TAKE_THE_VOWS_TRUSTING
 		}
-		
+
 		modifier = {
 			add = 20
 			scope:recipient = {
@@ -265,7 +261,7 @@
 			}
 			desc = INTERACTION_CONTENT
 		}
-		
+
 		modifier = {
 			add = 20
 			scope:actor.current_military_strength > scope:recipient.current_military_strength
@@ -314,7 +310,7 @@
 			add = 50
 			desc = AI_VASSAL_HOLDS_REALM_CAPITAL
 		}
-		
+
 		modifier = {
 			exists = scope:actor.primary_title.title_capital_county
 			scope:secondary_recipient = {
@@ -334,7 +330,7 @@
 			add = 30
 			desc = AI_VASSAL_IS_IN_CAPITAL_DUCHY
 		}
-		
+
 		modifier = { #Sub-Vassal is NOT De jure of current Vassal.
 			add = 25
 			NOT = {
@@ -461,14 +457,21 @@
 	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
 
 	send_options_exclusive = no
-	
+
 	can_send_despite_rejection = yes
-	
+
 	# AI
 	ai_targets = {
 		ai_recipients = vassals
 	}
-	ai_frequency = 12
+	ai_frequency_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 12
+		kingdom = 12
+		empire = 12
+		hegemony = 12
+	}
 
 	ai_potential = {
 		has_realm_law_flag = title_revocation_allowed
@@ -500,7 +503,7 @@
 		}
 		# Always retract preferred capital if you hold the duchy, or the duchy is uncreated
 		modifier = {
-			years_from_game_start >= 5
+			years_from_game_start >= 3
 			OR = {
 				scope:actor = {
 					is_at_war = no
@@ -543,7 +546,7 @@
 		}
 		# If below domain limit, try to revoke counties in your capital duchy despite tyranny, sometimes
 		modifier = {
-			years_from_game_start >= 5
+			years_from_game_start >= 3
 			scope:actor = { is_at_war = no }
 			scope:actor = { # The HRE doesn't need endless civil wars
 				NOT = {
@@ -585,19 +588,17 @@
 				}
 				AND = {
 					exists = scope:actor.primary_title.title_capital_county.de_jure_liege.holder
-					NOT = {
-						scope:actor.primary_title.title_capital_county.de_jure_liege.holder.top_liege = scope:actor.top_liege
-					}
+					scope:actor.primary_title.title_capital_county.de_jure_liege.holder.top_liege != scope:actor.top_liege
 				}
 				scope:actor.primary_title.title_capital_county.de_jure_liege = {
 					is_title_created = no
 				}
 			}
-			
+
 			scope:recipient = { # Not from players
 				is_ai = yes
 			}
-			
+
 			OR = { # Tyranny tolernance is based on rationality
 				AND = {
 					scope:actor.ai_rationality < 0
@@ -647,7 +648,7 @@
 					scope:actor = { has_revoke_title_reason = scope:recipient }
 				}
 			}
-			
+
 			add = 1100
 		}
 		# Always retract preferred capital duchy
@@ -668,15 +669,13 @@
 			}
 			add = 1000
 		}
-																									   
-		# The AI over uses this and it causes a ton of tyranny wars and I see no reason why it needs to exist
 		# Retract vassal we're dejure liege of if below domain limit
 		#modifier = {
 		#	scope:actor = {
 		#		vassal_limit_available > 0
 		#	}
 		#	scope:secondary_recipient.primary_title.de_jure_liege.holder = scope:actor
-		#	add = 400
+		#	add = 500
 		#}
 		# Retract non-De Jure vassals from Megadukes (only if a revoke reason is present, so we don't end up in massive tyranny war spirals)
 		modifier = {
@@ -689,10 +688,8 @@
 					count > 30
 				}
 			}
-			NOT = {
-				scope:secondary_recipient.primary_title.de_jure_liege.holder = scope:recipient
-			}
-			add = 400
+			scope:secondary_recipient.primary_title.de_jure_liege.holder != scope:recipient
+			add = 500
 		}
 		# Do not revoke titles from certain characters
 		modifier = {
@@ -725,7 +722,7 @@
 			}
 			add = -2000
 		}
-		
+
 		modifier = { # The AI will only use a Hook if they couldn't otherwise do this
 			scope:hook = yes
 			add = -1
