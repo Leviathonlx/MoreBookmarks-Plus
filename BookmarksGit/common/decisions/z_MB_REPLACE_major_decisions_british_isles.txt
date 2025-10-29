@@ -8,7 +8,14 @@ reclaim_britannia_decision = {
 	}
 	decision_group_type = major
 
-	ai_check_interval = 120
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
 
 	desc = reclaim_britannia_decision_desc
 
@@ -83,7 +90,7 @@ reclaim_britannia_decision = {
 		# Send event to other players
 		every_player = {
 			limit = {
-				NOT = { this = root }
+				this != root
 				OR = {
 					culture = { has_cultural_pillar = heritage_west_germanic }
 					culture = { has_cultural_pillar = heritage_goidelic }
@@ -110,15 +117,24 @@ embrace_english_culture_decision = {
 	}
 	decision_group_type = major
 
-	ai_check_interval = 36
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 12
+		empire = 12
+		hegemony = 12
+	}
 
 	desc = embrace_english_culture_decision_desc
 
 	is_shown = {
-		is_playable_character = yes
+							 
+			 
+		game_start_date < 1178.1.1
 		culture = {
 			OR = {
-					  
+	   
 				any_parent_culture = {
 					this = culture:norman
 				}
@@ -149,9 +165,7 @@ embrace_english_culture_decision = {
 				name = unavailable_unique_decisions
 				target = flag:embrace_english_culture_decision
 			}
-		}
-		#current_date >= 1100.1.1	
-		game_start_date <= 1150.1.1			
+		}		
 	}
 
 	is_valid = {
@@ -184,10 +198,10 @@ embrace_english_culture_decision = {
 				custom_description = {
 					text = high_pacification_tooltip
 					any_owned_story = {
-						story_type = story_cycle_harrying_of_the_north
+						type = story_cycle_harrying_of_the_north
 						var:pacification > var:resistance
-						var:pacification > 16
-						var:embrace_culture_decision_counter > 14
+						var:pacification > 14
+						var:embrace_culture_decision_counter > 11
 					}
 				}
 			}
@@ -398,13 +412,30 @@ england_request_laudabiliter_decision = {
 	is_valid_showing_failures_only = {
 		is_capable_adult = yes
 		is_imprisoned = no
-		is_independent_ruler = yes
+		top_liege = this
 		is_at_war = no
 		game_start_date < 1155.10.9					 
 	}
 
 	cost = {
-		gold = 1000
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 1000
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 1000
+			}
+		}
 		piety = 2000
 	}
 
@@ -437,265 +468,6 @@ england_request_laudabiliter_decision = {
 		base = 15
 		ai_value_modifier = {
 			ai_boldness = 1.0
-		}
-	}
-}
-
-#Refound Lunden
-refound_lunden_decision = {
-	picture = {
-		reference = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
-	}
-
-	decision_group_type = major
-	
-	desc = refound_lunden_decision_desc
-	selection_tooltip = refound_lunden_decision_tooltip
-	
-	ai_check_interval = 2
-	is_shown = {
-		game_start_date < 900.1.1
-		is_ruler = yes
-		is_playable_character = yes
-		has_primary_title = title:k_england
-		OR = {	#Government conditions.
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_clan
-		}
-		NOT = {	#You can only do it once.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:refound_lunden_decision
-			}
-		}
-	}
-	
-	is_valid = {	
-		culture = { has_cultural_pillar = heritage_west_germanic }
-		completely_controls = title:c_middlesex
-	}	
-	
-	is_valid_showing_failures_only = {
-		is_available_adult = yes
-	}
-
-	effect = {
-		title:c_middlesex = { change_development_level = 3 }
-		title:k_england = { set_capital_county = title:c_middlesex }
-		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:refound_lunden_decision
-			}
-		}
-	}
-	
-	cost = {
-		gold = 100
-		prestige = 500
-	}
-
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 100
-		modifier = {
-			factor = 0
-			current_date < 886.1.1
-		}
-	}
-}
-
-#Norman Conquest of England
-lay_claim_to_england_decision = {
-	picture = {
-		reference = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
-	}
-
-	desc = lay_claim_to_england_decision_desc
-	selection_tooltip = lay_claim_to_england_decision_tooltip
-	decision_group_type = major
-	
-	ai_check_interval = 1
-	is_shown = {
-		game_start_date <= 1066.1.1
-		current_date > 900.1.1
-		is_playable_character = yes
-		title:k_england = { is_title_created = yes }
-		OR = {	
-			root.primary_title = title:k_france
-			root.primary_title = title:k_aquitaine
-			root.primary_title = title:d_normandy
-		}
-		OR = {	#Government conditions.
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_clan
-		}
-		NOT = {	#You can only do it once.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:lay_claim_to_england_decision
-			}
-		}
-	}
-	
-	is_valid = {
-		culture = culture:norman
-		faith = { religion_tag = christianity_religion }
-	}	
-	
-	is_valid_showing_failures_only = {
-		is_available_adult = yes
-	}
-
-	effect = {
-		add_pressed_claim = title:k_england
-		if = {
-			limit = { title:k_daneland = { is_title_created = yes } }
-			add_pressed_claim = title:k_daneland
-		}
-		add_prestige = 2000
-		add_gold = 1000
-		add_piety = 1000
-		hidden_effect = {
-			add_character_flag = will_need_to_move_capital_to_england
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:lay_claim_to_england_decision
-			}
-		}
-	}
-
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 100
-		modifier = {
-			factor = 0
-			age > 35
-		}
-	}
-}
-
-#Non-Anglo Conqueror must move capital to England
-move_capital_to_london_conqueror_decision = {
-	picture = {
-		reference = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
-	}
-
-	desc = move_capital_to_london_conqueror_decision_desc
-	selection_tooltip = move_capital_to_london_conqueror_decision_tooltip
-	
-	ai_check_interval = 1
-	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
-		has_character_flag = will_need_to_move_capital_to_england
-	}
-	
-	is_valid = {	
-		has_primary_title = title:k_england
-	}	
-
-	effect = {
-		if = { #Usurp if not held personally.
-			limit = {
-				NOT = { this = title:c_middlesex.holder }
-			}
-			create_title_and_vassal_change = {
-				type = returned
-				save_scope_as = change
-				add_claim_on_loss = no
-			}
-			title:c_middlesex = {
-				change_title_holder = {
-					holder = root
-					change = scope:change
-				}
-			}
-			resolve_title_and_vassal_change = scope:change
-		}
-		root = { set_realm_capital = title:c_middlesex }
-		remove_character_flag = will_need_to_move_capital_to_england
-	}
-
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 100
-	}
-}
-
-#English claim to French Coast
-english_expansion_decision = {
-	picture = {
-		reference = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
-	}
-	
-	desc = english_expansion_decision_desc
-	selection_tooltip = english_expansion_decision_tooltip
-	decision_group_type = major
-	
-	ai_check_interval = 1
-	is_shown = {
-		current_date >= 1200.1.1
-		NOT = { game_start_date >= 1150.1.1 }
-		game_start_date <= 1066.1.1
-		is_playable_character = yes
-		OR = {
-			has_primary_title = title:k_england
-			has_primary_title = title:e_britannia
-		}
-		NOT = {	#You can only do it once.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:english_expansion_decision
-			}
-		}
-	}
-	
-	is_valid = {
-		is_independent_ruler = yes
-		is_capable_adult = yes
-		is_imprisoned = no
-		is_at_war = no
-	}	
-	
-	is_valid_showing_failures_only = {
-		is_available_adult = yes
-	}
-
-	effect = {
-			add_pressed_claim = title:d_normandy
-			add_pressed_claim = title:d_poitou
-			add_pressed_claim = title:d_aquitaine
-			add_pressed_claim = title:d_gascogne
-		add_prestige = 2000
-		add_gold = 1000
-		add_piety = 1000
-		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:english_expansion_decision
-			}
-		}
-	}
-
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 100
-		modifier = {
-			factor = 0
-			age > 35
 		}
 	}
 }
