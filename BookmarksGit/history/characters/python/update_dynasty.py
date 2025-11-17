@@ -5,14 +5,14 @@ from collections import defaultdict
 # --- Fill in your details below ---
 
 # ID of the character who will be the progenitor of the new house.
-PROGENITOR_ID = '10120084'
+PROGENITOR_ID = '12130150'
 
 # The VALUE of the dynasty or dynasty_house line you want to find and replace.
-ORIGINAL_PROPERTY_VALUE = 'house_minamoto_kawachi'
+ORIGINAL_PROPERTY_VALUE = 'house_utsunomiya_clan'
 
 # The new property KEY and VALUE you want to write.
 NEW_PROPERTY_KEY = 'dynasty_house'
-NEW_PROPERTY_VALUE = 'house_minamoto_kiso'
+NEW_PROPERTY_VALUE = 'house_shgnt_kamachi'
 
 # The name of your source file.
 INPUT_FILENAME = '00_JAPAN_1.txt'
