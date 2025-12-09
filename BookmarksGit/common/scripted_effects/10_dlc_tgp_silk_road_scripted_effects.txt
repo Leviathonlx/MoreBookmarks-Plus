@@ -1,0 +1,1169 @@
+﻿##################################################
+# Silk Road Scripted Effects
+##################################################
+
+tgp_silk_road_downstream_player_sub_region_effect = {
+	save_temporary_scope_as = player_temp
+	scope:origin_sub_region_temp = { 
+		if = {
+			limit = { any_situation_sub_region_participant = { this = scope:player_temp } }
+			save_temporary_scope_as = player_sub_region_temp
+		}
+	}
+	if = {
+		limit = { NOT = { exists = scope:player_sub_region_temp } }
+		random_in_list = {
+			list = second_sub_regions
+			limit = { any_situation_sub_region_participant = { this = scope:player_temp } }
+			save_temporary_scope_as = player_sub_region_temp
+		}
+	}
+	if = {
+		limit = { NOT = { exists = scope:player_sub_region_temp } }
+		random_in_list = {
+			list = third_sub_regions
+			limit = { any_situation_sub_region_participant = { this = scope:player_temp } }
+			save_temporary_scope_as = player_sub_region_temp
+		}
+	}
+}
+
+tgp_silk_road_downstream_effect = {
+	save_temporary_scope_as = origin_sub_region_temp
+	switch = {
+		trigger = scope:origin_sub_region_temp
+		# China
+		situation:silk_road_situation.situation_sub_region:region_silk_road_proper_china = {
+			situation:silk_road_situation = {
+				# Secondary
+				situation_sub_region:region_silk_road_proper_tibet = { add_to_temporary_list = second_sub_regions }
+				situation_sub_region:region_silk_road_proper_central_asia = { add_to_temporary_list = second_sub_regions }
+				# Tertiary
+				situation_sub_region:region_silk_road_proper_india = { add_to_temporary_list = third_sub_regions }
+				situation_sub_region:region_silk_road_proper_transcaspia = { add_to_temporary_list = third_sub_regions }
+				situation_sub_region:region_silk_road_proper_occident = { add_to_temporary_list = third_sub_regions }
+			}
+		}
+		# Tibet
+		situation:silk_road_situation.situation_sub_region:region_silk_road_proper_tibet = {
+			situation:silk_road_situation = {
+				# Secondary
+				situation_sub_region:region_silk_road_proper_india = { add_to_temporary_list = second_sub_regions }
+				# Tertiary
+				situation_sub_region:region_silk_road_proper_occident = { add_to_temporary_list = third_sub_regions }
+			}
+		}
+		# Central Asia
+		situation:silk_road_situation.situation_sub_region:region_silk_road_proper_central_asia = {
+			situation:silk_road_situation = {
+				# Secondary
+				situation_sub_region:region_silk_road_proper_transcaspia = { add_to_temporary_list = second_sub_regions }
+				# Tertiary
+				situation_sub_region:region_silk_road_proper_occident = { add_to_temporary_list = third_sub_regions }
+			}
+		}
+		# India
+		situation:silk_road_situation.situation_sub_region:region_silk_road_proper_india = {
+			situation:silk_road_situation = {
+				# Secondary
+				situation_sub_region:region_silk_road_proper_occident = { add_to_temporary_list = second_sub_regions }
+			}
+		}
+		# Transcaspia
+		situation:silk_road_situation.situation_sub_region:region_silk_road_proper_transcaspia = {
+			situation:silk_road_situation = {
+				# Secondary
+				situation_sub_region:region_silk_road_proper_occident = { add_to_temporary_list = second_sub_regions }
+			}
+		}
+		# Occident
+		situation:silk_road_situation.situation_sub_region:region_silk_road_proper_occident = {} # Terminus
+	}
+	# Fire changes/messages
+	scope:origin_sub_region_temp ?= {
+		if = {
+			limit = { silk_road_sub_region_conflict_trigger = yes }
+			tgp_silk_road_downstream_war_effect = yes
+		}
+		else = { tgp_silk_road_downstream_peace_effect = yes }
+	}
+	# Cleanup
+	clear_saved_scope = origin_sub_region_temp
+	every_in_list = {
+		list = second_sub_regions
+		remove_from_list = second_sub_regions
+	}
+	every_in_list = {
+		list = third_sub_regions
+		remove_from_list = third_sub_regions
+	}
+}
+
+# Effects to move sub regions towards Hardship
+tgp_silk_road_downstream_war_effect = {
+	# Disabled for now
+	#tgp_silk_road_downstream_war_message_effect = yes
+	scope:origin_sub_region_temp ?= {
+		trigger_sub_region_catalyst = { catalyst = catalyst_silk_road_region_peace }
+	}
+	every_in_list = {
+		list = second_sub_regions
+		trigger_sub_region_catalyst = { catalyst = catalyst_silk_road_adjacent_upstream_region_peace }
+	}
+	every_in_list = {
+		list = third_sub_regions
+		trigger_sub_region_catalyst = { catalyst = catalyst_silk_road_distant_upstream_region_peace }
+	}
+}
+
+tgp_silk_road_downstream_war_message_effect = {
+	every_player = {
+		tgp_silk_road_downstream_player_sub_region_effect = yes
+		if = {
+			limit = { exists = scope:player_sub_region_temp }
+			send_interface_message = {
+				type = msg_silk_road_prosperity_war_bad
+				title = msg_silk_road_prosperity_upstream_war
+				desc = tgp_silk_road_move_sub_region_towards_hardship_tt
+				scope:player_sub_region_temp = {
+					if = {
+						limit = { sub_region_current_phase = phase_exceptional_bounty }
+						if = {
+							limit = { this = scope:origin_sub_region_temp }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_steady_trading_primary_tt
+						}
+						else_if = {
+							limit = { is_in_list = second_sub_regions }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_steady_trading_secondary_tt
+						}
+						else = { custom_tooltip = tgp_silk_road_move_sub_region_towards_steady_trading_tertiary_tt }
+					}
+					else_if = {
+						limit = {
+							NOT = { sub_region_current_phase = phase_hardship }
+						}
+						if = {
+							limit = { this = scope:origin_sub_region_temp }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_hardship_primary_tt
+						}
+						else_if = {
+							limit = { is_in_list = second_sub_regions }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_hardship_secondary_tt
+						}
+						else = { custom_tooltip = tgp_silk_road_move_sub_region_towards_hardship_tertiary_tt }
+					}
+				}
+			}
+		}
+	}
+}
+
+# Effects to move sub regions towards Prosperity
+tgp_silk_road_downstream_peace_effect = {
+	# Disabled for now
+	#tgp_silk_road_downstream_peace_message_effect = yes
+	scope:origin_sub_region_temp ?= {
+		trigger_sub_region_catalyst = { catalyst = catalyst_silk_road_region_war }
+	}
+	every_in_list = {
+		list = second_sub_regions
+		trigger_sub_region_catalyst = { catalyst = catalyst_silk_road_adjacent_upstream_region_war }
+	}
+	every_in_list = {
+		list = third_sub_regions
+		trigger_sub_region_catalyst = { catalyst = catalyst_silk_road_distant_upstream_region_war }
+	}
+}
+
+tgp_silk_road_downstream_peace_message_effect = {
+	every_player = {
+		tgp_silk_road_downstream_player_sub_region_effect = yes
+		if = {
+			limit = { exists = scope:player_sub_region_temp }
+			send_interface_message = {
+				type = msg_silk_road_prosperity_peace_good
+				title = msg_silk_road_prosperity_upstream_peace
+				desc = tgp_silk_road_move_sub_region_towards_exceptional_bounty_tt
+				scope:player_sub_region_temp = {
+					if = {
+						limit = { sub_region_current_phase = phase_hardship }
+						if = {
+							limit = { this = scope:origin_sub_region_temp }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_steady_trading_primary_tt
+						}
+						else_if = { 
+							limit = { is_in_list = second_sub_regions }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_steady_trading_secondary_tt
+						}
+						else = { custom_tooltip = tgp_silk_road_move_sub_region_towards_steady_trading_tertiary_tt }
+					}
+					else_if = {
+						limit = {
+							NOT = { sub_region_current_phase = phase_exceptional_bounty }
+						}
+						if = {
+							limit = { this = scope:origin_sub_region_temp }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_exceptional_bounty_primary_tt
+						}
+						else_if = {
+							limit = { is_in_list = second_sub_regions }
+							custom_tooltip = tgp_silk_road_move_sub_region_towards_exceptional_bounty_secondary_tt
+						}
+						else = { custom_tooltip = tgp_silk_road_move_sub_region_towards_exceptional_bounty_tertiary_tt }
+					}
+				}
+			}
+		}
+	}
+}
+
+tgp_silk_road_innovation_setup_add_effect = {
+	add_to_variable_list = { name = silk_road_unlocked_innovations target = culture_innovation:innovation_$INNOVATION$ }
+	add_innovation = innovation_$INNOVATION$
+}
+
+tgp_silk_road_innovation_setup_effect = {
+	if = {
+		limit = { has_tgp_dlc_trigger = yes }
+		
+		# --- WESTERN SPREAD (Occident/Transcaspia: Iranian, Turkic, Greek) ---
+		
+		# ERE (Byzantine) - Sericulture
+		# Comment: Known to have acquired the knowledge of sericulture by the mid-6th century.
+		culture:greek = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture }
+		}
+		culture:pontic = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture }
+		}
+		culture:greek_cypriot = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture }
+		}
+		culture:antiochian = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture }
+		}
+		culture:cappadocian = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture }
+		}
+		culture:tauro_romaic = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture }
+		}
+		culture:griko = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture }
+		}
+
+		# Turkic/Iranic Cultures on the Route
+		culture:tujue = { # Tujue (Gokturks) - Composite Crossbow (early contact/adoption)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+		}
+		culture:turkish = { # Oghuz
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } # Lamellar armor common by Seljuks/Turks
+			}
+			if = {
+				limit = { game_start_date >= 1211.1.1 } # Crossbow spread to the West
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+			if = {
+				limit = { game_start_date >= 1246.1.1 } # Fire medicine by mid-13th century
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades }
+			}
+		}
+
+		# Iranian (Persian, Sogdian)
+		culture:persian = {
+			# Composite Crossbow (Mongol influence)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+		culture:tajik = { # Khorasani
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+		culture:sogdian = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+		culture:turkmeni = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+		culture:kipchak = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+		culture:cuman = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+		culture:khazar = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+		culture:bolghar = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+
+		# Byzantium/Occident Proper (for a general representation of spread)
+		culture:greek = {
+			# Composite Crossbow spread to ERE (Occident region)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow }
+			}
+		}
+
+		# --- JAPONIC & KOREANIC SPREAD (Chinese/Steppe influence) ---
+
+		# JAPONIC - Lacquered Armor
+		# Comment: Lacquered armor (e.g., lamellar) was standard in Japan from the Heian period.
+		culture:japanese = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:oshu = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:kyushu = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		
+		# KOREANIC - Lacquered Armor & Rocket Cart
+		culture:baekje = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:goguryeo = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:silla = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:jeju = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:samhan = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:goryeo = {
+			# Lacquered Armor for Goryeo kingdom era
+			if = {
+				limit = { game_start_date >= 990.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+			}
+			# Rocket Cart (Hwacha/Singijeon prototype use during Mongol invasions)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+		
+		# --- SOUTHEAST ASIAN SPREAD (Maritime Silk Road influence) ---
+		
+		# CHAM - Champa Rice
+		# Comment: Champa Rice introduced to China as a tribute gift from Champa in 1012.
+		culture:cham = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice }
+		}
+		# Khmer - Champa Rice
+		# Comment: Historical agricultural diffusion in the region.
+		culture:khmer = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice }
+		}
+		# VIET - Champa Rice (Date-gated)
+		# Comment: Vietnamese acquisition of Champa rice, leading to population growth.
+		culture:viet = {
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice }
+			}
+		}
+		culture:muong = {
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice }
+			}
+		}
+		
+		# --- TIBETAN SPREAD (region_silk_road_proper_tibet) ---
+		
+		# Tibetan cultures - Lacquered Armor
+		# Comment: Protective armors, often including leather/lamellar (similar to lacquer) known in Tibetan armies.
+		culture:bodpa = { # Üpa (Tibetan)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:wenmo = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:sumpa = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:khampa = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+		culture:amdo = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+		}
+
+		# Tibetan Cultures - Pharmacopoeia and Waterworks (Shared Chinese health/civic innovations)
+		# Comment: Transfer of early Tang-era medical and civic knowledge.
+		culture:bodpa = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia }
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks }
+		}
+		culture:amdo = {
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia }
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks }
+		}
+
+		# --- MONGOLIC & TUNGUSIC SPREAD (Steppe/Northern China) ---
+		
+		# Khitan - Lacquered Armor (Established pre-Liao/Liao Dynasty)
+		# Comment: Khitan (Liao Dynasty) used sophisticated Chinese-style lamellar/scale armor.
+		culture:khitan = {
+			if = {
+				limit = { game_start_date >= 990.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+			}
+		}
+		culture:qitai = {
+			if = {
+				limit = { game_start_date >= 990.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+			}
+		}
+		# Jurchen - Lacquered Armor
+		# Comment: Jurchen (Jin Dynasty) also adopted or developed similar armor types.
+		culture:jurchen = {
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+			}
+		}
+		# Mongol/Oirat - Late Medieval Military/Armor
+		# Comment: Mongol armies acquired Chinese armor and adopted early gunpowder weapons (especially catapult-launched grenades).
+		culture:mongol = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades }
+			}
+		}
+		culture:oirat = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades }
+			}
+		}
+
+		# Central Asian Commerce (Uyghur/Sogdian region)
+		culture:uigur = {
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } # Widespread use in trade networks
+			}
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } # Influence of Persian/Arab accounting
+			}
+		}
+		
+		# --- INDIC SPREAD (region_silk_road_proper_india) ---
+
+		# Fire Medicine/Grenades
+		# Comment: Gunpowder weapons began appearing in India around the 13th century (Delhi Sultanate era).
+		culture:bengali = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades }
+			}
+		}
+		culture:oriya = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades }
+			}
+		}
+		culture:tamil = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades }
+			}
+		}
+		culture:malayali = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades }
+			}
+		}
+		
+		# --- IRANIC SPREAD (region_silk_road_proper_transcaspia/occident) ---
+
+		# Double Entry Bookkeeping
+		# Comment: Developed independently in the Middle East and used by Persian merchants from the 13th century.
+		culture:persian = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping }
+																			  
+			}
+		}
+		culture:tajik = { # Khorasani
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping }
+																			  
+			}
+		}
+		culture:sogdian = {
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping }
+																			  
+			}
+		}
+		
+		# Indian Cultures - Compass (Maritime trade) and Pharmacopoeia (Ayurveda/Siddha medicine centers)
+		culture:bengali = {
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia }
+			}
+		}
+		culture:tamil = {
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia }
+			}
+		}
+		culture:malayali = {
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia }
+			}
+		}
+
+		# --- CHINESE SPREAD (region_silk_road_proper_china) ---
+		
+		# CHINA (HAN)
+		culture:han = {
+			# Tribal Era Innovations (769 Start - Pre-Tang/9th Century)
+			# Comment: Foundational Chinese inventions pre-dating the Song Dynasty.
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 19, 20]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 19, 20]
+			
+			# Early/Late Medieval Innovations (1066 Start - Song Dynasty Innovations)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } # Introduced to the Song court by 977 [cite: 20]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } # Known by Song [cite: 20]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } # Lodestone compasses by 1088 [cite: 20]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } # 10-11th century [cite: 20]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } # First written formulation of weaponized gunpowder [cite: 20]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } # 震天雷 by 1044 [cite: 20]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart } # Huo Che
+			}
+		}
+
+		# CHINA (SICHUAN)
+		culture:sichuan = {
+			# Tribal Era Innovations (769 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 21, 22]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 21, 22]
+
+			# Early/Late Medieval Innovations (1066 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } [cite: 22]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } [cite: 22]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } [cite: 22]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } [cite: 22]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } [cite: 22]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } [cite: 22]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+		
+		# CHINA (MIN)
+		culture:min = {
+			# Tribal Era Innovations (769 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 22, 23]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 22, 23]
+
+			# Early/Late Medieval Innovations (1066 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } [cite: 23]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } [cite: 23]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } [cite: 23]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } [cite: 23]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } [cite: 23]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } [cite: 23]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+
+		# CHINA (WU)
+		culture:wu = {
+			# Tribal Era Innovations (769 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 24, 25]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 24, 25]
+
+			# Early/Late Medieval Innovations (1066 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } [cite: 25]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } [cite: 25]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } [cite: 25]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } [cite: 25]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } [cite: 25]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } [cite: 25]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+
+		# CHINA (GAN)
+		culture:gan = {
+			# Tribal Era Innovations (769 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 25, 26]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 25, 26]
+
+			# Early/Late Medieval Innovations (1066 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } [cite: 26]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } [cite: 26]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } [cite: 26]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } [cite: 26]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } [cite: 26]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } [cite: 26]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+
+		# CHINA (YUE)
+		culture:yue = {
+			# Tribal Era Innovations (769 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 26, 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 26, 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 26, 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 26, 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 27, 28]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 27, 28]
+
+			# Early/Late Medieval Innovations (1066 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } [cite: 27, 28]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } [cite: 27, 28]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } [cite: 27, 28]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } [cite: 27, 28]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } [cite: 27, 28]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } [cite: 28]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+
+		# CHINA (XIANG)
+		culture:xiang = {
+			# Tribal Era Innovations (769 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 28, 29]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 28, 29]
+
+			# Early/Late Medieval Innovations (1066 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } [cite: 29]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } [cite: 29]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } [cite: 29]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } [cite: 29]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } [cite: 29]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } [cite: 29]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+
+		# CHINA (HAKKA)
+		culture:hakka = {
+			# Tribal Era Innovations (769 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = block_printing } [cite: 29, 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = coking } [cite: 29, 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = composite_crossbow } [cite: 29, 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = cupellation } [cite: 29, 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = dragon_kiln } [cite: 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = lacquered_armor } [cite: 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = pharmacopoeia } [cite: 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = sericulture } [cite: 30, 31]
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = waterworks } [cite: 30, 31]
+
+			# Early/Late Medieval Innovations (1066 Start)
+			tgp_silk_road_innovation_setup_add_effect = { INNOVATION = champa_rice } [cite: 30, 31]
+			if = {
+				limit = { game_start_date >= 1066.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = bulkheads } [cite: 30, 31]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = compass } [cite: 30, 31]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = double_entry_bookkeeping } [cite: 30, 31]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = fire_medicine } [cite: 30, 31]
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = grenades } [cite: 31]
+			}
+
+			# Late Medieval Innovations (1211 Start)
+			if = {
+				limit = { game_start_date >= 1211.1.1 }
+				tgp_silk_road_innovation_setup_add_effect = { INNOVATION = rocket_cart }
+			}
+		}
+	}
+}
+
+tgp_silk_road_movement_stream_effect = {
+	$SUB_REGION$ ?= {
+		save_temporary_scope_as = sub_region_temp
+		var:innovation ?= { save_temporary_scope_as = old_innovation_temp }
+	}
+	$UPSTREAM_SUB_REGION$ = {
+		save_temporary_scope_as = upstream_sub_region_temp
+		var:innovation ?= { save_temporary_scope_as = new_innovation_temp }
+	}
+	scope:sub_region_temp = {
+		every_player = {
+			limit = {
+				save_temporary_scope_as = player_temp
+				scope:sub_region_temp = { any_situation_sub_region_participant = { this = scope:player_temp } }
+			}
+			send_interface_message = {
+				type = msg_silk_road_innovation_movement
+				title = msg_silk_road_innovation_movement_stream_title
+				desc = msg_silk_road_innovation_movement_stream_desc
+				custom_tooltip = msg_silk_road_innovation_movement_tt
+			}
+		}
+		set_variable = {
+			name = innovation
+			value = scope:new_innovation_temp
+		}
+	}
+}
+
+tgp_silk_road_movement_china_effect = {
+	situation_sub_region:region_silk_road_proper_china = { save_temporary_scope_as = sub_region_temp }
+
+	# Find the culture of the province the market of Chang'an is located in
+	title:c_jingzhao = {
+		culture = {
+			save_temporary_scope_as = region_silk_road_proper_china_market_culture
+			random_culture_innovation = {
+				limit = {
+					has_innovation_parameter = silk_road_innovation_parameter
+					is_known_by_culture = scope:region_silk_road_proper_china_market_culture
+					NOR = {
+						this = situation_sub_region:region_silk_road_proper_occident.var:innovation
+						this = situation_sub_region:region_silk_road_proper_transcaspia.var:innovation
+						this = situation_sub_region:region_silk_road_proper_india.var:innovation
+						this = situation_sub_region:region_silk_road_proper_central_asia.var:innovation
+						this = situation_sub_region:region_silk_road_proper_tibet.var:innovation
+						this = situation_sub_region:region_silk_road_proper_china.var:innovation
+					}
+				}
+				save_scope_as = new_innovation_temp
+			}
+		}
+	}
+	scope:sub_region_temp = {
+		every_player = {
+			limit = {
+				save_temporary_scope_as = player_temp
+				scope:sub_region_temp = { any_situation_sub_region_participant = { this = scope:player_temp } }
+			}
+			send_interface_message = {
+				type = msg_silk_road_innovation_movement
+				title = msg_silk_road_innovation_movement_china_title
+				desc = msg_silk_road_innovation_movement_china_desc
+				custom_tooltip = msg_silk_road_innovation_movement_tt
+			}
+		}
+		set_variable = {
+			name = innovation
+			value = scope:new_innovation_temp
+		}
+	}
+}
+
+tgp_silk_road_decision_scope_effect = {
+	save_scope_as = market_temp
+	title_province = {
+		save_scope_as = destination_province
+		save_scope_as = background_market_scope
+		save_scope_as = silk_road_market_town
+	}
+	random_county_situation_sub_region = {
+		limit = {
+			situation_sub_region_has_county = scope:market_temp
+			OR = {
+				sub_region_current_phase = phase_exceptional_bounty
+				sub_region_current_phase = phase_steady_trading
+				sub_region_current_phase = phase_hardship
+			}
+		}
+		save_scope_as = sub_region_temp
+		var:innovation ?= { save_scope_as = innovation_temp }
+	}
+}
+
+tgp_silk_road_market_built_effect = {
+	county = {
+		save_temporary_scope_as = county_temp
+		random_county_situation = {
+			limit = {
+				situation_type = silk_road_situation
+				situation_has_catalyst = catalyst_silk_road_famous_market_built
+			}
+			trigger_situation_catalyst = {
+				catalyst = catalyst_silk_road_famous_market_built
+				county = scope:county_temp
+				character = scope:character
+			}
+		}
+	}
+}
+
+tgp_silk_road_canal_built_effect = {
+	situation:silk_road_situation ?= {
+		if = {
+			limit = { situation_has_catalyst = catalyst_silk_road_china_grand_canal_expanded }
+			situation_sub_region:region_silk_road_proper_china ?= {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_china_grand_canal_expanded
+					character = scope:owner
+				}
+			}
+		}
+		if = {
+			limit = { situation_has_catalyst = catalyst_silk_road_china_grand_canal_expanded_secondary }
+			situation_sub_region:region_silk_road_proper_tibet ?= {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_china_grand_canal_expanded_secondary
+					character = scope:owner
+				}
+			}
+			situation_sub_region:region_silk_road_proper_central_asia ?= {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_china_grand_canal_expanded_secondary
+					character = scope:owner
+				}
+			}
+		}
+		if = {
+			limit = { situation_has_catalyst = catalyst_silk_road_china_grand_canal_expanded_tertiary }
+			situation_sub_region:region_silk_road_proper_india ?= {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_china_grand_canal_expanded_tertiary
+					character = scope:owner
+				}
+			}
+			situation_sub_region:region_silk_road_proper_transcaspia ?= {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_china_grand_canal_expanded_tertiary
+					character = scope:owner
+				}
+			}
+		}
+	}
+}
+
+tgp_silk_road_expand_steppe_effect = {
+	situation:silk_road_situation = {
+		if = {
+			limit = { situation_has_catalyst = catalyst_silk_road_mpo_region_to_steppe }
+			situation_sub_region:region_silk_road_proper_$SUB_REGION$ = {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_mpo_region_to_steppe
+					character = scope:steppe_expander
+				}
+			}
+		}
+	}
+}
+
+tgp_silk_road_raid_effect = { # county scope
+	if = {
+		limit = {
+			title_province = { geographical_region = dlc_tgp_silk_road_route_region } # the actual route
+		}
+		save_temporary_scope_as = county_temp
+		random_county_situation = {
+			limit = {
+				situation_type = silk_road_situation
+				situation_has_catalyst = catalyst_silk_road_raided
+			}
+			trigger_situation_catalyst = {
+				catalyst = catalyst_silk_road_raided
+				county = scope:county_temp
+				character = scope:raider
+			}
+		}
+	}
+}
+
+tgp_silk_road_mongol_devastation_effect = { # county scope
+	if = {
+		limit = {
+			title_province = { geographical_region = dlc_tgp_silk_road_route_region } # the actual route
+		}
+		save_temporary_scope_as = county_temp
+		random_county_situation = {
+			limit = {
+				situation_type = silk_road_situation
+				situation_has_catalyst = catalyst_silk_road_mongol_devastation
+			}
+			trigger_situation_catalyst = {
+				catalyst = catalyst_silk_road_mongol_devastation
+				county = scope:county_temp
+				character = scope:mongol_emperor
+			}
+		}
+	}
+}
+
+tgp_silk_road_iranian_intermezzo_yearly_effect = {
+	if = {
+		limit = {
+			struggle:persian_struggle ?= { is_struggle_phase = struggle_persia_phase_unrest }
+			situation:silk_road_situation ?= { situation_has_catalyst = catalyst_silk_road_iranian_intermezzo_in_unrest }
+		}
+		situation:silk_road_situation.situation_sub_region:region_silk_road_proper_occident ?= {
+			trigger_sub_region_catalyst = { catalyst = catalyst_silk_road_iranian_intermezzo_in_unrest }
+		}
+	}
+}
+
+tgp_silk_road_iranian_intermezzo_ending_effect = {
+	save_scope_as = struggle_ender
+	situation:silk_road_situation ?= {
+		if = {
+			limit = { situation_has_catalyst = catalyst_silk_road_iranian_intermezzo_ending_reached }
+			situation_sub_region:region_silk_road_proper_occident ?= {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_iranian_intermezzo_ending_reached
+					character = scope:struggle_ender
+				}
+			}
+		}
+	}
+}
+
+tgp_silk_road_china_consolidation_effect = {
+	situation:silk_road_situation ?= {
+		if = {
+			limit = { situation_has_catalyst = catalyst_silk_road_china_consolidation }
+			every_situation_sub_region = {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_china_consolidation
+					character = scope:huangdi
+				}
+			}
+		}
+	}
+}
+
+tgp_silk_road_china_stability_effect = {
+	if = {
+		limit = {
+			situation:dynastic_cycle = {
+				OR = {
+					situation_current_phase = situation_dynastic_cycle_phase_stability
+					situation_current_phase = situation_dynastic_cycle_phase_stability_expansion
+					situation_current_phase = situation_dynastic_cycle_phase_stability_advancement
+				}
+			}
+		}
+		situation:silk_road_situation ?= {
+			if = {
+				limit = { situation_has_catalyst = catalyst_silk_road_china_stability }
+				every_situation_sub_region = {
+					trigger_sub_region_catalyst = {
+						catalyst = catalyst_silk_road_china_stability
+						character = scope:huangdi
+					}
+				}
+			}
+		}
+	}
+}
+
+tgp_silk_road_feudalize_holding_effect = {
+	save_temporary_scope_as = county_temp
+	random_county_situation = {
+		limit = {
+			situation_type = silk_road_situation
+			situation_has_catalyst = catalyst_silk_road_mpo_region_resettled
+		}
+		trigger_situation_catalyst = {
+			catalyst = catalyst_silk_road_mpo_region_resettled
+			county = scope:county_temp
+			character = scope:actor
+		}
+	}
+}
+
+tgp_silk_road_byzantium_destroyed_effect = {
+	situation:silk_road_situation = {
+		if = {
+			limit = { situation_has_catalyst = catalyst_silk_road_byzantium_blew_up }
+			situation_sub_region:region_silk_road_proper_occident = {
+				trigger_sub_region_catalyst = {
+					catalyst = catalyst_silk_road_byzantium_blew_up
+					character = title:e_byzantium.previous_holder
+				}
+			}
+		}
+	}
+}
+
+tgp_silk_road_phase_message_effect = {
+	every_player = {
+		limit = {
+			save_temporary_scope_as = player_temp
+			scope:situation_sub_region ?= {
+				any_situation_sub_region_participant_group = { participant_group_has_character = scope:player_temp }
+			}
+		}
+		if = {
+			limit = {
+				scope:situation_sub_region = { sub_region_current_phase = phase_exceptional_bounty }
+			}
+			send_interface_message = {
+				type = msg_silk_road_good
+				title = msg_silk_road_phase_change_title
+				custom_tooltip = msg_silk_road_phase_change_tt
+			}
+		}
+		else_if = {
+			limit = {
+				scope:situation_sub_region = { sub_region_current_phase = phase_hardship}
+			}
+			send_interface_message = {
+				type = msg_silk_road_bad
+				title = msg_silk_road_phase_change_title
+				custom_tooltip = msg_silk_road_phase_change_tt
+			}
+		}
+		else = {
+			send_interface_message = {
+				type = msg_silk_road_neutral
+				title = msg_silk_road_phase_change_title
+				custom_tooltip = msg_silk_road_phase_change_tt
+			}
+		}
+	}
+}
