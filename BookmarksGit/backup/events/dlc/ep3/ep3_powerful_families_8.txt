@@ -1,0 +1,2038 @@
+﻿namespace = ep3_powerful_families
+
+##################################################
+#	EP3 Powerful Families
+#	by James Beaumont
+#	8000		In High Places
+#	8010		Emperor in Distress
+#	8020		In the Bud
+#	8030		Families That Scheme Together...
+#	8040		Cordially
+#	8050		An Atrocious Appointment
+#	8060		A Villainous Villa
+#	8070		Folly
+#	8080		Stammering Silence
+
+
+
+# In High Places
+# 8000
+ep3_powerful_families.8000 = {
+	type = character_event
+	title = ep3_powerful_families.8000.t
+	desc = ep3_powerful_families.8000.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:influential_family_member
+		animation = scheme
+	}
+	lower_right_portrait = {
+		character = liege
+	}
+	cooldown = { years = 10 }
+
+	trigger = {
+		government_allows = administrative
+		house ?= {
+			is_powerful_family = yes
+		}
+		# No Emperors
+		top_liege != this
+		liege = { is_ai = yes }
+		house = {
+			any_house_member = {
+				this != root
+				any_court_position_employer = { this = root.liege }
+				ai_rationality > ai_honor
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+	}
+
+	immediate = {
+		house = {
+			random_house_member = {
+				limit = {
+					this != root
+					any_court_position_employer = { this = root.liege }
+					ai_rationality > ai_honor
+				}
+				save_scope_as = influential_family_member
+			}
+		}
+		liege = { save_scope_as = liege } # for loc
+	}
+
+	# Spread our influence like a weed
+	option = {
+		name = ep3_powerful_families.8000.a
+		scope:influential_family_member = {
+			duel = {
+				skill = intrigue
+				target = root.liege
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					root = {
+						send_interface_toast = {
+							title = ep3_powerful_families.8000.a.win
+							left_icon = root
+							right_icon = scope:influential_family_member
+							change_influence = medium_influence_gain
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 1.5
+						min = -49
+					}
+					root = {
+						send_interface_toast = {
+							title = ep3_powerful_families.8000.a.win
+							left_icon = root
+							right_icon = scope:influential_family_member
+							change_influence = minor_influence_gain
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					root = {
+						send_interface_toast = {
+							title = ep3_powerful_families.8000.a.lose
+							left_icon = root
+							right_icon = scope:influential_family_member
+							liege = {
+								progress_towards_rival_effect = {
+									REASON = rival_abused_power
+									CHARACTER = root
+									OPINION = default_rival_opinion
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		stress_impact = {
+			honest = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_rationality = 1.5
+				ai_honor = -1.5
+			}
+		}
+	}
+
+	# Discover the Empire's dirty secrets
+	option = {
+		name = ep3_powerful_families.8000.b
+		scope:influential_family_member = {
+			duel = {
+				skill = intrigue
+				target = root.liege
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					custom_tooltip = ep3_powerful_families.8000.b.tt
+					hidden_effect = {
+						root = {
+							random_list = {
+								75 = {
+									trigger = {
+										liege = {
+											any_secret = {
+												NOT = {
+													is_known_by = root
+												}
+											}
+										}
+									}
+									send_interface_toast = {
+										title = ep3_powerful_families.8000.b.win.secret
+										left_icon = root
+										right_icon = scope:influential_family_member
+										liege = {
+											random_secret = {
+												limit = {
+													NOT = {
+														is_known_by = root
+													}
+												}
+												reveal_to_without_events_effect = {
+													CHARACTER = root
+												}
+											}
+										}
+									}
+								}
+								25 = {
+									send_interface_toast = {
+										title = ep3_powerful_families.8000.b.win.no_secret
+										left_icon = root
+										right_icon = scope:influential_family_member
+										change_influence = minor_influence_gain
+									}
+								}
+							}
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					root = {
+						send_interface_toast = {
+							title = ep3_powerful_families.8000.a.lose
+							left_icon = root
+							right_icon = scope:influential_family_member
+							liege = {
+								progress_towards_rival_effect = {
+									REASON = rival_abused_power
+									CHARACTER = root
+									OPINION = default_rival_opinion
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		stress_impact = {
+			honest = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_rationality = 1.5
+				ai_honor = -1.5
+			}
+		}
+	}
+
+	# Curry favor with the emperor
+	option = {
+		name = ep3_powerful_families.8000.c
+		liege = {
+			progress_towards_friend_effect = {
+				REASON = friend_loyal_servant
+				CHARACTER = root
+				OPINION = default_friend_opinion
+			}
+		}
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+			deceitful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_rationality = -1.5
+				ai_honor = 1.5
+				ai_compassion = 1.5
+			}
+		}
+	}
+}
+
+# Emperor in Distress
+# 8010-8019
+scripted_effect ep3_pf_8010_a_effect = {
+	scope:generous_family = {
+		pay_short_term_gold = {
+			target = liege
+			gold = medium_gold_value
+		}
+		change_influence = medium_influence_gain
+	}
+}
+scripted_effect ep3_pf_8010_b_accept_effect = {
+	scope:war = {
+		if = {
+			limit = {
+				is_attacker = scope:liege
+			}
+			add_attacker = scope:generous_family
+		}
+		else_if = {
+			limit = {
+				is_defender = scope:liege
+			}
+			add_defender = scope:generous_family
+		}
+	}
+	scope:generous_family = {
+		change_influence = major_influence_gain
+	}
+}
+
+ep3_powerful_families.8010 = {
+	type = character_event
+	title = ep3_powerful_families.8010.t
+	desc = ep3_powerful_families.8010.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = liege
+		animation = stress
+	}
+	cooldown = { years = 10 }
+
+	trigger = {
+		government_allows = administrative
+		house ?= {
+			is_powerful_family = yes
+		}
+		# No Emperors
+		top_liege != this
+		is_at_war_with_liege = no
+		liege = {
+			NOT = { has_character_flag = ep3_pf_8010 }
+			any_character_war = {
+				OR = {
+					AND = {
+						is_attacker = root.liege
+						attacker_war_score < defender_war_score
+					}
+					AND = {
+						is_defender = root.liege
+						defender_war_score < attacker_war_score
+					}
+				}
+				NOT = {
+					is_participant = root
+				}
+			}
+		}
+	}
+
+	immediate = {
+		save_scope_as = generous_family
+		liege = {
+			save_scope_as = liege # for loc
+			random_character_war = {
+				limit = {
+					OR = {
+						AND = {
+							is_attacker = root.liege
+							attacker_war_score < defender_war_score
+						}
+						AND = {
+							is_defender = root.liege
+							defender_war_score < attacker_war_score
+						}
+					}
+					NOT = {
+						is_participant = root
+					}
+				}
+				save_scope_as = war
+			}
+			add_character_flag = {
+				flag = ep3_pf_8010
+				years = 15
+			}
+		}
+	}
+
+	# Send gold for influence
+	option = {
+		name = ep3_powerful_families.8010.a
+		show_as_tooltip = {
+			ep3_pf_8010_a_effect = yes
+		}
+		hidden_effect = {
+			liege = {
+				trigger_event = {
+					id = ep3_powerful_families.8011
+					days = 1
+				}
+			}
+		}
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			greedy = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = 1.5
+				ai_rationality = 1.5
+				ai_greed = -1.5
+			}
+		}
+	}
+
+	# Join the war directly
+	option = {
+		name = ep3_powerful_families.8010.b
+		show_as_tooltip = {
+			random_list = {
+				50 = {
+					show_chance = no
+					desc = tour_grounds_if_liege_accepts_tt
+					ep3_pf_8010_b_accept_effect = yes
+				}
+				50 = {
+					show_chance = no
+					desc = tour_grounds_if_liege_rejects_tt
+					change_influence = minor_influence_gain
+				}
+			}
+		}
+		hidden_effect = {
+			liege = {
+				trigger_event = {
+					id = ep3_powerful_families.8012
+					days = 1
+				}
+			}
+		}
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			craven = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_rationality = 1.5
+				ai_honor = 1.5
+				ai_boldness = 1.5
+			}
+		}
+	}
+
+	# Take advantage of the Emperor's weakness
+	option = {
+		name = ep3_powerful_families.8010.c
+		duel = {
+			skill = intrigue
+			target = root.liege
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8010.a.win
+					left_icon = root
+					right_icon = scope:liege
+					change_influence = medium_influence_gain
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8010.a.lose
+					left_icon = root
+					right_icon = scope:liege
+					liege = {
+						progress_towards_rival_effect = {
+							REASON = rival_abused_power
+							CHARACTER = root
+							OPINION = default_rival_opinion
+						}
+					}
+				}
+			}
+		}
+		stress_impact = {
+			honest = medium_stress_impact_gain
+			just = medium_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+			content = minor_stress_impact_gain
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_rationality = -1.5
+				ai_honor = -1.5
+			}
+		}
+	}
+
+	# Not my problem
+	option = {
+		name = ep3_powerful_families.8010.d
+		hidden_effect = {
+			scope:liege = {
+				remove_character_flag = ep3_pf_8010
+			}
+		}
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_boldness = -1.5
+			}
+		}
+	}
+}
+
+ep3_powerful_families.8011 = {
+	type = letter_event
+	opening = ep3_powerful_families.8011.t
+	desc = ep3_powerful_families.8011.desc
+	sender = scope:generous_family
+
+	# Thanks!
+	option = {
+		name = ep3_powerful_families.8011.a
+		ep3_pf_8010_a_effect = yes
+	}
+}
+
+ep3_powerful_families.8012 = {
+	type = character_event
+	title = ep3_powerful_families.8012.t
+	desc = ep3_powerful_families.8012.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:generous_family
+		animation = personality_honorable
+	}
+
+	# Accept their offer to help!
+	option = {
+		name = ep3_powerful_families.8012.a
+		scope:generous_family = {
+			send_interface_toast = {
+				title = ep3_powerful_families.8012.a.toast
+				left_icon = scope:generous_family
+				right_icon = scope:liege
+				ep3_pf_8010_b_accept_effect = yes
+			}
+		}
+		stress_impact = {
+			paranoid = minor_stress_impact_gain
+			greedy = minor_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = 1.5
+				ai_rationality = 1.5
+				ai_boldness = -1.5
+			}
+		}
+	}
+
+	# Refuse their help
+	option = {
+		name = ep3_powerful_families.8012.b
+		scope:generous_family = {
+			send_interface_toast = {
+				title = ep3_powerful_families.8012.b.toast
+				left_icon = scope:generous_family
+				right_icon = scope:liege
+				change_influence = minor_influence_gain
+			}
+		}
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			craven = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_rationality = -1.5
+				ai_boldness = 1.5
+			}
+		}
+	}
+}
+
+# In the Bud
+# You are from a Powerful Family - react to a new Powerful Family emerging
+# 8020
+ep3_powerful_families.8020 = {
+	type = character_event
+	title = ep3_powerful_families.8020.t
+	desc = ep3_powerful_families.8020.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:new_family
+		animation = personality_honorable
+	}
+
+	trigger = {
+		has_ep3_dlc_trigger = yes
+		government_allows = administrative
+		house ?= {
+			is_powerful_family = yes
+		}
+		NOT = {
+			#cooldown
+			has_character_flag = 8020_powerful_family_cooldown
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = 8020_powerful_family_cooldown
+			years = 10
+		}
+	}
+
+	# Stifle their influence
+	option = {
+		name = ep3_powerful_families.8020.a
+		duel = {
+			skills = { intrigue stewardship }
+			target = scope:new_family
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8020.a.win
+					left_icon = root
+					right_icon = scope:new_family
+					scope:new_family = {
+						set_relation_rival = {
+							target = root
+							reason = rival_stifled_my_influence
+						}
+					}
+					change_influence = major_influence_gain
+					scope:new_family = {
+						change_influence = major_influence_loss
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8020.a.lose
+					left_icon = root
+					right_icon = scope:new_family
+					scope:new_family = {
+						progress_towards_rival_effect = {
+							CHARACTER = root
+							REASON = rival_stifled_my_influence
+							OPINION = default_rival_opinion
+						}
+					}
+				}
+			}
+		}
+		stress_impact = {
+			just = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			shy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_rationality = -1.5
+				ai_boldness = 1.5
+				ai_greed = 1.5
+				ai_vengefulness = 1.5
+			}
+		}
+	}
+
+	# Reach out an olive branch
+	option = {
+		name = ep3_powerful_families.8020.b
+		duel = {
+			skill = diplomacy
+			target = scope:new_family
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8020.b.win
+					left_icon = root
+					right_icon = scope:new_family
+					scope:new_family = {
+						set_relation_friend = {
+							target = root
+							reason = friend_aided_my_family
+						}
+					}
+					change_influence = medium_influence_loss
+					scope:new_family = {
+						change_influence = medium_influence_gain
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8020.b.lose
+					left_icon = root
+					right_icon = scope:new_family
+					change_influence = medium_influence_loss
+				}
+			}
+		}
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			sadistic = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+			shy = minor_stress_impact_gain
+			stubborn = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1.5
+				ai_honor = 1.5
+				ai_rationality = 1.5
+				ai_sociability = 1.5
+				ai_greed = 1.5
+				ai_vengefulness = -1.5
+			}
+		}
+	}
+
+	# I don't care
+	option = {
+		name = ep3_powerful_families.8020.c
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			lazy = minor_stress_impact_loss
+			shy = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = -1.5
+				ai_sociability = -1.5
+				ai_greed = -1.5
+			}
+		}
+	}
+}
+
+# Families That Scheme Together...
+# 8030
+ep3_powerful_families.8030 = {
+	type = character_event
+	title = ep3_powerful_families.8030.t
+	desc = ep3_powerful_families.8030.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:friendly_family
+		animation = personality_honorable
+	}
+	cooldown = { years = 15 }
+
+	trigger = {
+		government_allows = administrative
+		house ?= {
+			is_powerful_family = yes
+		}
+		# No Emperors
+		top_liege != this
+		is_a_faction_member = yes
+		any_relation = {
+			type = friend
+			is_ai = yes
+			liege = root.liege
+			house ?= {
+				is_powerful_family = yes
+			}
+			can_join_faction = root.joined_faction
+			OR = {
+				NOT = { exists = joined_faction }
+				joined_faction != root.joined_faction
+			}
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = friend
+			limit = {
+				is_ai = yes
+				liege = root.liege
+				house ?= {
+					is_powerful_family = yes
+				}
+				can_join_faction = root.joined_faction
+				OR = {
+					NOT = { exists = joined_faction }
+					joined_faction != root.joined_faction
+				}
+			}
+			save_scope_as = friendly_family
+		}
+		joined_faction = { save_scope_as = faction }
+	}
+
+	# Coax them into the faction
+	option = {
+		name = ep3_powerful_families.8030.a
+		change_influence = medium_influence_loss
+		duel = {
+			skill = diplomacy
+			target = scope:friendly_family
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8030.a.win
+					left_icon = root
+					right_icon = scope:friendly_family
+					scope:friendly_family = {
+						join_faction_forced = {
+							faction = scope:faction
+							forced_by = root
+							years = 10
+						}
+
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8030.a.lose
+					left_icon = root
+					right_icon = scope:friendly_family
+				}
+			}
+		}
+		stress_impact = {
+			content = minor_stress_impact_gain
+			honest = minor_stress_impact_gain
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_rationality = 1.5
+				ai_boldness = 1.5
+				ai_vengefulness = 1.5
+			}
+		}
+	}
+
+	# This is not what friends do
+	option = {
+		name = ep3_powerful_families.8030.b
+		change_influence = minor_influence_gain
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			sadistic = minor_stress_impact_gain
+			schemer = minor_stress_impact_gain
+			deceitful = minor_stress_impact_gain
+			wrathful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = 1.5
+				ai_rationality = -1.5
+				ai_boldness = -1.5
+				ai_vengefulness = -1.5
+			}
+		}
+	}
+}
+
+# Cordially
+# Your estate is on someone else's lands, invite them round for tea?
+# 8040
+ep3_powerful_families.8040 = {
+	type = character_event
+	title = ep3_powerful_families.8040.t
+	desc = ep3_powerful_families.8040.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:other_family
+		animation = personality_honorable
+	}
+	cooldown = { years = 15 }
+
+	trigger = {
+		government_allows = administrative
+		is_available = yes
+		house ?= {
+			is_powerful_family = yes
+		}
+		domicile ?= {
+			is_domicile_type = estate
+			trigger_if = {
+				limit = {
+					root = { top_liege != this }
+				}
+				domicile_location.county.holder.liege != root
+			}
+			domicile_location.county.holder.house.house_head = {
+				this != root
+				exists = house
+				house != root.house
+				house = {
+					is_powerful_family = yes
+				}
+				is_available_ai_adult = yes
+			}
+		}
+	}
+
+	immediate = {
+		domicile ?= {
+			domicile_location.county = {
+				save_scope_as = location
+				holder.house.house_head = {
+					save_scope_as = other_family
+				}
+			}
+		}
+	}
+
+	# Have them over for a good dinner
+	option = {
+		name = ep3_powerful_families.8040.a
+		change_influence = minor_influence_loss
+		duel = {
+			skill = diplomacy
+			target = scope:other_family
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8040.a.win
+					left_icon = root
+					right_icon = scope:other_family
+					scope:other_family = {
+						progress_towards_friend_effect = {
+							REASON = friend_dinner
+							CHARACTER = root
+							OPINION = default_friend_opinion
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8040.a.lose
+					left_icon = root
+					right_icon = scope:other_family
+				}
+			}
+		}
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			shy = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = 0.1
+			}
+			ai_value_modifier = {
+				ai_sociability = 1.5
+				ai_rationality = 1.5
+				ai_boldness = -1.5
+				ai_vengefulness = -1.5
+			}
+		}
+	}
+
+	# Spread your influence in their lands
+	option = {
+		name = ep3_powerful_families.8040.b
+		scope:other_family = {
+			progress_towards_rival_effect = {
+				REASON = rival_plotting_against_me
+				CHARACTER = root
+				OPINION = default_rival_opinion
+			}
+		}
+		duel = {
+			skills = { intrigue stewardship }
+			target = scope:other_family
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8040.b.win
+					left_icon = root
+					right_icon = scope:other_family
+					change_influence = medium_influence_gain
+					scope:other_family = {
+						change_influence = minor_influence_loss
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8040.b.lose
+					left_icon = root
+					right_icon = scope:other_family
+					change_influence = medium_influence_loss
+					scope:other_family = {
+						change_influence = minor_influence_gain
+					}
+				}
+			}
+		}
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+			honest = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_rationality = -1.5
+				ai_boldness = 1.5
+				ai_vengefulness = 1.5
+			}
+		}
+	}
+
+	# Keep a low profile
+	option = {
+		name = ep3_powerful_families.8040.c
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_sociability = -1.5
+				ai_boldness = -2
+				ai_vengefulness = -1.5
+			}
+		}
+	}
+}
+
+# A Villainous Villa
+# A rival family's estate is on your lands, try and mess with them?
+# 8060
+ep3_powerful_families.8060 = {
+	type = character_event
+	title = ep3_powerful_families.8060.t
+	desc = ep3_powerful_families.8060.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	right_portrait = {
+		character = scope:other_family
+		animation = schadenfreude
+	}
+	cooldown = { years = 15 }
+
+	trigger = {
+		government_allows = administrative
+		is_available = yes
+		house ?= {
+			is_powerful_family = yes
+		}
+		any_relation = {
+			type = rival
+			top_liege = root.top_liege
+			exists = house
+			house != root.house
+			house = {
+				is_powerful_family = yes
+			}
+			is_available_ai_adult = yes
+			domicile ?= {
+				is_domicile_type = estate
+				domicile_location.county.holder = root
+			}
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = rival
+			limit = {
+				top_liege = root.top_liege
+				exists = house
+				house != root.house
+				house = {
+					is_powerful_family = yes
+				}
+				is_available_ai_adult = yes
+				domicile ?= {
+					is_domicile_type = estate
+					domicile_location.county.holder = root
+				}
+			}
+			domicile.domicile_location.county = { save_scope_as = location }
+			save_scope_as = other_family
+		}
+	}
+
+	# Try to steal their stuff!
+	option = {
+		name = ep3_powerful_families.8060.a
+		scope:other_family = {
+			progress_towards_rival_effect = {
+				REASON = rival_plotting_against_me
+				CHARACTER = root
+				OPINION = default_rival_opinion
+			}
+		}
+		duel = {
+			skill = intrigue
+			target = scope:other_family
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8060.a.win
+					left_icon = root
+					right_icon = scope:other_family
+					scope:other_family = {
+						pay_short_term_gold = {
+							target = root
+							gold = medium_gold_value
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 1.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8060.a.lose
+					left_icon = root
+					right_icon = scope:other_family
+					scope:other_family = {
+						pay_short_term_gold = {
+							target = root
+							gold = medium_gold_value
+						}
+						add_opinion = {
+							modifier = theft_opinion
+							target = root
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8060.a.lose
+					left_icon = root
+					right_icon = scope:other_family
+					scope:other_family = {
+						add_opinion = {
+							modifier = theft_opinion
+							target = root
+						}
+					}
+				}
+			}
+		}
+		stress_impact = {
+			content = minor_stress_impact_gain
+			honest = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = 0.1
+			}
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_boldness = 1.5
+				ai_vengefulness = 3.5
+				ai_greed = 1.5
+			}
+		}
+	}
+
+	# Bribe their servants
+	option = {
+		name = ep3_powerful_families.8060.b
+		remove_short_term_gold = minor_gold_value
+		change_influence = minor_influence_gain
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+			honest = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				short_term_gold <= minor_gold_value
+			}
+			ai_value_modifier = {
+				ai_rationality = 1.5
+				ai_boldness = 1.5
+				ai_vengefulness = -1.5
+				ai_greed = -1.5
+			}
+		}
+	}
+
+	# Nah nah nah
+	option = {
+		name = ep3_powerful_families.8060.c
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_greed = -1.5
+				ai_boldness = -2
+				ai_vengefulness = -1.5
+			}
+		}
+	}
+}
+
+# Folly
+# One of your young house members has been hanging out at a rival family's estate
+# 8070
+ep3_powerful_families.8070 = {
+	type = character_event
+	title = ep3_powerful_families.8070.t
+	desc = ep3_powerful_families.8070.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	right_portrait = {
+		character = scope:child
+		animation = fear
+	}
+	lower_right_portrait = {
+		character = scope:other_family
+	}
+	cooldown = { years = 15 }
+
+	trigger = {
+		government_allows = administrative
+		is_available = yes
+		house ?= {
+			is_powerful_family = yes
+		}
+		exists = domicile
+		house = {
+			any_house_member = {
+				top_liege = root.top_liege
+				is_available_ai = yes
+				is_adult = no
+				child_not_infant_trigger = yes # Should generally only be teens
+			}
+		}
+		top_liege = {
+			any_powerful_family = {
+				this != root.house
+				house_head = {
+					is_available_ai_adult = yes
+					domicile ?= {
+						is_domicile_type = estate
+						domicile_location.county = root.domicile.domicile_location.county
+					}
+					OR = {
+						has_relation_rival = root
+						root = {
+							house_has_feud_relation_with_trigger = { TARGET = prev }
+						}
+					}
+				}
+			}
+		}
+	}
+
+	immediate = {
+		house = {
+			random_house_member = {
+				limit = {
+					top_liege = root.top_liege
+					is_available_ai = yes
+					is_adult = no
+					child_not_infant_trigger = yes
+				}
+				save_scope_as = child
+			}
+		}
+		top_liege = {
+			random_powerful_family = {
+				limit = {
+					this != root.house
+					house_head = {
+						is_available_ai_adult = yes
+						domicile ?= {
+							is_domicile_type = estate
+							domicile_location.county = root.domicile.domicile_location.county
+						}
+						OR = {
+							has_relation_rival = root
+							root = {
+								house_has_feud_relation_with_trigger = { TARGET = prev }
+							}
+						}
+					}
+				}
+				house_head = { save_scope_as = other_family }
+			}
+		}
+	}
+
+	# Convince them to give you info on the family
+	option = {
+		name = ep3_powerful_families.8070.a
+		duel = {
+			skills = { intrigue diplomacy }
+			target = scope:child
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8070.a.win
+					left_icon = root
+					right_icon = scope:child
+					scope:other_family = {
+						change_influence = medium_influence_loss
+					}
+					change_influence = medium_influence_gain
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8070.a.lose
+					left_icon = root
+					right_icon = scope:child
+					scope:other_family = {
+						progress_towards_rival_effect = {
+							REASON = rival_plotting_against_me
+							CHARACTER = root
+							OPINION = default_rival_opinion
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8070.a.lose
+					left_icon = root
+					right_icon = scope:child
+					scope:other_family = {
+						progress_towards_rival_effect = {
+							REASON = rival_plotting_against_me
+							CHARACTER = root
+							OPINION = default_rival_opinion
+						}
+					}
+					scope:other_family = {
+						change_influence = medium_influence_gain
+					}
+					change_influence = minor_influence_loss
+				}
+			}
+		}
+		stress_impact = {
+			content = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			forgiving = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = -0.1
+			}
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_boldness = 1.5
+				ai_vengefulness = 3.5
+				ai_greed = 1.5
+			}
+		}
+	}
+
+	# Try to leverage them to break the rivalry
+	option = {
+		name = ep3_powerful_families.8070.b
+		scope:child = {
+			duel = {
+				skill = diplomacy
+				target = scope:other_family
+				15 = { # Crit success, rivalry is gone
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					root = {
+						send_interface_toast = {
+							title = ep3_powerful_families.8070.b.crit_win
+							left_icon = root
+							right_icon = scope:child
+							upgrade_to_friend_effect = {
+								CHARACTER = scope:other_family
+								REASON = friend_making_ammends
+							}
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					send_interface_toast = {
+						title = ep3_powerful_families.8070.b.win
+						left_icon = root
+						right_icon = scope:child
+						scope:other_family = {
+							progress_towards_friend_effect = {
+								REASON = friend_making_ammends
+								CHARACTER = root
+								OPINION = default_rival_opinion
+							}
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					send_interface_toast = {
+						title = ep3_powerful_families.8070.b.lose
+						left_icon = root
+						right_icon = scope:child
+						scope:other_family = {
+							progress_towards_rival_effect = {
+								REASON = rival_plotting_against_me
+								CHARACTER = root
+								OPINION = default_rival_opinion
+							}
+						}
+						scope:other_family = {
+							change_influence = medium_influence_gain
+						}
+						change_influence = minor_influence_loss
+					}
+				}
+			}
+		}
+		stress_impact = {
+			vengeful = medium_stress_impact_gain
+			callous = minor_stress_impact_gain
+			sadistic = minor_stress_impact_gain
+			stubborn = minor_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = 0.1
+			}
+			ai_value_modifier = {
+				ai_compassion = 1.5
+				ai_rationality = 1.5
+				ai_vengefulness = -1.5
+			}
+		}
+	}
+
+	# Just let the kid do as the kid do
+	option = {
+		name = ep3_powerful_families.8070.c
+		stress_impact = {
+			content = minor_stress_impact_loss
+			ambitious = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = -2
+			}
+		}
+	}
+}
+
+# Stammering Silence
+# Another rival family is giving a speech and chokes up
+# 8080
+ep3_powerful_families.8080 = {
+	type = activity_event
+	title = ep3_powerful_families.8080.t
+	desc = ep3_powerful_families.8080.desc
+	theme = feast_activity
+	left_portrait = {
+		character = root
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:other_family
+		animation = pain
+	}
+	cooldown = { years = 15 }
+
+	trigger = {
+		government_allows = administrative
+		house ?= {
+			OR = {
+				is_powerful_family = yes
+				is_dominant_family = yes
+			}
+		}
+		scope:activity = {
+			any_attending_character = {
+				OR = {
+					this = root.liege
+					liege = root.liege
+				}
+				house ?= {
+					this != root.house
+					is_powerful_family = yes
+					is_dominant_family = yes
+				}
+				is_ai = yes
+			}
+		}
+	}
+
+	immediate = {
+		house = {
+			random_house_member = {
+				limit = {
+					top_liege = root.top_liege
+					is_available_ai_adult = yes
+					is_adult = no
+					child_not_infant_trigger = yes
+				}
+				save_scope_as = child
+			}
+		}
+		scope:activity = {
+			random_attending_character = {
+				limit = {
+					OR = {
+						this = root.liege
+						liege = root.liege
+					}
+					house ?= {
+						this != root.house
+						is_powerful_family = yes
+						is_dominant_family = yes
+					}
+					is_ai = yes
+				}
+				save_scope_as = other_family
+			}
+		}
+	}
+
+	# Steal their thunder!
+	option = {
+		name = ep3_powerful_families.8080.a
+		progress_towards_rival_effect = {
+			REASON = rival_humiliated_at_feast
+			CHARACTER = scope:other_family
+			OPINION = default_rival_opinion
+		}
+		change_influence = minor_influence_gain
+		add_prestige = medium_prestige_gain
+		stress_impact = {
+			content = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			forgiving = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = -0.1
+			}
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_boldness = 1.5
+				ai_vengefulness = 3.5
+			}
+		}
+	}
+
+	# Support them
+	option = {
+		name = ep3_powerful_families.8080.b
+		progress_towards_friend_effect = {
+			REASON = friend_supported_at_feast
+			CHARACTER = scope:other_family
+			OPINION = default_friend_opinion
+		}
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = 0.1
+			}
+			ai_value_modifier = {
+				ai_sociability = 1.5
+				ai_honor = 1.5
+				ai_vengefulness = -3.5
+			}
+		}
+	}
+}
+
+# Civil Savagery
+# You're forced to sit next to someone from a rival family as they schmooze the liege
+# 8090
+scripted_trigger ep3_pf_rival_fam_trigger = {
+	house ?= {
+		is_powerful_family = yes
+	}
+	top_liege != this
+	top_liege = root.top_liege
+	house != root.house
+	OR = {
+		house.house_head = {
+			has_relation_rival = root.house.house_head
+		}
+		has_relation_rival = root
+	}
+	is_ai = yes
+}
+
+ep3_powerful_families.8090 = {
+	type = activity_event
+	title = ep3_powerful_families.8090.t
+	desc = ep3_powerful_families.8090.desc
+	theme = feast_activity
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:other_family
+		animation = rage
+	}
+	lower_right_portrait = {
+		character = scope:liege
+	}
+	cooldown = { years = 15 }
+
+	trigger = {
+		government_allows = administrative
+		house ?= {
+			is_powerful_family = yes
+		}
+		top_liege != this
+		scope:activity = {
+			any_attending_character = {
+				this = root.liege
+			}
+			any_attending_character = {
+				ep3_pf_rival_fam_trigger = yes
+			}
+		}
+	}
+
+	immediate = {
+		scope:activity = {
+			random_attending_character = {
+				limit = {
+					ep3_pf_rival_fam_trigger = yes
+				}
+				save_scope_as = other_family
+			}
+		}
+		top_liege = { save_scope_as = liege }
+	}
+
+	# Steal their thunder!
+	option = {
+		name = ep3_powerful_families.8090.a
+		progress_towards_rival_effect = {
+			REASON = rival_humiliated_at_feast
+			CHARACTER = scope:other_family
+			OPINION = default_rival_opinion
+		}
+		duel = {
+			skills = { stewardship diplomacy }
+			target = scope:liege
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8090.a.win
+					left_icon = root
+					right_icon = scope:liege
+					scope:other_family = {
+						change_influence = medium_influence_loss
+					}
+					change_influence = medium_influence_gain
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8090.a.lose
+					left_icon = root
+					right_icon = scope:liege
+					scope:other_family = {
+						progress_towards_rival_effect = {
+							REASON = rival_plotting_against_me
+							CHARACTER = root
+							OPINION = default_rival_opinion
+						}
+					}
+					scope:other_family = {
+						change_influence = medium_influence_gain
+					}
+					change_influence = minor_influence_loss
+				}
+			}
+		}
+		stress_impact = {
+			content = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			forgiving = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = -0.1
+			}
+			ai_value_modifier = {
+				ai_honor = -1.5
+				ai_boldness = 1.5
+				ai_sociability = 1.5
+				ai_vengefulness = 3.5
+			}
+		}
+	}
+
+	# Shut up and sit tight
+	option = {
+		name = ep3_powerful_families.8090.b
+		scope:other_family = {
+			change_influence = medium_influence_gain
+		}
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			opinion_modifier = {
+				opinion_target = scope:other_family
+				multiplier = 0.1
+			}
+			ai_value_modifier = {
+				ai_sociability = 1.5
+				ai_honor = 1.5
+				ai_vengefulness = -3.5
+			}
+		}
+	}
+}
+
+# Civil Service
+# Try to convince your liege to hire your relative
+# 8100
+scripted_trigger ep3_relative_valid_for_court_position_trigger = {
+	is_adult = yes
+	is_ruler = no
+	has_any_court_position = no
+	is_councillor = no
+	top_liege = root.top_liege
+	OR = {
+		liege = { is_ai = yes }
+		liege = root
+		liege = root.liege
+	}
+	can_be_employed_as = court_poet_court_position
+}
+
+ep3_powerful_families.8100 = {
+	type = activity_event
+	title = ep3_powerful_families.8100.t
+	desc = ep3_powerful_families.8100.desc
+	theme = feast_activity
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:liege
+		animation = toast_goblet
+	}
+	lower_left_portrait = {
+		character = scope:cp_fam
+	}
+	cooldown = { years = 15 }
+
+	trigger = {
+		government_allows = administrative
+		house ?= {
+			is_powerful_family = yes
+		}
+		top_liege != this
+		house = {
+			any_house_member = {
+				ep3_relative_valid_for_court_position_trigger = yes
+			}
+		}
+		liege = { is_ai = yes }
+		scope:activity = {
+			any_attending_character = {
+				this = root.liege
+			}
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			house = {
+				random_house_member = {
+					limit = {
+						ep3_relative_valid_for_court_position_trigger = yes
+					}
+					add_trait = lifestyle_poet
+					save_scope_as = cp_fam
+				}
+			}
+			liege = {
+				save_scope_as = liege
+				add_courtier = scope:cp_fam
+			}
+		}
+	}
+
+	# My family member should be your poet!
+	option = {
+		name = ep3_powerful_families.8100.a
+		duel = {
+			skill = diplomacy
+			target = scope:liege
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8100.a.win
+					left_icon = root
+					right_icon = scope:liege
+					scope:liege = {
+						court_position_grant_effect = {
+							EMPLOYER = scope:liege
+							POS = court_poet
+							CANDIDATE = scope:cp_fam
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = ep3_powerful_families.8100.a.lose
+					left_icon = root
+					right_icon = scope:liege
+					change_influence = minor_influence_loss
+				}
+			}
+		}
+		stress_impact = {
+			content = minor_stress_impact_gain
+			shy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1.5
+				ai_sociability = 1.5
+			}
+		}
+	}
+
+	# Make pleasant conversation
+	option = {
+		name = ep3_powerful_families.8100.b
+		reverse_add_opinion = {
+			modifier = feast_had_good_talk
+			target = scope:liege
+		}
+
+		change_influence = minor_influence_gain
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_sociability = -1.5
+				ai_honor = -1.5
+			}
+		}
+	}
+}

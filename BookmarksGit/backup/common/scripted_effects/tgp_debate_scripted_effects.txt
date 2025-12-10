@@ -1,0 +1,699 @@
+﻿# Find debate target
+set_debate_target_effect = {
+    save_scope_as = debate_contender
+    if = {
+        limit = {
+            scope:activity = {
+                has_activity_option = {
+                    category = special_type
+                    option = debate_type_favor
+                }
+            }
+        }
+        #Save current empowered movement.
+        situation:dynastic_cycle ?= {
+            random_participant_group = {
+                limit = { exists = var:movement_favored }
+                save_scope_as = current_empowered_movement
+            }
+        }
+        if = { # Grab the movement leader if available
+            limit = {
+                scope:current_empowered_movement = {
+                    var:movement_leader = { involved_activity = scope:activity }
+                }
+            }
+            scope:current_empowered_movement = {
+                var:movement_leader = { save_scope_as = challenged_movement_leader }
+            }
+        }
+        else_if = { # Else grab a proxy
+            limit = {
+                scope:activity = {
+                    any_attending_character = {
+                        top_participant_group:dynastic_cycle ?= scope:current_empowered_movement
+                    }                    
+                }
+            }
+            scope:activity = {
+                ordered_attending_character = {
+                    order_by = movement_power_character_value
+                    check_range_bounds = no
+                    limit = {
+                        top_participant_group:dynastic_cycle ?= scope:current_empowered_movement
+                    }
+                    save_scope_as = challenged_movement_leader
+                }
+            }
+        }
+        else_if = { # Else grab a character from _another_ movement
+            limit = {
+                scope:activity = {
+                    any_attending_character = {
+                        NOR = {
+                            top_participant_group:dynastic_cycle ?= { participant_group_type = undecided_movement }
+                            top_participant_group:dynastic_cycle ?= scope:host.top_participant_group:dynastic_cycle
+                        }
+                    }
+                }
+            }
+            scope:activity = {
+                ordered_attending_character = {
+                    order_by = movement_power_character_value
+                    check_range_bounds = no
+                    limit = {
+                        NOR = {
+                            top_participant_group:dynastic_cycle ?= { participant_group_type = undecided_movement }
+                            top_participant_group:dynastic_cycle ?= scope:host.top_participant_group:dynastic_cycle
+                        }
+                    }
+                    save_scope_as = challenged_movement_leader
+                }
+            }
+        }
+        else = { # Invalidate activity
+            trigger_event = activity_system.0552
+        }
+    }
+    else_if = {
+        limit = {
+            scope:activity = {
+                has_activity_option = {
+                    category = special_type
+                    option = debate_type_leadership
+                }
+            }
+        }
+        scope:activity.special_guest:movement_leader ?= { save_scope_as =  challenged_movement_leader }
+    }
+    scope:activity = {
+        set_variable = {
+            name = challenged_movement_leader
+            value = scope:challenged_movement_leader
+        }
+        set_variable = {
+            name = debate_contender
+            value = scope:debate_contender
+        }
+    }
+}
+
+# > 0 contender won and will become new leader
+# <= 0 movement leader won and defended position
+debate_determine_outcome_effect = {
+    random_list = {
+        10 = { # Contender is winner
+            modifier = {
+                add = 240
+                scope:activity.debate_outcome_value = 3
+            }
+            modifier = {
+                add = 70
+                scope:activity.debate_outcome_value = 2
+            }
+            modifier = {
+                add = 10
+                scope:activity.debate_outcome_value = 1
+            }
+            modifier = { # If opponents score is TOO high, you cannot win
+                factor = 0
+                scope:activity.debate_outcome_value <= -3
+            }
+            scope:activity.var:debate_contender = {
+                save_scope_as = debate_winner
+            }
+            scope:activity.var:challenged_movement_leader = {
+                save_scope_as = debate_loser
+            }
+            if = {
+                limit = {
+                    scope:activity.debate_outcome_value < 0
+                }
+                save_scope_as = debate_unexpected_win
+            }
+        }
+        10 = { # challenged leader is winner
+            modifier = {
+                add = 240
+                scope:activity.debate_outcome_value = -3
+            }
+            modifier = {
+                add = 70
+                scope:activity.debate_outcome_value = -2
+            }
+            modifier = {
+                add = 10
+                scope:activity.debate_outcome_value = -1
+            }
+            modifier = { # If opponents score is TOO high, you cannot win
+                factor = 0
+                scope:activity.debate_outcome_value >= 3
+            }
+            
+            scope:activity.var:debate_contender = {
+                save_scope_as = debate_loser
+            }
+            scope:activity.var:challenged_movement_leader = {
+                save_scope_as = debate_winner
+            }
+            if = {
+                limit = {
+                    scope:activity.debate_outcome_value > 0
+                }
+                save_scope_as = debate_unexpected_win
+            }
+        }
+    }
+    # Apply effects
+    # Seize movement leadership success
+    if = {
+        limit = {
+            scope:activity = {
+                has_activity_option = {
+                    category = special_type
+                    option = debate_type_leadership
+                }
+            }
+        }
+        # Set variables for activity conclusion desc - note that for the favor special option, these are set in the hegemon's follow up event.
+        scope:activity = {
+            set_variable = {
+                name = debate_winner
+                value = scope:debate_winner
+            }
+        }
+        scope:activity = {
+            set_variable = {
+                name = debate_loser
+                value = scope:debate_loser
+            }
+        }
+        # Record it
+        involved_activity = {
+            if = {
+                limit = {
+                    scope:debate_winner = {
+                        is_any_movement_leader = no
+                    }
+                }
+                add_activity_log_entry = {
+                    key = debate_become_movement_leader_reward
+                    score = 80
+                    tags = { completed }
+                    character = scope:debate_winner
+                    location = scope:debate_winner.location
+                }
+            }
+            else = {
+                add_activity_log_entry = {
+                    key = debate_remain_movement_leader_reward
+                    score = 80
+                    tags = { completed }
+                    character = scope:debate_winner
+                    location = scope:debate_winner.location
+                }
+            }
+        }
+    }
+}
+
+debate_disburse_activity_ai_guest_rewards = {
+    if = {
+        limit = {
+            NOT = { exists = var:tgp_debate_success_score }
+        }
+        set_variable = {
+            name = tgp_debate_success_score
+            value = tgp_debate_success_score_value
+        }
+    }
+    if = {
+        limit = {
+            has_activity_intent = debate_increase_movement_power_intent
+        }
+        top_participant_group:dynastic_cycle ?= { 
+            save_scope_as = my_movement
+        }
+        random = {
+            chance = {
+                value = 25
+                if = {
+                    limit = { var:tgp_debate_success_score >= 100 }
+                    add = 75
+                }
+                else_if = {
+                    limit = { var:tgp_debate_success_score >= 75 }
+                    add = 50
+                }
+                else_if = {
+                    limit = { var:tgp_debate_success_score >= 50 }
+                    add = 25
+                }
+            }
+            if = {
+                limit = { var:tgp_debate_success_score >= 100 }
+                change_influence = major_influence_gain
+                scope:my_movement = {
+                    event_change_movement_power_effect = {
+                        VALUE = event_increase_movement_power_major_value
+                    }
+                }
+            }
+            else_if = {
+                limit = { var:tgp_debate_success_score >= 75 }
+                change_influence = medium_influence_gain
+                scope:my_movement = {
+                    event_change_movement_power_effect = {
+                        VALUE = event_increase_movement_power_medium_value
+                    }
+                }
+            }
+            else = {
+                change_influence = minor_influence_gain
+                scope:my_movement = {
+                    event_change_movement_power_effect = {
+                        VALUE = event_increase_movement_power_minor_value
+                    }
+                }
+            }
+        }
+    }
+    else = {
+        save_scope_as = ai_guest
+        if = {
+            limit = {
+                NOT = {
+                    any_relation = {
+                        type = elder
+                        is_ai = no
+                    }
+                }
+            }
+            random = {
+                chance = {
+                    value = 25
+                }
+                scope:activity = {
+                    random_attending_character = {
+                        limit = {
+                            is_ai = yes
+                            merit > scope:ai_guest.merit
+                            num_of_relation_disciple < disciples_limit_value
+                            NOR = {
+                                has_relation_elder = scope:ai_guest
+                                has_relation_disciple = scope:ai_guest
+                            }
+                            # Not busy with their own things.
+                            this != scope:host
+                            this != scope:activity.var:challenged_movement_leader
+                        }
+                        weight = {
+                            base = 100
+                            modifier = {
+                                any_relation = {
+                                    type = disciple
+                                    count > 0
+                                }
+                                # even out the distribution of disciples
+                                add = {
+                                    every_relation = {
+                                        type = disciple
+                                        add = -5
+                                    }
+                                }
+                            }
+                        }
+                        save_scope_as = elder
+                        set_elder_relation_effect = {
+                            ELDER = scope:elder
+                            DISCIPLE = scope:ai_guest
+                            MERIT = minor_merit_gain
+                        }
+                    }            
+                }
+            }
+        }
+    }
+}
+
+debate_host_rewards_effect = {
+    if = {
+        # Host won debate
+        limit = {
+            this = scope:activity.var:debate_winner
+        }
+        # Activity is imperial debate (determines favored movement)
+        if = {
+            limit = {
+                scope:activity = {
+                    has_activity_option = {
+                        category = special_type
+                        option = debate_type_favor
+                    }
+                }
+            }
+            root.top_participant_group:dynastic_cycle ?= {
+                # Make favored movement
+                save_scope_as = my_movement
+            }
+            # We raise our own Movement Power
+            custom_tooltip = event_increase_movement_power_major_effect_tooltip
+            scope:my_movement = {
+                make_movement_favored_effect = yes
+                event_change_movement_power_effect = {
+                    VALUE = event_increase_movement_power_major_value
+                }
+                switch = {
+                    trigger = participant_group_type
+                    pro_hegemon_movement = {
+                        if = {
+                            limit = {
+                                situation:dynastic_cycle = {
+                                    situation_top_has_catalyst = catalyst_movement_gained_power_pro_hegemon
+                                }
+                            }
+                            trigger_situation_catalyst = catalyst_movement_gained_power_pro_hegemon
+                        }
+                    }
+                    advancement_movement = {
+                        if = {
+                            limit = {
+                                situation:dynastic_cycle = {
+                                    situation_top_has_catalyst = catalyst_movement_gained_power_advancement
+                                }
+                            }
+                            trigger_situation_catalyst = catalyst_movement_gained_power_advancement
+                        }
+                    }
+                    expansion_movement = {
+                        if = {
+                            limit = {
+                                situation:dynastic_cycle = {
+                                    situation_top_has_catalyst = catalyst_movement_gained_power_expansion
+                                }
+                            }
+                            trigger_situation_catalyst = catalyst_movement_gained_power_expansion
+                        }
+                    }
+                    conservative_movement = {
+                        if = {
+                            limit = {
+                                situation:dynastic_cycle = {
+                                    situation_top_has_catalyst = catalyst_movement_gained_power_conservative
+                                }
+                            }
+                            trigger_situation_catalyst = catalyst_movement_gained_power_conservative
+                        }
+                    }
+                }
+            }
+        }
+        else = {
+            make_movement_leader_effect = yes
+        }
+    }
+    # Then dole out secondary rewards
+    if = {
+        # We have the intent to gain disciples and gained at least one.
+        limit = { has_variable_list = debate_disciples }
+        if = {
+            # Code math starts at 0
+            limit = {
+                variable_list_size = {
+                    name = debate_disciples
+                    value = 1
+                }
+                num_of_relation_disciple >= 1
+            }
+            ordered_in_list = {
+                variable = debate_disciples
+                order_by = learning
+                save_scope_as = disciple_1
+            }
+        }
+        if = {
+            limit = {
+                variable_list_size = {
+                    name = debate_disciples
+                    value = 2
+                }
+                num_of_relation_disciple >= 2
+            }
+            ordered_in_list = {
+                variable = debate_disciples
+                order_by = learning
+                position = 1
+                save_scope_as = disciple_2
+            }
+        }
+        if = {
+            limit = {
+                variable_list_size = {
+                    name = debate_disciples
+                    value = 3
+                }
+                num_of_relation_disciple >= 3
+            }
+            ordered_in_list = {
+                variable = debate_disciples
+                order_by = learning
+                position = 2
+                save_scope_as = disciple_3
+            }
+        }
+        if = {
+            limit = {
+                exists = scope:disciple_3
+            }
+            custom_tooltip = gained_many_disciples
+        }
+        else_if = {
+            limit = {
+                exists = scope:disciple_2
+            }
+            custom_tooltip = gained_few_disciples
+        }
+        else_if = {
+            limit = {
+                exists = scope:disciple_1
+            }
+            custom_tooltip = gained_one_disciple
+        }
+    }
+    change_influence = {
+        # Modest reward as a base - you're the host after all!
+        value = major_influence_value
+        if = {
+            limit = {
+                scope:activity = {
+                    has_activity_option = {
+                        category = special_type
+                        option = debate_type_favor
+                    }
+                }
+                this = scope:activity.var:debate_winner
+            }
+            add = monumental_influence_value
+        }
+        if = {
+            limit = {
+                scope:activity = {
+                    has_activity_option = {
+                        category = special_type
+                        option = debate_type_leadership
+                    }
+                }
+                this = scope:activity.var:debate_winner
+            }
+            add = major_influence_value
+        }
+    }
+    add_prestige = {
+        # Modest reward as a base - you're the host after all!
+        value = major_prestige_value
+        if = {
+            limit = {
+                scope:activity = {
+                    has_activity_option = {
+                        category = special_type
+                        option = debate_type_favor
+                    }
+                }
+                this = scope:activity.var:debate_winner
+            }
+            add = monumental_prestige_value
+        }
+        if = {
+            limit = {
+                scope:activity = {
+                    has_activity_option = {
+                        category = special_type
+                        option = debate_type_leadership
+                    }
+                }
+                this = scope:activity.var:debate_winner
+            }
+            add = major_prestige_value
+        }
+    }
+}
+
+debate_disburse_activity_host_rewards = {
+    # Regardless of outcome for intents, you should receive some influence and prestige from having hosted debate.
+    if = {
+        limit = { this = scope:host }
+        # Record it
+        involved_activity = {
+            add_activity_log_entry = {
+                key = debate_host_rewards
+                score = 80
+                tags = { completed }
+                show_in_conclusion = yes
+                character = scope:host
+                location = scope:host.location
+                scope:host = { debate_host_rewards_effect = yes }
+            }
+        }
+    }
+    else = {
+        show_as_tooltip = { debate_host_rewards_effect = yes }
+    }
+}
+
+debate_guest_rewards = {
+    if = {
+        limit = {
+            this = scope:activity.var:challenged_movement_leader
+            this = scope:activity.var:debate_winner
+        }
+        add_prestige = major_prestige_value
+        change_influence = major_influence_value
+    }
+    if = {
+        limit = {
+            has_activity_intent = debate_gain_elder_intent
+        }
+        if = {
+            limit = {
+                has_variable = new_elder
+            }
+            custom_tooltip = gained_new_elder_tt
+        }
+        change_influence = debate_guest_influence_reward_value
+    }
+    if = {
+        limit = {
+            has_activity_intent = debate_increase_movement_power_intent
+            exists = var:tgp_debate_success_score
+        }
+        top_participant_group:dynastic_cycle ?= { 
+            save_scope_as = my_movement
+        }
+        random = {
+            chance = {
+                value = 25
+                if = {
+                    limit = { var:tgp_debate_success_score >= 100 }
+                    add = 75
+                }
+                else_if = {
+                    limit = { var:tgp_debate_success_score >= 75 }
+                    add = 50
+                }
+                else_if = {
+                    limit = { var:tgp_debate_success_score >= 50 }
+                    add = 25
+                }
+            }
+            if = {
+                limit = { var:tgp_debate_success_score >= 100 }
+                change_influence = major_influence_gain
+                scope:my_movement = {
+                    event_change_movement_power_effect = {
+                        VALUE = event_increase_movement_power_major_value
+                    }
+                }
+            }
+            else_if = {
+                limit = { var:tgp_debate_success_score >= 75 }
+                change_influence = medium_influence_gain
+                scope:my_movement = {
+                    event_change_movement_power_effect = {
+                        VALUE = event_increase_movement_power_medium_value
+                    }
+                }
+            }
+            else = {
+                change_influence = minor_influence_gain
+                scope:my_movement = {
+                    event_change_movement_power_effect = {
+                        VALUE = event_increase_movement_power_minor_value
+                    }
+                }
+            }
+        }
+        change_influence = debate_guest_influence_reward_value
+    }
+    add_trait_xp = {
+        trait = confucian_education
+        value = {
+            value = lifestyle_confucian_education_xp_gain_minor_value
+            #High Score
+            if = {
+                limit = {
+                    has_variable = tgp_debate_success_score
+                    var:tgp_debate_success_score >= 75
+                }
+                multiply = 3
+            }
+            #Good Score
+            else_if = {
+                limit = {
+                    has_variable = tgp_debate_success_score
+                    var:tgp_debate_success_score < 75
+                    var:tgp_debate_success_score >= 50
+                }
+                multiply = 1.5
+            }
+            #Poor Score
+            else_if = {
+                limit = {
+                    has_variable = tgp_debate_success_score
+                    var:tgp_debate_success_score < 50
+                }
+                multiply = 0.8
+            }           
+        }
+    }
+}
+
+debate_disburse_activity_guest_rewards = {
+    save_scope_as = guest
+    involved_activity = {
+        add_activity_log_entry = {
+            key = debate_guest_rewards
+            score = 80
+            tags = { completed }
+            show_in_conclusion = yes
+            character = scope:guest
+            location = scope:guest.location
+            scope:guest = { debate_guest_rewards = yes }
+        }
+    }
+}
+
+debate_cleanup_effect = {
+    if = {
+        limit = {
+            has_variable = tgp_debate_success_score
+        }
+        set_variable = {
+            name = tgp_debate_success_score
+            value = var:tgp_debate_success_score
+            days = 60
+        }
+    }
+    # Debates
+    remove_variable ?= debate_selected_tactic
+    remove_variable ?= debate_crowd_sentiment
+}

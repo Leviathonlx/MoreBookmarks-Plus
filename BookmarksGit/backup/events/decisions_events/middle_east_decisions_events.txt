@@ -1,0 +1,1682 @@
+﻿
+namespace = middle_east_decisions
+
+##################################################
+
+### Middle East Major Decision Events
+# by Flavio Verna
+
+# 0001 - Forming Outremer
+# 0003 - Restoring Sunni Caliphate
+# 0005 - Creating Israel
+# 0007 - Jewish High Priesthood Restored
+# 0009 - Zoroastrian High Priesthood Restored
+# 0011 - The Saoyshant appears
+# 0014 - Create Sultanate of Rum
+# 1001 - Revive the Armenian Empire
+# 1020 - Found the Empire of Beth Nahrain
+
+##################################################
+
+##################################################
+# Middle Eastern special titles
+##################################################
+
+##################################################
+# Forming the Outremer
+##################################################
+
+middle_east_decisions.0001 = {
+	type = character_event
+	title = middle_east_decisions.0001.t
+	desc = middle_east_decisions.0001.desc
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+	theme = realm
+
+	immediate = {
+		play_music_cue = "mx_cue_crusade_starts"
+		hidden_effect = {
+			save_scope_as = scoped_ruler
+			# De jure shifts.
+			title:k_jerusalem = {
+				set_de_jure_liege_title = title:e_outremer
+			}
+			title:k_syria = {
+				set_de_jure_liege_title = title:e_outremer
+			}
+			title:k_mesopotamia = {
+				set_de_jure_liege_title = title:e_outremer
+			}
+			title:k_arabia = {
+				set_de_jure_liege_title = title:e_outremer
+			}
+			#Saving the title scope for loc purposes
+			title:e_outremer = { save_scope_as = outremer_title }
+			faith:ashari.religion = {
+				every_faith = {
+					change_fervor = {
+						value = -30
+						desc = fervor_gain_formed_outremer
+					}
+				}
+			}
+			every_held_title = { # Should shift all dejure of all Empires owned at the time.
+				title_tier = empire
+				every_in_de_jure_hierarchy = {
+					limit = {
+						tier = tier_kingdom
+					}
+					set_de_jure_liege_title = title:e_outremer
+
+				}
+			}
+			every_held_title = { # And any other held Kingdom.
+				title_tier = kingdom
+				set_de_jure_liege_title = title:e_outremer
+			}
+			if = {
+				limit = {
+					completely_controls = title:k_israel # Just in case...
+				}
+				title:k_israel = {
+					set_de_jure_liege_title = title:e_outremer
+				}
+			}
+			if = {
+				limit = {
+					completely_controls = title:k_egypt
+				}
+				title:k_egypt = {
+					set_de_jure_liege_title = title:e_outremer
+				}
+			}
+			else_if = { # Otherwise just switch Sinai to Jerusalem
+				limit = {
+					NOT = { completely_controls = title:k_egypt }
+				}
+				title:d_sinai = {
+					set_de_jure_liege_title = title:k_jerusalem
+				}
+			}
+			legend_seed_new_title_effect = yes
+		}
+		hidden_effect = {
+			random_list = {
+				10 = { set_nickname_effect = { NICKNAME = nick_the_crusader } }
+				10 = { set_nickname_effect = { NICKNAME = nick_the_holy } }
+				10 = { set_nickname_effect = { NICKNAME = nick_the_sword_of_god } }
+				10 = { set_nickname_effect = { NICKNAME = nick_the_messenger_of_christ } }
+				10 = {
+					trigger = { is_female = yes }
+					set_nickname_effect = { NICKNAME = nick_the_maiden_of_virgin }
+				}
+				10 = {
+					trigger = { is_female = no }
+					set_nickname_effect = { NICKNAME = nick_the_knight_of_gabriel }
+				}
+			}
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0001.a
+		form_outremer_scripted_effect = yes
+		# Send narrative fluff to other players (if any).
+		every_ruler = {
+			limit = {
+				is_landed = yes
+				this != root
+				capital_province = {
+					OR = {
+						geographical_region = world_europe_west
+						geographical_region = world_middle_east
+					}
+				}
+			}
+			trigger_event = middle_east_decisions.0002
+		}
+		hidden_effect = {
+			random = {
+				chance = 35
+				every_held_title = {
+					title_tier = county
+					limit = {
+						faith != root.faith
+					}
+					set_county_faith = root.faith
+				}
+			}
+			every_vassal = { # Muslims abandon Faith.
+				limit = {
+					faith.religion = faith:ashari.religion
+					NOT = { has_trait = zealous }
+				}
+				random = {
+					chance = 35
+					set_character_faith = root.faith
+					every_held_title = {
+						title_tier = county
+						set_county_faith = root.faith
+					}
+				}
+			}
+			every_vassal = { # Culture conversion.
+				limit = {
+					culture = { has_same_culture_heritage = root.culture }
+				}
+				if = {
+					limit = { exists = scope:new_culture }
+					random = {
+						chance = 50
+						set_culture = scope:new_culture
+						if = {
+							limit = { exists = capital_county }
+							capital_county = { set_county_culture = scope:new_culture }
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Players react.
+middle_east_decisions.0002 = {
+	type = character_event
+	title = middle_east_decisions.0001.t
+	desc = {
+		first_valid = {
+			# Christian reaction.
+			triggered_desc = {
+				trigger = {
+					faith.religion = faith:catholic.religion
+				}
+				desc = middle_east_decisions.0002.desc.christians
+			}
+			# Muslim reaction.
+			triggered_desc = {
+				trigger = {
+					faith.religion = faith:ashari.religion
+				}
+				desc = middle_east_decisions.0002.desc.muslims
+			}
+			# Others.
+			triggered_desc = {
+				trigger = {
+					NOR = {
+						faith.religion = faith:catholic.religion
+						faith.religion = faith:ashari.religion
+					}
+				}
+				desc = middle_east_decisions.0002.desc.others
+			}
+		}
+	}
+	theme = realm
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_zealous
+	}
+
+	immediate = {
+		#Play a suitably crusader-themed song for Christians.
+		if = {
+			limit = {
+				faith = { religion_tag = christianity_religion }
+			}
+			play_music_cue = "mx_cue_crusade_starts"
+		}
+		#And something a bit more revenge-driven for non-Christians.
+		else = { play_music_cue = "mx_cue_combat_2" }
+	}
+
+	option = {
+		name = middle_east_decisions.0002.a
+		trigger = {
+			faith.religion = faith:catholic.religion
+		}
+	}
+	option = {
+		name = middle_east_decisions.0002.b
+		trigger = {
+			faith.religion = faith:ashari.religion
+		}
+		add_opinion = {
+			target = scope:scoped_ruler
+			modifier = destroyed_papacy_opinion
+		}
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+		}
+	}
+	option = {
+		name = middle_east_decisions.0002.c
+		trigger = {
+			NOR = {
+				faith.religion = faith:catholic.religion
+				faith.religion = faith:ashari.religion
+			}
+		}
+	}
+}
+
+##################################################
+# Restoring Sunni Caliphate
+##################################################
+
+middle_east_decisions.0003 = {
+	type = character_event
+	title = middle_east_decisions.0003.t
+	desc = middle_east_decisions.0003.desc
+	theme = faith
+	left_portrait = {
+		character = scope:reformer
+		animation = personality_zealous
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_faith_conversion"
+		restore_sunni_caliphate_scripted_effect = yes
+	}
+
+	option = {
+		name = middle_east_decisions.0003.a
+		every_player = {
+			limit = {
+				this != root
+				faith.religion = faith:ashari.religion
+			}
+			trigger_event = middle_east_decisions.0004 # Notification.
+		}
+	}
+}
+
+# Players notified.
+middle_east_decisions.0004 = {
+	type = character_event
+	title = middle_east_decisions.0003.t
+	desc = {
+		first_valid = {
+			# Sunni Reaction
+			triggered_desc = {
+				trigger = {
+					root.faith = faith:ashari
+				}
+				desc = middle_east_decisions.0004.desc.ashari
+			}
+			#Every other Muslim
+			triggered_desc = {
+				trigger = {
+					NOT = {
+						root.faith = faith:ashari
+					}
+
+				}
+				desc = middle_east_decisions.0004.desc.other
+			}
+		}
+	}
+	theme = faith
+	left_portrait = {
+		character = scope:reformer
+		animation = personality_zealous
+	}
+
+	immediate = {
+		#Rejoice! Muzak!
+		if = {
+			limit = {
+				faith = { religion_tag = islam_religion }
+			}
+			play_music_cue = "mx_cue_faith_conversion"
+		}
+		#Woe! Muzak!
+		if = {
+			limit = {
+				faith = { religion_tag = christianity_religion }
+			}
+			play_music_cue = "mx_cue_crusade_starts"
+		}
+		#Probably trouble? Muzak!
+		else = { play_music_cue = "mx_cue_combat_2" }
+	}
+
+	option = {
+		name = middle_east_decisions.0004.a
+		trigger = {
+			root.faith = faith:ashari
+		}
+	}
+	option = {
+		name = middle_east_decisions.0004.b
+		trigger = {
+			NOT = {
+				root.faith = faith:ashari
+			}
+		}
+	}
+}
+
+##################################################
+# Israel has been recreated.
+##################################################
+
+middle_east_decisions.0005 = {
+	type = character_event
+	title = middle_east_decisions.0005.t
+	desc = middle_east_decisions.0005.desc
+	theme = faith
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_zealous
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_faith_conversion"
+		create_israel_scripted_effect = yes
+		legend_seed_new_title_effect = yes
+		hidden_effect = {
+			random_list = {
+				50 = { set_nickname_effect = { NICKNAME = nick_the_shepherd } }
+				50 = { set_nickname_effect = { NICKNAME = nick_the_judge } }
+			}
+			every_held_title = {
+				title_tier = county
+				random = { # Communities flowing back home.
+					chance = 33
+					set_county_culture = root.culture
+					set_county_faith = root.faith
+				}
+			}
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0005.a
+		add_prestige = major_prestige_gain
+		add_piety = major_piety_gain
+		title:k_israel = { save_scope_as = israel_title }
+		faith = {
+			change_fervor = {
+				value = 25
+				desc = fervor_gain_israel_recreated
+			}
+		}
+		hidden_effect = {
+			every_player = {
+				limit = {
+					this != root
+					OR = {
+						faith.religion = root.faith.religion
+						AND = {
+							is_landed = yes
+							capital_province = {
+								OR = {
+									geographical_region = world_europe_west
+									geographical_region = world_middle_east
+								}
+							}
+						}
+					}
+				}
+				trigger_event = middle_east_decisions.0006
+			}
+		}
+	}
+}
+
+# Players notified.
+middle_east_decisions.0006 = {
+	type = character_event
+	title = middle_east_decisions.0005.t
+	desc = {
+		first_valid = {
+			# Jewish Reaction
+			triggered_desc = {
+				trigger = {
+					root.faith.religion = scope:scoped_ruler.faith.religion
+				}
+				desc = middle_east_decisions.0005.desc
+			}
+			# Every other Muslim
+			triggered_desc = {
+				trigger = {
+					root.faith.religion != scope:scoped_ruler.faith.religion
+				}
+				desc = middle_east_decisions.0006.desc.others
+			}
+		}
+	}
+	theme = faith
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_zealous
+	}
+
+	immediate = {
+		#Jewish characters get some celebratory music.
+		if = {
+			limit = {
+				faith = { religion_tag = judaism_religion }
+			}
+			play_music_cue = "mx_cue_faith_conversion"
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0006.a
+		trigger = {
+			faith = { religion_tag = judaism_religion }
+		}
+	}
+	option = {
+		name = middle_east_decisions.0006.b
+		trigger = {
+			NOT = {
+				faith = { religion_tag = judaism_religion }
+			}
+		}
+	}
+}
+
+##################################################
+# Jewish High Priesthood has been re-established.
+##################################################
+
+middle_east_decisions.0007 = {
+	type = character_event
+	title = middle_east_decisions.0007.t
+	desc = {
+		desc = middle_east_decisions.0007.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:new_priest = scope:scoped_ruler }
+				desc = middle_east_decisions.0007.desc.me
+			}
+			desc = middle_east_decisions.0007.desc.not_me
+		}
+	}
+	theme = faith
+	left_portrait = {
+		character = scope:portrait_ruler
+		triggered_animation = {
+			trigger = { scope:new_priest != scope:scoped_ruler }
+			animation = happiness
+		}
+		triggered_animation = {
+			trigger = { scope:new_priest = scope:scoped_ruler }
+			animation = personality_zealous
+		}
+	}
+	right_portrait = {
+		character = scope:new_priest
+		animation = personality_zealous
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_faith_conversion"
+		save_scope_as = scoped_ruler
+		save_scope_as = portrait_ruler
+		if = {
+			limit = {
+				faith = { has_doctrine = special_doctrine_not_allowed_to_hof }
+			}
+			faith = {
+				remove_doctrine = special_doctrine_not_allowed_to_hof
+			}
+		}
+		if = { # Check if Temporal first.
+			limit = {
+				faith = {
+					OR = {
+						has_doctrine_parameter = lay_clergy
+						has_doctrine = doctrine_temporal_head
+					}
+				}
+			}
+			if = {
+				limit = {
+					faith = {
+						has_doctrine = doctrine_no_head
+					}
+				}
+				hidden_effect = {
+					root.faith = { remove_doctrine = doctrine_no_head }
+					root.faith = { add_doctrine = doctrine_temporal_head }
+				}
+			}
+			save_scope_as = new_priest
+		}
+		else_if = { # Pick your chaplain first.
+			limit = {
+				exists = cp:councillor_court_chaplain
+				cp:councillor_court_chaplain = { faith = scope:scoped_ruler.faith }
+			}
+			if = {
+				limit = {
+					root.faith = {
+						has_doctrine = doctrine_no_head
+					}
+				}
+				hidden_effect = {
+					root.faith = { remove_doctrine = doctrine_no_head }
+					root.faith = { add_doctrine = doctrine_spiritual_head }
+				}
+			}
+			cp:councillor_court_chaplain = { save_scope_as = new_priest }
+		}
+		else = {
+			hidden_effect = {
+				create_character = {
+					employer = root
+					template = religious_leader_character
+					random_traits = no
+					save_scope_as = new_priest
+					dynasty = generate
+				}
+			}
+			scope:new_priest = {
+				add_trait = education_learning_3
+				add_trait = zealous
+				add_trait = intellect_good_1
+				random_list = {
+					1 = { add_trait = lustful }
+					1 = { add_trait = chaste }
+					1 = { add_trait = wrathful }
+					1 = { add_trait = diligent }
+					1 = { add_trait = impatient }
+					1 = { add_trait = arrogant }
+					1 = { add_trait = humble }
+					1 = { add_trait = gregarious }
+				}
+				random_list = {
+					1 = { add_trait = honest }
+					1 = { add_trait = ambitious }
+					1 = { add_trait = just }
+					1 = { add_trait = cynical }
+					1 = { add_trait = zealous }
+					1 = { add_trait = compassionate }
+					1 = { add_trait = stubborn }
+				}
+			}
+		}
+
+		custom_description = {
+			text = "new_religious_head_title"
+			object = scope:new_priest
+			subject = scope:new_priest
+
+			set_up_dynamic_spiritual_hof_title_existing_hof_effect = {
+				CREATOR = scope:scoped_ruler
+				RELIGIOUS_HEAD = scope:new_priest
+			}
+		}
+	}
+
+	option = {
+		name = {
+			trigger = { scope:new_priest != scope:scoped_ruler }
+			text = middle_east_decisions.0007.a
+		}
+		name = {
+			trigger = { scope:new_priest = scope:scoped_ruler }
+			text = middle_east_decisions.0007.a.me
+		}
+		add_prestige = major_prestige_gain
+		add_piety = major_piety_gain
+		faith = {
+			change_fervor = {
+				value = 100
+				desc = fervor_gain_priesthood_recreated
+			}
+		}
+		if = { # Vassalize if possible/needed.
+			limit = {
+				highest_held_title_tier > scope:new_priest.highest_held_title_tier
+				NOT = { scope:new_priest = { any_liege_or_above = { this = root } } }
+			}
+			create_title_and_vassal_change = {
+				type = created
+				save_scope_as = change
+				add_claim_on_loss = no
+			}
+			scope:new_priest = {
+				change_liege = {
+					liege = root
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+		}
+		create_legend_seed = {
+			type = holy
+			quality = famed
+			chronicle = priesthood_restoration
+			properties = {
+				founder = scope:new_priest
+				faith = scope:new_priest.faith
+				religion = scope:new_priest.religion
+			}
+		}
+		hidden_effect = {
+			every_player = {
+				limit = {
+					this != root
+					OR = {
+						faith = root.faith
+						AND = {
+							is_landed = yes
+							capital_province = {
+								OR = {
+									geographical_region = world_middle_east
+									geographical_region = world_persian_empire
+								}
+							}
+						}
+					}
+				}
+				trigger_event = middle_east_decisions.0008
+			}
+		}
+	}
+}
+
+# Players notified.
+middle_east_decisions.0008 = {
+	type = character_event
+	title = middle_east_decisions.0007.t
+	desc = {
+		first_valid = {
+			# Jewish Reaction
+			triggered_desc = {
+				trigger = {
+					root.faith = scope:scoped_ruler.faith
+				}
+				desc = middle_east_decisions.0007.desc.intro
+				desc = middle_east_decisions.0007.desc.not_me
+			}
+			# Everybody else
+			triggered_desc = {
+				trigger = {
+					root.faith != scope:scoped_ruler.faith
+				}
+				desc = middle_east_decisions.0008.desc.others
+			}
+		}
+	}
+	theme = faith
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_zealous
+	}
+	right_portrait = {
+		character = scope:new_priest
+		animation = happiness
+	}
+
+	immediate = {
+		#Jewish characters get some chilled music.
+		if = {
+			limit = {
+				faith = { religion_tag = judaism_religion }
+			}
+			play_music_cue = "mx_cue_faith_conversion"
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0008.a
+		trigger = {
+			root.faith = scope:scoped_ruler.faith
+		}
+	}
+	option = {
+		name = middle_east_decisions.0008.b
+		trigger = {
+			root.faith != scope:scoped_ruler.faith
+		}
+	}
+}
+
+##################################################
+# Zoroastrian High Priesthood has been re-established.
+##################################################
+
+middle_east_decisions.0009 = {
+	type = character_event
+	title = middle_east_decisions.0009.t
+	desc = middle_east_decisions.0009.desc
+	theme = faith
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_zealous
+	}
+	right_portrait = {
+		character = scope:new_priest
+		animation = happiness
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_faith_conversion"
+		save_scope_as = scoped_ruler
+		if = { #remove the HoF blocker for all Zoroastrian faiths
+			limit = {
+				religion = {
+					any_faith = { has_doctrine = special_doctrine_not_allowed_to_hof }
+				}
+			}
+			religion = {
+				every_faith = {
+					limit = {
+						has_doctrine = special_doctrine_not_allowed_to_hof
+					}
+					remove_doctrine = special_doctrine_not_allowed_to_hof
+				}
+			}
+		}
+		if = { # Check if Temporal first.
+			limit = {
+				faith = { has_doctrine = doctrine_temporal_head }
+			}
+			save_scope_as = new_priest
+		}
+		else_if = { # Pick your chaplain first.
+			limit = {
+				exists = cp:councillor_court_chaplain
+				cp:councillor_court_chaplain = { faith = scope:scoped_ruler.faith }
+			}
+			cp:councillor_court_chaplain = { save_scope_as = new_priest }
+		}
+		else = {
+			hidden_effect = {
+				create_character = {
+					employer = root
+					template = religious_leader_character
+					random_traits = no
+					save_scope_as = new_priest
+					dynasty = generate
+				}
+			}
+			scope:new_priest = {
+				add_trait = education_learning_3
+				add_trait = zealous
+				add_trait = intellect_good_1
+				random_list = {
+					1 = { add_trait = lustful }
+					1 = { add_trait = chaste }
+					1 = { add_trait = wrathful }
+					1 = { add_trait = diligent }
+					1 = { add_trait = impatient }
+					1 = { add_trait = arrogant }
+					1 = { add_trait = humble }
+					1 = { add_trait = gregarious }
+				}
+				random_list = {
+					1 = { add_trait = honest }
+					1 = { add_trait = ambitious }
+					1 = { add_trait = just }
+					1 = { add_trait = cynical }
+					1 = { add_trait = zealous }
+					1 = { add_trait = compassionate }
+					1 = { add_trait = stubborn }
+				}
+			}
+		}
+		create_title_and_vassal_change = {
+			type = created
+			save_scope_as = change
+			add_claim_on_loss = no
+		}
+		root.faith.religious_head_title = {
+			change_title_holder = {
+				holder = scope:new_priest
+				change = scope:change
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+	}
+
+	option = {
+		name = middle_east_decisions.0009.a
+		add_prestige = major_prestige_gain
+		add_piety = major_piety_gain
+		faith = {
+			change_fervor = {
+				value = 10
+				desc = fervor_gain_priesthood_recreated
+			}
+		}
+		if = { # Vassalize if possible/needed.
+			limit = {
+				highest_held_title_tier > scope:new_priest.highest_held_title_tier
+				NOT = { scope:new_priest = { any_liege_or_above = { this = root } } }
+			}
+			create_title_and_vassal_change = {
+				type = created
+				save_scope_as = change
+				add_claim_on_loss = no
+			}
+			scope:new_priest = {
+				change_liege = {
+					liege = root
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+		}
+		create_legend_seed = {
+			type = holy
+			quality = famed
+			chronicle = priesthood_restoration
+			properties = {
+				founder = scope:new_priest
+				faith = scope:new_priest.faith
+				religion = scope:new_priest.religion
+			}
+		}
+		hidden_effect = {
+			every_player = {
+				limit = {
+					this != root
+					OR = {
+						faith.religion = root.faith.religion
+						AND = {
+							is_landed = yes
+							capital_province = {
+								OR = {
+									geographical_region = world_middle_east
+									geographical_region = world_persian_empire
+								}
+							}
+						}
+					}
+				}
+				trigger_event = middle_east_decisions.0010
+			}
+		}
+	}
+}
+
+# Players notified.
+middle_east_decisions.0010 = {
+	type = character_event
+	title = middle_east_decisions.0009.t
+	desc = {
+		first_valid = {
+			# Zoroastrian Reaction
+			triggered_desc = {
+				trigger = {
+					root.faith.religion = scope:scoped_ruler.faith.religion
+				}
+				desc = middle_east_decisions.0009.desc
+			}
+			# Muslim Reaction
+			triggered_desc = {
+				trigger = {
+					root.faith.religion = faith:ashari.religion
+				}
+				desc = middle_east_decisions.0010.desc.muslims
+			}
+			# Everybody else
+			triggered_desc = {
+				trigger = {
+					NOR = {
+						root.faith.religion = scope:scoped_ruler.faith.religion
+						root.faith.religion = faith:ashari.religion
+					}
+				}
+				desc = middle_east_decisions.0010.desc.others
+			}
+		}
+	}
+	theme = faith
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_zealous
+	}
+	right_portrait = {
+		character = scope:new_priest
+		animation = happiness
+	}
+
+	immediate = {
+		#Zoroastrian characters get some chilled music.
+		if = {
+			limit = {
+				faith = { religion_tag = zoroastrianism_religion }
+			}
+			play_music_cue = "mx_cue_faith_conversion"
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0010.a
+		trigger = {
+			root.faith.religion = scope:scoped_ruler.faith.religion
+		}
+	}
+	option = {
+		name = middle_east_decisions.0010.b
+		trigger = {
+			root.faith.religion != scope:scoped_ruler.faith.religion
+		}
+	}
+	option = {
+		name = middle_east_decisions.0010.c
+		trigger = {
+			NOR = {
+				root.faith.religion = scope:scoped_ruler.faith.religion
+				root.faith.religion = faith:ashari.religion
+			}
+		}
+	}
+}
+
+##################################################
+# The Saoshyant appears.
+##################################################
+
+middle_east_decisions.0011 = {
+	type = character_event
+	title = middle_east_decisions.0011.t
+	desc = middle_east_decisions.0011.desc
+	theme = faith
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_bold
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_faith_conversion"
+		save_scope_as = scoped_ruler
+		hidden_effect = {
+			every_player = {
+				limit = {
+					this != root
+					OR = {
+						faith.religion = root.faith.religion
+						AND = {
+							is_landed = yes
+							capital_province = {
+								OR = {
+									geographical_region = world_middle_east
+									geographical_region = world_persian_empire
+								}
+							}
+						}
+					}
+				}
+				trigger_event = middle_east_decisions.0013
+			}
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0011.a
+		become_saoshyant_decision_effect = yes
+	}
+
+	after = {
+		hidden_effect = {
+			save_scope_as = saoshyant_progenitor
+			every_child = {
+				even_if_dead = yes
+				trigger_event = middle_east_decisions.0012
+
+				every_child = {
+					even_if_dead = yes
+					limit = {
+						OR = {
+							is_grandchild_of = scope:saoshyant_progenitor
+							is_great_grandchild_of = scope:saoshyant_progenitor
+						}
+					}
+					trigger_event = middle_east_decisions.0012
+
+					every_child = {
+						even_if_dead = yes
+						limit = {
+							OR = {
+								is_grandchild_of = scope:saoshyant_progenitor
+								is_great_grandchild_of = scope:saoshyant_progenitor
+							}
+						}
+						trigger_event = middle_east_decisions.0012
+					}
+				}
+			}
+		}
+	}
+}
+
+# Child of Saoshyant's line gains proper trait (fired on creation and on_birth).
+middle_east_decisions.0012 = {
+	type = character_event
+	hidden = yes
+
+	trigger = {
+		OR = {
+			AND = {
+				mother ?= {
+					OR = {
+						has_trait = saoshyant
+						has_trait = saoshyant_descendant
+					}
+				}
+			}
+			AND = {
+				father ?= {
+					OR = {
+						has_trait = saoshyant
+						has_trait = saoshyant_descendant
+					}
+				}
+			}
+			AND = {
+				exists = scope:saoshyant_progenitor
+				OR = {
+					is_grandchild_of = scope:saoshyant_progenitor
+					is_great_grandchild_of = scope:saoshyant_progenitor
+				}
+			}
+		}
+		NOR = {
+			has_trait = saoshyant # Just in case the tree was horribly tangled...
+			has_trait = saoshyant_descendant
+		}
+	}
+
+	immediate = {
+		add_trait = saoshyant_descendant
+		every_child = {
+			trigger_event = middle_east_decisions.0012
+		}
+	}
+}
+
+# Players notified.
+middle_east_decisions.0013 = {
+	type = character_event
+	title = middle_east_decisions.0011.t
+	desc = {
+		first_valid = {
+			# Zoroastrian Reaction
+			triggered_desc = {
+				trigger = {
+					root.faith.religion = scope:scoped_ruler.faith.religion
+				}
+				desc = middle_east_decisions.0013.desc
+			}
+			# Muslim Reaction
+			triggered_desc = {
+				trigger = {
+					root.faith.religion = faith:ashari.religion
+				}
+				desc = middle_east_decisions.0013.desc.muslims
+			}
+			# Everybody else
+			triggered_desc = {
+				trigger = {
+					NOR = {
+						root.faith.religion = scope:scoped_ruler.faith.religion
+						root.faith.religion = faith:ashari.religion
+					}
+				}
+				desc = middle_east_decisions.0013.desc.others
+			}
+		}
+	}
+	theme = faith
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_bold
+	}
+
+	immediate = {
+		#Zoroastrian characters get some chilled music.
+		if = {
+			limit = {
+				faith = { religion_tag = zoroastrianism_religion }
+			}
+			play_music_cue = "mx_cue_faith_conversion"
+		}
+		if = {
+			limit = {
+				faith = { religion_tag = islam_religion }
+			}
+			play_music_cue = "mx_cue_combat_2"
+		}
+		show_as_tooltip = {
+			faith:ashari.religion = {
+				every_faith = {
+					limit = {
+						any_independent_ruler = {
+							faith = prev
+							is_landed = yes
+							capital_province = {
+								OR = {
+									geographical_region = world_middle_east
+									geographical_region = world_persian_empire
+								}
+							}
+						}
+					}
+					change_fervor = {
+						value = -15
+						desc = fervor_loss_saoshyant
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0013.a
+		trigger = {
+			root.faith.religion = scope:scoped_ruler.faith.religion
+		}
+	}
+	option = {
+		name = middle_east_decisions.0013.b
+		trigger = {
+			root.faith.religion != scope:scoped_ruler.faith.religion
+		}
+	}
+	option = {
+		name = middle_east_decisions.0013.c
+		trigger = {
+			NOR = {
+				root.faith.religion = scope:scoped_ruler.faith.religion
+				root.faith.religion = faith:ashari.religion
+			}
+		}
+	}
+}
+
+##################################################
+# Create Sultanate of Rum
+##################################################
+
+middle_east_decisions.0014 = {
+	type = character_event
+	title = middle_east_decisions.0014.t
+	desc = middle_east_decisions.0014.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = personality_greedy
+	}
+	right_portrait = {
+		character = scope:roman_emperor
+		animation = disbelief
+	}
+	lower_left_portrait = scope:former_liege
+
+	immediate = {
+		play_music_cue = "mx_cue_positive_effect"
+		save_scope_as = scoped_ruler
+		if = {
+			limit = { top_liege != this }
+			liege = { save_scope_as = former_liege }
+		}
+		if = {
+			limit = { exists = title:e_byzantium.holder }
+			title:e_byzantium.holder = { save_scope_as = roman_emperor }
+		}
+		else_if = {
+			limit = { exists = title:h_roman_empire.holder }
+			title:h_roman_empire.holder = { save_scope_as = roman_emperor }
+		}
+		else_if = {
+			limit = { exists = title:h_eastern_roman_empire.holder }
+			title:h_eastern_roman_empire.holder = { save_scope_as = roman_emperor }
+		}
+
+		legend_seed_new_title_effect = yes
+		# De jure shifts.
+
+		# k_anatolia: d_cilicia d_cibyrrhaeot d_anatolia d_cappadocia
+		# k_pontus: d_paphlagonia d_armeniac d_sebasteia d_charsianon d_chaldia
+		# k_armenia: d_greater_armenia d_vaspurakan d_mesopotamia d_edessa
+		hidden_effect = {
+			title:d_cilicia = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_cibyrrhaeot = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_anatolia = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_cappadocia = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_paphlagonia = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_armeniac = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_sebasteia = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_charsianon = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			title:d_chaldia = {
+				set_de_jure_liege_title = title:k_rum
+			}
+			every_held_title = { # Should shift all dejure of all Duchies owned at the time.
+				title_tier = duchy
+				set_de_jure_liege_title = title:k_rum
+			}
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0014.a
+		create_rum_scripted_effect = yes
+		# Send narrative fluff to other players (if any).
+		every_player = {
+			limit = {
+				this != root
+				OR = {
+					top_liege = scope:former_liege
+					is_roman_emperor_trigger = yes
+				}
+			}
+			trigger_event = middle_east_decisions.0015
+		}
+	}
+}
+
+middle_east_decisions.0015 = {
+	type = character_event
+	title = middle_east_decisions.0014.t
+	desc = {
+		first_valid = {
+			# Liege's reaction.
+			triggered_desc = {
+				trigger = {
+					this = scope:former_liege
+				}
+				desc = middle_east_decisions.0015.desc.liege
+			}
+			triggered_desc = {
+				trigger = {
+					is_roman_emperor_trigger = yes
+				}
+				desc = middle_east_decisions.0015.desc.romans
+			}
+			# Everybody else's.
+			triggered_desc = {
+				trigger = {
+					this != scope:former_liege
+				}
+				desc = middle_east_decisions.0015.desc.others
+			}
+		}
+	}
+	theme = realm
+	left_portrait = {
+		character = scope:scoped_ruler
+		animation = personality_greedy
+	}
+	right_portrait = {
+		character = scope:former_liege
+		animation = shock
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				this = scope:former_liege
+			}
+			show_as_tooltip = {
+				add_prestige = major_prestige_loss
+				add_unpressed_claim = title:k_rum #Give chance to retaliate
+				add_opinion = {
+					target = scope:scoped_ruler
+					modifier = pretender_opinion
+				}
+			}
+		}
+	}
+
+	option = {
+		name = middle_east_decisions.0015.a
+		trigger = {
+			OR = {
+				this = scope:former_liege
+				is_roman_emperor_trigger = yes
+			}
+		}
+	}
+	option = {
+		name = middle_east_decisions.0015.b
+		trigger = {
+			this != scope:former_liege
+		}
+	}
+}
+
+################
+# Revive the Armenian Empire
+# by Ewan Cowhig Croft
+################
+
+#The empire revived.
+middle_east_decisions.1001 = {
+	type = character_event
+	title = middle_east_decisions.1001.t
+	desc = middle_east_decisions.1001.desc
+	theme = realm
+	left_portrait = {
+		character = scope:founder
+		animation = personality_bold
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_epic_sacral_moment"
+		revive_armenian_empire_decision_scripted_effect = yes
+		legend_seed_new_title_effect = yes
+	}
+
+	#Take the nickname.
+	option = {
+		name = middle_east_decisions.1001.a
+		give_nickname = nick_the_great
+		add_prestige_experience = massive_fame_gain
+	}
+	#No thanks on the nickname, more prestige instead please.
+	option = {
+		name = middle_east_decisions.1001.b
+		add_prestige_experience = monumental_fame_gain
+	}
+}
+
+#Inform any players.
+middle_east_decisions.1002 = {
+	type = character_event
+	title = middle_east_decisions.1001.t
+	desc = middle_east_decisions.1002.desc
+	theme = realm
+	left_portrait = {
+		character = scope:founder
+		animation = personality_bold
+	}
+
+	immediate = {
+		#Armenians, by faith or culture (and who are not rival emperors), get some happy muzak.
+		if = {
+			limit = {
+				OR = {
+					faith = faith:armenian_apostolic
+					culture = culture:armenian
+				}
+				NOT = { highest_held_title_tier = tier_empire }
+			}
+			play_music_cue = "mx_cue_epic_sacral_moment"
+		}
+		#Empires get rivalry music.
+		if = {
+			limit = { highest_held_title_tier = tier_empire }
+			play_music_cue = "mx_cue_combat_2"
+		}
+	}
+
+	option = {
+		name = { #Empires are less than impressed.
+			trigger = {
+				highest_held_title_tier = tier_empire
+				NOR = {
+					faith = faith:armenian_apostolic
+					culture = culture:armenian
+				}
+			}
+			text = middle_east_decisions.1002.a
+		}
+		name = { #Armenians by faith or by culture are pretty happy.
+			trigger = {
+				OR = {
+					faith = faith:armenian_apostolic
+					culture = culture:armenian
+				}
+				NOT = { highest_held_title_tier = tier_empire }
+			}
+			text = middle_east_decisions.1002.b
+		}
+		name = { #No one else thinks it'll last much longer than the last one.
+			trigger = {
+				NOR = {
+					faith = faith:armenian_apostolic
+					culture = culture:armenian
+					highest_held_title_tier = tier_empire
+				}
+			}
+			text = middle_east_decisions.1002.c
+		}
+	}
+}
+
+#################################
+# Found the Empire of Beth Nahrain
+# by Anna Johansson				
+#################################
+
+middle_east_decisions.1020 = {
+	type = character_event
+	title = middle_east_decisions.1020.t
+	desc = middle_east_decisions.1020.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+
+	immediate = {
+		promote_culture_beth_nahrain_scripted_effect = yes
+	}
+
+	#Learning Focus
+	option = { 
+		name = middle_east_decisions.1020.a
+		learning_beth_nahrain_scripted_effect = yes
+	}
+
+	#Martial Focus
+	option = { 
+		name = middle_east_decisions.1020.b
+		martial_beth_nahrain_scripted_effect = yes
+	}
+
+	#Nestorian
+	option = { 
+		name = middle_east_decisions.1020.c
+		trigger = {
+			faith = faith:nestorian
+		}
+		nestorian_faith_beth_nahrain_scripted_effect = yes
+	}
+
+	#Non Nestorian
+	option = { 
+		name = middle_east_decisions.1020.d
+		trigger = {
+			NOT = {
+				faith = faith:nestorian
+				any_held_title = { is_head_of_faith = yes }
+			}
+		}
+		no_faith_beth_nahrain_scripted_effect = yes
+	}
+}
+
+###################
+# Dar al-Islam
+# By Emil Tisander
+###################
+
+# Creating the Dar al-Islam
+middle_east_decisions.1100 = {
+	type = character_event
+	window = big_event_window
+	title = middle_east_decisions.1100.t
+	desc = middle_east_decisions.1100.desc
+	theme = crown
+	override_background = {
+		trigger = {
+			capital_county ?= {
+				this != title:c_mecca
+			}
+		}
+		reference = ep2_holy_site_mena
+	}
+	override_background = {
+		trigger = {
+			capital_county ?= {
+				this = title:c_mecca
+			}
+		}
+		reference = holy_site_mecca
+	}
+	override_effect_2d = { reference = legend_glow }
+	left_portrait = {
+		character = root
+		animation = jockey_wave
+		camera = camera_event_table_right
+	}
+	
+	immediate = {
+		create_dar_al_islam_effect = yes
+	}
+	
+	option = {
+		name = middle_east_decisions.1100.a
+	}
+}
+
+# Notify players
+middle_east_decisions.1101 = {
+	type = character_event
+	window = big_event_window
+	title = middle_east_decisions.1100.t
+	desc = {
+		desc = middle_east_decisions.1101.intro
+		desc = newline.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { faith.religion = religion:islam_religion }
+				desc = middle_east_decisions.1101.islam_desc
+			}
+			desc = middle_east_decisions.1101.other_desc
+		}
+	}
+	theme = crown
+	override_background = {
+		trigger = {
+			scope:dar_al_islam_ruler.capital_county ?= {
+				this != title:c_mecca
+			}
+		}
+		reference = ep2_holy_site_mena
+	}
+	override_background = {
+		trigger = {
+			scope:dar_al_islam_ruler.capital_county ?= {
+				this = title:c_mecca
+			}
+		}
+		reference = holy_site_mecca
+	}
+	override_effect_2d = { reference = legend_glow }
+	left_portrait = {
+		character = scope:dar_al_islam_ruler
+		animation = jockey_wave
+		camera = camera_event_table_right
+	}
+	
+	immediate = {
+		show_as_tooltip = {
+			scope:dar_al_islam_ruler = {
+				get_title = title:h_dar_al_islam
+			}
+		}
+	}
+	
+	option = {
+		name = {
+			trigger = {
+				faith.religion = religion:islam_religion
+				top_liege = scope:dar_al_islam_ruler
+			}
+			text = middle_east_decisions.1101.a
+		}
+		name = {
+			trigger = {
+				faith.religion = religion:islam_religion
+				top_liege != scope:dar_al_islam_ruler
+			}
+			text = middle_east_decisions.1101.b
+		}
+		name = {
+			trigger = { faith.religion != religion:islam_religion }
+			text = middle_east_decisions.1101.c
+		}
+	}
+}
+
+# Notify other Islamic head of faiths, and destroy their (now obsolete) head of faith title
+middle_east_decisions.1102 = {
+	type = character_event
+	window = big_event_window
+	title = middle_east_decisions.1100.t
+	desc = {
+		desc = middle_east_decisions.1101.intro
+		desc = newline.desc
+		desc = middle_east_decisions.1102.desc
+	}
+	theme = crown
+	override_background = {
+		trigger = {
+			scope:dar_al_islam_ruler.capital_county ?= {
+				this != title:c_mecca
+			}
+		}
+		reference = ep2_holy_site_mena
+	}
+	override_background = {
+		trigger = {
+			scope:dar_al_islam_ruler.capital_county ?= {
+				this = title:c_mecca
+			}
+		}
+		reference = holy_site_mecca
+	}
+	override_effect_2d = { reference = legend_glow }
+	left_portrait = {
+		character = scope:dar_al_islam_ruler
+		animation = jockey_wave
+		camera = camera_event_table_right
+	}
+	
+	immediate = {
+		show_as_tooltip = {
+			scope:dar_al_islam_ruler = {
+				get_title = title:h_dar_al_islam
+			}
+		}
+		if = {
+			limit = { exists = var:old_hof_title }
+			destroy_title = var:old_hof_title
+			remove_variable = old_hof_title
+		}
+	}
+	
+	option = {
+		name = middle_east_decisions.1102.a
+	}
+}

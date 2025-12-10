@@ -1,0 +1,1590 @@
+﻿###
+#fallback_move_to_pool_effect
+#select_and_move_to_pool_effect - Use this to move courtiers/guests to pool
+
+select_fallback_pool_to_move_to_effect = {
+	if = {
+		limit = {
+			NOT = { exists = location }
+		}
+		random_duchy = {
+			limit = {
+				exists = title_capital_county
+				title_capital_county.culture = {
+					has_same_culture_heritage = scope:mover.culture
+				}
+			}
+			title_capital_county.holder.capital_province = { save_scope_as = destination }
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:destination }
+			}
+			random_duchy = {
+				limit = {
+					exists = title_capital_county
+					title_capital_county.faith = scope:mover.faith
+				}
+				title_capital_county.holder.capital_province = { save_scope_as = destination }
+			}
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:destination }
+			}
+			random_duchy = {
+				limit = {
+					exists = title_capital_county.holder.capital_province
+				}
+				title_capital_county.holder.capital_province = { save_scope_as = destination }
+			}
+		}
+	}
+	else = {
+		random_kingdom = {
+			limit = {
+				is_titular = no
+				title_capital_county.title_province ?= {
+					squared_distance = {
+						target = scope:mover.location value <= squared_distance_large
+					}
+				}
+			}
+			random_in_de_jure_hierarchy = {
+				limit = {
+					tier = tier_duchy
+					title_capital_county.holder.capital_province = { local_pool_is_full_trigger = no }
+				}
+				title_capital_county.holder.capital_province = { save_scope_as = destination }
+			}
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:destination }
+				exists = scope:mover.host.capital_province
+			}
+			scope:mover.host.capital_province = { save_scope_as = destination }
+		}
+		else_if = {
+			limit = {
+				NOT = { exists = scope:destination }
+			}
+			random_kingdom = {
+				limit = {
+					exists = title_capital_county
+				}
+				title_capital_county.holder.capital_province = { save_scope_as = destination }
+			}
+		}
+	}
+}
+
+
+fallback_move_to_pool_effect = {
+	save_temporary_scope_as = mover
+	if = {
+		limit = { exists = host }
+		set_variable = {
+			name = last_visited_ruler
+			value = this.host
+			days = 1825
+		}
+	}
+	else = { #I.e. if we're in the pool
+		set_variable = {
+			name = last_visited_ruler
+			value = dummy_female #Because you must have a character value to compare it with another
+			days = 1825
+		}
+	}
+
+	select_fallback_pool_to_move_to_effect = yes
+	
+	every_traveling_family_member = {
+		limit = {
+			NOT = { is_in_pool_at = scope:destination }
+		}
+		move_to_pool_at = scope:destination
+	}
+}
+
+select_pool_to_move_to_effect = {
+	###CLAIMANT HANDLING###
+	random = {
+		chance = 20
+		if = {
+			limit = {
+				any_claim = { tier <= tier_kingdom }
+				NOT = {
+					is_weak_claimant_due_to_gender_trigger = { FAITH = scope:mover.faith CHARACTER = scope:mover }
+				}
+			}
+
+			every_traveling_family_member = {
+				add_to_temporary_list = claimant_family
+			}
+
+			#Player if possible
+			random_player = {
+				limit = {
+					save_temporary_scope_as = player
+					scope:mover = { any_claim = { useful_courtier_or_guest_claim_trigger = { RULER = scope:player } } }
+					any_in_list = {
+						list = claimant_family
+						count = all
+						guest_allowed_to_arrive_trigger = { HOST = scope:player  }
+					}
+					exists = capital_province
+				}
+				capital_province = { save_scope_as = destination }
+			}
+
+			#Otherwise some independent ruler
+			if = {
+				limit = { NOT = { exists = scope:destination } }
+				random_independent_ruler = {
+					limit = {
+						save_temporary_scope_as = independent_ruler
+						scope:mover = { any_claim = { useful_courtier_or_guest_claim_trigger = { RULER = scope:independent_ruler } } }
+						any_in_list = {
+							list = claimant_family
+							count = all
+							guest_allowed_to_arrive_trigger = { HOST = scope:independent_ruler  }
+						}
+						exists = capital_province
+					}
+					capital_province = { save_scope_as = destination }
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = { NOT = { exists = scope:destination } }
+
+		###PICK THE NEW LOCATION###
+		random_list = {
+			#Close or extended family
+			25 = {
+				trigger = { any_close_or_extended_family_member = { is_visitable_relation_trigger = { CHARACTER = scope:mover } } }
+				random_close_or_extended_family_member = {
+					limit = { is_visitable_relation_trigger = { CHARACTER = scope:mover } }
+					capital_province = { save_scope_as = destination }
+				}
+			}
+			#Other dynasty members
+			5 = {
+				trigger = {
+					dynasty ?= {
+						any_dynasty_member = {
+							is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							NOT = { is_close_or_extended_family_of = scope:mover }
+						}
+					}
+				}
+				dynasty = {
+					random_dynasty_member = {
+						limit = {
+							is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							NOT = { is_close_or_extended_family_of = scope:mover }
+						}
+						capital_province = { save_scope_as = destination }
+					}
+				}
+			}
+			#Lovers
+			25 = {
+				trigger = {
+					any_relation = {
+						type = lover
+						is_visitable_relation_trigger = { CHARACTER = scope:mover }
+					}
+				}
+				random_relation = {
+					type = lover
+					limit = { any_close_or_extended_family_member = { is_visitable_relation_trigger = { CHARACTER = scope:mover } } }
+					capital_province = { save_scope_as = destination }
+				}
+			}
+			#Friends
+			25 = {
+				trigger = {
+					any_relation = {
+						type = friend
+						is_visitable_relation_trigger = { CHARACTER = scope:mover }
+					}
+				}
+				random_relation = {
+					type = friend
+					limit = { is_visitable_relation_trigger = { CHARACTER = scope:mover } }
+					capital_province = { save_scope_as = destination }
+				}
+			}
+			#Secret Witch
+			25 = {
+				trigger = {
+					any_secret = {
+						type = secret_witch
+						any_secret_knower = {
+							is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							is_witch_trigger = yes
+						}
+					}
+				}
+
+				random_secret = {
+					type = secret_witch
+					random_secret_knower = {
+						limit = {
+							is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							is_witch_trigger = yes
+						}
+						capital_province = { save_scope_as = destination }
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { exists = scope:destination } }
+		
+		random_list = {
+			#Within the realm (only for kingdoms/empires)
+			15 = {
+				trigger = {
+					host.top_liege ?= {
+						highest_held_title_tier >= tier_kingdom
+						OR = {
+							is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							any_vassal = {
+								highest_held_title_tier >= tier_county
+								is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							}
+						}
+					}
+				}
+				host.top_liege = {
+					if = {
+						limit = {
+							is_visitable_relation_trigger = { CHARACTER = scope:mover }
+						}
+						add_to_temporary_list = same_realm_list
+					}
+					every_vassal = {
+						limit = {
+							highest_held_title_tier >= tier_county
+							is_visitable_relation_trigger = { CHARACTER = scope:mover }
+						}
+						add_to_temporary_list = same_realm_list
+					}
+				}
+				random_in_list = {
+					list = same_realm_list
+					limit = {
+						is_visitable_relation_trigger = { CHARACTER = scope:mover }
+					}
+					capital_province = { save_scope_as = destination }
+				}
+			}
+			#Neighboring realm (overseas)
+			5 = {
+				trigger = {
+					host ?= {
+						any_neighboring_and_across_water_top_liege_realm_owner = {
+							OR = {
+								is_visitable_relation_trigger = { CHARACTER = scope:mover }
+								any_vassal = {
+									highest_held_title_tier >= tier_county
+									is_visitable_relation_trigger = { CHARACTER = scope:mover }
+								}
+							}
+						}
+					}
+				}
+				host = {
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						if = {
+							limit = {
+								is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							}
+							add_to_temporary_list = other_realm_list
+						}
+						every_vassal_or_below = {
+							limit = {
+								highest_held_title_tier >= tier_county
+								is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							}
+							add_to_temporary_list = other_realm_list
+						}
+					}
+				}
+				random_in_list = {
+					list = other_realm_list
+					limit = {
+						is_visitable_relation_trigger = { CHARACTER = scope:mover }
+					}
+					capital_province = { save_scope_as = destination }
+				}
+			}
+			#Neighboring realm (not overseas)
+			15 = {
+				trigger = {
+					host ?= {
+						any_neighboring_top_liege_realm_owner = {
+							OR = {
+								is_visitable_relation_trigger = { CHARACTER = scope:mover }
+								any_vassal = {
+									highest_held_title_tier >= tier_county
+									is_visitable_relation_trigger = { CHARACTER = scope:mover }
+								}
+							}
+						}
+					}
+				}
+				host = {
+					random_neighboring_top_liege_realm_owner = {
+						if = {
+							limit = {
+								is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							}
+							add_to_temporary_list = other_realm_list
+						}
+						every_vassal_or_below = {
+							limit = {
+								highest_held_title_tier >= tier_county
+								is_visitable_relation_trigger = { CHARACTER = scope:mover }
+							}
+							add_to_temporary_list = other_realm_list
+						}
+					}
+				}
+				random_in_list = {
+					list = other_realm_list
+					limit = {
+						is_visitable_relation_trigger = { CHARACTER = scope:mover }
+					}
+					capital_province = { save_scope_as = destination }
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			NOT = { exists = scope:destination }
+		}
+
+		select_fallback_pool_to_move_to_effect = yes
+	}
+}
+
+move_to_pool_effect = {
+	save_temporary_scope_as = mover
+	###TOOLTIP FOR HOST###
+	show_as_tooltip = {
+		scope:mover = { move_to_pool = yes }
+	}
+
+	###MOVE OR FIND FALLBACK DESTINATION###
+	if = {
+		limit = {
+			exists = scope:destination
+		}
+		set_variable = {
+			name = last_visited_ruler
+			value = this.host
+			days = 3650
+		}
+		every_traveling_family_member = {
+			limit = {
+				NOT = { is_in_pool_at = scope:destination }
+				is_ruler = no
+				trigger_if = {
+					limit = {
+						exists = scope:mover.host
+						is_child_of = scope:mover.host
+						is_adult = no
+					}
+					dynasty != scope:mover.host.dynasty
+				}
+			}
+			hidden_effect = { move_to_pool_at = scope:destination }
+		}
+	}
+}
+
+select_and_move_to_pool_effect = {
+	save_temporary_scope_as = mover
+
+	hidden_effect = { select_pool_to_move_to_effect = yes }
+	move_to_pool_effect = yes
+}
+
+courtier_guest_pool_character_secret_giving_effect = {
+	random_list = {
+		# Deviant
+		200 = {
+			trigger = {
+				NOR = {
+					has_trait = celibate
+					has_trait = chaste
+					any_secret = { type = secret_deviant }
+					has_trait = deviant
+				}
+			}
+			modifier = {
+				has_trait = lustful
+				add = 50
+			}
+
+			give_deviant_secret_or_trait_effect = yes
+		}
+		# Homosexual
+		100 = {
+			trigger = {
+				is_male = yes
+				OR = {
+					has_sexuality = homosexual
+					has_sexuality = bisexual
+				}
+				NOT = { has_trait = celibate }
+				NOR = {
+					any_secret = { type = secret_homosexual }
+					has_trait = sodomite
+				}
+			}
+			modifier = {
+				has_trait = chaste
+				add = -50
+			}
+
+			give_homosexual_secret_or_nothing_effect = yes
+		}
+		# Cannibal
+		100 = {
+			trigger = {
+				OR = {
+					has_trait = lunatic
+					has_trait = possessed
+					ai_compassion <= high_negative_ai_value
+				}
+				NOR = {
+					any_secret = { type = secret_cannibal }
+					has_trait = cannibal
+				}
+			}
+			ai_compassion_target_modifier = { VALUE = -50 }
+
+			give_cannibal_secret_or_trait_effect = yes
+		}
+		# Non-believer
+		500 = {
+			trigger = {
+				NOR = {
+					has_trait = zealous
+					any_secret = { type = secret_non_believer }
+					has_character_modifier = known_non_believer
+				}
+			}
+			ai_zeal_target_modifier = { VALUE = -50 }
+			give_non_believer_secret_effect = yes
+		}
+		# Witch
+		100 = {
+			trigger = {
+				NOR = {
+					has_trait = zealous
+					any_secret = { type = secret_witch }
+					has_trait = witch
+				}
+			}
+			modifier = {
+				OR = {
+					has_trait = lifestyle_mystic
+					has_trait = lifestyle_herbalist
+				}
+				add = 50
+			}
+			ai_greed_target_modifier = { VALUE = 50 }
+		}
+	}
+}
+
+pool_character_development_effect = {
+	###POSIBLE EFFECTS###
+	# Increase a low skill
+	# Get married
+	# Get a scripted relation
+	# Get a lifestyle trait
+	# Get a commander trait
+	# Get an interesting trait
+	# Get a secret
+	# Kill someone
+	# Learn a language
+
+	save_temporary_scope_as = pool_character
+
+
+	random_list = {
+		# INCREASE A LOW SKILL
+		100 = {
+			trigger = { diplomacy < medium_skill_rating }
+			add_diplomacy_skill = 1
+		}
+		100 = {
+			trigger = { martial < medium_skill_rating }
+			add_martial_skill = 1
+		}
+		100 = {
+			trigger = { stewardship < medium_skill_rating }
+			add_stewardship_skill = 1
+		}
+		100 = {
+			trigger = { intrigue < medium_skill_rating }
+			add_intrigue_skill = 1
+		}
+		100 = {
+			trigger = { learning < medium_skill_rating }
+			add_learning_skill = 1
+		}
+		100 = {
+			trigger = { prowess < medium_skill_rating }
+			add_prowess_skill = 1
+		}
+		400 = {
+			trigger = {
+				prowess > medium_skill_rating
+				NOT = {
+					has_trait = berserker
+				}
+				faith = {
+					has_doctrine = tenet_warmonger
+				}
+				OR = {
+					culture = { has_cultural_pillar = heritage_north_germanic }
+					religion = religion:germanic_religion
+				}
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+			}
+			add_trait = berserker
+		}
+		100 = {
+			trigger = {
+				diplomacy >= medium_skill_rating
+				NOT = {
+					has_trait = lifestyle_poet
+				}
+				OR = {
+					culture = { has_cultural_pillar = heritage_north_germanic }
+					religion = religion:germanic_religion
+					culture = { has_cultural_parameter = poet_trait_more_common }
+				}
+			}
+			add_trait = lifestyle_poet
+		}
+
+		# GET MARRIED
+		15 = {
+			trigger = {
+				age <= 40
+				is_married = no
+				is_concubine = no
+				#The triggers below are here to avoid low fertility marriages (in most cases)
+				NOR = {
+					has_sexuality = asexual
+					has_trait = celibate
+					has_trait = chaste
+				}
+				fertility > low_fertility
+				OR = {
+					exists = mother
+					exists = father
+				}
+				can_marry_trigger = yes
+			}
+			
+			save_temporary_scope_as = template
+			
+			if = {
+				limit = {
+					exists = scope:pool_character.location
+					any_pool_character = {
+						province = scope:pool_character.location
+						allowed_to_marry_character_gender_trigger = { CHARACTER = scope:pool_character }
+						is_physically_able_adult = yes
+						age <= 40
+						is_married = no
+						can_marry_trigger = yes
+						is_concubine = no
+					}
+				}
+				random_pool_character = {
+					province = scope:pool_character.location
+					limit = {
+						allowed_to_marry_character_gender_trigger = { CHARACTER = scope:pool_character }
+						is_physically_able_adult = yes
+						age <= 40
+						is_married = no
+						can_marry_trigger = yes
+						is_concubine = no
+					}
+					save_temporary_scope_as = spouse
+				}
+			}
+			else = {
+				create_character = {
+					location = scope:template.location
+					gender_female_chance = scope:template.marriage_gender_adjusted_female_chance
+					template = mediocre_spouse
+					save_temporary_scope_as = spouse
+				}
+			}
+
+			if = {
+				limit = {
+					is_female = yes
+				}
+				marry_matrilineal = scope:spouse
+			}
+			else = {
+				marry = scope:spouse
+			}
+			
+			scope:spouse = {
+				if = {
+					limit = {
+						exists = scope:template.host
+					}
+					visit_court_of = scope:template.host
+				}
+			}
+		}
+
+		# GET A LIFESTYLE TRAIT
+		50 = {
+			trigger = {
+				number_of_lifestyle_traits <= 2
+			}
+			modifier = {
+				number_of_lifestyle_traits = 0
+				factor = 2
+			}
+
+			random_list = {
+				100 = { #REVELER
+					trigger = {
+						NAND = {
+							has_trait = lifestyle_reveler
+							has_trait_xp = {
+								trait = lifestyle_reveler
+								value >= 100
+							}
+						}
+						NOR = {
+							has_trait = shy
+							has_trait = celibate
+							has_trait = temperate
+							has_trait = chaste
+							ai_greed < 0
+						}
+					}
+					modifier = {
+						has_trait = lifestyle_reveler
+						factor = 5
+					}
+					modifier = {
+						culture = { has_cultural_parameter = reveler_traits_more_common }
+						factor = 5
+					}
+					if = {
+						limit = {
+							NOT = { has_trait = lifestyle_reveler }
+						}
+						add_trait = lifestyle_reveler
+					}
+					else = {
+						add_trait_xp = {
+							trait = lifestyle_reveler
+							value = 10
+						}
+					}
+				}
+				100 = { #BLADEMASTER
+					trigger = {
+						NAND = {
+							has_trait = lifestyle_blademaster
+							has_trait_xp = {
+								trait = lifestyle_blademaster
+								value >= 100
+							}
+						}
+						prowess >= decent_skill_rating
+					}
+					modifier = {
+						has_trait = lifestyle_blademaster
+						factor = 5
+					}
+					modifier = {
+						factor = 3
+						culture = {
+							has_cultural_parameter = blademaster_traits_more_common
+						}
+					}
+					modifier = {
+						NOT = { can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character } }
+						factor = 0.1
+					}
+					if = {
+						limit = { has_trait = lifestyle_blademaster }
+						add_trait_xp = {
+							trait = lifestyle_blademaster
+							value = 10
+						}
+					}
+					else = { add_trait = lifestyle_blademaster }
+				}
+				100 = { #HUNTER
+					trigger = {
+						NOT = {
+							hunt_lifestyle_track_greater_equal_trigger = { TRACK = hunter GREATER_EQUAL = 100 }
+						}
+						ai_boldness >= medium_positive_ai_value
+						ai_energy >= low_positive_ai_value
+						ai_compassion < high_positive_ai_value
+					}
+					modifier = {
+						has_trait = lifestyle_hunter
+						factor = 5
+					}
+					modifier = {
+						culture = {
+							OR = {
+								has_cultural_parameter = hunting_traits_more_common
+								has_cultural_parameter = falconer_traits_more_common
+							}
+						}
+						factor = 5
+					}
+					if = {
+						limit = { has_trait = lifestyle_hunter }
+						random_list = {
+							10 = {
+								modifier = {
+									culture = { has_cultural_parameter = hunting_traits_more_common }
+									add = 20
+								}
+								add_trait_xp = {
+									trait = lifestyle_hunter
+									track = hunter
+									value = 10
+								}
+							}
+							10 = {
+								modifier = {
+									culture = { has_cultural_parameter = falconer_traits_more_common }
+									add = 20
+								}
+								add_trait_xp = {
+									trait = lifestyle_hunter
+									track = falconer
+									value = 10
+								}
+							}
+						}
+					}
+					else = { add_trait = lifestyle_hunter }
+				}
+				100 = { #PHYSICIAN
+					trigger = {
+						NAND = {
+							has_trait = lifestyle_physician
+							has_trait_xp = {
+								trait = lifestyle_physician
+								value >= 100
+							}
+						}
+						learning >= decent_skill_rating
+					}
+					modifier = {
+						has_trait = lifestyle_physician
+						factor = 5
+					}
+					modifier = {
+						culture = { has_cultural_tradition = tradition_medicinal_plants }
+						factor = 2
+					}
+					if = {
+						limit = { has_trait = lifestyle_physician }
+						add_trait_xp = {
+							trait = lifestyle_physician
+							value = 10
+						}
+					}
+					else = { add_trait = lifestyle_physician }
+				}
+				100 = { #MYSTIC
+					trigger = {
+						NAND = {
+							has_trait = lifestyle_mystic
+							has_trait_xp = {
+								trait = lifestyle_mystic
+								value >= 100
+							}
+						}
+						learning >= decent_skill_rating
+					}
+					modifier = {
+						has_trait = lifestyle_mystic
+						factor = 5
+					}
+					modifier = {
+						ai_zeal > 0
+						factor = 0.5
+					}
+					modifier = {
+						is_witch_trigger = yes
+						factor = 3
+					}
+					modifier = {
+						culture = { has_cultural_parameter = mystic_trait_more_common }
+						factor = 5
+					}
+					if = {
+						limit = { has_trait = lifestyle_mystic }
+						add_trait_xp = {
+							trait = lifestyle_mystic
+							value = 10
+						}
+					}
+					else = { add_trait = lifestyle_mystic }
+				}
+				100 = { #HERBALIST
+					trigger = {
+						NOT = { has_trait = lifestyle_herbalist }
+						learning >= decent_skill_rating
+					}
+					modifier = {
+						ai_zeal > 0
+						factor = 0.5
+					}
+					modifier = {
+						is_witch_trigger = yes
+						factor = 3
+					}
+					modifier = {
+						culture = { has_cultural_parameter = herbalist_traits_more_common }
+						factor = 5
+					}
+					add_trait = lifestyle_herbalist
+				}
+				50 = { #GARDENER
+					trigger = {
+						NOT = { has_trait = lifestyle_gardener }
+						stewardship >= decent_skill_rating
+					}
+					modifier = {
+						culture = { has_cultural_parameter = can_appoint_court_gardener }
+						factor = 5
+					}
+					add_trait = lifestyle_gardener
+				}
+			}
+		}
+
+		#GET A COMMANDER TRAIT
+		100 = {
+			trigger = {
+				has_trait = education_martial
+				number_of_commander_traits < commander_trait_limit
+			}
+
+			random_list = {
+				1 = {
+					trigger = { NOT = { has_trait = logistician } }
+					add_trait = logistician
+				}
+				1 = {
+					trigger = { NOT = { has_trait = military_engineer } }
+					add_trait = military_engineer
+				}
+				1 = {
+					trigger = { NOT = { has_trait = aggressive_attacker } }
+					add_trait = aggressive_attacker
+				}
+				1 = {
+					trigger = { NOT = { has_trait = unyielding_defender } }
+					add_trait = unyielding_defender
+				}
+				1 = {
+					trigger = { NOT = { has_trait = forder } }
+					add_trait = forder
+				}
+				1 = {
+					trigger = { NOT = { has_trait = holy_warrior } }
+					add_trait = holy_warrior
+				}
+				1 = {
+					trigger = { NOT = { has_trait = reckless } }
+					add_trait = reckless
+				}
+				1 = {
+					trigger = { NOT = { has_trait = cautious_leader } }
+					add_trait = cautious_leader
+				}
+				1 = {
+					trigger = { NOT = { has_trait = rough_terrain_expert } }
+					add_trait = rough_terrain_expert
+				}
+				1 = {
+					trigger = { NOT = { has_trait = open_terrain_expert } }
+					add_trait = open_terrain_expert
+				}
+			}
+		}
+
+		# GET AN INTERESTING TRAIT
+		20 = {
+			random_list = {
+				1 = {
+					trigger = { NOT = { has_trait = lunatic } }
+					add_trait = lunatic_1
+				}
+				1 = {
+					trigger = { NOT = { has_trait = possessed } }
+					add_trait = possessed_1
+				}
+				1 = {
+					trigger = { NOT = { has_trait = scarred } }
+					add_trait = scarred
+					add_trait_xp = {
+		                trait = scarred
+		                value = {
+		                    integer_range = {
+		                        min = 5
+		                        max = 25
+		                    }
+		                }
+		            }
+				}
+				1 = {
+					trigger = { NOT = { has_trait = lifestyle_poet } }
+					add_trait = lifestyle_poet
+				}
+				1 = {
+					trigger = {
+						can_be_drunkard = yes
+					}
+					add_trait = drunkard
+				}
+				1 = {
+					trigger = { #Does not use the can_be_rakish to reduce performance hit
+						NOR = {
+							has_trait = rakish
+							has_trait = celibate
+							has_trait = chaste
+							has_sexuality = asexual
+						}
+					}
+					add_trait = rakish
+				}
+				1 = { #Does not use the can_be_flagellant to reduce performance hit
+					trigger = { NOT = { has_trait = flagellant } }
+					add_trait = flagellant
+				}
+				1 = { #Does not use the can_be_contrite to reduce performance hit
+					trigger = {
+						NOR = {
+							has_trait = deceitful
+							has_trait = contrite
+						}
+					}
+					add_trait = contrite
+				}
+				1 = { #Does not use the can_be_journaller to reduce performance hit
+					trigger = { NOT = { has_trait = journaller } }
+					add_trait = journaller
+				}
+				1 = {
+					trigger = {
+						is_eunuch_trigger = no
+						is_male = yes
+						age >= 12
+					}
+					add_trait = eunuch_1
+				}
+				1 = {
+					trigger = {
+						is_eunuch_trigger = no
+						is_male = yes
+						age < 12
+					}
+					add_trait = beardless_eunuch
+				}
+				1 = {
+					trigger = { NOT = { has_trait = blind } }
+					add_trait = blind
+				}
+				1 = {
+					trigger = {
+						NOR = {
+							has_trait = intellect_bad
+							has_trait = dull
+							has_trait = shrewd
+						}
+					}
+					add_trait = shrewd
+				}
+				1 = {
+					trigger = {
+						NOR = {
+							has_trait = weak
+							has_trait = physique_bad
+							has_trait = strong
+						}
+					}
+					add_trait = strong
+				}
+				1 = {
+					trigger = {
+						NOT = {
+							has_trait = loyal
+						}
+					}
+					add_trait = loyal
+				}
+				1 = {
+					trigger = {
+						NOT = {
+							has_trait = disloyal
+						}
+					}
+					add_trait = disloyal
+				}
+			}
+		}
+
+		# GET LOYAL/DISLOYAL
+		10 = {
+			trigger = {
+				culture = {
+					has_cultural_parameter = loyal_trait_more_common
+				}
+				NOT = { has_trait = loyal }
+			}
+			add_trait = loyal
+		}
+		10 = {
+			trigger = {
+				culture = {
+					has_cultural_parameter = disloyal_trait_more_common
+				}
+				NOT = { has_trait = disloyal }
+			}
+			add_trait = disloyal
+		}
+
+		# GET A SECRET
+		30 = {
+			trigger = {
+				NOT = { any_secret = { always = yes } }
+			}
+
+			courtier_guest_pool_character_secret_giving_effect = yes
+		}
+
+		# Learn a language
+		30 = {
+			trigger = {
+				exists = location.county.culture
+				learning >= 8
+				num_of_known_languages < language_soft_cap
+				NOT = {
+					knows_language_of_culture = location.county.culture
+				}
+			}
+			learn_language_of_culture = location.county.culture
+		}
+	} #RANDOM_LIST ENDS HERE
+	
+	# Certain characters learn languages very often
+	random = {
+		chance = {
+			value = 70
+			if = {
+				limit = {
+					has_trait = scholar
+				}
+				add = -50
+			}
+		}
+		if = {
+			limit = {
+				culture = {
+					has_cultural_parameter = wanderers_learn_languages
+				}
+				num_of_known_languages < language_soft_cap
+				exists = location.county.culture
+				NOT = {
+					knows_language_of_culture = location.county.culture
+				}
+			}
+			learn_language_of_culture = location.county.culture
+		}
+	}
+	
+	random = {
+		chance = 20
+		# Cultural Traditions
+		if = { # blademaster_traits_more_common
+			limit = {
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+				culture = {
+					has_cultural_parameter = blademaster_traits_more_common
+				}
+			}
+			blademaster_lifestyle_rank_up_effect = yes
+		}
+	}
+	random = {
+		chance = 80
+		if = { # wanderers_gain_extra_combat_skills
+			limit = {
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+				culture = {
+					has_cultural_parameter = wanderers_gain_extra_combat_skills
+				}
+			}
+			random_list = {
+				10 = {
+					blademaster_lifestyle_rank_up_effect = yes
+				}
+				10 = {
+					wanderer_give_random_commander_trait_effect = yes
+				}
+				20 = {
+					add_prowess_skill = 1
+				}
+				10 = {
+					add_prowess_skill = 2
+				}
+				20 = {
+					add_martial_skill = 1
+				}
+				10 = {
+					add_martial_skill = 2
+				}
+			}
+		}
+	}
+	if = { # wanderers_gain_extra_economic_skills
+		limit = {
+			culture = {
+				has_cultural_parameter = wanderers_gain_extra_economic_skills
+			}
+		}
+		random_list = {
+			20 = {
+				wanderer_give_random_economic_trait_effect = yes
+			}
+			30 = {
+				add_stewardship_skill = 1
+			}
+			10 = {
+				add_stewardship_skill = 2
+			}
+			40 = {
+				add_gold = 50
+			}
+		}
+	}
+	
+	
+	# Cultural Traditions
+	random = {
+		chance = 10
+		if = {
+			limit = {
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+				has_education_martial_trigger = yes
+				culture = {
+					has_cultural_parameter = winter_soldier_trait_more_common
+				}
+				NOT = {
+					has_trait = winter_soldier
+				}
+			}
+			add_trait = winter_soldier
+		}
+	}
+	random = {
+		chance = 10
+		if = {
+			limit = {
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+				has_education_martial_trigger = yes
+				culture = {
+					has_cultural_parameter = forest_fighter_trait_more_common
+				}
+				NOT = {
+					has_trait = forest_fighter
+				}
+			}
+			add_trait = forest_fighter
+		}
+	}
+	random = {
+		chance = 10
+		if = {
+			limit = {
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+				has_education_martial_trigger = yes
+				culture = {
+					has_cultural_parameter = rough_terrain_expert_trait_more_common
+				}
+				NOT = {
+					has_trait = rough_terrain_expert
+				}
+			}
+			add_trait = rough_terrain_expert
+		}
+	}
+	random = {
+		chance = 10
+		if = {
+			limit = {
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+				has_education_martial_trigger = yes
+				culture = {
+					has_cultural_parameter = desert_warrior_trait_more_common
+				}
+				NOT = {
+					has_trait = desert_warrior
+				}
+			}
+			add_trait = desert_warrior
+		}
+	}
+	random = {
+		chance = 10
+		if = {
+			limit = {
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+				has_education_martial_trigger = yes
+				culture = {
+					has_cultural_parameter = jungle_stalker_trait_more_common
+				}
+				NOT = {
+					has_trait = jungle_stalker
+				}
+			}
+			add_trait = jungle_stalker
+		}
+	}
+}
+
+purge_excess_wanderer_riches_effect = {
+	# Spend any excess gold to avoid having ultra-rich characters floating around
+	save_scope_as = pool_character
+	while = {
+		limit = {
+			gold >= 1000
+			NOT = {
+				any_player = {
+					dynasty ?= scope:pool_character.dynasty
+				}
+			}
+			is_ruler = no
+		}
+		random_list = {
+			100 = { # Spend gold on getting a friend
+				trigger = {
+					ai_sociability > low_negative_ai_value
+					NOR = {
+						has_trait = shy
+						has_trait = reclusive
+					}
+					exists = scope:pool_character.location
+					any_pool_character = {
+						province = scope:pool_character.location
+						is_physically_able_adult = yes
+						this != scope:pool_character
+						NOT = { has_any_scripted_relation = scope:pool_character }
+					}
+				}
+				random_pool_character = {
+					province = scope:pool_character.location
+					limit = {
+						is_physically_able_adult = yes
+						this != scope:pool_character
+						NOT = { has_any_scripted_relation = scope:pool_character }
+					}
+					save_temporary_scope_as = new_friend
+				}
+				add_prestige = major_prestige_value
+				set_random_friendship_reason = { TARGET = scope:new_friend }
+				pay_short_term_gold = {
+					target = scope:new_friend
+					gold = 500
+				}
+			}
+			
+			150 = { # Spend gold on for religious purposes
+				trigger = {
+					ai_zeal >= medium_positive_ai_value
+					learning < 30
+				}
+				add_learning_skill = 3
+				add_piety = major_piety_value
+				remove_short_term_gold = 500
+			}
+			
+			200 = { # Spend gold on gaining prestige and training prowess!
+				trigger = {	
+					can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+					prowess < 30
+				}
+				knight_increase_prowess_chance_effect = yes
+				add_prestige = major_prestige_value
+				remove_short_term_gold = 500
+			}
+			
+			100 = { # Spend gold on gaining prestige and skill!
+				trigger = {	
+					can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:pool_character }
+					martial < 25
+				}
+				add_martial_skill = 2
+				add_prestige = major_prestige_value
+				remove_short_term_gold = 500
+			}
+			
+			100 = { # Spend gold on gaining prestige and skill!
+				trigger = {
+					intrigue < 25
+				}
+				add_intrigue_skill = 3
+				add_prestige = major_prestige_value
+				remove_short_term_gold = 500
+			}
+			
+			100 = { # Spend gold on gaining prestige and skill!
+				trigger = {
+					stewardship < 25
+				}
+				add_stewardship_skill = 3
+				add_prestige = major_prestige_value
+				remove_short_term_gold = 500
+			}
+			
+			100 = { # Spend gold on gaining prestige and skill!
+				trigger = {
+					diplomacy < 25
+				}
+				add_diplomacy_skill = 3
+				add_prestige = major_prestige_value
+				remove_short_term_gold = 500
+			}
+			
+			100 = { # Lavish wedding!
+				trigger = {
+					age <= 40
+					is_married = no
+					is_concubine = no
+					#The triggers below are here to avoid low fertility marriages
+					OR = {
+						has_sexuality = heterosexual
+						has_sexuality = bisexual
+						allowed_to_marry_same_sex_trigger = yes
+					}
+					NOR = {
+						has_trait = celibate
+						has_trait = chaste
+					}
+					fertility > low_fertility
+					can_marry_trigger = yes
+				}
+				
+				save_temporary_scope_as = template
+				
+				if = {
+					limit = {
+						exists = scope:pool_character.location
+						any_pool_character = {
+							province = scope:pool_character.location
+							allowed_to_marry_character_gender_trigger = { CHARACTER = scope:pool_character }
+							is_physically_able_adult = yes
+							age <= 40
+							is_married = no
+							can_marry_trigger = yes
+							is_concubine = no
+							is_attracted_to_gender_of = scope:pool_character
+						}
+					}
+					random_pool_character = {
+						province = scope:pool_character.location
+						limit = {
+							allowed_to_marry_character_gender_trigger = { CHARACTER = scope:pool_character }
+							is_physically_able_adult = yes
+							age <= 40
+							is_married = no
+							can_marry_trigger = yes
+							is_concubine = no
+							is_attracted_to_gender_of = scope:pool_character
+						}
+						save_temporary_scope_as = spouse
+					}
+				}
+				else = {
+					create_character = {
+						location = scope:template.location
+						gender_female_chance = scope:template.marriage_gender_adjusted_female_chance
+						template = mediocre_spouse
+						save_temporary_scope_as = spouse
+					}
+				}
+
+
+				marry = scope:spouse
+				
+				scope:spouse = {
+					if = {
+						limit = {
+							exists = scope:template.host
+						}
+						visit_court_of = scope:template.host
+					}
+				}
+				remove_short_term_gold = 500
+			}	
+			500 = { # Become an adventurer!
+				trigger = {
+					has_dlc_feature = roads_to_power
+					gold >= 500
+					is_physically_able_adult = yes
+					exists = location.county
+					ai_can_valid_to_create_laamp_trigger = yes
+				}
+				create_landless_adventurer_title_effect = {
+					REASON = flag:voluntary
+					FLAVOR_CHAR = root
+				}
+				if = {
+					limit = {
+						NOT = {
+							exists = global_var:pool_adventurer_spawn
+						}
+					}
+					set_global_variable = {
+						name = pool_adventurer_spawn
+						value = 1
+					}
+				}
+				else = {
+					change_global_variable = {
+						name = pool_adventurer_spawn
+						add = 1
+					}
+				}
+			}	
+			500 = { # Just waste the gold on nonsense
+				add_prestige = minor_prestige_value
+				remove_short_term_gold = 500
+			}
+		}
+	}
+}
+
+wanderer_give_random_commander_trait_effect = {
+	random_list = {
+		100 = {
+			trigger = { NOT = { has_trait = logistician } }
+			add_trait = logistician
+		}
+		100 = {
+			trigger = { NOT = { has_trait = military_engineer } }
+			add_trait = military_engineer
+		}
+		100 = {
+			trigger = { NOT = { has_trait = aggressive_attacker } }
+			add_trait = aggressive_attacker
+		}
+		100 = {
+			trigger = { NOT = { has_trait = unyielding_defender } }
+			add_trait = unyielding_defender
+		}
+		100 = {
+			trigger = { NOT = { has_trait = forder } }
+			add_trait = forder
+		}
+		100 = {
+			trigger = { NOT = { has_trait = flexible_leader } }
+			add_trait = flexible_leader
+		}
+		100 = {
+			trigger = {
+				NOT = { has_trait = desert_warrior }
+				location = {
+					terrain = desert
+				}
+			}
+			add_trait = desert_warrior
+		}
+		100 = {
+			trigger = {
+				NOT = { has_trait = jungle_stalker }
+				location = {
+					terrain = jungle
+				}
+			}
+			add_trait = jungle_stalker
+		}
+		100 = {
+			trigger = {
+				NOT = { has_trait = winter_soldier }
+				location = {
+					OR = {
+						terrain = taiga
+						geographical_region = world_tibet
+						geographical_region = world_europe_north
+						geographical_region = world_europe_east
+						geographical_region = world_steppe
+					}
+				}
+			}
+			add_trait = winter_soldier
+		}
+		100 = {
+			trigger = { NOT = { has_trait = reaver } }
+			add_trait = reaver
+		}
+		100 = {
+			trigger = { NOT = { has_trait = reckless } }
+			add_trait = reckless
+		}
+		100 = {
+			trigger = { NOT = { has_trait = holy_warrior } }
+			add_trait = holy_warrior
+		}
+	}
+}
+
+wanderer_give_random_economic_trait_effect = {
+	random_list = {
+		100 = {
+			trigger = { NOT = { has_trait = architect } }
+			add_trait = architect
+		}
+		100 = {
+			trigger = { NOT = { has_trait = administrator } }
+			add_trait = administrator
+		}
+		100 = {
+			trigger = { NOT = { has_trait = avaricious } }
+			add_trait = avaricious
+		}
+		100 = {
+			trigger = { NOT = { has_trait = lifestyle_gardener } }
+			add_trait = lifestyle_gardener
+		}
+	}
+}

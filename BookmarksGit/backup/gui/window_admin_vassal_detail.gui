@@ -1,0 +1,1091 @@
+﻿window = {
+	name = "admin_vassal_detail_view"
+	widgetid = "admin_vassal_detail_view"
+	parentanchor = top|right
+	position = { -610 90 }
+	size = { 580 776 }
+
+	movable = no
+	layer = middle
+	allow_outside = yes
+
+	using = Window_Background
+	using = Window_Decoration
+
+	oncreate = "[BindTabsContext]"
+	oncreate = "[PdxGuiTabs.AddTab( 'overview' )]"
+	oncreate = "[PdxGuiTabs.AddTab( 'appointment' )]"
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+		position_x = -610
+		on_start = "[PdxGuiTabs.SetTabByKey( SelectLocalization( GetVariableSystem.Exists( 'AdminVassalDetailAppointment' ), 'appointment', 'overview' ) )]"
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+		position_x = -580
+	}
+
+	margin_widget = {
+		size = { 100% 100% }
+		using = Window_Margins
+
+		widget = {
+			datacontext = "[AdminVassalDetailView.GetTitle]"
+			datacontext = "[AdminVassalDetailView.GetGovernor]"
+			size = { 100% 100% }
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				state = {
+					name = "admin_vassal_details_refresh"
+					alpha = 0
+					duration = 0.2
+					next = "b"
+					using = Animation_Curve_Default
+				}
+
+				state = {
+					name = "b"
+					alpha = 1
+					duration = 0.2
+					using = Animation_Curve_Default
+				}
+
+				## Header Background
+				widget = {
+					datacontext = "[Title.GetProvince.GetHolding]"
+					size = { 498 170 }
+
+					background = {
+						using = Background_Area_Holding
+
+						mirror = horizontal
+					}
+
+					widget_theme_item_small = {
+						parentanchor = left|vcenter
+						position = { 0 27}
+
+						blockoverride "outer_size"
+						{
+							size = { 116 116 }
+						}
+
+						blockoverride "inner_size"
+						{
+							size = { 106 106 }
+						}
+
+						blockoverride "theme_item_onclick"
+						{
+							onclick = "[OpenGameViewData( 'title_view_window', Title.GetID )]"
+							onrightclick = "[DefaultOnCoatOfArmsRightClick(Title.GetID)]"
+							button_ignore = none
+						}
+					}
+
+					vbox = {
+						parentanchor = hcenter
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+						margin = { 0 10 }
+
+						text_label_center = {
+							text = "[Title.GetNameNoTooltip]"
+							default_format = "#high"
+							using = Font_Size_Medium
+						}
+
+						text_single = {
+							name = "tier_info"
+							layoutpolicy_horizontal = expanding
+							text = ADMIN_VASSAL_DETAILS_TITLE_TIER
+							align = center
+						}
+
+						expand = {}
+					}
+
+					# Window control buttons
+					flowcontainer = {
+						parentanchor = top|right
+						position = { -10 10 }
+
+						button_go_to_my_location = {
+							name = "button_goto"
+
+							onclick = "[DefaultOnCoatOfArmsClick( Title.GetID )]"
+							onclick = "[DefaultOnCoatOfArmsClick( Title.GetID )]"
+
+							tooltip = "ADMIN_VASSAL_DETAILS_LOCATION"
+							using = tooltip_ne
+						}
+
+						button_close = {
+							name = "button_close"
+
+							onclick = "[AdminVassalDetailView.Close]"
+
+							tooltip = "CLOSE_TOOLTIP"
+							shortcut = "close_window"
+							clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_close"
+						}
+					}
+				}
+
+				hbox_tab_buttons = {
+					name = "province_window_tabs"
+
+					blockoverride "tab_name"
+					{
+						text = "[PdxGuiTabItem.LocalizeTab( 'admin_vassal_tab' )]"
+					}
+
+					blockoverride "on_click"
+					{
+					}
+				}
+
+				## Appointment Tab
+				vbox = {
+					name = "appointment"
+					visible = "[PdxGuiTabs.IsTabSet( 'appointment' )]"
+					layoutpolicy_horizontal = expanding
+
+					using = Animation_Tab_Switch
+
+					vbox = {
+						name = "province_window_succession_info"
+						widgetid = "province_window_succession_info" #tutorial uses this
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+
+						margin = { 0 10 }
+
+						background = {
+							using = Background_Area
+						}
+
+						hbox_admin_title_successor_candidates_list = {
+							datacontext = "[AdminVassalDetailView.GetSuccessorCandidateList]"
+						}
+
+						# Candidate Investment Buttons
+						vbox = {
+							layoutpolicy_horizontal = expanding
+
+							margin = { 15 0 }
+							margin_top = 7
+							spacing = 10
+
+							text_multi = {
+								layoutpolicy_horizontal = expanding
+								
+								text = "[AdminVassalDetailView.GetSuccessionLineDesc]"
+								align = center|nobaseline
+								autoresize = yes
+								max_width = 470
+							}
+
+							# Scheme 'influence_candidacy_interaction'
+							button_standard = {
+								datacontext = "[AdminVassalDetailView.GetTitle]"
+								datacontext = "[AdminVassalDetailView.GetPreferredCandidate]"
+								visible = "[Character.IsPlayerInteractionShown('influence_candidacy_interaction')]"
+								layoutpolicy_horizontal = expanding
+								
+								minimumsize = { 0 40 }
+								
+								onclick = "[Character.OpenPlayerInteractionWithTargetTitle('influence_candidacy_interaction', Title.Self)]"
+								
+								tooltip = "[Character.GetPlayerInteractionTooltip('influence_candidacy_interaction')]"
+								tooltip_when_disabled = "[Character.GetPlayerInteractionValidBlockers('influence_candidacy_interaction')]"
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									margin = { 8 5 }
+									spacing = 5
+
+									expand = {}
+
+									button_promote_candidate = {
+										alwaystransparent = yes
+									}
+
+									text_single = {
+										visible = "[ObjectsEqual( Character.Self, GetPlayer )]"
+										max_width = 430
+
+										text = "ADMIN_VASSAL_DETAILS_VOTE_FOR_SUCCESSOR_BUTTON"
+										default_format = "#clickable"
+										align = nobaseline
+									}
+
+									text_single = {
+										visible = "[Not( ObjectsEqual( Character.Self, GetPlayer ) )]"
+										max_width = 430
+
+										text = "ADMIN_VASSAL_DETAILS_VOTE_FOR_SUCCESSOR_BUTTON_FOR"
+										default_format = "#clickable"
+										align = nobaseline
+									}
+
+									expand = {}
+								}
+							}
+
+							# Scheme 'start_promote_interaction' (if candidate exists)
+							button_standard = {
+								datacontext = "[AdminVassalDetailView.GetTitle]"
+								datacontext = "[AdminVassalDetailView.GetSuccessorCandidateList]"
+								datacontext = "[AdminVassalDetailView.GetPreferredCandidate]"
+								visible = "[Character.IsValid]"
+								layoutpolicy_horizontal = expanding
+								
+								minimumsize = { 0 40 }
+								
+								enabled = "[Character.IsPlayerInteractionValid('start_promote_interaction')]"
+								onclick = "[Character.OpenPlayerInteractionWithTargetTitle('start_promote_interaction', Title.Self)]"
+								
+								tooltip = "[Character.GetPlayerInteractionTooltip('start_promote_interaction')]"
+								tooltip_when_disabled = "[Character.GetPlayerInteractionValidBlockers('start_promote_interaction')]"
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									margin = { 8 5 }
+									spacing = 5
+
+									expand = {}
+
+									button_promote_candidate = {
+										alwaystransparent = yes
+									}
+
+									text_single = {
+										visible = "[ObjectsEqual( Character.Self, GetPlayer )]"
+										
+										text = "ADMIN_VASSAL_DETAILS_PROMOTE_BUTTON"
+										align = nobaseline
+										default_format = "#clickable"
+										max_width = 430
+									}
+
+									text_single = {
+										visible = "[Not( ObjectsEqual( Character.Self, GetPlayer ) )]"
+										
+										text = "ADMIN_VASSAL_DETAILS_PROMOTE_BUTTON_FOR"
+										align = nobaseline
+										default_format = "#clickable"
+										max_width = 430
+									}
+
+									expand = {}
+								}
+							}
+						}
+
+						text_multi = {
+							layoutpolicy_horizontal = expanding
+							margin = { 15 0 }
+							min_width = 460
+							
+							text = "ADMIN_VASSAL_DETAILS_SUCCESSION_DETAILS"
+							align = center|nobaseline
+							default_format = "#weak"
+						}
+					}
+				}
+
+				## Overview Tab
+				vbox = {
+					name = "overview"
+					visible = "[PdxGuiTabs.IsTabSet( 'overview' )]"
+					layoutpolicy_horizontal = expanding
+
+					using = Animation_Tab_Switch
+
+					# Top Section
+					vbox = {
+						layoutpolicy_horizontal = expanding
+
+						background = {
+							using = Background_Area
+						}
+
+						vbox = {
+							layoutpolicy_horizontal = expanding
+							margin_top = 5
+
+							# Vassal Obligation Info
+							vbox = {
+								datacontext = "[Character.GetVassalContract]"
+								datacontext = "[SubjectContract.GetContractGroup]"
+								datacontext = "[AdminVassalDetailView.GetPrimaryContractAndObligationItem]"
+								datacontext = "[PrimaryContractAndObligation.GetObligationLevel]"
+								visible = "[And( Character.IsValid, SubjectContract.IsValid )]"
+
+								layoutpolicy_horizontal = expanding
+
+								widget  = {
+									size = { 494 40 }
+									using = Background_Obligation_Banner_Right
+
+									text_single = {
+										parentanchor = vcenter
+										position = { 10 -4}
+										layoutpolicy_horizontal = expanding
+
+										text = "[ObligationLevel.GetName]"
+										default_format = "#underline"
+										align = nobaseline
+										using = Font_Size_Medium
+
+										tooltip = "[ObligationLevel.GetDesc]"
+									}
+								}
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+
+									margin = { 15 0 }
+									margin_bottom = 5
+									spacing = 5
+
+									vbox = {
+										datamodel = "[PrimaryContractAndObligation.GetObligationOptions]"
+
+										item = {
+											text_single = {
+												datacontext = "[ContractAndObligation.GetType]"
+												datacontext = "[ContractAndObligation.GetObligationLevel]"
+												max_width = 200
+												layoutpolicy_horizontal = expanding
+
+												text = "ADMIN_VASSAL_DETAILS_SUBJECT_OBLIGATION_INFO"
+												align = nobaseline
+											}
+										}
+									}
+
+									expand = {}
+
+									hbox_vassal_contract_button = {
+										blockoverride "vassal_contract_type_name" {}
+									}
+								}
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									margin_left = 10
+
+									divider_light = {
+										layoutpolicy_horizontal = expanding
+
+										modify_texture = {
+											texture = "gfx/interface/component_masks/mask_fade_horizontal_thick.dds"
+											blend_mode = alphamultiply
+											mirror = horizontal
+										}
+									}
+								}
+
+							}
+
+							# GOVERNOR EFFICIENCY | TAXES | LEVIES
+							hbox = {
+								name = "province_window_tax_levy_efficiency" #tutorial uses this
+								layoutpolicy_horizontal = expanding
+								datacontext = "[AdminVassalDetailView.GetGovernor]"
+
+								margin_top = 5
+								margin_left = 5
+								margin_right = 15
+
+								# GOVERNOR EFFICIENCY
+								hbox = {
+									spacing = 5
+
+									icon_governor_efficiency = {
+										size = { 42 42 }
+									}
+
+									vbox = {
+										text_single = {
+											layoutpolicy_horizontal = expanding
+
+											text = "[governor_efficiency|E]"
+											align = nobaseline
+										}
+
+										text_single = {
+											layoutpolicy_horizontal = expanding
+
+											text = "ADMIN_WINDOW_THEME_GOVERNOR_EFFICIENCY_NO_ICON"
+											default_format = "#high"
+											align = nobaseline
+											using = Font_Size_Medium
+
+											tooltip = "ADMIN_WINDOW_THEME_GOVERNOR_EFFICIENCY_TT"
+										}
+									}
+								}
+
+								expand = {}
+
+								# TAXES
+								hbox = {
+									spacing = 5
+
+									icon_gold = {
+										size = { 36 36 }
+									}
+
+									vbox = {
+										text_single = {
+											layoutpolicy_horizontal = expanding
+
+											text = "[taxes|E]"
+											align = nobaseline
+										}
+
+										hbox = {
+											spacing = 4
+
+											tooltip = "ADMIN_WINDOW_THEME_GOVERNOR_EFFICIENCY_TAX_LEVY_TT"
+											using = tooltip_se
+
+											text_single = {
+												layoutpolicy_horizontal = expanding
+
+												text = "ADMIN_VASSAL_DETAILS_TAX_CONTRIBUTION"
+												using = Font_Size_Medium
+												default_format = "#high"
+												align = nobaseline
+											}
+
+											text_single = {
+												visible = "[GreaterThanOrEqualTo_CFixedPoint( AdminVassalDetailView.GetTaxEfficiencyBonus, '(CFixedPoint)0' )]"
+												text = "ADMIN_VASSAL_DETAILS_TAX_EFFICIENCY_BONUS"
+												align = nobaseline
+												default_format = "#P"
+											}
+
+											text_single = {
+												visible = "[LessThan_CFixedPoint( AdminVassalDetailView.GetTaxEfficiencyBonus, '(CFixedPoint)0' )]"
+												text = "ADMIN_VASSAL_DETAILS_TAX_EFFICIENCY_BONUS"
+												align = nobaseline
+												default_format = "#N"
+											}
+										}
+									}
+								}
+
+								expand = {}
+
+								# LEVIES
+								hbox = {
+									spacing = 5
+
+									icon_levies = {
+										size = { 36 36 }
+									}
+
+									vbox = {
+										text_single = {
+											layoutpolicy_horizontal = expanding
+
+											text = "[levies|E]"
+											align = nobaseline
+										}
+
+										hbox = {
+											spacing = 4
+
+											tooltip = "ADMIN_WINDOW_THEME_GOVERNOR_EFFICIENCY_TAX_LEVY_TT"
+											using = tooltip_se
+
+											text_single = {
+												layoutpolicy_horizontal = expanding
+
+												text = "ADMIN_VASSAL_DETAILS_LEVY_CONTRIBUTION"
+												using = Font_Size_Medium
+												default_format = "#high"
+												align = nobaseline
+											}
+
+											text_single = {
+												visible = "[GreaterThanOrEqualTo_CFixedPoint( AdminVassalDetailView.GetLevyEfficiencyBonus, '(CFixedPoint)0' )]"
+												text = "ADMIN_VASSAL_DETAILS_LEVY_EFFICIENCY_BONUS"
+												align = nobaseline
+												default_format = "#P"
+											}
+
+											text_single = {
+												visible = "[LessThan_CFixedPoint( AdminVassalDetailView.GetLevyEfficiencyBonus, '(CFixedPoint)0' )]"
+												text = "ADMIN_VASSAL_DETAILS_LEVY_EFFICIENCY_BONUS"
+												align = nobaseline
+												default_format = "#N"
+											}
+										}
+									}
+								}
+							}
+
+							text_multi = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = shrinking
+
+								text = "ADMIN_VASSAL_DETAILS_OVERVIEW_DESC"
+								align = nobaseline
+								autoresize = yes
+								default_format = "#weak"
+								max_width = 460
+
+								margin_top = 5
+								margin_bottom = 15
+							}
+						}
+					}
+
+					widget = {
+						size = { 498 85 }
+
+						# Hired Troop Item
+						widget_province_army_item = {
+							datacontext = "[AdminVassalDetailView.GetHiredTroops]"
+							parentanchor = top|hcenter
+							position = { 0 -18 }
+
+							blockoverride "margins"
+							{
+								margin_right = 10
+							}
+
+							blockoverride "item_size"
+							{
+								size = { 498 100 }
+							}
+
+							blockoverride "theme_name"
+							{
+								text = "[GetPlayer.Custom('GetProvincialArmyConcept')]"
+							}
+
+							blockoverride "theme_item" {}
+
+							blockoverride "theme_item_margin"
+							{
+								margin_left = 10
+							}
+
+							blockoverride "reassign_troops_on_click"
+							{
+								onclick = "[CloseGameView('government_administration')]"
+							}
+						}
+					}
+
+					# Vassal Directive
+					hbox = {
+						margin = { 10 0 }
+						margin_right = 12
+						layoutpolicy_horizontal = expanding
+
+						vbox = {
+							layoutpolicy_horizontal = expanding
+
+							text_single = {
+								layoutpolicy_horizontal = expanding
+
+								text = "[vassal_directive|E]"
+								align = nobaseline
+								using = Font_Size_Medium
+							}
+
+							text_single = {
+								layoutpolicy_horizontal = expanding
+
+								text = "[Character.Custom('vassal_directive_text_and_icon')]"
+								align = nobaseline
+							}
+						}
+
+						button_round = {
+							datacontext = "[Title.GetHolder]"
+							visible = "[Character.IsPlayerInteractionShown('give_vassal_directive_interaction')]"
+							size = { 40 40 }
+
+							enabled = "[Character.IsPlayerInteractionValid('give_vassal_directive_interaction')]"
+							onclick = "[Character.OpenPlayerInteraction('give_vassal_directive_interaction')]"
+
+							tooltip = "[Character.GetPlayerInteractionTooltip('give_vassal_directive_interaction')]"
+							using = tooltip_se
+
+							button_give_directive = {
+								alwaystransparent = yes
+								parentanchor = center
+								size = { 30 30 }
+							}
+						}
+					}
+				}
+
+				expand = {}
+
+				widget_current_governor = {
+					datacontext = "[AdminVassalDetailView.GetGovernor]"
+				}
+			}
+		}
+	}
+}
+
+types AdminVassalDetails
+{
+	type widget_current_governor = widget {
+		size = { 500 130 }
+		allow_outside = yes
+
+		background = {
+			using = Background_Area
+		}
+
+		hbox = {
+			margin = { 5 0 }
+			spacing = 5
+			portrait_head = {}
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				margin_top = 8
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					text_single = {
+						max_width = 300
+
+						text = "ADMIN_VASSAL_DETAILS_CURRENT_GOVERNOR"
+						align = nobaseline
+					}
+
+					expand = {}
+				}
+
+				hbox_character_view_name_age_health = {
+					blockoverride "health_margin" {}
+				}
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					text_single = {
+						name = "character_relation_to_you"
+						max_width = 360
+						layoutpolicy_horizontal = expanding
+
+						text = "[Character.GetRelationToString( GetPlayer )]"
+						align = nobaseline
+
+						tooltip = "EXTENDED_RELATIONS_TOOLTIP"
+						using = tooltip_se
+					}
+					expand = {}
+				}
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					widget = {
+						size = { 46 46 }
+						allow_outside = yes
+
+						coa_house_tiny = {
+							datacontext = "[Character.GetHouse]"
+							position = { -5 0 }
+						}
+					}
+
+					text_single = {
+						datacontext = "[Character.GetHouse]"
+						max_width = 310
+						layoutpolicy_horizontal = expanding
+
+						text = "ADMINISTRATIVE_GOVERNMENT_HOUSE_WITH_NAME"
+						align = nobaseline
+					}
+				}
+
+				expand = {}
+			}
+
+			vbox = {
+				layoutpolicy_vertical = expanding
+				margin_top = 12
+				margin_right = 7
+
+				button_round = {
+					visible = "[And( Not( Character.IsLocalPlayer ), Not( Character.IsIndependentRuler ))]"
+
+					onclick = "[ToggleFilteredCharacterInteractionMenu( Character.Self, 'admin_governor' )]"
+
+					tooltip = "ADMIN_GOVERNMENT_GOVERNOR_INTERACTIONS_BUTTON_TOOLTIP"
+					tooltip_visible = "[Not( IsInteractionMenuOpenForCharacterWithFilter( Character.Self, 'admin_governor' ) )]"
+
+					button_icon = {
+						alwaystransparent = yes
+						parentanchor = center
+						margin_top = 10
+						size = { 30 30 }
+						texture = "gfx/interface/icons/flat_icons/character_interactions.dds"
+					}
+
+					text_single = {
+						parentanchor = bottom|hcenter
+						position = { 0 3 }
+						text = "[GetNumberOfValidInteractionsWithFilter( Character.Self, 'admin_governor' )]"
+						default_format = "#glow_color:{0.1,0.1,0.1,1.0}"
+
+						background = {
+							margin = { 5 0 }
+							margin_top = -5
+							using = Background_Area_Dark
+						}
+					}
+				}
+
+				expand = {}
+
+			}
+		}
+	}
+
+	type vbox_admin_vassal_successor_candidate = vbox {
+		margin = { 4 4 }
+		margin_bottom = 8
+
+		background = {
+			using = Background_Area
+		}
+
+		background = {
+			visible = "[AdminVassalSuccessorCandidate.IsLocalPlayerCandidate]"
+			using = Background_Frame_Gold
+		}
+
+		background = {
+			visible = "[Not( AdminVassalSuccessorCandidate.IsLocalPlayerCandidate )]"
+			using = Background_Frame
+		}
+
+		hbox = {
+			visible = "[GreaterThan_int32( AdminVassalSuccessorCandidate.GetCandidateIndex, '(int32)0' )]"
+
+			text_single = {
+				text = "ADMIN_VASSAL_DETAILS_SUCCESSOR_INDEX"
+			}
+		}
+
+		portrait_head = {
+			widget = {
+				parentanchor = top
+				size = { 56 64 }
+				position = { -6 2 }
+
+				widget = {
+					name = "investment_has_candidate"
+					visible = "[And( AdminVassalSuccessorCandidate.IsLocalPlayerWinnerOrAnyLoser, And( And( AdminVassalSuccessorCandidate.IsLocalPlayerCandidate, AdminVassalSuccessorCandidate.IsLocalPlayerInvested ), Not( AdminVassalSuccessorCandidate.IsLocalPlayerCandidateInFirst ) ) )]"
+
+					size = { 100% 100% }
+
+					tooltip = "ADMIN_WINDOW_THEME_ADMINISTRATION_LOCAL_PLAYER_HAS_INVESTED_LOSING_TT"
+
+					background = {
+						texture = "gfx/interface/window_theme_administration/admin_theme_no_sucession.dds"
+					}
+
+					button_promote_candidate = {
+						parentanchor = center
+						position = { 0 -8 }
+						alwaystransparent = yes
+					}
+				}
+
+				widget = {
+					name = "no_investment_has_candidate"
+					visible = "[And( AdminVassalSuccessorCandidate.IsLocalPlayerWinnerOrAnyLoser, And( And( AdminVassalSuccessorCandidate.IsLocalPlayerCandidate, Not( AdminVassalSuccessorCandidate.IsLocalPlayerInvested ) ), Not( AdminVassalSuccessorCandidate.IsLocalPlayerCandidateInFirst ) ) )]"
+
+					size = { 100% 100% }
+
+					tooltip = "ADMIN_WINDOW_THEME_ADMINISTRATION_LOCAL_PLAYER_HAS_CANDIDATE_LOSING_TT"
+
+					background = {
+						texture = "gfx/interface/window_theme_administration/admin_theme_no_sucession.dds"
+					}
+
+					button_house = {
+						parentanchor = center
+						position = { 0 -8 }
+						alwaystransparent = yes
+					}
+				}
+
+				widget = {
+					name = "player_candidate_in_first_invested"
+					visible = "[And( AdminVassalSuccessorCandidate.IsLocalPlayerWinnerOrAnyLoser, And( And( AdminVassalSuccessorCandidate.IsLocalPlayerCandidate, AdminVassalSuccessorCandidate.IsLocalPlayerCandidateInFirst ), AdminVassalSuccessorCandidate.IsLocalPlayerInvested ) )]"
+
+					size = { 100% 100% }
+
+					tooltip = "ADMIN_WINDOW_THEME_ADMINISTRATION_LOCAL_PLAYER_HAS_INVESTED_WINNING_TT"
+
+					background = {
+						texture = "gfx/interface/window_theme_administration/admin_theme_sucession.dds"
+					}
+
+					button_promote_candidate = {
+						parentanchor = center
+						position = { 0 -8 }
+						alwaystransparent = yes
+					}
+				}
+
+				widget = {
+					name = "player_candidate_in_first"
+					visible = "[And( AdminVassalSuccessorCandidate.IsLocalPlayerWinnerOrAnyLoser, And( And( AdminVassalSuccessorCandidate.IsLocalPlayerCandidate, AdminVassalSuccessorCandidate.IsLocalPlayerCandidateInFirst ), Not( AdminVassalSuccessorCandidate.IsLocalPlayerInvested ) ) )]"
+
+					size = { 100% 100% }
+
+					tooltip = "ADMIN_WINDOW_THEME_ADMINISTRATION_LOCAL_PLAYER_HAS_CANDIDATE_WINNING_TT"
+
+					background = {
+						texture = "gfx/interface/window_theme_administration/admin_theme_sucession.dds"
+					}
+
+					button_house = {
+						parentanchor = center
+						position = { 0 -8 }
+						alwaystransparent = yes
+					}
+				}
+			}
+		}
+
+		hbox = {
+			spacing = 15
+
+			
+
+			
+
+			# Merit
+			widget_merit = {
+				datacontext = "[AdminVassalSuccessorCandidate.GetMeritItem]"
+				visible = "[Character.HasMerit]"
+
+				blockoverride "icon_size"
+				{
+					size = { 24 24 }
+				}
+			}
+
+			hbox = {
+				spacing = 5
+				icon = {
+					size = { 24 24 }
+					texture = "gfx/interface/icons/appointment_score.dds"
+				}
+
+				text_single = {
+					text = ADMIN_VASSAL_DETAILS_SUCCESSOR_SCORES
+					align = nobaseline
+				}
+
+				tooltipwidget = {
+					widget_value_breakdown_tooltip = {
+						block "score_breakdown" {
+							datacontext = "[AdminVassalDetailView.GetSuccessionScoreBreakdown(AdminVassalSuccessorCandidate.GetCandidate.Self )]"
+						}
+						blockoverride "header_text" {
+							text = ADMIN_VASSAL_CANDIDATE_SCORE_TT_HEADING
+						}
+					}
+				}
+
+				using = tooltip_se
+			}
+		}
+	}
+
+	type hbox_admin_title_successor_candidates_list = hbox {
+		hbox = {
+			visible = "[AdminVassalSuccessorCandidateList.ShowBestPlayerCandidateIndependently( '(int32)3' )]"
+			spacing = 0
+
+			hbox = {
+				datamodel = "[DataModelFirst( AdminVassalSuccessorCandidateList.GetSuccessorCandidates, '(int32)3')]"
+
+				spacing = 0
+
+				item = {
+					vbox_admin_vassal_successor_candidate = {
+						datacontext = "[AdminVassalSuccessorCandidate.GetCandidate]"
+					}
+				}
+			}
+
+			vbox_admin_vassal_successor_candidate = {
+				datacontext = "[AdminVassalSuccessorCandidateList.GetBestLocalPlayerCandidate( '(int32)3' )]"
+				datacontext = "[AdminVassalSuccessorCandidate.GetCandidate]"
+			}
+		}
+
+		hbox = {
+			visible = "[Not( AdminVassalSuccessorCandidateList.ShowBestPlayerCandidateIndependently( '(int32)3' ) )]"
+			datamodel = "[DataModelFirst( AdminVassalSuccessorCandidateList.GetSuccessorCandidates, '(int32)4')]"
+			spacing = 0
+
+			item = {
+				vbox_admin_vassal_successor_candidate = {
+					datacontext = "[AdminVassalSuccessorCandidate.GetCandidate]"
+				}
+			}
+		}
+
+		hbox = {
+			visible = "[IsDataModelEmpty( AdminVassalSuccessorCandidateList.GetSuccessorCandidates )]"
+
+			text_single = {
+				text = ADMIN_VASSAL_DETAILS_NO_SUCCESSORS
+				default_format = "#low"
+			}
+		}
+	}
+
+	type powerful_family_bonus = powerful_family_bonus_icon_with_frame {
+		name = "powerful_family_bonus"
+
+		datacontext = "[DynastyHouse.GetHouseAspiration]"
+
+		visible = "[HouseAspiration.IsValid]"
+
+		tooltipwidget = {
+			using = house_attribute_tooltip
+		}
+
+	}
+
+	type powerful_family_bonus_icon_with_frame = highlight_icon {
+		size = { 32 32 }
+
+		icon = {
+			parentanchor = center
+			size = { 100% 100% }
+			texture = "gfx/interface/window_theme_administration/icon_house_aspiration_blue_frame.dds"
+
+			block "powerful_family_bonus_frame_properties"
+			{
+			
+			}
+		}
+
+		powerful_family_bonus_icon = {
+			size = { 100% 100% }
+		}
+	}
+
+	type powerful_family_bonus_icon = widget {
+		block "family_bonus_size" {
+			size = { 42 42 }
+		}
+
+		widget = {
+			parentanchor = center
+			size = { 90% 90% }
+
+			block "flat_visible" {
+				visible = "[Not(HasSpecialHouseAspiration(DynastyHouse))]"
+			}
+
+			icon_flat_standard = {
+				size = { 70% 70% }
+				parentanchor = center
+
+				texture = "[HouseAspiration.GetSmallIcon]"
+			}
+		}
+
+		widget = {
+			size = { 100% 100% }
+
+			block "rendered_visible" {
+				visible = "[HasSpecialHouseAspiration(DynastyHouse)]"
+			}
+
+			highlight_icon = {
+				size = { 92% 92% }
+				position = { 0 -2}
+				parentanchor = center
+
+				texture = "[HouseAspiration.GetSmallIcon]"
+			}
+
+			block "level_icons" {
+				flowcontainer = {
+					visible = "[HouseAspiration.HasMultipleLevels]"
+					datamodel = "[HouseAspiration.GetLevels]"
+					position = { 0 2}
+					spacing = -4
+					parentanchor = bottom|hcenter
+					ignoreinvisible = yes
+
+					item = {
+						icon_flat_standard_gold = {
+							size = { 16 16 }
+							texture = "gfx/interface/icons/flat_icons/star.dds"
+							visible = "[And(LessThanOrEqualTo_int32( PdxGuiWidget.GetIndexInDataModel, DynastyHouse.GetHouseAspirationLevelIndex ),LessThanOrEqualTo_int32( PdxGuiWidget.GetIndexInDataModel, '(int32)2' ))]"
+
+							glow = {
+								glow_radius = 3
+								using = Glow_Standard
+								using = Color_Black
+								alpha = 1
+							}
+						}
+					}
+				}
+
+				flowcontainer = {
+					visible = "[HouseAspiration.HasMultipleLevels]"
+					datamodel = "[HouseAspiration.GetLevels]"
+					position = { 0 10}
+					spacing = -4
+					parentanchor = bottom|hcenter
+					ignoreinvisible = yes
+
+					item = {
+						icon_flat_standard_gold = {
+							size = { 16 16 }
+							texture = "gfx/interface/icons/flat_icons/star.dds"
+							visible = "[And(LessThanOrEqualTo_int32( PdxGuiWidget.GetIndexInDataModel, DynastyHouse.GetHouseAspirationLevelIndex ),GreaterThanOrEqualTo_int32( PdxGuiWidget.GetIndexInDataModel, '(int32)3' ))]"
+
+							glow = {
+								glow_radius = 3
+								using = Glow_Standard
+								using = Color_Black
+								alpha = 1
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

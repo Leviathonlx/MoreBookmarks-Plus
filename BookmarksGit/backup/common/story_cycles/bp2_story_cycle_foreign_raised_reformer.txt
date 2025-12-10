@@ -1,0 +1,184 @@
+﻿story_foreign_raised_reformer = {
+	# by Jason Cantalini
+	
+	on_setup = {
+		story_owner = {
+			set_variable = {
+ 				name = reform_counter
+ 				value = 0
+ 			}
+ 			set_variable = {
+ 				name = reaffirmation_counter
+ 				value = 0
+ 			}
+ 		}
+	}
+#
+	on_end = {
+		debug_log = "Foreign-Raised Reformer story ended on:"
+		debug_log_date = yes
+		story_owner = {
+			if = {
+				limit = { is_alive = yes }
+				remove_character_flag = hostage_childhood
+				remove_character_flag = education_childhood
+				remove_character_flag = foreign_realm_reforms
+				remove_character_flag = rejecting_foreign_realm_reforms
+				remove_character_flag = foreign_social_reforms
+				remove_character_flag = rejecting_foreign_social_reforms
+				remove_character_flag = foreign_ritual_reforms
+				remove_character_flag = rejecting_foreign_ritual_reforms
+				remove_character_flag = foreign_maa_reforms
+				remove_character_flag = rejecting_foreign_maa_reforms
+				remove_variable = childhood_location
+				remove_variable = advanced_culture
+				remove_variable = advanced_realm
+				remove_variable = foreign_educator
+				remove_variable = advanced_culture_faith
+				remove_variable = reform_counter
+				remove_variable = reaffirmation_counter
+				clear_variable_list = rejected_traditions
+			}
+		}
+	}
+#
+	on_owner_death = {
+		end_story = yes
+	}
+
+	# Oh you changed culture? Story ends
+	effect_group = {
+		days = { 40 80 }
+
+		trigger = {
+			story_owner = { exists = var:advanced_culture }
+		}
+
+		first_valid = {
+			triggered_effect = {
+				trigger = {
+					story_owner = { culture = var:advanced_culture }
+				}
+				effect = {
+					end_story = yes
+				}
+			}
+		}
+	}
+
+	# Something happens - random events
+	effect_group = {
+		days = { 80 120 }
+
+		trigger = {
+			story_owner = { exists = var:advanced_culture }
+		}
+
+		first_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = {
+					story_owner = {
+						trigger_event = {
+							on_action = ongoing_foreign_raised_reformer_events
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# Reaffirmation conclusion!
+	effect_group = {
+		days = { 30 60 }
+
+		trigger = {
+			has_bp2_dlc_trigger = yes
+			
+			story_owner = {
+				exists = var:advanced_culture
+				exists = var:childhood_location
+				is_at_war = no
+				is_landed_or_landless_administrative = yes
+				is_imprisoned = no
+				is_incapable = no
+				NOT = { has_character_flag = had_event_bp2_yearly_6090 }
+				OR = {
+					any_vassal = {
+						is_imprisoned = no
+						age > 13
+						is_at_war = no
+						culture = prev.culture
+					}
+					any_courtier = {
+						is_imprisoned = no
+						age > 13
+						is_at_war = no
+						culture = prev.culture
+					}
+				}
+				var:reaffirmation_counter >= 2
+			}
+		}
+
+		first_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = {
+					story_owner = {
+						trigger_event = bp2_yearly.6090
+					}
+				}
+			}
+		}
+	}
+
+	# Reform conclusion!
+	effect_group = {
+		days = { 60 80 }
+
+		trigger = {
+			has_bp2_dlc_trigger = yes
+			
+			story_owner = {
+				exists = var:advanced_culture
+				exists = var:childhood_location
+				is_at_war = no
+				is_landed_or_landless_administrative = yes
+				is_imprisoned = no
+				is_incapable = no
+				NOT = { has_character_flag = had_event_bp2_yearly_6100 }
+				var:reform_counter >= 3
+			}
+		}
+
+		first_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = {
+					story_owner = {
+						trigger_event = bp2_yearly.6100
+					}
+				}
+			}
+		}
+	}
+
+	#Maintenance group
+	effect_group = {
+		days = 1
+		trigger = {
+			story_owner = { is_landed = no }
+		}
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				#You became a landless adventurer/administrative! Ending story prematurely.
+				story_owner = { save_scope_as = story_owner }
+				debug_log = "Reformer invalidated"
+				debug_log_scopes = yes
+				end_story = yes
+			}
+		}
+	}
+}

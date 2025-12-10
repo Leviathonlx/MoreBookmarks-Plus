@@ -1,0 +1,1986 @@
+﻿###########################################
+# ON ACTIONS FOR CREATING MANDALA REALM CONTRACTS
+###########################################
+
+spawn_mandala_realm_contract_on_action = {
+	# Select a random eligible contract to create
+	random_on_action = {
+		# Any Aspect
+		100 = on_action_mandala_realm_contract_0001
+		# Creation Aspect
+		100 = on_action_mandala_realm_contract_0002 # Barren Cattle // Also generic
+		75 = on_action_mandala_realm_contract_0003 # The First Seed
+		100 = on_action_mandala_realm_contract_0004 # Sacred Heifer // Also generic
+		100 = on_action_mandala_realm_contract_0005 # Divine Witness
+		75 = on_action_mandala_realm_contract_0006 # Midwives' Dream
+		75 = on_action_mandala_realm_contract_0007 # Weeping Statue // Also generic
+		100 = on_action_mandala_realm_contract_0008 # Sprouting Flowers
+		100 = on_action_mandala_realm_contract_0009 # River Ritual
+		100 = on_action_mandala_realm_contract_0010 # Cursed Fields // Also generic
+		100 = on_action_mandala_realm_contract_0011 # Withered Grove
+		# Destruction Aspect
+		100 = on_action_mandala_realm_contract_0012 # Pig Slaughter Oath // Also generic
+		100 = on_action_mandala_realm_contract_0013 # Ritual Wrath
+		100 = on_action_mandala_realm_contract_0014 # Collective Punishment // Also generic
+		100 = on_action_mandala_realm_contract_0015 # Diseased Spirits
+		100 = on_action_mandala_realm_contract_0016 # Dull Spears
+		100 = on_action_mandala_realm_contract_0017 # Defiant Village
+		100 = on_action_mandala_realm_contract_0018 # Blood Tax
+		100 = on_action_mandala_realm_contract_0019 # Bamboo Rebels // Also generic
+		100 = on_action_mandala_realm_contract_0020 # Road Sacrifice // Also generic
+		100 = on_action_mandala_realm_contract_0021 # War God Festival
+		# Serenity Aspect
+		100 = on_action_mandala_realm_contract_0022 # Quarreling Monks // Also generic
+		100 = on_action_mandala_realm_contract_0023 # Purify Battlefield
+		100 = on_action_mandala_realm_contract_0024 # Bless the Weavers // Also generic
+		100 = on_action_mandala_realm_contract_0025 # Breaking of Spears
+		75 = on_action_mandala_realm_contract_0026 # Guru's Peace // Also generic
+		100 = on_action_mandala_realm_contract_0027 # Reconciliation Edict
+		75 = on_action_mandala_realm_contract_0028 # Eightfold Path // Also generic
+		100 = on_action_mandala_realm_contract_0029 # Grove Guardians
+		100 = on_action_mandala_realm_contract_0030 # Vow of Stillness
+		100 = on_action_mandala_realm_contract_0031 # Stone-laying
+		# Trickery Aspect
+		75 = on_action_mandala_realm_contract_0032 # Laughing Ascetic // Also generic
+		100 = on_action_mandala_realm_contract_0033 # Spirit Decoy
+		125 = on_action_mandala_realm_contract_0034 # Game of Wit // Also generic
+		75 = on_action_mandala_realm_contract_0035 # Divine Thief
+		100 = on_action_mandala_realm_contract_0036 # Trickster's Trial
+		100 = on_action_mandala_realm_contract_0037 # Festival of Reversal
+		100 = on_action_mandala_realm_contract_0038 # Goat Oracle // Also generic
+		100 = on_action_mandala_realm_contract_0039 # Beasts in the Jungle
+		100 = on_action_mandala_realm_contract_0040 # River Naga
+		100 = on_action_mandala_realm_contract_0041 # Promised Land // Also generic
+	}
+}
+
+on_action_mandala_realm_contract_0001 = {
+	trigger = {
+		any_sub_realm_county = {
+			any_county_province = {
+				has_holding = yes
+				NOR = {
+					this = scope:mandala_ruler.capital_province
+					has_variable = requested_mandala_ritual
+					has_variable = mandala_ritual_cooldown
+				}
+			}
+		}
+	}
+
+	effect = {
+		# Select a suitable location
+		random_sub_realm_county = {
+			limit = {
+				any_county_province = {
+					has_holding = yes
+					NOR = {
+						this = scope:mandala_ruler.capital_province
+						has_variable = requested_mandala_ritual 
+						has_variable = mandala_ritual_cooldown
+					}
+				}
+			}
+			random_county_province = {
+				limit = {
+					has_holding = yes
+					NOR = {
+						this = scope:mandala_ruler.capital_province
+						has_variable = requested_mandala_ritual
+						has_variable = mandala_ritual_cooldown
+					}
+				}
+				save_scope_as = target_province
+				#Consider county_opinion as a factor
+				random_list = {
+					30 = {
+						save_scope_value_as = {
+							name = mandala_task_contract_tier
+							value = define:NTaskContract|LOW_TASK_CONTRACT_TIER
+						}
+					}
+					10 = {
+						save_scope_value_as = {
+							name = mandala_task_contract_tier
+							value = define:NTaskContract|MEDIUM_TASK_CONTRACT_TIER
+						}
+
+						modifier = {
+							add = 10
+							prev.county_opinion >= 10
+						}
+						modifier = {
+							add = 10
+							prev.county_opinion >= 20
+						}
+					}
+					5 = {
+						save_scope_value_as = {
+							name = mandala_task_contract_tier
+							value = define:NTaskContract|HIGH_TASK_CONTRACT_TIER
+						}
+
+						modifier = {
+							add = 10
+							prev.county_opinion >= 40
+						}
+						modifier = {
+							add = 10
+							prev.county_opinion >= 60
+						}
+						modifier = {
+							add = 10
+							prev.county_opinion >= 80
+						}
+						modifier = {
+							add = 10
+							prev.county_opinion >= 100
+						}
+					}
+				}
+			}
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0001
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Barren Cattle
+on_action_mandala_realm_contract_0002 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_creation }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0002
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# The First Seed
+on_action_mandala_realm_contract_0003 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_no_holding_trigger = yes
+		house = { has_house_power_parameter = aspect_of_creation }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_no_holding_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control >= 100
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0003
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Sacred Heifer
+on_action_mandala_realm_contract_0004 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_creation }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					has_building_or_higher = pastures_01
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0004
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Divine Witness
+on_action_mandala_realm_contract_0005 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_creation }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					barony.holder ?= {
+						is_ai = yes
+						is_married = yes
+						primary_spouse = { is_ai = yes }
+						NOT = {
+							any_child = { is_alive = yes }
+						}
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0005
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Midwives' Dream
+on_action_mandala_realm_contract_0006 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_creation }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0006
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Weeping Statue
+on_action_mandala_realm_contract_0007 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_creation }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					OR = {
+						has_building_or_higher = cereal_fields_01
+						has_building_or_higher = paddy_fields_01
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = stone_head_shrine_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0007
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Sprouting Flowers
+on_action_mandala_realm_contract_0008 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_creation }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					OR = {
+						has_building_or_higher = cereal_fields_01
+						has_building_or_higher = paddy_fields_01
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = fertile_ground_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0008
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# River Ritual
+on_action_mandala_realm_contract_0009 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_creation }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					is_riverside_province = yes
+				}
+				modifier = {
+					add = 10
+					OR = {
+						is_coastal = yes
+						is_lakeside_province = yes
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0009
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Cursed Fields
+on_action_mandala_realm_contract_0010 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_creation }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					OR = {
+						has_building_or_higher = cereal_fields_01
+						has_building_or_higher = paddy_fields_01
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0010
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Withered Grove
+on_action_mandala_realm_contract_0011 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_creation }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					has_building_or_higher = hunting_grounds_01
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = lush_grove_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0011
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Pig Slaughter Oath
+on_action_mandala_realm_contract_0012 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_with_neighbor_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_destruction }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_with_neighbor_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county = {
+						any_neighboring_county = {
+							holder = {
+								NOR = {
+									top_liege ?= root
+									top_suzerain ?= root
+								}
+							}
+						}
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0012
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Ritual Wrath
+on_action_mandala_realm_contract_0013 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_destruction }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0013
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Collective Punishment
+on_action_mandala_realm_contract_0014 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_destruction }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = collective_punishments_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0014
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Diseased Spirits
+on_action_mandala_realm_contract_0015 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_destruction }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = no_healers_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0015
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Dull Spears
+on_action_mandala_realm_contract_0016 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_destruction }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = motivated_men_at_arms_modifier
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = safer_roads_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0016
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Defiant Village
+on_action_mandala_realm_contract_0017 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_destruction }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					county = { has_county_modifier = slaughtered_village_modifier }
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0017
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Blood Tax
+on_action_mandala_realm_contract_0018 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_destruction }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = enforced_levy_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0018
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Bamboo Rebels
+on_action_mandala_realm_contract_0019 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_destruction }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = well_armed_peasants_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0019
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Road Sacrifice
+on_action_mandala_realm_contract_0020 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_destruction }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = safer_roads_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0020
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# War God Festival
+on_action_mandala_realm_contract_0021 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_destruction }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control < 100
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = safer_roads_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0021
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Quarreling Monks
+on_action_mandala_realm_contract_0022 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_serenity }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					OR = {
+						has_holding_type = church_holding
+						has_holding_type = temple_citadel_holding
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = upset_monks_modifier
+					}
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = new_shrines_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0022
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Purify Battlefield
+on_action_mandala_realm_contract_0023 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_serenity }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 10
+					county.county_control < 100
+				}
+				modifier = {
+					add = 100
+					county = { has_county_modifier = recently_looted_modifier }
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0023
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Bless the Weavers
+on_action_mandala_realm_contract_0024 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_serenity }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					has_holding_type = city_holding
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0024
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Breaking of Spears
+on_action_mandala_realm_contract_0025 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_serenity }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = -200
+					has_province_modifier = feudless_village_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0025
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Guru's Peace
+on_action_mandala_realm_contract_0026 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.45
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_serenity }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control > 100
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = generation_of_peace_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0026
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Reconciliation Edict
+on_action_mandala_realm_contract_0027 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_serenity }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control > 100
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = weapon_ban_modifier
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = arbitration_edict_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0027
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Eightfold Path
+on_action_mandala_realm_contract_0028 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_serenity }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control > 100
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = eightfold_path_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0028
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Grove Guardians
+on_action_mandala_realm_contract_0029 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_serenity }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					OR = {
+						terrain = jungle
+						terrain = forest
+						terrain = taiga
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = well_protected_groves_modifier
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = garrisoned_groves_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0029
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Vow of Stillness
+on_action_mandala_realm_contract_0030 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_serenity }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control > 100
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = discordant_town_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0030
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Stone-laying
+on_action_mandala_realm_contract_0031 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_serenity }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.county_control > 100
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = pious_silpakaras_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0031
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Laughing Ascetic
+on_action_mandala_realm_contract_0032 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.45
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_trickery }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					county.culture != root.culture
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0032
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Spirit Decoy
+on_action_mandala_realm_contract_0033 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_trickery }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = mocked_idol_modifier
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = vegetable_idol_modifier
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = ruler_idol_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0033
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Game of Wit
+on_action_mandala_realm_contract_0034 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.25
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_trickery }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = { # Is your vassal
+					add = 100
+					barony.holder = {
+						is_vassal_of = root
+						is_available_ai_adult = yes
+					}
+				}
+				modifier = { # Is your tributary
+					add = 100
+					barony.holder = {
+						is_tributary_of = root
+						is_available_ai_adult = yes
+					}
+				}
+				modifier = { # Is held by you
+					add = -500
+					county.holder = root
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0034
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Divine Thief
+on_action_mandala_realm_contract_0035 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_trickery }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = omnipresent_authority_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0035
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Trickster's Trial
+on_action_mandala_realm_contract_0036 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_trickery }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = { # Is within a tributaries lands
+					add = 100
+					county.holder.top_liege != root.top_liege
+				}
+				modifier = { # Is an independent tributary
+					add = 100
+					county.holder.top_liege = county.holder.top_liege
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0036
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Festival of Reversal
+on_action_mandala_realm_contract_0037 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_trickery }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0037
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Goat's Sermon
+on_action_mandala_realm_contract_0038 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.4
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_trickery }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = -200
+					has_province_modifier = goat_oracle_modifier
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = punished_charlatan_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0038
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Beasts in the Jungle
+on_action_mandala_realm_contract_0039 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_trickery }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = beast_free_modifier
+					}
+				}
+				modifier = {
+					add = -200
+					county = {
+						has_county_modifier = brimming_with_beasts_modifier
+					}
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0039
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# River Naga
+on_action_mandala_realm_contract_0040 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_trigger = yes
+		house = { has_house_power_parameter = aspect_of_trickery }
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = {
+					add = 100
+					is_riverside_province = yes
+				}
+				modifier = {
+					add = 10
+					OR = {
+						is_coastal = yes
+						is_lakeside_province = yes
+					}
+				}
+				modifier = {
+					add = -200
+					has_province_modifier = river_crocodile_god_modifier
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0040
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}
+
+# Promised Land
+on_action_mandala_realm_contract_0041 = {
+	trigger = {
+		there_is_any_valid_mandala_contract_spot_no_holding_trigger = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.35
+			NOT = {
+				house = { has_house_power_parameter = aspect_of_trickery }
+			}
+		}
+	}
+
+	effect = {
+		add_all_valid_mandala_contract_provinces_no_holding_to_list_effect = yes
+		
+		# Select a suitable location
+		random_in_list = {
+			list = valid_target_provinces
+			weight = {
+				base = 1
+				modifier = { # In your lands
+					add = 125
+					county.holder.top_liege = root.top_liege
+				}
+			}
+			save_scope_as = target_province
+			set_mandala_contract_tier_effect = yes
+		}
+		
+		# Create the contract
+		create_task_contract = {
+			task_contract_type = mandala_realm_contract_0041
+			task_contract_tier = scope:mandala_task_contract_tier
+			location = scope:target_province
+			save_scope_as = new_mandala_visit
+		}
+		
+		# General post-creation set up
+		manage_new_mandala_contract_effect = yes
+	}
+}

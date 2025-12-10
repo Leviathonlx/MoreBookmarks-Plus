@@ -1,0 +1,105 @@
+﻿
+# Fires when a mercenary company is hired by a character
+#
+# root - the mercenary company
+# scope:employer - the character who has hired the mercenary company 
+#
+on_mercenary_company_hired = {
+	effect = {
+		if = {
+			limit = {
+				scope:employer = { government_has_flag = government_is_nomadic }
+			}
+			scope:employer.domicile ?= {
+				switch = {
+					trigger = has_domicile_parameter
+					nomad_yurt_merc_hired_bonus_lvl_1 = {
+						scope:employer = { add_character_modifier = mpo_yurt_merc_modifier_1 }
+					}
+					nomad_yurt_merc_hired_bonus_lvl_2 = {
+						scope:employer = { add_character_modifier = mpo_yurt_merc_modifier_2 }
+					}
+					nomad_yurt_merc_hired_bonus_lvl_3 = {
+						scope:employer = { add_character_modifier = mpo_yurt_merc_modifier_3 }
+					}
+				}
+			}	
+		}
+	}
+	
+}
+
+# Fires when a mercenary company is dismissed (contract expires)
+# May also happen on Succession, Title & Vassal Change
+#
+# root - the mercenary company
+# scope:old_employer - the character who previously hired the mercenary company
+#
+on_mercenary_company_dismissed = {
+	effect = {
+		if = {
+			limit = {
+				scope:old_employer = { government_has_flag = government_is_nomadic }
+			}
+			root.holder = {
+				set_variable = {
+					name = merc_knight_gain_chance
+					value = 0
+				}
+				random_knight = {
+					weight = {
+						modifier = { factor = prowess }
+					}
+					save_scope_as = giveaway_knight
+				}
+			}
+			scope:old_employer.domicile ?= {
+				switch = {
+					trigger = has_domicile_parameter
+					nomad_yurt_merc_fired_bonus_lvl_1 = {
+						root.holder = { change_variable = { name = merc_knight_gain_chance add = 20 } }
+					}
+					nomad_yurt_merc_fired_bonus_lvl_2 = {
+						root.holder = { change_variable = { name = merc_knight_gain_chance add = 40 } }
+					}
+					nomad_yurt_merc_fired_bonus_lvl_3 = {
+						root.holder = { change_variable = { name = merc_knight_gain_chance add = 60 } }
+					}	
+				}
+				random = {
+					chance = root.holder.var:merc_knight_gain_chance
+					scope:old_employer = {
+						send_interface_message = {
+							type = event_generic_good
+							title = merc_yurt_knights_gained.tt
+							add_courtier = scope:giveaway_knight
+						}
+					}					
+				}
+			}
+		}
+		scope:old_employer = {
+			if = {
+				limit = {
+					OR = {
+						has_character_modifier = mpo_yurt_merc_modifier_1
+						has_character_modifier = mpo_yurt_merc_modifier_2
+						has_character_modifier = mpo_yurt_merc_modifier_3
+					}				
+				}
+				switch = {
+					trigger = has_character_modifier
+					mpo_yurt_merc_modifier_1 = {
+						remove_character_modifier = mpo_yurt_merc_modifier_1
+					}
+					mpo_yurt_merc_modifier_2 = {
+						remove_character_modifier = mpo_yurt_merc_modifier_2
+					}
+					mpo_yurt_merc_modifier_3 = {
+						remove_character_modifier = mpo_yurt_merc_modifier_3
+					}
+				}
+			}
+		}
+	}
+}

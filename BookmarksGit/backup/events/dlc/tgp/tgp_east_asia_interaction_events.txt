@@ -1,0 +1,650 @@
+﻿
+namespace = tgp_east_asia_interaction_events
+
+#Notify the former Suzerain that they were dropped!
+tgp_east_asia_interaction_events.0010 = {
+	type = letter_event
+	opening = tgp_east_asia_interaction_events.0010.opening
+	desc = tgp_east_asia_interaction_events.0010.desc
+	sender = {
+		character = scope:leaving_tributary
+		animation = personality_honorable
+	}
+	immediate = {
+		custom_tooltip = tgp_east_asia_interaction_events.0010.tt
+	}
+	#How can this be!
+	option = {
+		name = tgp_east_asia_interaction_events.0010.a
+	}
+}
+
+
+#I'm sorry, let me keep being your tributary for a while longer!
+tgp_east_asia_interaction_events.0020 = {
+	type = letter_event
+	opening = tgp_east_asia_interaction_events.0020.opening
+	desc = tgp_east_asia_interaction_events.0020.desc
+	sender = {
+		character = scope:recipient
+		animation = personality_honorable
+	}
+	immediate = {
+		if = {
+			limit = {
+				NOR = {
+					scope:decrease_tax_obligation_1 = yes
+					scope:decrease_tax_obligation_2 = yes
+					scope:decrease_tax_obligation_3 = yes
+					scope:decrease_tax_obligation_4 = yes
+					scope:decrease_tax_obligation_5 = yes
+					scope:decrease_piety_obligation_1 = yes
+					scope:decrease_piety_obligation_2 = yes
+					scope:decrease_prestige_obligation_1 = yes
+					scope:decrease_prestige_obligation_2 = yes
+					scope:decrease_levy_obligation_1 = yes
+					scope:decrease_levy_obligation_2 = yes
+					scope:decrease_levy_obligation_3 = yes
+					scope:decrease_levy_obligation_4 = yes
+					scope:decrease_levy_obligation_5 = yes
+					scope:hook = yes
+					#scope:dread = yes
+				}
+			}
+			#You're quite the smooth-talker huh
+			scope:actor.dynasty = {
+				show_as_tooltip = {
+					add_dynasty_prestige = {
+						value = miniscule_dynasty_prestige_value
+						divide = 2
+					}
+				}
+			}
+		}
+	}
+	#That's what I thought.
+	option = {
+		name = tgp_east_asia_interaction_events.0020.a
+		custom_tooltip = reassert_tributary_interaction_effect_tt
+	}
+}
+
+#Nah, I don't feel like being reasserted
+tgp_east_asia_interaction_events.0025 = {
+	type = letter_event
+	opening = tgp_east_asia_interaction_events.0025.opening
+	desc = tgp_east_asia_interaction_events.0025.desc
+	sender = {
+		character = scope:recipient
+		animation = dismissal
+	}
+	immediate = {
+		scope:actor = { add_prestige = medium_prestige_loss }
+		scope:recipient = {
+			add_opinion = {
+				modifier = reassertion_request_denied_opinion
+				target = scope:actor
+				opinion = -20
+			}
+		}
+	}
+	#Ayyy
+	option = {
+		name = tgp_east_asia_interaction_events.0025.a
+	}
+}
+
+
+#Suzerain: Your Tributary is being Embraced by someone else!
+tgp_east_asia_interaction_events.0030 = {
+	type = character_event
+	title = tgp_east_asia_interaction_events.0030.t
+	desc = tgp_east_asia_interaction_events.0030.desc
+	theme = mandala
+	left_portrait = {
+		character = scope:recipient
+		animation = prayer
+		camera = camera_event_very_left_further_back
+	}
+	right_portrait = {
+		character = scope:actor
+		animation = wedding_priest
+		camera = camera_event_scheme_far_right
+	}
+	immediate = {
+		add_character_flag = allowed_war_declaration_sans_truce_penalties
+	}
+	#Spend some resources
+	option = {
+		name = tgp_east_asia_interaction_events.0030.a
+		#Pay some resources to make them stay
+		add_piety = major_piety_loss
+		#Let the instigator know what happened
+		scope:actor = { trigger_event = tgp_east_asia_interaction_events.0035 }
+		ai_chance = {
+			base = 100
+			modifier = {
+				piety <= major_piety_value
+				factor = 0
+			}
+		}
+	}
+	#Start a war against the Tributary
+	option = {
+		name = tgp_east_asia_interaction_events.0030.b
+		scope:recipient.suzerain = { save_scope_as = warring_suzerain }
+		reason = alert
+		add_internal_flag = special
+		# To war!
+		if = {
+			limit = { has_truce = scope:recipient }
+			cancel_truce_one_way = scope:recipient
+		}
+		start_war = {
+			casus_belli = make_tributary_cb
+			target = scope:recipient
+		}
+		#Let the instigator know what happened
+		scope:actor = { trigger_event = tgp_east_asia_interaction_events.0035 }
+		ai_chance = {
+			base = 100
+			modifier = {
+				house = { has_house_power_parameter = aspect_of_serenity }
+				factor = 0
+			}
+			modifier = {
+				is_at_war = yes
+				factor = 0
+			}
+			modifier = {
+				military_power <= scope:recipient.military_power
+				factor = 0
+			}
+		}
+	}
+	#_This is fine_
+	option = {
+		name = tgp_east_asia_interaction_events.0030.c
+		#They're a bit irked
+		scope:recipient.suzerain = {
+			if = {
+				limit = { is_ai = yes }
+				add_opinion = {
+					target = scope:actor
+					modifier = embraced_my_tributary_opinion
+					opinion = -20
+				}
+			}
+		}
+		#No more tributary, huh
+		scope:recipient = {
+			end_tributary = yes
+			hidden_effect = { mandala_embrace_tributary_effect = yes }
+
+		}
+		#Wa-waw
+		add_piety = miniscule_piety_loss
+		ai_chance = {
+			base = 100
+		}
+	}
+	after = { remove_character_flag = allowed_war_declaration_sans_truce_penalties }
+
+}
+
+
+#Embracer: Your Tributary (with a former and also present Suzerain) is in another castle
+tgp_east_asia_interaction_events.0035 = {
+	type = letter_event
+	opening = tgp_east_asia_interaction_events.0035.opening
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:warring_suzerain }
+				desc = tgp_east_asia_interaction_events.0035.desc.warring
+			}
+			desc = tgp_east_asia_interaction_events.0035.desc
+		}
+	}
+	sender = {
+		character = scope:sending_character
+		triggered_animation = {
+			trigger = {
+				NOT = { scope:sending_character = scope:recipient }
+			}
+			animation = rage
+		}
+		animation = dismissal
+	}
+	immediate = {
+		if = {
+			limit = { exists = scope:warring_suzerain }
+			scope:warring_suzerain = {
+				save_scope_as = sending_character
+				add_opinion = {
+					target = root
+					modifier = attempted_to_embrace_my_tributary_opinion
+					opinion = -10
+				}
+			}
+			scope:recipient = {
+				add_opinion = {
+					modifier = warred_into_submission_opinion # this opinion acts as a built-in cooldown
+					target = scope:actor
+					years = 5
+				}
+			}
+		}
+		else = {
+			scope:recipient = {
+				save_scope_as = sending_character
+				add_opinion = {
+					modifier = tributary_request_denied_opinion # this opinion also acts as a built-in cooldown
+					target = scope:actor
+					years  = 3
+				}
+			}
+		}
+	}
+	#How can this be!
+	option = {
+		name = tgp_east_asia_interaction_events.0035.a
+	}
+}
+
+
+# Favor
+tgp_east_asia_interaction_events.1000 = {
+	type = letter_event
+	opening = tgp_east_asia_interaction_events.1000.opening
+	desc = {
+		desc = tgp_east_asia_interaction_events.1000.desc
+		desc = tgp_east_asia_interaction_events.1000.favor
+	}
+	sender = scope:recipient
+
+	trigger = {
+		exists = scope:demanded_mandala
+		scope:recipient.primary_title = scope:demanded_mandala
+		scope:recipient = { target_is_liege_or_above = scope:actor }
+	}
+
+	#Accept
+	option = {
+		name = tgp_east_asia_interaction_events.1000.a
+		scope:recipient = {
+			send_interface_toast = {
+				type = event_toast_effect_neutral
+				title = tgp_east_asia_interaction_events.1000.accept_toast
+				left_icon = scope:actor
+				right_icon = scope:demanded_mandala
+				add_hook = {
+					target = scope:actor
+					type = favor_hook
+				}
+				change_to_mandala_interaction_effect = yes
+			}
+		}
+		stress_impact = {
+			arrogant = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 75
+			opinion_modifier = {
+				opinion_target = scope:recipient
+				multiplier = 0.5
+			}
+		}
+	}
+
+	#Refuse
+	option = {
+		name = tgp_east_asia_interaction_events.1000.b
+		scope:recipient = {
+			send_interface_toast = {
+				type = event_toast_effect_bad
+				title = tgp_east_asia_interaction_events.1000.refuse_toast
+				left_icon = scope:actor
+				right_icon = scope:demanded_mandala
+				custom_tooltip = demand_mandala_interaction_vassal_refuses
+				# Opinion
+				if = {
+					limit = {
+						scope:actor = { is_ai = yes }
+					}
+					reverse_add_opinion = {
+						target = scope:actor
+						modifier = angry_opinion
+						opinion = -25
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	#Use a Hook to force it through
+	option = {
+		name = religious_interaction.2012.c
+		trigger = { has_strong_usable_hook = scope:recipient }
+		scope:recipient = {
+			send_interface_toast = {
+				type = event_toast_effect_neutral
+				title = tgp_east_asia_interaction_events.1000.force_toast
+				left_icon = scope:actor
+				right_icon = scope:demanded_mandala
+				scope:actor = { use_hook = scope:recipient }
+				change_to_mandala_interaction_effect = yes
+			}
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = 1
+			}
+		}
+	}
+}
+
+# Gold
+tgp_east_asia_interaction_events.1001 = {
+	type = letter_event
+	opening = tgp_east_asia_interaction_events.1000.opening
+	desc = {
+		desc = tgp_east_asia_interaction_events.1000.desc
+		desc = tgp_east_asia_interaction_events.1001.gold
+	}
+	sender = scope:recipient
+
+	trigger = {
+		exists = scope:demanded_mandala
+		scope:recipient.primary_title = scope:demanded_mandala
+		scope:recipient = { target_is_liege_or_above = scope:actor }
+	}
+
+	#Accept
+	option = {
+		name = tgp_east_asia_interaction_events.1002.a
+		scope:recipient = {
+			send_interface_toast = {
+				type = event_toast_effect_neutral
+				title = tgp_east_asia_interaction_events.1000.accept_toast
+				left_icon = scope:actor
+				right_icon = scope:demanded_mandala
+				change_to_mandala_interaction_effect = yes
+			}
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 75
+			ai_value_modifier = {
+				ai_greed = -1
+				ai_rationality = 0.5
+			}
+			modifier = {
+				factor = 0.2
+				gold <= 0
+			}
+			opinion_modifier = {
+				opinion_target = scope:recipient
+				multiplier = 0.5
+			}
+		}
+	}
+
+	#Refuse
+	option = {
+		name = tgp_east_asia_interaction_events.1000.b
+		scope:recipient = {
+			send_interface_toast = {
+				type = event_toast_effect_bad
+				title = tgp_east_asia_interaction_events.1000.refuse_toast
+				left_icon = scope:actor
+				right_icon = scope:demanded_mandala
+				custom_tooltip = demand_mandala_interaction_vassal_refuses
+				if = {
+					limit = {
+						scope:actor = { is_ai = yes }
+					}
+					reverse_add_opinion = {
+						target = scope:actor
+						modifier = angry_opinion
+						opinion = -25
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 100
+				gold < medium_gold_value
+			}
+		}
+	}
+
+	#Use a Hook to force it through
+	option = {
+		name = religious_interaction.2011.c
+		trigger = { has_strong_usable_hook = scope:recipient }
+		save_scope_value_as = { # Cancel extra gold
+			name = gold
+			value = no
+		}
+		scope:recipient = {
+			send_interface_toast = {
+				type = event_toast_effect_neutral
+				title = tgp_east_asia_interaction_events.1000.force_toast
+				left_icon = scope:actor
+				right_icon = scope:demanded_mandala
+				scope:actor = { use_hook = scope:recipient }
+				change_to_mandala_interaction_effect = yes
+			}
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = 1
+			}
+		}
+	}
+}
+
+
+tgp_east_asia_interaction_events.1002 = {
+	type = letter_event
+	opening = tgp_east_asia_interaction_events.1003.opening
+	desc = tgp_east_asia_interaction_events.1003.desc
+	sender = scope:actor
+
+	trigger = {
+		exists = scope:demanded_mandala
+		scope:recipient.primary_title = scope:demanded_mandala
+		scope:recipient = { target_is_liege_or_above = scope:actor }
+	}
+
+	#Accept
+	option = {
+		name = tgp_east_asia_interaction_events.1003.a
+		scope:actor = {
+			send_interface_toast = {
+				type = event_toast_effect_good
+				title = turn_subject_into_mandala_interaction_accept
+				left_icon = scope:recipient
+				change_to_mandala_interaction_effect = yes
+			}
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 0
+			turn_subject_into_mandala_acceptance_modifier = yes
+			modifier = { # We increase the value to compensate for the potentially high AI values in the other options
+				factor = 2
+				always = yes
+			}
+		}
+	}
+
+	#Favor
+	option = {
+		name = tgp_east_asia_interaction_events.1003.b
+		trigger = {
+			NOT = {
+				has_hook_of_type = {
+					target = scope:actor
+					type = favor_hook
+				}
+			}
+			scope:hook = no
+		}
+		show_as_unavailable = { scope:hook = yes }
+		custom_description_no_bullet = {
+			text = if_actor_accepts_desc
+			object = scope:actor
+		}
+		show_as_tooltip = {
+			add_hook = {
+				target = scope:actor
+				type = favor_hook
+			}
+			change_to_mandala_interaction_effect = yes
+		}
+		scope:actor = {
+			trigger_event = {
+				id = tgp_east_asia_interaction_events.1000
+				days = 5
+			}
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				add = {
+					value = 50
+					# This goes double for your Powerful Vassals. A better contract is likely to be much more important than a short-term payout.
+					if = {
+						limit = { is_powerful_vassal_of = scope:actor }
+						add = 100
+					}
+				}
+				this.liege = scope:actor
+			}
+			modifier = {
+				has_trait = ambitious
+				add = 50
+			}
+		}
+	}
+
+	#Gold
+	option = {
+		name = tgp_east_asia_interaction_events.1003.c
+		trigger = { scope:hook = no }
+		show_as_unavailable = { scope:hook = yes }
+		save_scope_value_as = {
+			name = gold
+			value = yes
+		}
+		custom_description_no_bullet = {
+			text = if_actor_accepts_desc
+			object = scope:actor
+		}
+		show_as_tooltip = {
+			change_to_mandala_interaction_effect = yes
+		}
+		scope:actor = {
+			trigger_event = {
+				id = tgp_east_asia_interaction_events.1001
+				days = 5
+			}
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				add = 50 # More likely to ask for gold if they're poor
+				scope:recipient.short_term_gold < medium_gold_value
+			}
+			modifier = {
+				add = { # Much more likely to ask for gold if involved in one of their own wars (they want to win).
+					value = 50
+					if = {
+						# Especially true if they're in debt!
+						limit = { gold < 0 }
+						add = 150
+					}
+				}
+				is_at_war = yes
+				any_character_war = { is_war_leader = scope:recipient }
+			}
+			modifier = {
+				has_trait = greedy
+				add = 50
+			}
+			modifier = {
+				ai_greed < high_negative_ai_value
+				add = -50
+			}
+		}
+	}
+
+	#Refuse
+	option = {
+		name = tgp_east_asia_interaction_events.1003.d
+		trigger = { scope:hook = no }
+		show_as_unavailable = { scope:hook = yes }
+		scope:actor = {
+			send_interface_toast = {
+				type = event_toast_effect_bad
+				title = turn_subject_into_mandala_interaction_refuse
+				left_icon = scope:recipient
+				custom_tooltip = demand_mandala_interaction_vassal_refuses
+			}
+			if = {
+				limit = { is_ai = yes }
+				add_opinion = {
+					modifier = angry_opinion
+					target = scope:recipient
+					opinion = -25
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			opinion_modifier = {
+				opinion_target = scope:actor
+				multiplier = -0.5
+			}
+			modifier = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+				add = -15
+			}
+			modifier = {
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+				add = -30
+			}
+			modifier = {
+				has_trait = stubborn
+				add = 25
+			}
+			modifier = {
+				has_trait = arrogant
+				add = 25
+			}
+			modifier = {
+				has_trait = ambitious
+				add = -25
+			}
+		}
+	}
+}

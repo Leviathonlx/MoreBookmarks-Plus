@@ -1,0 +1,694 @@
+﻿@celibacy_cooldown_time = 365
+@sale_of_titles_cooldown_time = 1825
+@sale_of_titles_prestige_cost = 500
+@extort_subjects_cooldown_time = 1825
+@commission_epic_cooldown_time = 3650
+@hold_mystical_communion_cooldown_time = 1825
+@draw_maps_cooldown_time = 1825
+@local_adjudicate_cooldown_time = 1825
+
+### Embrace Celibacy
+# by Petter Vilberg
+# Unlocked by: Restraint
+### Embrace Celibacy ###
+embrace_celibacy_decision = {
+	ai_check_interval = 0
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	}
+	desc = embrace_celibacy_decision_desc
+
+	selection_tooltip = embrace_celibacy_decision_tooltip
+
+	cooldown = { days = @celibacy_cooldown_time }
+
+	is_shown = {
+		has_perk = restraint_perk
+		NOT = { has_trait = celibate }
+	}
+
+	is_valid_showing_failures_only = {
+		NOR = {
+			has_trait = lifestyle_reveler
+			has_trait = seducer
+		}
+		is_adult = yes
+	}
+
+	is_valid = {
+		has_perk = restraint_perk
+	}
+
+	effect = {
+
+		send_interface_toast = {
+			type = event_toast_effect_neutral
+			title = msg_became_celibate
+			left_icon = root
+			add_trait = celibate
+		}
+
+		stress_impact = {
+			lustful = major_stress_impact_gain
+			lifestyle_reveler = medium_stress_impact_gain
+		}
+		
+		# If you have a legend maybe we change it?
+		if = {
+			limit = {
+				has_legend_chapter_trigger = { CHAPTER = motivation }
+			}
+			random = {
+				chance = 75
+				send_interface_toast = {
+					title = legend_chapter_change_toast
+					left_icon = root
+					promoted_legend = {
+						set_legend_chapter = {
+							name = motivation
+							localization_key = legend_chapter_motivation_celibacy
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = no
+	}
+
+	ai_will_do = {
+		base = 0
+	}
+}
+
+### Abandon Celibacy
+# by Petter Vilberg
+# Unlocked by: Restraint
+### Abandon Celibacy ###
+abandon_celibacy_decision = {
+	ai_check_interval = 0
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	}
+	desc = abandon_celibacy_decision_desc
+
+	selection_tooltip = abandon_celibacy_decision_tooltip
+
+	cooldown = { days = @celibacy_cooldown_time }
+
+	is_shown = {
+		has_perk = restraint_perk
+		has_trait = celibate
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	is_valid = {
+		has_perk = restraint_perk
+	}
+
+	effect = {
+
+		send_interface_toast = {
+			type = event_toast_effect_neutral
+			title = msg_stopped_being_celibate
+			left_icon = root
+
+			remove_trait = celibate
+		}
+	}
+	
+	ai_potential = {
+		always = no
+	}
+
+	ai_will_do = {
+		base = 0
+	}
+}
+
+
+### Sale of Titles
+# by Petter Vilberg
+# Unlocked by: At Any Cost
+### Sell Trivial Titles ###
+sale_of_titles_decision = {
+	picture = {
+		trigger = {
+			culture = {
+				has_graphical_east_asia_culture_group_trigger = yes
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/tgp_debate.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_spend_money.dds"
+	}
+	desc = sale_of_titles_decision_desc
+
+	selection_tooltip = sale_of_titles_decision_tooltip
+
+	cooldown = { days = @sale_of_titles_cooldown_time }
+
+	is_shown = {
+		is_landed = yes
+		OR = {
+			has_perk = at_any_cost_perk
+			AND = {
+				highest_held_title_tier >= tier_kingdom
+				any_character_struggle = {
+					involvement = involved
+					has_struggle_phase_parameter = unlocks_sell_minor_title_for_kings_and_higher
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	is_valid = {
+		OR = {
+			has_perk = at_any_cost_perk
+			AND = {
+				highest_held_title_tier >= tier_kingdom
+				any_character_struggle = {
+					involvement = involved
+					has_struggle_phase_parameter = unlocks_sell_minor_title_for_kings_and_higher
+				}
+			}
+		}
+	}
+
+	cost = {
+		prestige = @sale_of_titles_prestige_cost
+	}
+
+	effect = {
+		hidden_effect = {
+			random = {
+				chance = 2
+				modifier = {
+					add = 3
+					has_trait = greedy
+				}
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = sell_titles_nickname_gained
+					left_icon = root
+					set_nickname_effect = {
+						NICKNAME = nick_the_greedy
+					}
+				}
+			}
+		}
+
+		add_gold = major_gold_value
+
+		custom_tooltip = sale_of_titles_side_effects_tt
+
+		trigger_event = {
+			on_action = sell_titles_side_effect_events
+			days = 5
+		}
+	}
+	
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 72
+		duchy = 72
+		kingdom = 72
+		empire = 72
+		hegemony = 72
+	}
+	
+	ai_potential = {
+		OR = {
+			ai_greed >= medium_positive_ai_value
+			gold < medium_gold_value
+		}
+	}
+
+	ai_will_do = {
+		base = 30
+		
+		modifier = {
+			add = 70
+			ai_greed >= high_positive_ai_value
+		}
+	}
+}
+
+
+### Extort Subjects
+# by Petter Vilberg
+# Unlocked by: It Is MY Domain
+### Extort Subjects ###
+extort_subjects_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_spend_money.dds"
+	}
+	desc = extort_subjects_decision_desc
+
+	selection_tooltip = extort_subjects_decision_tooltip
+
+	cooldown = { days = @extort_subjects_cooldown_time }
+
+	is_shown = {
+		is_landless_adventurer = no
+		OR = {
+			has_perk = it_is_my_domain_perk
+			has_character_modifier = fp3_justification_for_taxation_modifier
+			has_character_modifier = fp3_excuses_for_extortion_modifier
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_available_adult = yes
+		custom_description = {
+			text = has_count_vassals_or_higher
+			any_vassal = {
+				highest_held_title_tier >= tier_county
+			}
+		}
+	}
+
+	is_valid = {
+		OR = {
+			has_perk = it_is_my_domain_perk
+			has_character_modifier = fp3_justification_for_taxation_modifier
+			has_character_modifier = fp3_excuses_for_extortion_modifier
+		}
+	}
+
+	effect = {
+
+		custom_description = {
+			text = extort_subjects_effect
+		}
+		
+		trigger_event = {
+			id = subject_extortion.9999
+			days = { 3 5 }
+		}
+
+		stress_impact = {
+			generous = major_stress_gain
+		}
+	}
+	
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 72
+		duchy = 72
+		kingdom = 72
+		empire = 72
+		hegemony = 72
+	}
+	
+	ai_potential = {
+		ai_greed >= medium_positive_ai_value
+		OR = {
+			ai_honor <= medium_negative_ai_value
+			ai_greed >= 100
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+		
+		modifier = {
+			add = 45
+			ai_greed >= high_positive_ai_value
+		}
+		modifier = {
+			add = 45
+			ai_honor <= high_negative_ai_value
+		}
+	}
+}
+
+
+### Commission Epic
+# by Petter Vilberg
+# Unlocked by: Making History
+### Commission Epic ###
+commission_epic_decision = {
+	picture = {
+		trigger = {
+			culture = { has_graphical_mediterranean_culture_group_trigger = yes }
+		}
+		reference = "gfx/interface/illustrations/event_scenes/ep3_medi_study.dds"
+	}
+	picture = {
+		trigger = {
+			culture = { has_building_gfx = japanese_building_gfx } #Just Japan
+		}
+		reference = "gfx/interface/illustrations/event_scenes/tgp_study_japan.dds"
+	}
+	picture = {
+		trigger = {
+			culture = { has_graphical_east_asia_culture_group_trigger = yes } #Rest of East Asia
+		}
+		reference = "gfx/interface/illustrations/event_scenes/tgp_study_asia.dds"
+	}
+	picture = {
+		trigger = {
+			culture = { has_graphical_india_culture_group_trigger = yes }
+		}
+		reference = "gfx/interface/illustrations/event_scenes/bp2_study_indian.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+	}
+	desc = commission_epic_decision_desc
+
+	selection_tooltip = commission_epic_decision_tooltip
+
+	cooldown = { days = @commission_epic_cooldown_time }
+
+	is_shown = {
+		is_landed = yes
+		exists = house
+		OR = {
+			has_perk = writing_history_perk
+			AND = {
+				top_liege = this
+				any_character_struggle = {
+   					involvement = involved
+					has_struggle_phase_parameter = unlocks_epic_commission_for_independent_rulers
+	 			}	
+			}
+		}
+		is_landless_adventurer = no
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	cost = {
+		gold = medium_gold_value
+	}
+
+	effect = {
+		custom_description_no_bullet = {
+			text = "commission_epic_once_complete_effect"
+		}
+		show_as_tooltip = {
+			add_prestige = medium_prestige_gain
+			custom_tooltip = commission_epic_artifact_tt
+		}
+		custom_description_no_bullet = {
+			text = "commission_epic_potential_cost_effect"
+		}
+		trigger_event = commission_epic.0001
+	}
+	
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+	
+	ai_potential = {
+		short_term_gold >= major_gold_value
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+
+### Hold Mystical Communion
+### Hold Mystical Communion ###
+hold_mystical_communion_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	}
+	desc = hold_mystical_communion_decision_desc
+
+	selection_tooltip = hold_mystical_communion_decision_tooltip
+
+	cooldown = { days = @hold_mystical_communion_cooldown_time }
+
+	is_shown = {
+		is_playable_character = yes
+		has_trait = lifestyle_mystic
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	is_valid = {
+		has_trait = lifestyle_mystic
+	}
+
+	cost = {
+		piety = medium_piety_value
+	}
+
+	effect = {
+		show_as_tooltip = {
+			mystical_communion_outcome_effect = yes
+		}
+		custom_tooltip = hold_mystical_communion_side_effects_tt
+
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = {
+						id = mystic_lifestyle.0001
+						days = 3
+					}
+				}
+				50 = {
+					trigger_event = {
+						on_action = mystic_communion_side_effect_events
+						days = 3
+					}
+				}
+			}
+		}
+
+	}
+	
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Local Arbitration
+# Unlocked by: Local Arbitration Perk
+### Local Arbitration ###
+local_arbitration_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/fp3/fp3_decision_concession.dds"
+	}
+	sort_order = 50
+
+	desc = local_arbitration_decision_desc
+
+	selection_tooltip = local_arbitration_decision_tooltip
+
+	cooldown = { days = @local_adjudicate_cooldown_time }
+
+	is_shown = {
+		is_ruler = yes
+		has_perk = local_arbitration_perk
+		government_has_flag = government_is_settled
+	}
+
+	is_valid_showing_failures_only = {
+		custom_tooltip = {
+			text = inside_realm_trigger
+			any_sub_realm_county = {
+				this = root.location.county
+			}
+		}
+	}
+
+	cost = {
+		prestige = {
+			value = medium_prestige_value
+			if = {
+				limit = {
+					government_has_flag = government_is_tribal
+				}
+				divide = 2
+			}
+			if = {
+				limit = {
+					highest_held_title_tier = tier_duchy
+				}
+				multiply = 1.4
+			}
+			if = {
+				limit = {
+					highest_held_title_tier = tier_kingdom
+				}
+				multiply = 2
+			}
+			if = {
+				limit = {
+					highest_held_title_tier = tier_empire
+				}
+				multiply = 3
+			}
+		}
+	}
+
+	effect = {
+		add_legitimacy = minor_legitimacy_gain
+		custom_description = {
+			text = local_adjudicate_location_tt
+		}
+		if = {
+			limit = {
+				is_travelling = yes
+				exists = current_travel_plan
+			}
+			current_travel_plan = { 
+				delay_travel_plan = {
+					days = 15
+				}
+			}
+		}
+		location.county = {
+			local_adjudicate_effect = yes #Scripted effect since it is also referenced by the inspection activity with the personal_touch_perk
+		}
+	}
+	
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+	
+	ai_potential = {
+		top_liege = this
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Create Travel Itinerary ###
+draw_up_new_charts_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/activity_header_backgrounds/activity_adult_education.dds"
+	}
+	desc = draw_up_new_charts_decision_desc
+	sort_order = 75
+
+	selection_tooltip = draw_up_new_charts_decision_tooltip
+
+	cooldown = { days = @draw_maps_cooldown_time }
+
+	is_shown = {
+		has_perk = realm_charts_perk
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		custom_description = {
+			text = has_locations_to_map_tt
+			OR = {
+				AND = {
+					has_variable_list = visited_poi
+					any_in_list = {
+						variable = visited_poi
+						OR = {
+							AND = {
+								this = county.holder.top_liege.capital_province
+								county.holder.top_liege != root.top_liege
+							}
+							has_building_with_flag = travel_point_of_interest_religious
+							has_building_with_flag = travel_point_of_interest_learning
+							has_building_with_flag = travel_point_of_interest_economic
+							has_building_with_flag = travel_point_of_interest_martial
+							has_building_with_flag = travel_point_of_interest_diplomatic
+							has_building_with_flag = travel_point_of_interest_wonder
+							has_building_with_flag = travel_point_of_interest_natural_feature
+						}
+					}
+				}
+				AND = {
+					has_variable_list = mapmaking_location_list
+					any_in_list = {
+						variable = mapmaking_location_list
+						county.holder = root
+						county != root.capital_province.county #We cannot in good conscience let someone map their own capital county with this decision
+					}
+				}
+				AND = {
+					has_variable_list = mapmaking_location_list
+					any_in_list = {
+						variable = mapmaking_location_list
+						county.holder != root
+						county.holder.liege = root
+						this = county.holder.capital_province
+					}
+				}
+			}
+		}
+	}
+
+	cost = {
+		gold = major_gold_value
+	}
+
+	effect = {
+		show_as_tooltip = {
+			add_prestige = medium_prestige_gain
+			custom_tooltip = draw_up_new_charts_artifact_tt
+			#Artifact dependent on where you went
+		}
+		trigger_event = mapmaking.0001
+	}
+	
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+	
+	ai_potential = {
+		short_term_gold >= major_gold_value
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}

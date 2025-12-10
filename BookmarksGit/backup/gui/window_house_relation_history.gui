@@ -1,0 +1,417 @@
+window = {
+	name = "window_house_relation_history"
+	widgetid = "window_house_relation_history"
+
+	layer = middle
+	parentanchor = center
+	size = { 796 898 }
+
+	allow_outside = yes
+
+	using = Window_Background
+	using = Window_Decoration_Spike
+	using = Window_Movable
+
+	datacontext = "[HouseRelationHistoryWindow.GetHouseRelation]"
+
+
+	margin_widget = {
+		size = { 100% 100% }
+		margin = { 16 20 }
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			margin = { 24 48 }
+			margin_top = 0
+			margin_right = 56
+			margin_bottom = 40
+
+			# Window heading
+			header_pattern = {
+				layoutpolicy_horizontal = expanding
+
+				blockoverride "header_text"
+				{
+					text = "HOUSE_RELATION_HISTORY_WINDOW_HEADING"
+				}
+
+				blockoverride "button_close"
+				{
+					onclick = "[HouseRelationHistoryWindow.Close]"
+				}
+			}
+
+			# Relation overview
+			hbox_house_relation_history_info = {
+				layoutpolicy_horizontal = expanding
+				datacontext = "[GetIllustration( 'character_view_bg' )]"
+				datacontext = "[HouseRelationHistoryWindow.GetLeftHouse.GetHeadOfHouseOrLastHistoricHead]"
+
+				background = {
+					texture = "[Illustration.GetTexture( Character.MakeScope )]"
+					alpha = 0.5
+					fittype = centercrop
+					using = Mask_Rough_Edges
+					margin_top = 10
+
+					modify_texture = {
+						texture = "gfx/interface/component_masks/mask_fade_vertical.dds"
+						blend_mode = alphamultiply
+					}
+				}
+			}
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				using = Background_Letter
+				margin_bottom = 10
+
+				# Relation history
+				scrollbox = {
+					name = "house_relation_changes"
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					maximumsize = { 630 525 }
+
+					blockoverride "scrollbox_margins" {}
+					blockoverride "scrollbox_background" {}
+					blockoverride "scrollbox_background_fade" {}
+					blockoverride "scrollbox_content"
+					{
+						vbox_house_relation_history_list = {
+							layoutpolicy_horizontal = expanding
+						}
+
+						expand = {}
+
+					}
+				} # scrollbox "house_relation_changes"
+			}
+		}
+	}
+}
+
+
+###############################################################################
+
+types HouseRelationHistoryWindow
+{
+	## House Relation history heading
+	#
+	# Window heading allowing the player top close the window.
+	#
+	type header_pattern_house_relation_history = header_pattern {
+		layoutpolicy_horizontal = expanding
+
+		blockoverride "header_text"
+		{
+			text = "HOUSE_RELATION_HISTORY_WINDOW_HEADING"
+		}
+
+		blockoverride "button_close"
+		{
+			onclick = "[HouseRelationHistoryWindow.Close]"
+		}
+	}
+
+
+	## House Relation information overview
+	#
+	type hbox_house_relation_history_info = hbox {
+		layoutpolicy_horizontal = expanding
+
+		margin = { 24 20 }
+
+		vbox = {
+			datacontext = "[HouseRelationHistoryWindow.GetLeftHouse]"
+
+
+			coa_house_big = { }
+
+			text_single = {
+				max_width = 96
+				text = "[DynastyHouse.GetNameNoTooltip]"
+			}
+		}
+
+		widget = {
+			size = { 140 165 }
+			portrait_torso = {
+				parentanchor = center
+				datacontext = "[HouseRelationHistoryWindow.GetLeftHouse.GetHeadOfHouseOrLastHistoricHead]"
+
+				blockoverride "portrait_texture"
+				{
+					portrait_texture = "[Character.GetPortrait('environment_torso', 'camera_torso_left', 'idle', PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+				}
+
+				blockoverride "portrait_status_icons"
+				{
+					portrait_status_icons = {
+						parentanchor = bottom|left
+						position = { 50 -4 }
+					}
+				}
+			}
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			tooltipwidget = {
+				house_relation_item_tooltip_no_progressbar = {}
+			}
+
+			icon = {
+				size = { 55 55 }
+				texture = "[HouseRelation.GetLevel.GetRenderedIcon]"
+			}
+
+			spacer = {
+				size = { 0 3 }
+			}
+
+			text_single = {
+				align = center
+				text = "HOUSE_RELATIONS_CURRENT_RELATION"
+				using = Text_Light_Background_Overrides
+				default_format = "#medium"
+			}
+
+			text_single = {
+				align = center
+				text = "[HouseRelation.GetLevel.GetName]"
+				default_format = "#high"
+			}
+		}
+
+		widget = {
+			size = { 140 165 }
+			portrait_torso = {
+				parentanchor = center
+				datacontext = "[HouseRelationHistoryWindow.GetRightHouse.GetHeadOfHouseOrLastHistoricHead]"
+
+				blockoverride "portrait_texture"
+				{
+					portrait_texture = "[Character.GetPortrait('environment_torso', 'camera_torso_right', 'idle', PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+				}
+
+				blockoverride "portrait_status_icons"
+				{
+					portrait_status_icons = {
+						parentanchor = bottom|left
+						position = { 50 -4 }
+					}
+				}
+			}
+		}
+
+		vbox = {
+			datacontext = "[HouseRelationHistoryWindow.GetRightHouse]"
+
+			coa_house_big = { }
+
+			text_single = {
+				max_width = 96
+				text = "[DynastyHouse.GetNameNoTooltip]"
+			}
+		}
+	}
+
+
+	## Listing of all House Relation history items
+	#
+	type vbox_house_relation_history_list = vbox {
+
+		margin_right = 5
+		spacing = 4
+
+		bottomtotop = yes
+
+		datamodel = "[HouseRelation.GetHistory]"
+
+		item = {
+			hbox_house_relation_history_item = {
+				layoutpolicy_horizontal = expanding
+			}
+		}
+	}
+
+
+	## Single change to the house relation
+	#
+	type hbox_house_relation_history_item = hbox {
+
+		margin = { 16 7 }
+		margin_right = 15
+		spacing = 2
+
+		background = {
+			alpha = 0.5
+			using = Background_Area
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+
+				background = {
+					margin = { 10 7 }
+					alpha = 0.6
+					using = Background_Area
+				}
+
+				text_multi = {
+					name = "house_relation_change_description"
+					layoutpolicy_horizontal = expanding
+					text= "[HouseRelationChange.GetDescription]"
+					default_format = "#light_background"
+					using = Text_Light_Background_Overrides
+					
+					autoresize = yes
+					max_width = 410
+				}
+
+				expand = {}
+
+				text_single = {
+					name = "house_relation_change_amount"
+					align = center
+					fonttintcolor = { 0.6 0.55 0.9 1.0 }
+					visible = "[HouseRelationChange.NonZeroAmount]"
+					min_width = 48
+					text = "[HouseRelationChange.GetChangeAmount|+=]"
+					default_format = "#light_background"
+				}
+
+				text_single = {
+					name = "house_relation_no_change_amount"
+					visible = "[Not( HouseRelationChange.NonZeroAmount )]"
+					align = center
+					min_width = 48
+					text = ""
+				}
+
+				spacer = {
+					size = { 5 0 }
+				}
+
+				divider = {
+					layoutpolicy_vertical = expanding
+				}
+
+				spacer = {
+					size = { 10 0 }
+				}
+
+				vbox = {
+					layoutpolicy_vertical = expanding
+
+					text_single = {
+						name = "house_relation_change_date"
+						align = right
+						min_width = 120
+						alpha = 0.45
+						text = "[HouseRelationChange.GetChangeDate.GetString|V]"
+						default_format = "#light_background"
+						using = Text_Light_Background_Overrides
+					}
+
+					spacer = {
+						visible = "[Not( HouseRelation.IsIndexAtRelationChange( PdxGuiWidget.GetIndexInDataModel ) )]"
+						size = { 112 1 }
+					}
+					expand = {}
+				}
+			}
+
+			spacer = {
+				size = { 0 8 }
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+
+				expand = {}
+
+				hbox = {
+					visible = "[HouseRelation.IsIndexAtRelationChange( PdxGuiWidget.GetIndexInDataModel )]"
+					min_width = 112
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						icon = {
+							size = { 32 32 }
+							texture = "[HouseRelationChange.GetLevel.GetRenderedIcon]"
+						}
+
+						spacer = {
+							size = { 5 0 }
+						}
+						text_single = {
+							text = "[HouseRelationChange.GetLevel.GetName]"
+							default_format = "#light_background"
+							using = Text_Light_Background_Overrides
+							tooltip = "[HouseRelationChange.GetLevelTooltip]"
+						}
+						expand = {}
+					}
+				}
+			}
+		}
+	}
+	
+	# Displays the impact of the current house relation level
+	type house_relation_item_tooltip_no_progressbar = object_tooltip_pop_out {
+		alwaystransparent = no
+
+		blockoverride "header_additions"
+		{
+			hbox = {
+				margin_right = 10
+				margin_top = 8
+				margin_left = -4
+
+				icon = {
+					size = { 52 52 }
+					texture = "[HouseRelation.GetLevel.GetRenderedIcon]"
+				}
+			}
+		}
+
+		blockoverride "title_text" {
+			margin = { 0 8 }
+			text = "[HouseRelation.GetNameNoTooltip]"
+			default_format = "#T"
+		}
+
+		blockoverride "main_description" {
+			vbox = {
+				block "description_prefix" {}
+				
+				textbox = {
+					name = "main_description"
+					layoutpolicy_horizontal = expanding
+					max_width = 400
+					margin_top = 5
+					margin_bottom = 15
+					using = DefaultTooltipText
+					multiline = yes
+					text = "[HouseRelation.GetTooltip]"
+					fonttintcolor = "[TooltipInfo.GetTintColor]"
+					alwaystransparent = no
+				}
+			}
+		}
+		blockoverride "concept_link" {
+			text = "[house_relation|E]"
+		}
+	}
+}

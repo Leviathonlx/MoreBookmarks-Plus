@@ -1,0 +1,347 @@
+﻿# scope:first = Character in relation
+# scope:second = Other character in relation
+# This is run once, so anything applied on both characters must be done on both root and scope:second here
+on_alliance_added = {
+	effect = {
+		# Embassies Perk stat bonus:
+		scope:first = { update_embassies_effect = yes }
+		scope:second = { update_embassies_effect = yes }
+
+		# If players are fighting a war, let them know new allies can be called in soon.
+		if = {
+			limit = {
+				 scope:first = { # Vassals cannot be called to war
+			        NOR = {
+			            target_is_vassal_or_below = scope:second
+			            target_is_liege_or_above = scope:second
+			        }
+			    }
+			}
+			send_new_alliance_message = {
+				THIS_CHARACTER = scope:first
+				OTHER_CHARACTER = scope:second
+			}
+			send_new_alliance_message = {
+				THIS_CHARACTER = scope:second
+				OTHER_CHARACTER = scope:first
+			}
+		}
+		# Add a delay on calling new allies into old wars.
+		if = {
+			limit = {
+				scope:first = { is_playable_character = yes}
+				scope:second = { is_playable_character = yes}
+			}
+			if = {
+				limit = {
+					scope:first = {	is_at_war = yes }
+				}
+				scope:first = {
+					set_variable = { 
+						name = delay_calling_recent_ally
+						value = scope:second
+						months = 1
+					}
+				}
+			}
+			if = {
+				limit = {
+					scope:second = { is_at_war = yes}
+				}
+				scope:second = {
+					set_variable = {
+						name = delay_calling_recent_ally
+						value = scope:first
+						months = 1
+					}
+				}
+			}
+		}
+
+		# Struggle parameter
+		scope:first = {
+			if = {
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = piety_from_new_alliance
+						is_secondary_character_involvement_involved_trigger = {
+							CHAR = scope:second
+						}
+					}
+				}
+				add_piety = medium_piety_gain
+			}
+		}
+		scope:second = {
+			if = {
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = piety_from_new_alliance
+						is_secondary_character_involvement_involved_trigger = {
+							CHAR = scope:first
+						}
+					}
+				}
+				add_piety = medium_piety_gain
+			}
+		}
+
+		# Struggle Catalysts.
+		if = {
+			limit = {
+				scope:first = {
+					faith != scope:second.faith
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = interfaith_marriages_available_between_involved_characters
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_formed_interreligious_alliance_with_important_character
+							CHAR = scope:second
+						}
+					}
+				}
+				scope:second = {
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = interfaith_marriages_available_between_involved_characters
+					}
+				}
+			}
+			scope:first = {
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_formed_interreligious_alliance_with_important_character
+							CHAR = scope:second
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_formed_interreligious_alliance_with_important_character
+						character = scope:first
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:second = { realm_size >= catalyst_forming_alliance_with_major_uninvolved_power_power_realm_size_value }
+				scope:first = {
+					is_important_or_vip_struggle_character = yes
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_neither_trigger = {
+							CATALYST = catalyst_forming_alliance_with_major_uninvolved_power
+							CHAR = scope:second
+						}
+					}
+				}
+			}
+			scope:first = {
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_neither_trigger = {
+							CATALYST = catalyst_forming_alliance_with_major_uninvolved_power
+							CHAR = scope:second
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_forming_alliance_with_major_uninvolved_power
+						character = scope:first
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:second = { top_liege = this }
+				scope:first = {
+					top_liege = this
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_forming_alliance_between_independent_involved_rulers
+							CHAR = scope:second
+						}
+					}
+				}
+			}
+			scope:first = {
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_forming_alliance_between_independent_involved_rulers
+							CHAR = scope:second
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_forming_alliance_between_independent_involved_rulers
+						character = scope:first
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				fp3_struggle_involves_one_supporter_and_one_detractor = {
+					FIRST = scope:first
+					SECOND = scope:second
+				}
+				scope:first = {
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_forming_alliance_between_supporter_detractor_rulers
+							CHAR = scope:second
+						}
+					}
+				}
+			}
+			scope:first = {
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_forming_alliance_between_supporter_detractor_rulers
+							CHAR = scope:second
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_forming_alliance_between_supporter_detractor_rulers
+						character = scope:first
+					}
+					log_debug_variable_for_persian_struggle_effect = { VAR = concession_catalyst_forming_alliance_between_supporter_detractor_rulers }
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						scope:first = {
+							has_trait = fp3_struggle_detractor
+							any_character_struggle = {
+								involvement = involved
+								phase_has_catalyst = catalyst_forming_alliance_between_detractor_uninvolved_rulers
+							}
+						}
+						scope:second = { fp3_character_uninvolved_in_struggle_trigger = yes }
+					}
+					AND = {
+						scope:second = {
+							has_trait = fp3_struggle_detractor
+							any_character_struggle = {
+								involvement = involved
+								phase_has_catalyst = catalyst_forming_alliance_between_detractor_uninvolved_rulers
+							}
+						}
+						scope:first = { fp3_character_uninvolved_in_struggle_trigger = yes }
+					}
+				}
+			}
+			if = {
+				limit = { scope:second = { fp3_character_uninvolved_in_struggle_trigger = yes } }
+				scope:first = { save_scope_as = involved_character }
+			}
+			else = {
+				scope:second = { save_scope_as = involved_character }
+			}
+			scope:involved_character = {
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						phase_has_catalyst = catalyst_forming_alliance_between_detractor_uninvolved_rulers
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_forming_alliance_between_detractor_uninvolved_rulers
+						character = scope:involved_character
+					}
+					log_debug_variable_for_persian_struggle_effect = { VAR = unrest_catalyst_forming_alliance_between_detractor_uninvolved_rulers }
+				}
+			}
+		}
+	}
+}
+
+# scope:first = Character in relation
+# scope:second = Other character in relation
+# This is run once, so anything applied on both characters must be done on both root and scope:second here
+on_alliance_removed = {
+	effect = {
+		# Embassies modifier removal:
+		scope:first = { update_embassies_effect = yes }
+		scope:second = { update_embassies_effect = yes }
+		
+		# Remove the opinion modifier from having proposed an alliance via the perk:
+		scope:first = { try_remove_perk_alliance_opinion_effect = { TARGET = scope:second } }
+		scope:second = { try_remove_perk_alliance_opinion_effect = { TARGET = scope:first } }
+
+		#End blood brotherhood
+		scope:first = {
+			end_blood_brotherhood_effect = { TARGET = scope:second }
+		}
+	}
+}
+
+# scope:first = Character in relation
+# scope:second = Other character in relation
+# List 'first' = The "left" half of the reason characters
+# List 'second' = The "right" half of the reason characters
+# The two lists are ordered together so the top of first and the top of second together make one alliance reason pair
+# This is run once, so anything applied on both characters must be done on both root and scope:second here
+on_alliance_broken = {
+	effect = {
+		# Embassies modifier removal:
+		scope:first = { update_embassies_effect = yes }
+		scope:second = { update_embassies_effect = yes }
+
+		# Remove the opinion modifier from having proposed an alliance via the perk:
+		scope:first = { try_remove_perk_alliance_opinion_effect = { TARGET = scope:second } }
+		scope:second = { try_remove_perk_alliance_opinion_effect = { TARGET = scope:first } }
+
+		#End blood brotherhood
+		scope:first = {
+			end_blood_brotherhood_effect = { TARGET = scope:second }
+		}
+
+		# Hack scope change to make sure we're in a valid scope which is necessary for the later compare trigger inside the loop.
+		scope:first = {
+			set_local_variable = { name = reason_counter value = 0 }
+			while = {
+				limit = { # Loop over every pair of people in the first and second reason list
+					list_size = {
+						name = first
+						value > local_var:reason_counter
+					}
+				}
+				ordered_in_list = { # Pick the person at counter index for first reason list
+					list = first
+					position = local_var:reason_counter
+					save_temporary_scope_as = reason_first
+				}
+				ordered_in_list = { # Pick the corresponding person at counter index for second reason list
+					list = second
+					position = local_var:reason_counter
+					save_temporary_scope_as = reason_second
+				}
+				scope:reason_first = { # If they were betrothed break that betrothal now that the alliance is broken
+					if = {
+						limit = {
+							is_betrothed = yes
+							betrothed = scope:reason_second
+						}
+						break_betrothal = scope:reason_second
+					}
+				}
+				change_local_variable = {
+					name = reason_counter
+					add = 1
+				}
+			}
+		}
+	}
+}

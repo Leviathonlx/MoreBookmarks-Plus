@@ -1,0 +1,987 @@
+﻿#Create the Empire of Outremer
+### Form the Outremer Empire ###
+create_outremer_empire_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_destiny_goal.dds"
+	}
+	desc = create_outremer_empire_decision_desc
+	selection_tooltip = create_outremer_empire_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 120
+		empire = 0
+		hegemony = 0
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		#Visible to dukes and kings.
+		highest_held_title_tier >= tier_duchy
+		highest_held_title_tier <= tier_kingdom
+		#Must be in the right area.
+		capital_province = { geographical_region = world_middle_east }
+		#Must have the correct religion, and support from the rest of Catholicism.
+		religion = { exists = var:variable_ghw_unlocked } #The era of the Crusades must have started.
+		faith = faith:catholic
+		#Exempt Byzantine group: this is such a huge slap in the face to _anyone_ even vaguely in the Greek sphere.
+		culture = {
+			NOR = {
+				has_cultural_pillar = heritage_byzantine
+				has_cultural_pillar = heritage_caucasian
+				has_cultural_pillar = heritage_syriac
+			}
+		}
+		#Can only do it once.
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_created_outremer_empire
+			}
+		}
+	}
+
+	is_valid = {
+		prestige_level >= max_prestige_level
+		highest_held_title_tier = tier_kingdom
+		completely_controls_region = custom_outremer
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		is_at_war = no
+	}
+
+	effect = {
+		custom_tooltip = create_outremer_empire_decision_effect_tooltip
+		gain_heroic_legend_seed_tooltip_effect = yes
+		show_as_tooltip = {
+			form_outremer_scripted_effect = yes
+		}
+		trigger_event = {
+			id = middle_east_decisions.0001
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_created_outremer_empire
+			}
+			set_global_variable = {
+				name = flag_created_outremer_empire
+				value = root
+			}
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Restore the Ash'ari Caliphate ###
+restore_sunni_caliphate_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+	desc = restore_sunni_caliphate_decision_desc
+	selection_tooltip = restore_sunni_caliphate_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		faith = faith:ashari
+		NOT = { faith = { exists = religious_head } }
+		highest_held_title_tier > 3 #Only Kings and Emperors
+	}
+
+	is_valid = {
+		completely_controls = title:c_mecca
+		completely_controls = title:d_medina
+		completely_controls = title:d_shammar
+		completely_controls = title:d_palestine
+		completely_controls = title:d_oultrejourdain
+		piety_level >= high_piety_level
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+	}
+
+	effect = {
+		custom_tooltip = restore_sunni_caliphate_decision_effect_tooltip
+		show_as_tooltip = {
+			restore_sunni_caliphate_scripted_effect = yes
+		}
+		trigger_event = {
+			id = middle_east_decisions.0003
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = { #Always do it when possible.
+		base = 100
+		ai_value_modifier = {
+			ai_zeal = 1.0
+		}
+		modifier = {
+			factor = 0
+			has_trait = cynical
+		}
+	}
+}
+
+### Embrace Outremer Culture ###
+embrace_outremer_culture_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+	desc = embrace_outremer_culture_decision_desc
+	selection_tooltip = embrace_outremer_culture_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		faith:catholic.religion = { exists = var:variable_ghw_unlocked } #The era of the Crusades must have started.
+		NOR = {
+			root.culture = culture:roman
+			root.culture = {
+				any_parent_culture = {
+					has_cultural_pillar = heritage_arabic
+				}
+			}
+		}
+		OR = {
+			faith.religion = faith:catholic.religion
+			top_liege ?= { faith.religion = faith:catholic.religion }
+		}
+		capital_province = {
+			OR = {
+				geographical_region = world_middle_east
+				geographical_region = world_persian_empire
+				geographical_region = world_africa
+			}
+		}
+		top_liege = {
+			culture != root.culture
+		}
+		top_liege.culture = {
+			any_parent_culture = {
+				has_cultural_pillar = heritage_arabic
+			}
+		}
+	}
+
+	is_valid = {
+		custom_description = {
+			text = "under_outremer_liege"
+			top_liege = {
+				culture != root.culture
+			}
+			liege.culture = {
+				any_parent_culture = {
+					has_cultural_pillar = heritage_arabic
+				}
+			}
+		}
+		custom_description = {
+			text = "under_outremer_empire"
+			liege = {
+				has_title = title:e_outremer
+			}
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	effect = {
+		custom_tooltip = embrace_outremer_culture_decision_courtiers_embrace_outremer
+		custom_tooltip = embrace_outremer_culture_decision_provinces_embrace_outremer
+		custom_tooltip = embrace_outremer_culture_decision_capital_embraces_outremer
+		top_liege.culture = { save_scope_as = outremer_equivalent }
+		hidden_effect = {
+			every_courtier = {
+				limit = {
+					has_culture = root.culture
+					dynasty = root.dynasty
+				}
+				set_culture = scope:outremer_equivalent
+			}
+			every_held_title = {
+				title_tier = county
+				limit = {
+					culture = { has_same_culture_heritage = root.culture }
+					title_province = {
+						OR = {
+							geographical_region = world_middle_east
+							geographical_region = world_persian_empire
+							geographical_region = world_africa
+						}
+					}
+				}
+				set_county_culture = scope:outremer_equivalent
+			}
+			capital_county = { set_county_culture = scope:outremer_equivalent }
+		}
+		set_culture = scope:outremer_equivalent
+		add_character_flag = converted_culture_this_lifetime
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+		modifier = { #Small Crusader States will balkanize with their own culture or go native.
+			factor = 0
+			top_liege = {
+				highest_held_title_tier < 4 #Less than King
+			}
+		}
+	}
+}
+
+### Restore Israel ###
+create_israel_kingdom_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	desc = create_israel_kingdom_decision_desc
+	selection_tooltip = create_israel_kingdom_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		faith.religion = faith:rabbinism.religion
+		NOT = {
+			exists = title:k_israel.holder
+		}
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:create_israel_kingdom
+			}
+		}
+	}
+
+	is_valid = {
+		prestige_level >= high_prestige_level
+		piety_level >= high_piety_level
+		completely_controls = title:d_palestine
+		completely_controls = title:d_urdunn
+		completely_controls = title:d_oultrejourdain
+		custom_description = {
+			text = "jerusalem_is_same_faith"
+			title:c_jerusalem.faith = root.faith
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		is_at_war = no
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		custom_tooltip = create_israel_kingdom_decision_effect_tooltip
+		show_as_tooltip = {
+			create_israel_scripted_effect = yes
+		}
+		trigger_event = {
+			id = middle_east_decisions.0005
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:create_israel_kingdom
+			}
+			set_global_variable = {
+				name = create_israel_kingdom
+				value = root
+			}
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Restore the [ROOT.Char.GetFaith.GetAdjectiveNoTooltip] High Priesthood ###
+jewish_restore_high_priesthood_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	}
+	desc = jewish_restore_high_priesthood_decision_desc
+	selection_tooltip = jewish_restore_high_priesthood_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		NOT = {  #Can be redone if somehow the High Priest title is destroyed
+			exists = faith.religious_head
+		}
+		religion = religion:judaism_religion
+		faith = {
+			NOT = {
+				has_doctrine_parameter = no_head_of_faith
+			}
+		}
+	}
+
+	is_valid = {
+		piety_level >= 2
+		custom_description = {
+			text = "restore_high_priesthood_holy_sites"
+			faith = {
+				any_holy_site = {
+					OR = {
+						county.holder = root
+						county.holder.top_liege = { this = root }
+					}
+					count >= 3
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		is_at_war = no
+	}
+
+	effect = {
+		custom_tooltip = restore_high_priesthood_decision_effect_tooltip
+		trigger_event = {
+			id = middle_east_decisions.0007
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Restore the [ROOT.Char.GetFaith.AltPriestTermPlural] ###
+zoroastrian_restore_high_priesthood_decision = { #Updated for FP3 by Ola 
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/fp3/fp3_decision_foundation.dds"
+	}
+	desc = zoroastrian_restore_high_priesthood_decision_desc
+	selection_tooltip = zoroastrian_restore_high_priesthood_decision_tooltip
+	decision_group_type = major
+	sort_order = 80
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		NOR = {  #Can be redone if somehow the High Priest title is destroyed
+			exists = faith.religious_head
+			faith = { has_doctrine = doctrine_no_head } #Only if Faith is meant to have one.
+			faith = { has_doctrine = doctrine_temporal_head } #Cannot be done if you have taken the "Destroy the Magi" decision
+		}
+		OR = {
+			faith = faith:mazdayasna
+			faith = faith:zurvanism
+			faith = faith:gayomarthianism
+			faith = faith:khurmazta
+			faith = faith:mazdakism
+			faith = faith:khurramism
+			faith = faith:urartuism
+			faith = faith:afridunism
+		}
+	}
+
+	is_valid = {
+		piety_level >= high_piety_level
+		custom_description = {
+			text = "restore_high_priesthood_holy_sites"
+			faith = {
+				any_holy_site = {
+					OR = {
+						county.holder = root
+						county.holder.top_liege = { this = root }
+					}
+					count >= 3
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		is_at_war = no
+	}
+
+	effect = {
+		custom_tooltip = restore_high_priesthood_decision_effect_tooltip
+		trigger_event = {
+			id = middle_east_decisions.0009
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Become the Saoshyant ###
+become_saoshyant_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/fp3/fp3_decision_foundation.dds"
+	}
+	desc = become_saoshyant_decision_desc
+	selection_tooltip = become_saoshyant_decision_tooltip
+	decision_group_type = major
+	sort_order = 100 #FP3 change; this is an extremely epic decision, we want it to appear on top. 
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 0
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		faith.religion = faith:mazdayasna.religion
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_became_saoshyant
+			}
+		}
+	}
+
+	is_valid = {
+		piety_level >= very_high_piety_level
+		has_title = title:e_persia
+		completely_controls = title:e_persia
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		is_at_war = no
+	}
+
+
+	effect = {
+		show_as_tooltip = {
+			become_saoshyant_decision_effect = yes
+		}
+		trigger_event = {
+			id = middle_east_decisions.0011
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_became_saoshyant
+			}
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+#Refound the long-lapsed & short-lived Armenian Empire - by Ewan Cowhig Croft
+### Revive Greater Armenia ###
+create_armenian_empire_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+	desc = create_armenian_empire_decision_desc
+	selection_tooltip = create_armenian_empire_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval = 0
+
+	is_shown = {
+		is_playable_character = yes # Normally this will always be true, but if in DEBUG mode and playing as an unlanded ruler this will cause error spam without it.
+		highest_held_title_tier <= tier_kingdom
+		capital_province = { geographical_region = custom_greater_armenia }
+		OR = {
+			faith = faith:armenian_apostolic
+			culture = culture:armenian
+		}
+		NOT = {  #Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_created_armenian_empire
+			}
+		}
+		OR = {
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_republic
+			government_has_flag = government_is_clan
+			government_allows = administrative
+			government_has_flag = government_is_landless_adventurer
+		}
+	}
+
+	is_valid = {
+		top_liege = this
+		highest_held_title_tier = tier_kingdom
+		completely_controls_region = custom_greater_armenia
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_available_adult = yes
+	}
+
+	cost = {
+		prestige = 2000
+		piety = 1000
+	}
+
+	effect = {
+		show_as_tooltip = {
+			revive_armenian_empire_decision_scripted_effect = yes
+		}
+		save_scope_as = founder
+		trigger_event = {
+			id = middle_east_decisions.1001
+		}
+		#Notify other players.
+		every_player = {
+			limit = {
+				this != root
+				is_within_diplo_range = { CHARACTER = root }
+			}
+			trigger_event = middle_east_decisions.1002
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_created_armenian_empire
+			}
+			set_global_variable = {
+				name = flag_created_armenian_empire
+				value = scope:founder
+			}
+		}
+	}
+
+	ai_potential = {
+		always = no
+	}
+
+	ai_will_do = {
+		base = 0
+	}
+}
+
+#################################
+# Found the Empire of Beth Nahrain
+# by Anna Johansson				
+#################################
+
+### Found Empire Of Beth Nahrain Decision ###
+found_empire_of_beth_nahrain_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 0
+		hegemony = 0
+	}
+
+	title = middle_east_major_decisions.1020.t
+	desc = middle_east_major_decisions.1020.desc
+	selection_tooltip = middle_east_major_decisions.1020.tt
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		capital_province = { geographical_region = world_middle_east }
+
+		any_sub_realm_county = {
+			OR = {
+				faith = faith:nestorian
+				culture = {
+					OR = {
+						this = culture:assyrian
+						any_parent_culture_or_above = {
+							this = culture:assyrian
+						}
+					}
+				}
+			}
+		}
+
+		#Can only do it once
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:created_beth_nahrain
+			}
+		}
+	}
+	is_valid = {
+		is_independent_ruler = yes
+		highest_held_title_tier = tier_kingdom
+		culture = { has_cultural_pillar = heritage_syriac }
+		custom_tooltip = {
+			text = completely_controls_jazira_mesopotamia_tt
+			completely_controls = title:k_jazira
+			completely_controls = title:k_mesopotamia
+		}
+		custom_tooltip = {
+			text = has_titles_jazira_mesopotamia_tt
+			has_title = title:k_jazira
+			has_title = title:k_mesopotamia
+		}
+		OR = {
+			custom_tooltip = {
+				text = has_title_and_completely_control_jerusalem_tt
+				has_title = title:k_jerusalem
+				completely_controls = title:k_jerusalem
+			}
+			custom_tooltip = {
+				text = has_title_and_completely_control_syria_tt
+				has_title = title:k_syria
+				completely_controls = title:k_syria		
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_capable_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+	}
+
+	effect = {
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:created_beth_nahrain
+			}
+			create_title_and_vassal_change = {
+				type = created
+				save_scope_as = title_change
+				add_claim_on_loss = no
+			}
+			title:k_jazira = {
+				set_de_jure_liege_title = title:e_beth_nahrain
+			}
+			title:k_mesopotamia = {
+				set_de_jure_liege_title = title:e_beth_nahrain
+			}
+	
+			if = {
+				limit = {
+					has_title = title:k_jerusalem
+					completely_controls = title:k_jerusalem
+				}
+				title:k_jerusalem = {
+					set_de_jure_liege_title = title:e_beth_nahrain
+				}
+			}
+	
+			if = {
+				limit = {
+					has_title = title:k_syria
+					completely_controls = title:k_syria
+				}
+				title:k_syria = {
+					set_de_jure_liege_title = title:e_beth_nahrain
+				}
+			}
+		}
+		#Create Beth Nahrain
+		title:e_beth_nahrain = {
+			change_title_holder = {
+				holder = root
+				change = scope:title_change
+			}
+		}
+		resolve_title_and_vassal_change = scope:title_change
+
+		dynasty = {
+			add_dynasty_prestige = 1000
+		}
+
+		give_nickname = nick_beth_nahrain
+
+		show_as_tooltip = {
+			promote_culture_beth_nahrain_scripted_effect = yes
+			custom_tooltip = middle_east_major_decisions.1020.promote_culture.tt
+		}
+		save_scope_as = suppress_tooltips
+
+		trigger_event = { id = middle_east_decisions.1020 }
+		
+		show_as_tooltip = {
+			random_list = {
+				100 = { 
+					show_chance = no
+					desc = middle_east_major_decisions.1020.learning.desc
+					learning_beth_nahrain_scripted_effect = yes
+				}
+				100 = { 
+					show_chance = no
+					desc = middle_east_major_decisions.1020.martial.desc
+					martial_beth_nahrain_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					trigger = {
+						faith = faith:nestorian
+					}
+					desc = middle_east_major_decisions.1020.nestorian.desc
+					nestorian_faith_beth_nahrain_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					trigger = {
+						NOT = {
+							faith = faith:nestorian
+						}
+					}
+					desc = middle_east_major_decisions.1020.no_faith.desc
+					no_faith_beth_nahrain_scripted_effect = yes
+				}
+			}
+		}
+	}
+
+	cost = {
+		prestige = 1000
+	}
+
+	ai_potential = {
+		culture = { has_cultural_pillar = heritage_syriac }
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+##############
+# Dar al-Islam
+##############
+
+### Establish the Dar al-Islam ###
+create_dar_al_islam_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/fp3/fp3_decision_foundation.dds"
+	}
+	decision_group_type = major
+
+	desc = create_dar_al_islam_decision_desc
+	selection_tooltip = create_dar_al_islam_decision_tt
+	
+	sort_order = 1000 # Should be at the very top
+
+	is_shown = {
+		# Only for Islamic head of faiths
+		faith = { religious_head ?= root }
+		faith.religion = religion:islam_religion
+		# And only if it hasn't been created yet
+		NOT = { has_global_variable = created_dar_al_islam }
+	}
+	is_valid = {
+		# The basics
+		is_independent_ruler = yes
+		any_held_title = {
+			count >= 2
+			tier = tier_empire
+		}
+		faith = { has_doctrine = doctrine_temporal_head }
+		# Must be very pious
+		prestige_level >= 4
+		piety_level >= 5
+		# Controls Islamic core lands
+		completely_controls_region = world_middle_east_arabia
+		completely_controls_region = world_middle_east_jerusalem
+		completely_controls_region = world_persia
+		completely_controls_region = world_africa_north
+		# Also controls at minimum % of all islamic counties
+		save_temporary_scope_as = root_scope
+		custom_tooltip = {
+			text = realm_controls_enough_islamic_counties_desc
+			any_realm_county = {
+				faith.religion = religion:islam_religion
+				count >= islam_required_county_number_value
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+	}
+
+	effect = {
+		show_as_tooltip = {
+			create_dar_al_islam_effect = yes
+		}
+		save_scope_as = dar_al_islam_ruler
+		# Save all existing islamic head of faiths and their titles
+		religion:islam_religion = {
+			every_faith = {
+				if = {
+					limit = {
+						exists = religious_head
+						faith_hostility_level = {
+							target = root.faith
+							value < faith_hostile_level
+						}
+					}
+					religious_head = {
+						add_to_list = former_islamic_hofs
+						set_variable = {
+							name = old_hof_title
+							value = faith.religious_head_title
+						}
+					}
+				}
+			}
+		}
+		# Trigger follow-up events
+		trigger_event = middle_east_decisions.1100
+		every_player = {
+			limit = {
+				this != root
+				NOT = { is_in_list = former_islamic_hofs }
+			}
+			trigger_event = middle_east_decisions.1101
+		}
+		every_in_list = {
+			list = former_islamic_hofs
+			limit = { this != root }
+			trigger_event = { id = middle_east_decisions.1102 days = 1 }
+		}
+	}
+
+	cost = {
+		piety = 1500
+	}
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 0
+		empire = 24
+		hegemony = 0
+	}
+
+	ai_potential = {
+		faith = { religious_head ?= root }
+		faith.religion = religion:islam_religion
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}

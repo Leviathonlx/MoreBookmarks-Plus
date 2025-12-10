@@ -1,0 +1,142 @@
+﻿
+namespace = feast_default_joe
+
+scripted_trigger feast_default_joe_1010_agent_trigger = {
+	is_ai = yes
+	intrigue > mediocre_skill_rating # avoid suck
+	$SCHEME$ = {
+		any_scheme_agent_slot = { save_temporary_scope_as = agent_slot_temp }
+	}
+	is_valid_as_agent_in_slot = scope:agent_slot_temp
+	save_temporary_scope_as = agent_temp
+	NOR = {
+		$SCHEME$ = { scheme_is_character_agent = scope:agent_temp } # Not already in the scheme
+		has_any_bad_relationship_with_character_trigger = { CHARACTER = root } # Doesn't hate you
+	}
+}
+
+feast_default_joe.1010 = { # Get agent to join your scheme
+	type = activity_event
+	title = feast_default_joe.1010.t
+	desc = feast_default_joe.1010.desc
+	theme = feast_activity
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:agent
+		animation = war_over_win
+	}
+	lower_center_portrait = scope:scheme.scheme_target_character
+	cooldown = { years = 10 }
+	
+	trigger = {
+		any_scheme = { save_temporary_scope_as = scheme_temp }
+		scope:activity = {
+			any_attending_character = {
+				feast_default_joe_1010_agent_trigger = { SCHEME = scope:scheme_temp }
+			}
+		}
+	}
+
+	immediate = {
+		scope:activity = {
+			every_attending_character = {
+				limit = {
+					root = { any_scheme = { save_temporary_scope_as = scheme_temp } }
+					feast_default_joe_1010_agent_trigger = { SCHEME = scope:scheme_temp }
+					scope:agent_slot_temp = { is_filled = no } # prefer schemes with unfilled slots
+				}
+				alternative_limit = {
+					root = { any_scheme = { save_temporary_scope_as = scheme_temp } }
+					feast_default_joe_1010_agent_trigger = { SCHEME = scope:scheme_temp }
+				}
+				add_to_list = agent_list
+				scope:scheme_temp = { add_to_list = scheme_list }
+			}
+		}
+		random_in_list = { # Pick a scheme
+			list = scheme_list
+			weight = {
+				base = 1
+				modifier = { add = scheme_success_chance }
+			}
+			save_scope_as = scheme
+		}
+		random_in_list = { # Pick an agent
+			list = agent_list
+			limit = { feast_default_joe_1010_agent_trigger = { SCHEME = scope:scheme } }
+			weight = {
+				base = 1
+				modifier = { add = intrigue }
+				is_of_major_interest_to_weight_up_modifier = { CHARACTER = scope:scheme.scheme_target_character }
+			}
+			save_scope_as = agent
+		}
+	}
+
+	option = { # Attract all
+		name = feast_default_joe.1010.a
+		trigger = {
+			custom_tooltip = {
+				text = feast_default_joe.1010.a.trigger
+				OR = {
+					intrigue >= decent_skill_rating
+					has_trait = schemer
+				}
+			}
+		}
+		skill = intrigue
+		show_as_unavailable = { always = yes }
+		custom_tooltip = {
+			text = all_guests_agent_more_likely_join_scheme_tt
+			scope:activity = {
+				every_attending_character = {
+					limit = {
+						is_valid_as_agent_in_any_slot = scope:scheme
+						trigger_if = {
+							limit = { exists = scope:scheme.scheme_target_character }
+							NOT = {
+								has_any_good_relationship_with_character_trigger = { CHARACTER = scope:scheme.scheme_target_character }
+							}
+						}
+					}
+					scope:scheme = {
+						add_to_variable_list = {
+							name = increased_agent_join_acceptance
+							target = prev
+							months = 6
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = { # Focus on one
+		name = feast_default_joe.1010.b
+		custom_tooltip = {
+			text = agent_more_likely_join_scheme_tt
+			scope:scheme = {
+				add_to_variable_list = {
+					name = increased_agent_join_acceptance
+					target = scope:agent
+					months = 6
+				}
+			}
+		}
+	}
+
+	option = {
+		name = feast_default_joe.1010.c
+		add_prestige = medium_prestige_loss
+		scope:scheme = { change_opportunities = 1 }
+	}
+
+	option = {
+		name = feast_default_joe.1010.d
+		scope:scheme = { add_scheme_progress = 15 }
+	}
+}
+

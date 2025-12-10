@@ -1,0 +1,70 @@
+﻿namespace = coronation_events
+
+scripted_trigger coronation_events_3001_angry_vassal_trigger = {
+	is_available_healthy_ai_adult = yes
+	opinion = {
+		target = scope:host
+		value < 10
+	}
+}
+
+coronation_events.3001 = {
+	type = letter_event
+	opening = coronation_events.3001.opening
+	desc = coronation_events.3001.desc
+	sender = scope:main_vassal
+
+	trigger = {
+		any_vassal = {
+			coronation_events_3001_angry_vassal_trigger = yes
+			count > 1
+		}
+	}
+	
+	immediate = {
+		ordered_vassal = {
+			limit = {
+				coronation_events_3001_angry_vassal_trigger = yes
+			}
+			order_by = primary_title.tier
+			save_scope_as = main_vassal
+		}
+		every_vassal = {
+			limit = {
+				coronation_events_3001_angry_vassal_trigger = yes
+				NOT = { this = scope:main_vassal }
+			}
+			add_to_list = angry_vassals
+		}
+	}
+	
+	option = { # Invite them
+		name = coronation_events.3001.a
+		show_as_tooltip = {
+			every_in_list = {
+				list = angry_vassals
+				add_to_activity = root.involved_activity
+			}
+		}
+		hidden_effect = {
+			every_in_list = {
+				list = angry_vassals
+				set_location = root.location
+				add_to_activity_without_travel = root.involved_activity
+			}
+		}
+	}
+	
+	option = { # Nah
+		name = coronation_events.3001.b
+		add_legitimacy = major_legitimacy_loss
+		every_in_list = {
+			list = angry_vassals
+			add_opinion = {
+				target = root
+				modifier = not_invited_coronation_opinion
+				opinion = -15
+			}
+		}
+	}
+}

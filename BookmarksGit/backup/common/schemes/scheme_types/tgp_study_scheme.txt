@@ -1,0 +1,208 @@
+﻿study_confucian_classics = {
+	# Basic Setup
+	skill = learning
+	desc = "study_confucian_classics_desc_general"
+	success_desc = "STUDY_CONFUCIAN_CLASSICS_SCHEME_SUCCESS_DESC"
+	icon =	icon_study
+	illustration = "gfx/interface/illustrations/event_scenes/tgp_study_asia.dds"
+	category = personal
+	target_type = character
+
+	is_secret = no
+	is_basic = yes
+	
+	hide_target_name = yes
+	freeze_scheme_when_traveling = yes
+
+	# Parameters
+	speed_per_skill_point = -2
+	spymaster_speed_per_skill_point = 0	
+	uses_resistance = no
+	base_progress_goal = 300
+	base_maximum_success = 95
+	minimum_success = 5
+
+	# Core Triggers
+	allow = {
+		age >= 12
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	valid = {
+		scope:target = scope:owner
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	odds_prediction = {
+		add = odds_mentoring_scheme_misc_value
+		min = 0
+	}
+
+	# Base Chances
+	base_success_chance = {
+		base = 0
+		# Skill
+		modifier = {
+			add = scope:owner.learning
+			desc = "SCHEME_MY_LEARNING"
+		}
+		# Faith
+		modifier = {
+			add = 15
+			desc = "SCHEME_OWNER_PURSUIT_OF_KNOWLEDGE"
+			scope:owner.faith = { has_doctrine = tenet_pursuit_of_knowledge }
+		}
+		# Elder
+		modifier = {
+			add = {
+				value = 0
+				scope:owner = {
+					every_relation = {
+						type = elder
+						add = learning
+					}
+				}
+			}
+			desc = "SCHEME_OWNER_ELDER"
+			scope:owner = {
+				num_of_relation_elder > 0
+			}
+		}
+		# Parents
+		modifier = {
+			add = 10
+			desc = "SCHEME_OWNER_STUDY_HARDER"
+			scope:owner = {
+				has_character_modifier = tgp_study_harder_modifier
+			}
+		}
+		modifier = {
+			add = {
+				value = 0
+				scope:owner = {
+					father = {
+						add = learning
+					}
+				}
+			}
+			desc = "SCHEME_OWNER_FATHER"
+			scope:owner = {
+				father ?= {
+					is_alive = yes
+					top_liege = scope:owner.top_liege
+				}
+			}
+		}
+		modifier = {
+			add = {
+				value = 0
+				scope:owner = {
+					mother = {
+						add = learning
+					}
+				}
+			}
+			desc = "SCHEME_OWNER_MOTHER"
+			scope:owner = {
+				mother ?= {
+					is_alive = yes
+					top_liege = scope:owner.top_liege
+				}
+			}
+		}
+		# Situation
+		modifier = {
+			add = -20
+			desc = SCHEME_OWNER_LANDED
+			scope:owner = { is_landed = yes }
+		}
+		modifier = {
+			add = 15
+			desc = SCHEME_OWNER_UNLANDED
+			scope:owner = { is_landed = no }
+		}
+		modifier = {
+			add = {
+				value = -15
+				multiply = {
+					add = scope:owner.primary_title.tier
+					add = -1
+				}
+			}
+			desc = SCHEME_OWNER_RANK
+			scope:owner = { highest_held_title_tier >= tier_duchy }
+		}
+		## grand secretary director
+		modifier = {
+			add = 10
+			scope:owner.liege ?= {
+				has_active_mandate = promote_merit
+			}
+			desc = promote_merit_bonus_tt
+		}
+		# Personality traits
+		modifier = {
+			add = -10
+			desc = SCHEME_OWNER_LAZY
+			scope:owner = { has_trait = lazy }
+		}
+		modifier = {
+			add = -30
+			desc = SCHEME_OWNER_BURDENED
+			scope:owner = { has_trait = burdened }
+		}
+		modifier = {
+			add = 10
+			desc = SCHEME_OWNER_DILIGENT
+			scope:owner = { has_trait = diligent }
+		}
+		modifier = {
+			add = -10
+			desc = SCHEME_OWNER_IMPATIENT
+			scope:owner = { has_trait = impatient }
+		}
+		modifier = {
+			add = 10
+			desc = SCHEME_OWNER_STUBBORN
+			scope:owner = { has_trait = stubborn }
+		}
+		modifier = {
+			add = 10
+			desc = SCHEME_OWNER_AMBITIOUS
+			scope:owner = { has_trait = ambitious }
+		}
+	}
+
+	# On Actions
+	on_phase_completed = {
+		# Save scopes
+		save_scope_as = scheme
+		scheme_target_character = { save_scope_as = target }
+		scheme_owner = { save_scope_as = owner }
+		# Let's see if we made progress
+		random = {
+			chance = scope:scheme.scheme_success_chance
+			save_scope_value_as = {
+				name = scheme_successful
+				value = yes
+			}
+		}
+		# Determine the outcome
+		scope:owner = {
+			if = {
+				limit = { exists = scope:scheme_successful }
+				trigger_event = { on_action = study_confucian_classics_success }
+			}
+			else = {
+				trigger_event = { on_action = study_confucian_classics_failure }
+			}
+		}
+		reset_scheme_progress = yes
+	}
+
+	## Invalidation
+	on_invalidated = {
+	}
+}

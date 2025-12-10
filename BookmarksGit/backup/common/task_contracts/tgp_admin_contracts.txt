@@ -1,0 +1,3458 @@
+﻿jail_inspection = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/control.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0010
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		renovate_jail = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_influence = {
+						value = medium_influence_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					if = {
+						limit = { county_control < 100 }
+						change_county_control = 5
+					}
+				}
+			}
+		}
+		improve_their_conditions = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					remove_short_term_gold = minor_gold_value
+					increase_governance_effect = { VALUE = 5 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					if = {
+						limit = { county_control < 100 }
+						change_county_control = 5
+					}
+				}
+			}
+		}
+		pardon_some_of_them = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = -5
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_pardoned_prisoners_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		beat_the_complainers = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_martial_lifestyle_xp = minor_lifestyle_xp
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		convict_labor = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_convict_labor_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+potent_physick = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0011
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		emergency_appropriation = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_influence = {
+						value = medium_influence_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		licensing_issue = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0002.b.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_gold = minor_gold_value
+						change_merit = {
+							value = minor_merit_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+					if = {
+						limit = {
+							secret_siphoned_treasury_is_valid_trigger = {
+								OWNER = scope:task_contract.task_contract_taker
+								TARGET = top_liege
+							}
+						}
+						add_secret = {
+							type = secret_siphoned_treasury
+							target = top_liege
+						}
+					}
+				}
+			}
+		}
+		begone_quack = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_prestige = minor_prestige_gain
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_expelled_popular_peddler_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		hire_the_quack = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					remove_short_term_gold = minor_gold_value
+					increase_governance_effect = { VALUE = 5 }
+				}
+			}
+		}
+		down_the_hatch = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					remove_short_term_gold = tiny_gold_value
+					add_character_modifier = {
+						modifier = tgp_potent_physick
+						years = 5
+					}
+				}
+			}
+		}
+		failure_licensing_issue = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0002.b.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+irregular_accounting = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0012
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		confiscation_and_incarceration = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+					add_gold = minor_gold_value
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_enforced_justice_on_official_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		recruit_embezzler = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		cover_up = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_intrigue_lifestyle_xp = minor_lifestyle_xp
+					change_influence = minor_influence_gain
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = -5
+				}
+			}
+		}
+		into_your_pocket = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_gold = medium_gold_value
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+					if = {
+						limit = {
+							secret_siphoned_treasury_is_valid_trigger = {
+								OWNER = scope:task_contract.task_contract_taker
+								TARGET = top_liege
+							}
+						}
+						add_secret = {
+							type = secret_siphoned_treasury
+							target = top_liege
+						}
+					}
+				}
+			}
+		}
+		continue_the_charade = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0003.e.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						add_gold = major_gold_value
+						add_intrigue_lifestyle_xp = minor_lifestyle_xp
+					}
+					add_secret = {
+						type = secret_siphoned_treasury
+						target = top_liege
+					}
+				}
+			}
+		}
+		failure_continue_the_charade = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0003.e.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+salt_smugglers = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/control.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0013
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		execute_smuggler = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		cut_a_deal = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+					add_intrigue_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		interrogate_smuggler = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0004.c.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						change_influence = medium_influence_gain
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		a_cut_of_the_take = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0004.d.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_gold = medium_gold_value
+						add_intrigue_lifestyle_xp = minor_lifestyle_xp
+					}
+					if = {
+						limit = {
+							secret_siphoned_treasury_is_valid_trigger = {
+								OWNER = scope:task_contract.task_contract_taker
+								TARGET = top_liege
+							}
+						}
+						add_secret = {
+							type = secret_siphoned_treasury
+							target = top_liege
+						}
+					}
+				}
+			}
+		}
+		recruit_smuggler = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		failure_interrogate_smuggler = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0004.c.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_a_cut_of_the_take = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0004.d.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+hoarding_grain = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0014
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		release_the_grain = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		shame_them = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0005.b.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_prestige = minor_prestige_gain
+						add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+			}
+		}
+		intimidate_them = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0005.c.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_dread = {
+							value = minor_dread_gain
+							multiply = governance_task_contract_tier_value
+						}
+						add_prestige = minor_prestige_gain
+						change_influence = {
+							value = medium_influence_gain
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		purchase_grain_yourself = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					remove_short_term_gold = minor_gold_value
+					add_prestige = minor_prestige_gain
+					change_influence = {
+						value = medium_influence_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		bribe_with_offices = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					change_influence = {
+						value = medium_influence_gain
+						multiply = governance_task_contract_tier_value
+					}
+					add_intrigue_lifestyle_xp = minor_lifestyle_xp
+				}
+			}
+		}
+		failure_intimidate_them = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0005.c.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_shame_them = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0005.b.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+doddering_magistrate = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/diplomacy.dds"
+	travel = no
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0015
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		appoint_substitute = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		force_him_out = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		promote_somewhere_harmless = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_prestige = minor_prestige_gain
+				}
+			}
+		}
+		let_him_continue = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_doddering_magistrate_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		demote_him = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+					add_character_modifier = {
+						modifier = tgp_disrespected_elderly_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+burdensome_taxes = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+	travel = no
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0007
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		revise_tax_assessment = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0007.a.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						change_influence = {
+							value = medium_influence_gain
+							multiply = governance_task_contract_tier_value
+						}
+						add_stewardship_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					if = {
+						limit = { county_control < 100 }
+						change_county_control = 5
+					}
+				}
+			}
+		}
+		waive_their_taxes = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					if = {
+						limit = { county_control < 100 }
+						change_county_control = 5
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_reduced_taxes_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		pay_it_yourself = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					remove_short_term_gold = medium_gold_value
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		delayed_taxes = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_delayed_taxes_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		imprison_debtors = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_imprisoned_poor_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		failure_revise_tax_assessment = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0007.a.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+unsafe_highways = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/soldier.dds"
+	travel = no
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0008
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		merchant_funded_government_escort = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					if = {
+						limit = { county_control < 100 }
+						change_county_control = 5
+					}
+				}
+			}
+		}
+		send_out_the_patrols = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_prestige = minor_prestige_gain
+					add_martial_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location.county = {
+					if = {
+						limit = { county_control < 100 }
+						change_county_control = 5
+					}
+				}
+			}
+		}
+		talk_them_into_bodyguards = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0008.c.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_prestige = minor_prestige_gain
+						add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+			}
+		}
+		threaten_with_sanctions = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0008.d.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_dread = {
+							value = minor_dread_gain
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		entice_with_promises = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0008.e.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+						remove_short_term_gold = minor_gold_value
+					}
+				}
+			}
+		}
+		failure_entice_with_promises = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0008.e.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_threaten_with_sanctions = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0008.d.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_talk_them_into_bodyguards = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0008.c.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+dam_in_disrepair = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0009
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		conscientious_mobilization = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		forced_labor = { 
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+				}
+				scope:task_contract.task_contract_location.county = {
+					if = {
+						limit = { county_control < 100 }
+						change_county_control = 15
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_compelled_labor_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		compel_the_wealthy = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0009.c.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_stewardship_lifestyle_xp = medium_lifestyle_xp
+					}
+				}
+			}
+		}
+		personal_contribution = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					remove_short_term_gold = medium_gold_value
+					change_influence = {
+						value = medium_influence_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_appreciative_populace_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		requisition_state_resources = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0009.e.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_intrigue_lifestyle_xp = medium_lifestyle_xp
+					}
+				}
+			}
+		}
+		failure_compel_the_wealthy = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0009.c.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_requisition_state_resources = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0009.e.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+lines_in_the_soil = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0020
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		land_resurvey = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+					change_merit = {
+						value = miniscule_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		consult_archives = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0021.b.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_learning_lifestyle_xp = minor_lifestyle_xp
+						change_merit = {
+							value = medium_merit_value
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_consult_archives = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0021.b.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		split_the_land = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		purchase_claims = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0021.d.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						remove_short_term_gold = minor_gold_value
+						add_stewardship_lifestyle_xp = minor_lifestyle_xp
+						add_character_modifier = {
+							modifier = tgp_purchased_land
+							years = 10
+						}
+					}
+				}
+			}
+		}
+		failure_purchase_claims = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0021.d.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+						remove_short_term_gold = minor_gold_value
+					}
+				}
+			}
+		}
+		declare_state_property = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_state_annexed_land
+						years = 10
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+fraud_in_broad_daylight = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0022
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		goods_inspection = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		reward_for_information = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					remove_short_term_gold = minor_gold_value
+					add_intrigue_lifestyle_xp = minor_lifestyle_xp
+				}
+			}
+		}
+		undercover_clerks = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0023.c.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_intrigue_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		failure_undercover_clerks = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0023.c.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		merchant_association = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					remove_short_term_gold = minor_gold_value
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_empowered_merchants_association
+						years = 10
+					}
+				}
+			}
+		}
+		surprise_raid = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0023.e.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_gold = { medium_gold_value major_gold_value }
+						add_martial_lifestyle_xp = minor_lifestyle_xp
+						add_dread = {
+							value = minor_dread_gain
+							multiply = governance_task_contract_tier_value
+						}
+					}
+					if = {
+						limit = {
+							secret_siphoned_treasury_is_valid_trigger = {
+								OWNER = scope:task_contract.task_contract_taker
+								TARGET = top_liege
+							}
+						}
+						add_secret = {
+							type = secret_siphoned_treasury
+							target = top_liege
+						}
+					}
+				}
+			}
+		}
+		failure_surprise_raid = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0023.e.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+crumbling_bridge = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0024
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		army_assistance = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_army_reconstruction
+						years = 10
+					}
+				}
+			}
+		}
+		temporary_substitute = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					remove_short_term_gold = minor_gold_value
+					change_influence = medium_influence_gain
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_hastily_rebuilt_bridge
+						years = 10
+					}
+				}
+			}
+		}
+		ferry_crossing = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_ferry_crossing
+						years = 10
+					}
+				}
+			}
+		}
+		slower_replacement = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_learning_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_well_planned_bridge
+						years = 10
+					}
+				}
+			}
+		}
+		settle_caravans = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0025.e.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_stewardship_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_settled_caravans
+						years = 10
+					}
+				}
+			}
+		}
+		failure_settle_caravans = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0025.e.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+confusion_of_tongues = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0026
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		temporary_housing = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		search_for_translator = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+				}
+			}
+		}
+		confiscate_their_goods = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_gold = { medium_gold_value major_gold_value }
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+					if = {
+						limit = {
+							faith = {
+								trait_is_sin = greedy
+							}
+						}
+						add_piety = minor_piety_loss
+					}
+					if = {
+						limit = {
+							secret_siphoned_treasury_is_valid_trigger = {
+								OWNER = scope:task_contract.task_contract_taker
+								TARGET = top_liege
+							}
+						}
+						add_secret = {
+							type = secret_siphoned_treasury
+							target = top_liege
+						}
+					}
+				}
+				scope:task_contract.var:foreign_merchant_culture = {
+					change_cultural_acceptance = {
+						target = scope:task_contract.task_contract_taker.culture
+						value = minor_cultural_acceptance_loss
+						desc = cultural_acceptance_loss_event
+					}
+				}
+			}
+		}
+		communicate_through_gestures = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0027.d.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+				scope:task_contract.var:foreign_merchant_culture = {
+					change_cultural_acceptance = {
+						target = root.culture
+						value = minor_cultural_acceptance_loss
+						desc = cultural_acceptance_loss_event
+					}
+				}
+			}
+		}
+		failure_communicate_through_gestures = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0027.d.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		put_them_under_guard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+				scope:task_contract.var:foreign_merchant_culture = {
+					change_cultural_acceptance = {
+						target = root.culture
+						value = minor_cultural_acceptance_loss
+						desc = cultural_acceptance_loss_event
+					}
+				}
+			}
+		}
+		i_know_this_one = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_dread = major_dread_gain
+					add_martial_lifestyle_xp = minor_lifestyle_xp
+					if = {
+						limit = {
+							NOT = {
+								has_character_modifier = feast_display_of_ruthlessness_modifier
+							}
+						}
+						add_character_modifier = {
+							modifier = feast_display_of_ruthlessness_modifier
+							years = 10
+						}
+					}
+				}
+				scope:task_contract.var:foreign_merchant_culture = {
+					change_cultural_acceptance = {
+						target = root.culture
+						value = minor_cultural_acceptance_loss
+						desc = cultural_acceptance_loss_event
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+seditious_storytelling = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0028
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		censor_storyteller = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_suppressed_popular_storyteller
+						years = 10
+					}
+				}
+			}
+		}
+		arrest_storyteller = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_suppressed_popular_storyteller
+						years = 10
+					}
+				}
+			}
+		}
+		encourage_rival_storytellers = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					remove_short_term_gold = minor_gold_value
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_state_sponsored_storytellers
+						years = 10
+					}
+				}
+			}
+		}
+		intimidate_audience = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		persuade_storyteller = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0029.e.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_converted_storyteller
+						years = 10
+					}
+				}
+			}
+		}
+		failure_persuade_storyteller = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0029.e.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+quaking_in_panic = { # TODO_CD_TGP: hook into Natural Disasters if and where appropriate when implemented (foreshocks, aftershocks?)
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+		any_councillor = { # For the context of the event localization to work properly
+			count >= 2
+		}
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0030
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		convene_public_meeting = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0031.a.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+						change_merit = {
+							value = medium_merit_value
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_reassured_populace
+						years = 10
+					}
+				}
+			}
+		}
+		failure_convene_public_meeting = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0031.a.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		deploy_guards = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					change_county_control = 5
+				}
+			}
+		}
+		appeal_to_local_leadership = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		architectural_inspection = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0031.d.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_stewardship_lifestyle_xp = minor_lifestyle_xp
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_reassured_populace
+						years = 10
+					}
+				}
+			}
+		}
+		failure_architectural_inspection = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0031.d.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		population_transfer = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_consolidated_population
+						years = 10
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+monopoly_in_the_marketplace = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0032
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		strict_regulations = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_stewardship_lifestyle_xp = minor_lifestyle_xp
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_market_regulation
+						years = 10
+					}
+				}
+			}
+		}
+		association_stalls_only = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_empowered_merchants_association
+						years = 10
+					}
+				}
+			}
+		}
+		levy_special_tax = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_gold = { minor_gold_value medium_gold_value }
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+					if = {
+						limit = {
+							faith = {
+								trait_is_sin = greedy
+							}
+						}
+						add_piety = minor_piety_loss
+					}
+					if = {
+						limit = {
+							secret_siphoned_treasury_is_valid_trigger = {
+								OWNER = scope:task_contract.task_contract_taker
+								TARGET = top_liege
+							}
+						}
+						add_secret = {
+							type = secret_siphoned_treasury
+							target = top_liege
+						}
+					}
+				}
+			}
+		}
+		back_competitors = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0033.d.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 5 }
+						add_intrigue_lifestyle_xp = minor_lifestyle_xp
+						remove_short_term_gold = minor_gold_value
+					}
+				}
+				scope:task_contract.task_contract_location = {
+					add_province_modifier = {
+						modifier = tgp_empowered_merchants_association
+						years = 10
+					}
+				}
+			}
+		}
+		failure_back_competitors = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0033.d.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+						remove_short_term_gold = minor_gold_value
+					}
+				}
+			}
+		}
+		seize_merchant_goods = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_gold = { medium_gold_value major_gold_value }
+					add_dread = {
+						value = minor_dread_gain
+						multiply = governance_task_contract_tier_value
+					}
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+					if = {
+						limit = {
+							faith = {
+								trait_is_sin = greedy
+							}
+						}
+						add_piety = minor_piety_loss
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+contested_inheritance = {
+	group = admin_governance_group
+	icon = "gfx/interface/icons/message_feed/stewardship.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_governor_contract_event.0034
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_success_tt_rewards
+			}
+		}
+		success_failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_failure_tt
+			}
+		}
+		declare_communal_property = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					change_merit = {
+						value = medium_merit_value
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		award_according_to_seniority = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 5 }
+					add_prestige = medium_prestige_gain
+					change_influence = {
+						value = minor_influence_gain
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		award_to_highest_bidder = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = tgp_governor_contract_event.0035.c.toast_success
+						left_icon = scope:task_contract.task_contract_taker
+						add_gold = { medium_gold_value major_gold_value }
+						change_merit = {
+							value = minor_merit_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+					if = {
+						limit = {
+							faith = {
+								trait_is_sin = greedy
+							}
+						}
+						add_piety = minor_piety_loss
+					}
+					if = {
+						limit = {
+							secret_siphoned_treasury_is_valid_trigger = {
+								OWNER = scope:task_contract.task_contract_taker
+								TARGET = top_liege
+							}
+						}
+						add_secret = {
+							type = secret_siphoned_treasury
+							target = top_liege
+						}
+					}
+				}
+			}
+		}
+		failure_award_to_highest_bidder = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0035.c.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		adhere_to_testament = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_learning_lifestyle_xp = minor_lifestyle_xp
+					change_merit = {
+						value = minor_merit_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+		persuade_private_settlement = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					add_prestige = minor_prestige_gain
+				}
+			}
+		}
+		failure_persuade_private_settlement = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = tgp_governor_contract_event.0035.e.toast_failure
+						left_icon = scope:task_contract.task_contract_taker
+						change_influence = {
+							value = minor_influence_loss
+							multiply = governance_task_contract_tier_value
+						}
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = minor_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+

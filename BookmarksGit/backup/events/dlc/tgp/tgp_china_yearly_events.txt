@@ -1,0 +1,1154 @@
+﻿#China Yearly Events
+
+namespace = tgp_china_yearly
+
+# tgp_china_yearly.0001 - Charitable Acts
+# tgp_china_yearly.0005 - Child mourns the loss of a father
+# tgp_china_yearly.0010 - Hack poet peddles supposedly lucky poems
+# tgp_china_yearly.0015 - Settle a dispute between a merchant and a peasant
+# tgp_china_yearly.0020 - County has unpaid back-taxes
+
+###########################################
+# Charitable Acts
+# 0001 - 0004
+###########################################
+
+tgp_china_yearly.0001 = {
+	type = character_event
+	title = tgp_china_yearly.0001.t
+	desc = tgp_china_yearly.0001.desc
+
+	theme = merit
+	override_background = { reference = tgp_holysite_asia }
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	right_portrait = {
+		character = scope:begging_peasant
+		animation = beg
+		outfit_tags = { beggar_rags }
+		hide_info = yes
+	}
+
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		highest_held_title_tier <= tier_kingdom
+		is_independent_ruler = no
+		short_term_gold >= medium_gold_value
+		any_held_county = {
+			county_control <= 60
+			root.location.county = this
+		}
+	}
+
+	immediate = {
+		random_held_county = {
+			limit = {
+				county_control <= 60
+				root.location.county = this
+			}
+			save_scope_as = poor_county
+		}
+		create_character = {
+			template = generic_peasant_character
+			location = root.location
+			save_scope_as = begging_peasant
+		}
+	}
+
+	option = { #Donate money to the poor.
+		name = tgp_china_yearly.0001.a
+		flavor = tgp_china_yearly.0001.a.flavor
+		remove_short_term_gold = medium_gold_value
+		scope:poor_county = {
+			change_county_control = 10
+		}
+		change_merit = minor_merit_gain
+
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+			generous = medium_stress_impact_loss
+			compassionate = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = medium_chance_impact_positive_ai_value
+			}
+			modifier = {
+				OR = {
+					has_trait = greedy
+				}
+				factor = 0
+			}
+			modifier = {
+				short_term_gold <= medium_gold_value
+				factor = 0
+			}
+		}
+	}
+
+	option = { #Beat them back to work!
+		name = tgp_china_yearly.0001.b
+
+		scope:poor_county = {
+			add_county_modifier = {
+				modifier = tgp_forced_labor_modifier
+				years = 5
+			}
+		}
+
+		random_list = {
+			80 = {
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = tgp_china_yearly.0001.b.success
+					add_character_modifier = {
+						modifier = tgp_lowborn_chastiser_modifier
+						years = 5
+					}
+				}
+			}
+			20 = {
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = tgp_china_yearly.0001.b.critical
+					add_character_modifier = {
+						modifier = tgp_lowborn_tenderizer_modifier
+						years = 5
+					}
+				}
+			}
+		}
+
+		stress_impact = {
+			greedy = medium_stress_impact_loss
+			generous = medium_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_greed = medium_chance_impact_positive_ai_value
+				ai_zeal = tiny_chance_impact_positive_ai_value
+			}
+			modifier = {
+				OR = {
+					has_trait = generous
+					has_trait = compassionate
+				}
+				factor = 0
+			}
+		}
+	}
+
+	option = { #I'm not learned enough to settle this.
+		name = tgp_china_yearly.0001.c
+		flavor = tgp_china_yearly.0001.c.flavor
+
+		trigger = {
+			OR = {
+				has_trait_xp = {
+					trait = confucian_education
+					value < 100
+				}
+				NOT = { has_trait = confucian_education }
+			}
+		}
+
+		#Add small amount of Confucian Education trait. If root does not have the trait, add stress.
+		if = {
+			limit = {
+				has_trait = confucian_education
+			}
+			add_trait_xp = {
+				trait = confucian_education
+				value = lifestyle_confucian_education_xp_gain_minor_value
+			}
+		}
+		else = {
+			stress_impact = {
+				base = miniscule_stress_impact_gain
+				lazy = medium_stress_impact_loss
+				diligent = medium_stress_impact_gain
+			}
+			custom_description_no_bullet = { text = tgp_china_yearly_no_education }
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = tiny_chance_impact_positive_ai_value
+			}
+			modifier = {
+				has_trait = diligent
+				factor = 0
+			}
+		}
+	}
+	option = { #These worldly matters are beneath me.
+		name = tgp_china_yearly.0001.d
+
+		trigger = {
+			has_trait_xp = {
+				trait = confucian_education
+				value = 100
+			}
+		}
+		add_stress = medium_stress_impact_loss
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_greed = tiny_chance_impact_positive_ai_value
+			}
+		}
+	}
+}
+
+###########################################
+# Child mourns the loss of a parent
+# 0005 - 0009
+###########################################
+
+tgp_china_yearly.0005 = {
+	type = character_event
+	title = tgp_china_yearly.0005.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:messenger = { is_knight = yes }
+				}
+				desc = tgp_china_yearly.0005.knight
+			}
+			desc = tgp_china_yearly.0005.eunuch
+		}
+		desc = tgp_china_yearly.0005.outro
+	}
+
+	theme = merit
+
+	override_background = { reference = courtyard }
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	right_portrait = {
+		character = scope:grieving_child
+		animation = beg
+	}
+
+	lower_right_portrait = scope:messenger
+	lower_center_portrait = scope:guardian
+
+	cooldown = { years = 5 }
+
+	trigger = {
+		is_ai = no
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		highest_held_title_tier <= tier_kingdom
+		is_independent_ruler = no
+		any_held_county = { development_level <= terrible_development_level }
+		OR = {
+			any_courtier_or_guest  = {
+				is_available_ai_adult = yes
+			}
+			number_of_knights > 0
+		}
+	}
+
+	immediate = {
+		every_pool_character = {
+			province = root.location
+			limit = {
+				age = { 6 12 }
+				num_of_good_genetic_traits >= 1
+				num_of_bad_genetic_traits >= 1
+				any_parent = {
+					count = all
+					is_alive = no
+				}
+			}
+			save_scope_as = grieving_child
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:grieving_child }
+			}
+			hidden_effect = {
+				#Create orphan.
+				create_character = {
+					template = tgp_orphan_character
+					location = root.location
+					save_scope_as = grieving_child
+				}
+				#Orphan needs dead parents (sorry).
+				create_character = {
+					template = generic_peasant_character
+					location = root.location
+					gender = female
+					age = { 25 27 }
+					save_scope_as = orphan_mother
+				}
+				create_character = {
+					template = generic_peasant_character
+					location = root.location
+					gender = male
+					age = { 29 33 }
+					save_scope_as = orphan_father
+				}
+				scope:grieving_child = {
+					set_mother = scope:orphan_mother
+					set_father = scope:orphan_father
+				}
+				scope:orphan_mother ?= {
+					silent_disappearance_effect = yes
+				}
+				scope:orphan_father ?= {
+					silent_disappearance_effect = yes
+				}
+			}
+		}
+		else = {
+			scope:grieving_child.mother ?= {
+				save_scope_as = orphan_mother				
+			}
+			scope:grieving_child.father ?= {
+				save_scope_as = orphan_father
+			}
+		}
+		#Is mentioned parent woman or man?
+		if = {
+			limit = {
+				faith = { has_doctrine = doctrine_gender_equal }
+			}
+			random_list = {
+				50 = {
+					scope:orphan_mother ?= { save_scope_as = parent }
+				}
+				50 = {
+					scope:orphan_father ?= { save_scope_as = parent }
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				faith = { has_doctrine = doctrine_gender_female_dominated }
+			}
+			scope:orphan_mother ?= { save_scope_as = parent }
+		}
+		else_if = {
+			limit = {
+				faith = { has_doctrine = doctrine_gender_male_dominated }
+			}
+			scope:orphan_father ?= { save_scope_as = parent }
+		}
+		#Find suitable guardian.
+		random_courtier = {
+			limit = {
+				is_available_ai_adult = yes
+				num_of_relation_ward < 2
+				save_temporary_scope_as = compare_character
+				scope:grieving_child = { has_ward_guardian_education_match_compare_character_trigger = yes } #Get same education
+			}
+			alternative_limit = {
+				is_available_ai_adult = yes
+				num_of_relation_ward < 2
+			} #Get backup
+			save_scope_as = guardian
+		}
+		#Find eunuch to bring you the child.
+		random_courtier = {
+			limit = {
+				has_court_position = chief_eunuch_court_position 
+				is_available_ai_adult = yes
+			}
+			save_scope_as = messenger
+		}
+		#if no eunuch, find knight
+		if = {
+			limit = {
+				NOT = { exists = scope:messenger }
+			}
+			random_knight = {
+				limit = { has_trait = compassionate }
+				save_scope_as = messenger
+			}
+		}
+		#if no knight, find anyone
+		if = {
+			limit = {
+				NOT = { exists = scope:messenger }
+			}
+			random_courtier_or_guest = {
+				limit = {
+					is_available_ai_adult = yes
+				}
+				save_scope_as = messenger
+			}
+		}
+	}
+
+	option = { #I will find a suitable custodian.
+		name = tgp_china_yearly.0005.a
+
+		trigger = { exists = scope:guardian }
+
+		scope:grieving_child = {
+			set_relation_guardian = scope:guardian
+		}
+		add_prestige = medium_prestige_gain
+		change_influence = major_influence_loss
+		add_courtier = scope:grieving_child
+
+		stress_impact = {
+			compassionate = medium_stress_impact_loss
+			callous = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = tiny_chance_impact_positive_ai_value
+				ai_greed = tiny_chance_impact_negative_ai_value
+			}
+			modifier = {
+				has_trait = callous
+				factor = 0
+			}
+		}
+	}
+
+	option = { #The child cannot honor their father if we take them in.
+		name = tgp_china_yearly.0005.b
+
+		change_merit = minor_merit_gain
+
+		stress_impact = {
+			compassionate = medium_stress_impact_gain
+			callous = medium_stress_impact_loss
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = tiny_chance_impact_negative_ai_value
+				ai_energy = tiny_chance_impact_positive_ai_value
+			}
+			modifier = {
+				add = 15
+				has_trait = callous
+			}
+			modifier = {
+				has_trait = compassionate
+				factor = 0
+			}
+		}
+	}
+
+	option = { #I am not ready to decide on this.
+		name = tgp_china_yearly.0005.c
+		flavor = tgp_china_yearly.0005.c.flavor
+
+		trigger = {
+			OR = {
+				has_trait_xp = {
+					trait = confucian_education
+					value < 100
+				}
+				NOT = { has_trait = confucian_education }
+			}
+		}
+
+		#Add small amount of Confucian Education trait. If root does not have the trait, add stress.
+		if = {	
+			limit = {
+				has_trait = confucian_education
+			}
+			add_trait_xp = {
+				trait = confucian_education
+				value = lifestyle_confucian_education_xp_gain_minor_value
+			}
+		}
+		else = {
+			stress_impact = {
+				base = miniscule_stress_impact_gain
+				lazy = medium_stress_impact_loss
+				diligent = medium_stress_impact_gain
+			}
+			custom_description_no_bullet = { text = tgp_china_yearly_no_education }
+		}
+
+		scope:grieving_child = {
+			silent_disappearance_effect = yes
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_greed = tiny_chance_impact_positive_ai_value
+			}
+			modifier = {
+				has_trait = compassionate
+				has_trait = diligent
+				factor = 0
+			}
+			modifier = {
+				add = 10
+				has_trait = callous
+			}
+		}
+	}
+
+	option = { #We cannot lord over life and death.
+		name = tgp_china_yearly.0005.d
+
+		trigger = {
+			has_trait_xp = {
+				trait = confucian_education
+				value = 100
+			}
+		}
+
+		add_stress = medium_stress_impact_loss
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_greed = tiny_chance_impact_positive_ai_value
+			}
+		}
+	}
+}
+
+###########################################
+# Hack poet peddles supposedly lucky poems
+# 0010 - 0014
+###########################################
+
+tgp_china_yearly.0010 = {
+	type = character_event
+	title = tgp_china_yearly.0010.t
+	desc = tgp_china_yearly.0010.desc
+
+	theme = merit
+
+	override_background = { reference = market }
+
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	right_portrait = {
+		character = scope:starving_lowborn
+		animation = obsequious_bow
+	}
+
+	cooldown = { years = 5 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		highest_held_title_tier <= tier_kingdom
+		is_independent_ruler = no
+		is_ai = no
+	}
+
+	immediate = {
+		create_character = {
+			template = generic_peasant_character
+			location = root.location
+			trait = deceitful
+			trait = fickle
+			trait = eccentric
+			age = { 21 35 }
+			save_scope_as = starving_lowborn
+		}
+		hidden_effect = {
+			scope:starving_lowborn ?= {
+				change_current_weight = -75
+			}
+			scope:starving_lowborn ?= {
+				random_list = {
+					30 = {
+						add_trait = physique_good_1
+					}
+					30 = {
+						add_trait = beauty_good_1
+					}
+					30 = {
+						add_trait = intellect_good_1
+					}
+					10 = {
+						add_trait = shrewd
+					}
+				}
+			}
+		}
+	}
+
+	option = { #Banish him.
+		name = tgp_china_yearly.0010.a
+		custom_tooltip = tgp_china_yearly.0010.a.tt
+		add_dread = minor_dread_gain
+		change_merit = minor_merit_gain
+
+		scope:starving_lowborn = {
+			silent_disappearance_effect = yes
+		}
+
+		stress_impact =  {
+			zealous = medium_stress_impact_loss
+			callous = minor_stress_impact_loss
+		}
+	}
+
+	option = { #Hire him. He could prove useful.
+		name =  tgp_china_yearly.0010.b
+		add_courtier = scope:starving_lowborn
+		add_character_modifier = {
+			modifier = tgp_recruited_charlatan_modifier
+			years = 5
+		}
+
+		stress_impact = { ambitious = medium_stress_impact_loss }
+	}
+
+	option = { #I wonder what the books say about this.
+		name = tgp_china_yearly.0010.c
+
+		trigger = {
+			OR = {
+				has_trait_xp = {
+					trait = confucian_education
+					value < 100
+				}
+				NOT = { has_trait = confucian_education }
+			}
+		}
+
+		#Add small amount of Confucian Education trait. If root does not have the trait, add stress.
+		if = {	
+			limit = {
+				has_trait = confucian_education
+			}
+			add_trait_xp = {
+				trait = confucian_education
+				value = lifestyle_confucian_education_xp_gain_minor_value
+			}
+		}
+		else = {
+			stress_impact = {
+				base = miniscule_stress_impact_gain
+				lazy = medium_stress_impact_loss
+				diligent = medium_stress_impact_gain
+			}
+			custom_description_no_bullet = { text = tgp_china_yearly_no_education }
+		}
+
+		scope:starving_lowborn = {
+			silent_disappearance_effect = yes
+		}
+	}
+
+	option = { #I have more important matters to attend.
+		name = tgp_china_yearly.0010.d
+
+		trigger = {
+			has_trait_xp = {
+				trait = confucian_education
+				value = 100
+			}
+		}
+		add_stress = medium_stress_impact_loss
+	}
+}
+
+###########################################
+# Settle a dispute between a merchant and a peasant
+# 0015 - 0019
+###########################################
+
+tgp_china_yearly.0015 = {
+	type = character_event
+	title = tgp_china_yearly.0015.t
+	desc = tgp_china_yearly.0015.desc
+
+	theme = merit
+
+	override_background = { reference = market }
+
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	right_portrait = {
+		character = scope:market_vendor
+		animation = disapproval
+	}
+
+	lower_right_portrait = { character = scope:traveling_merchant }
+
+	cooldown = { years = 5 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		highest_held_title_tier <= tier_kingdom
+		is_independent_ruler = no
+	}
+
+	immediate = {
+		create_character = {
+			template = merchant_template
+			location = root.location
+			culture = root.culture
+			faith = root.faith
+			trait = honest
+			trait = diligent
+			trait = honest
+			save_scope_as = market_vendor
+		}
+		create_character = {
+			template = merchant_template
+			location = root.location
+			culture = root.culture
+			faith = root.faith
+			trait = gluttonous
+			trait = greedy
+			trait = gregarious
+			save_scope_as = traveling_merchant
+		}
+	}
+
+	option = { #Drive the merchant out.
+		name = tgp_china_yearly.0015.a
+		change_merit = minor_merit_gain
+
+		hidden_effect = {
+			scope:market_vendor = { silent_disappearance_effect = yes }
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_energy = tiny_chance_impact_positive_ai_value
+			}
+		}
+	}
+
+	option = { #Allow the merchant to stay, at a cost.
+		name = tgp_china_yearly.0015.b
+		add_treasury_or_gold = medium_treasury_or_gold_value
+		change_merit = minor_merit_loss
+		stress_impact = {
+			greedy = medium_stress_loss
+			diligent = medium_stress_gain
+		}
+		hidden_effect = {
+			if = {
+				limit = { is_ai = yes }
+				scope:traveling_merchant = { silent_disappearance_effect = yes }
+			}
+			else = {
+				scope:traveling_merchant = { move_to_pool = yes }
+			}
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_greed = medium_chance_impact_positive_ai_value
+			}
+			modifier = {
+				has_trait = diligent
+				factor = 0
+			}
+		}
+	}
+
+	option = { #I sush them so I can meditate on my studies.
+		name = tgp_china_yearly.0015.c
+
+		trigger = {
+			OR = {
+				has_trait_xp = {
+					trait = confucian_education
+					value < 100
+				}
+				NOT = { has_trait = confucian_education }
+			}
+		}
+
+		#Add small amount of Confucian Education trait. If root does not have the trait, lose stress.
+		if = {	
+			limit = {
+				has_trait = confucian_education
+			}
+			add_trait_xp = {
+				trait = confucian_education
+				value = lifestyle_confucian_education_xp_gain_minor_value
+			}
+		}
+		else = {
+			stress_impact = {
+				base = miniscule_stress_impact_gain
+				lazy = medium_stress_impact_loss
+				diligent = medium_stress_impact_gain
+			}
+			custom_description_no_bullet = { text = tgp_china_yearly_no_education }
+		}
+
+		hidden_effect = {
+			scope:traveling_merchant = { silent_disappearance_effect = yes }
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_energy = tiny_chance_impact_positive_ai_value
+			}
+			modifier = {
+				has_trait = impatient
+				has_trait = diligent
+				factor = 0
+			}
+		}
+	}
+
+	option = { #Such a petty squabble.
+		name = tgp_china_yearly.0015.d
+
+		trigger = {
+			has_trait_xp = {
+				trait = confucian_education
+				value = 100
+			}
+		}
+		add_stress = medium_stress_impact_loss
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_greed = tiny_chance_impact_positive_ai_value
+			}
+		}
+	}
+
+	after = {
+		scope:market_vendor = { silent_disappearance_effect = yes }
+	}
+}
+
+###########################################
+# County has unpaid back-taxes
+# 0020 - 0024
+###########################################
+
+tgp_china_yearly.0020 = {
+	type = character_event
+	title = tgp_china_yearly.0020.t
+	desc = tgp_china_yearly.0020.desc
+
+	theme = merit
+
+	override_background = { reference = tgp_garden_asia }
+
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	right_portrait = {
+		character = scope:tax_official
+		animation = personality_dishonorable
+	}
+
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		highest_held_title_tier <= tier_kingdom
+		is_independent_ruler = no
+	}
+
+	immediate = {
+		random_held_county = { save_scope_as = taxless_county }
+		root.liege = {
+			random_councillor = {
+				limit = {
+					has_council_position = councillor_steward
+					NOT = { this = root }
+				}
+				alternative_limit = { 
+					NOT = { this = root }
+				}
+				save_scope_as = tax_official
+			}
+			save_scope_as = tax_liege
+		}
+	}
+
+	option = { #Send out the tax collectors.
+		name = tgp_china_yearly.0020.a
+		scope:taxless_county = {
+			change_county_control = medium_county_control_loss
+		}
+		scope:tax_liege = {
+			add_treasury = 50
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 25
+			}
+		}
+
+		stress_impact = {
+			ambitious = medium_stress_loss
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_energy = 1
+			}
+		}
+	}
+
+	option = { #Refuse.
+		name = tgp_china_yearly.0020.b
+
+		change_influence = major_influence_loss
+		scope:taxless_county = {
+			add_county_modifier = {
+				modifier = tgp_unpressed_taxes_modifier
+				years = 5
+			}
+		}
+		change_merit = minor_merit_gain
+		stress_impact = {
+			compassionate = medium_stress_loss
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = 1
+			}
+		}
+	}
+}
+
+###########################################
+# Governor Appointment Available
+# 0030 - 0035
+###########################################
+
+#tgp_china_yearly.0030 = {
+#	type = letter_event
+#	opening = tgp_china_yearly.0030.t
+#	desc = {
+#		first_valid = {
+#			triggered_desc = {
+#				trigger = {
+#					scope:title_offerer = {
+#						has_council_position = minister_personnel
+#					}
+#				}
+#				desc = tgp_china_yearly.0030.desc_minister_of_personel
+#			}
+#			triggered_desc = {
+#				trigger = {
+#					scope:title_offerer = {
+#						has_relation_disciple = root
+#					}
+#				}
+#				desc = tgp_china_yearly.0030.desc_elder
+#			}
+#			desc = tgp_china_yearly.0030.desc_fellow_confucian
+#		}
+#		desc = tgp_china_yearly.0030.desc_intro_outro
+#	}
+#
+#	sender = scope:title_offerer
+#
+#	cooldown = { years = 10 }
+#	
+#	trigger = {
+#		is_ai = no
+#		is_landed = no # gentlefolk only
+#		# You have enough merit to become duke tier, but not enough to become king tier
+#		merit_level >= merit_level_expected_duchy_value
+#		merit_level < merit_level_expected_kingdom_value
+#		liege = { is_available_ai_adult = yes }
+#		is_available_healthy_adult = yes
+#		top_liege = {
+#			any_vassal = {
+#				government_has_flag = government_is_celestial
+#				is_governor = yes
+#				primary_title = {
+#					tier = tier_duchy
+#					current_heir != root
+#				}
+#				is_ai = yes
+#			}
+#		}
+#		dynasty != top_liege.dynasty 
+#	}
+#
+#	immediate = {
+#		top_liege = {
+#			random_vassal = {
+#				limit = {
+#					government_has_flag = government_is_celestial
+#					is_governor = yes
+#					primary_title = {
+#						tier = tier_duchy
+#						current_heir != root
+#					}
+#					is_ai = yes
+#				}
+#				save_scope_as = title_holder
+#				primary_title = { save_scope_as = free_title }
+#			}
+#		}
+#		liege = {
+#			if = {
+#				limit = {
+#					this = title:h_china.holder
+#				}
+#				if = {
+#					limit = {
+#						any_councillor = {
+#							is_available_ai_adult = yes
+#							NOT = {
+#								any_learning_councillor = { exists = this }
+#							}
+#						}
+#					}
+#					random_councillor = {
+#						limit = {
+#							is_available_ai_adult = yes
+#							NOT = {
+#								any_learning_councillor = { exists = this }
+#							}
+#						}
+#						weight = {
+#							base = 1
+#							modifier = {
+#								has_council_position = minister_personnel
+#								add = 100
+#							}
+#						}
+#						save_scope_as = title_offerer
+#					}
+#				}
+#				else_if = {
+#					limit = {
+#						any_relation = {
+#							type = elder
+#							is_available = yes
+#						}
+#					}
+#					random_relation = {
+#						type = elder
+#						limit = {
+#							is_available = yes
+#						}
+#						save_scope_as = title_offerer
+#					}
+#				}
+#				else = {
+#					ordered_vassal_or_below = {
+#						limit = {
+#							is_available_ai_adult = yes
+#							has_trait = governor
+#							NOT = { this = root }
+#						}
+#						order_by = {
+#							value = 0
+#							if = {
+#								limit = { has_trait_xp = { trait = confucian_education value >= 50 } }
+#								add = 5
+#							}
+#							if = {
+#								limit = { has_trait_xp = { trait = confucian_education value >= 75 } }
+#								add = 25
+#							}
+#							if = {
+#								limit = { has_trait_xp = { trait = confucian_education value >= 100 } }
+#								add = 100
+#							}
+#						}
+#						save_scope_as = title_offerer
+#					}
+#				}
+#			}
+#			else = { save_scope_as = title_offerer }
+#		}
+#		scope:title_offerer = {
+#			change_influence = medium_influence_loss
+#		}
+#	}
+#
+#	option = { # I graciously accept!
+#		name = tgp_china_yearly.0030.a
+#		scope:free_title = {
+#			change_appointment_investment = {
+#				target = root
+#				value = root.automated_nomination_merit_investment_value
+#			}
+#		}
+#		reverse_add_opinion = {
+#			modifier = pleased_opinion
+#			target = scope:title_offerer
+#			opinion = 30
+#		}
+#	}
+#
+#	option = { # My education is not yet complete.
+#		name = tgp_china_yearly.0030.b
+#		if = {
+#			limit = {
+#				NOT = {
+#					has_trait_xp = {
+#						trait = confucian_education
+#						value >= 100
+#					}
+#				}
+#			}
+#			if = {
+#				limit = {
+#					NOT = { has_trait = confucian_education }
+#				}
+#				add_trait = confucian_education
+#			}
+#			add_trait_xp = {
+#				trait = confucian_education
+#				value = lifestyle_confucian_education_xp_gain_medium_value
+#			}
+#		}
+#		else = {
+#			add_learning_lifestyle_xp = minor_lifestyle_xp
+#		}
+#		reverse_add_opinion = {
+#			modifier = insulted_opinion
+#			target = scope:title_offerer
+#			opinion = -20
+#		}
+#	}
+#}

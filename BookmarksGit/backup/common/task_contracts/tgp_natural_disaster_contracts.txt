@@ -1,0 +1,685 @@
+﻿#TODO_CD_TGP_AJ; merit needs to be added for all relevant options (positive and negative) for use in China
+tgp_food_shortage = { #Food Shortage
+	group = admin_governance_group
+	icon = "gfx/interface/icons/situation_types/natural_disaster_generic.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_natural_disaster_contract_event.0001
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_tt_rewards
+			}
+		}
+		failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_failure_tt
+			}
+		}
+		distribution_of_food = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_diplomacy_lifestyle_xp = medium_lifestyle_xp
+					add_character_modifier = {
+						modifier = tgp_distribution_of_food_character_modifier
+						years = 10
+					}
+					change_influence = minor_influence_loss
+					every_vassal = {
+						limit = {
+							is_adult = yes
+						}
+						add_stress = minor_stress_impact_gain
+						remove_short_term_gold = minor_gold_value
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					add_county_modifier = {
+						modifier = tgp_distribution_of_food_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		pay_from_own_pocket = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_learning_lifestyle_xp = minor_lifestyle_xp
+					add_piety = minor_piety_gain
+					add_character_modifier = {
+						modifier = tgp_pay_from_own_pocket_character_modifier
+						years = 10
+					}
+					remove_short_term_gold = medium_gold_value
+				}
+				scope:task_contract.task_contract_location.county = {
+					add_county_modifier = {
+						modifier = tgp_pay_from_own_pocket_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		haggle_with_merchants = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0002.c.tt.success
+						left_icon = scope:task_contract.task_contract_taker
+						scope:task_contract.task_contract_location.county = {
+							add_county_modifier = {
+								modifier = tgp_haggle_with_merchants_modifier
+								years = 10
+							}
+						}
+						add_stewardship_lifestyle_xp = medium_lifestyle_xp
+						remove_short_term_gold = minor_gold_value
+					}
+				}
+			}
+		}
+		haggle_with_merchants_failure = {
+			visible = no
+			effect = {
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0002.c.tt.failure
+						left_icon = scope:task_contract.task_contract_taker
+						add_prestige = minor_prestige_loss
+					}
+				}
+			}
+		}
+		demand_food_from_nobles = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = minor_influence_loss
+					add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+				}
+				scope:task_contract.task_contract_location.county = {
+					add_county_modifier = {
+						modifier = tgp_demand_food_from_nobles_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = medium_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+					add_piety = {
+						value = minor_piety_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+tgp_ravaged_buildings = { #Destroyed by Nature
+	group = admin_governance_group
+	icon = "gfx/interface/icons/situation_types/natural_disaster_generic.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_natural_disaster_contract_event.0005
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_tt_rewards
+			}
+		}
+		failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_failure_tt
+			}
+		}
+		rebuild_settlement = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					add_stewardship_lifestyle_xp = medium_lifestyle_xp
+					add_character_modifier = {
+						modifier = tgp_rebuild_settlement_character_modifier
+						years = 10
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					add_county_modifier = {
+						modifier = tgp_rebuild_settlement_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		temporary_shelters = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+					add_piety = minor_piety_gain
+				}
+				scope:task_contract.task_contract_location.county = {
+					add_county_modifier = {
+						modifier = tgp_temporary_shelters_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		remove_debris = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0006.c.tt.success
+						left_icon = scope:task_contract.task_contract_taker
+						add_piety = minor_piety_gain
+						add_stewardship_lifestyle_xp = minor_lifestyle_xp
+						scope:task_contract.task_contract_location.county = {
+							add_county_modifier = {
+								modifier = tgp_remove_debris_modifier
+								years = 10
+							}
+						}
+					}
+				}
+			}
+		}
+		remove_debris_failure = {
+			visible = no
+			effect = {
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0006.c.tt.failure
+						left_icon = root
+						change_influence = minor_influence_loss
+					}
+				}
+			}
+		}
+		labor_exchange = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_character_modifier = {
+						modifier = tgp_labor_exchange_character_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = medium_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+					add_piety = {
+						value = minor_piety_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+tgp_medieval_medicine = { #Treating the Unfortunate
+	group = admin_governance_group
+	icon = "gfx/interface/icons/situation_types/natural_disaster_generic.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_natural_disaster_contract_event.0010
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_tt_rewards
+			}
+		}
+		failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_failure_tt
+			}
+		}
+		assisting_physician = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					increase_governance_effect = { VALUE = 10 }
+					if = {
+						limit = {
+							employs_court_position = court_physician_court_position
+						}
+						random = {
+							chance = 50
+							court_position:court_physician_court_position = {
+								add_learning_skill = 1
+							}
+							add_learning_lifestyle_xp = medium_lifestyle_xp
+						}
+					}
+				}
+				scope:task_contract.task_contract_location.county = {
+					add_county_modifier = {
+						modifier = tgp_assisting_physician_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		medical_assistance = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0011.b.tt.success
+						left_icon = scope:task_contract.task_contract_taker
+						add_character_modifier = {
+							modifier = tgp_medical_assistance_character_modifier
+							years = 10
+						}
+						add_learning_lifestyle_xp = minor_lifestyle_xp
+						add_piety = minor_piety_gain
+					}
+				}
+			}
+		}
+		medical_assistance_failure = {
+			visible = no
+			effect = {
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0011.b.tt.failure
+						left_icon = scope:task_contract.task_contract_taker
+						scope:task_contract.task_contract_location.county = {
+							add_county_modifier = {
+								modifier = tgp_medical_assistance_modifier
+								years = 10
+							}
+						}
+					}
+				}
+			}
+		}
+		prayers_to_the_people = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_learning_lifestyle_xp = minor_lifestyle_xp
+					add_piety = minor_piety_gain
+					add_character_modifier = {
+						modifier = tgp_prayers_to_the_people_character_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		better_pay_up = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_gold = medium_gold_value
+					add_piety = medium_piety_loss
+				}
+			}	
+		}
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = medium_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+					add_piety = {
+						value = minor_piety_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}
+
+tgp_disaster_displacement = { #Provisional Relocation
+	group = admin_governance_group
+	icon = "gfx/interface/icons/situation_types/natural_disaster_generic.dds"
+
+	valid_to_create = {
+		valid_governor_contract_trigger = yes
+	}
+
+	valid_to_keep = {
+		task_contract_taker = { valid_governor_contract_trigger = yes }
+		valid_governor_contract_basic_trigger = yes
+	}
+
+	valid_to_accept = {
+		valid_governor_contract_trigger = yes
+		custom_tooltip = {
+			text = has_active_governance_issue
+			num_taken_task_contracts < 1
+		}
+		is_available = yes
+	}
+
+	valid_to_continue = {
+		task_contract_taker = {
+			valid_governor_contract_trigger = yes
+		}
+	}
+
+	on_accepted = {
+		task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_accept_contract" }
+		save_scope_as = task_contract
+		task_contract_taker ?= {
+			root.task_contract_location.barony = {
+				save_scope_as = task_contract_location
+			}
+			trigger_event = tgp_natural_disaster_contract_event.0015
+		}
+	}
+
+	on_completed = {
+	}
+
+	on_invalidated = {
+		if = {
+			limit = { governor_contract_invalidated_message_trigger = yes }
+			governor_contract_invalidated_message_effect = yes
+		}
+	}
+
+	task_contract_reward = {
+		success = {
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_tt_rewards
+			}
+		}
+		failure = {
+			positive = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				custom_tooltip = tgp_admin_contract_natural_disaster_failure_tt
+			}
+		}
+		deployed_troops = { # Good governance option
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0016.a.tt.success
+						left_icon = scope:task_contract.task_contract_taker
+						increase_governance_effect = { VALUE = 10 }
+						add_martial_lifestyle_xp = medium_lifestyle_xp
+						add_character_modifier = {
+							modifier = tgp_deployed_troops_character_modifier
+							years = 10
+						}
+					}
+				}
+			}
+		}
+		deployed_troops_failure = {
+			visible = no
+			effect = {
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					send_interface_toast = {
+						title = tgp_natural_disaster_contract_event.0016.a.tt.failure
+						left_icon = scope:task_contract.task_contract_taker
+						scope:task_contract.task_contract_location.county = {
+							add_county_modifier = {
+								modifier = tgp_deployed_troops_modifier
+								years = 10
+							}
+						}
+					}
+				}
+			}
+		}
+		setting_an_example = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" } 
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_dread = medium_dread_gain
+					add_character_modifier = {
+						modifier = tgp_setting_an_example_character_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		confiscate_for_personal_inspection = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					add_gold = medium_gold_value
+					add_piety = medium_piety_loss
+				}
+			}
+		}
+		paying_off_the_looters = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_success_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					remove_short_term_gold = medium_gold_value
+					scope:task_contract.task_contract_location.county = {
+						add_county_modifier = {
+							modifier = tgp_paying_off_the_looters_modifier
+							years = 10
+						}
+					}
+				}
+			}
+		} 
+		failure_standard = {
+			visible = no
+			effect = {
+				task_contract_taker = { play_sound_effect = "event:/DLC/EP3/SFX/UI/Contracts/ep3_ui_contracts_failure_on_contract" }
+				save_scope_as = task_contract
+				task_contract_taker ?= {
+					change_influence = {
+						value = medium_influence_loss
+						multiply = governance_task_contract_tier_value
+					}
+					add_piety = {
+						value = minor_piety_loss
+						multiply = governance_task_contract_tier_value
+					}
+				}
+			}
+		}
+	}
+}

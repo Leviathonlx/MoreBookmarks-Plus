@@ -1,0 +1,383 @@
+﻿tgp_minister_manage_talent_on_action = {
+	trigger = {
+		has_tgp_dlc_trigger = yes
+	}
+	
+	effect = {
+		# Manage Talent - Main effect to find skilled characters to court positions
+		if = {
+			limit = { current_month = 1 } # No need to do this more frequently than once a year
+			random = {
+				chance = task_manage_talent_scale_tooltip_total_value
+				
+				scope:councillor_liege = {
+					# Find courtiers throughout the realm
+					every_vassal_or_below = {
+						limit = { highest_held_title_tier >= tier_county }
+						every_courtier_or_guest = {
+							limit = {
+								NOT = { is_in_list = court_position_candidates }
+								sum_of_all_skills_value >= sum_of_all_skills_threshold_poor
+							}
+							add_to_list = court_position_candidates
+						}
+					}
+					
+					# As well as courtiers in our own court
+					every_courtier_or_guest = {
+						limit = {
+							NOT = { is_in_list = court_position_candidates }
+							sum_of_all_skills_value >= sum_of_all_skills_threshold_poor
+						}
+						add_to_list = court_position_candidates
+					}
+					
+					# We'll also look at the capital's character pool
+					every_pool_character = {
+						limit = {
+							NOT = { is_in_list = court_position_candidates }
+							sum_of_all_skills_value >= sum_of_all_skills_threshold_poor
+						}
+						province = scope:councillor_liege.capital_province
+						add_to_list = court_position_candidates
+					}
+					
+					# Let's continue only if we actually have at least someone to consider employing
+					if = {
+						limit = {
+							any_in_list = {
+								list = court_position_candidates
+								count >= 1
+							}
+						}
+						
+						# Next, let's see if anyone is a good fit for the following court positions
+						# We don't look at EVERY court position, just the ones we think are the most relevant
+						if = {
+							limit = {
+								can_employ_court_position_type = court_physician_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:court_physician_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = court_physician_court_position
+									}
+								}
+								order_by = aptitude:court_physician_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:court_physician_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = travel_leader_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:travel_leader_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = travel_leader_court_position
+									}
+								}
+								order_by = aptitude:travel_leader_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:travel_leader_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = grand_mentor_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:grand_mentor_court_position >= 2
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = grand_mentor_court_position
+									}
+								}
+								order_by = aptitude:grand_mentor_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:grand_mentor_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = grand_preceptor_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:grand_preceptor_court_position >= 2
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = grand_preceptor_court_position
+									}
+								}
+								order_by = aptitude:grand_preceptor_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:grand_preceptor_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = court_tutor_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:court_tutor_court_position >= 2
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = court_tutor_court_position
+									}
+								}
+								order_by = aptitude:court_tutor_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:court_tutor_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = keeper_of_the_harem_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:keeper_of_the_harem_court_position >= 2
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = keeper_of_the_harem_court_position
+									}
+								}
+								order_by = aptitude:keeper_of_the_harem_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:keeper_of_the_harem_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = chief_eunuch_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:chief_eunuch_court_position >= 2
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = chief_eunuch_court_position
+									}
+								}
+								order_by = aptitude:chief_eunuch_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:chief_eunuch_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = royal_architect_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:royal_architect_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = royal_architect_court_position
+									}
+								}
+								order_by = aptitude:royal_architect_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:royal_architect_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = seneschal_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:seneschal_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = seneschal_court_position
+									}
+								}
+								order_by = aptitude:seneschal_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:seneschal_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = court_poet_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:court_poet_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = court_poet_court_position
+									}
+								}
+								order_by = aptitude:court_poet_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:court_poet_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = grand_guardian_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:grand_guardian_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = grand_guardian_court_position
+									}
+								}
+								order_by = aptitude:grand_guardian_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:grand_guardian_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = fire_dragon_engineer_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:fire_dragon_engineer_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = fire_dragon_engineer_court_position
+									}
+								}
+								order_by = aptitude:fire_dragon_engineer_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:fire_dragon_engineer_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = chronicler_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:chronicler_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = chronicler_court_position
+									}
+								}
+								order_by = aptitude:chronicler_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:chronicler_court_position = { save_scope_as = designated_court_position }
+						}
+						else_if = {
+							limit = {
+								can_employ_court_position_type = court_artificer_court_position
+								any_in_list = {
+									list = court_position_candidates
+									aptitude:court_artificer_court_position >= 3
+								}
+							}
+							ordered_in_list = {
+								list = court_position_candidates
+								limit = {
+									would_be_valid_for_court_position = {
+										employer = scope:councillor_liege
+										court_position = court_artificer_court_position
+									}
+								}
+								order_by = aptitude:court_artificer_court_position
+								save_scope_as = new_court_position_holder
+							}
+							court_position_type:court_artificer_court_position = { save_scope_as = designated_court_position }
+						}
+						
+						# Recruit and employ the new character
+						if = {
+							limit = {
+								exists = scope:new_court_position_holder
+							}
+							send_interface_toast = {
+								type = event_toast_effect_good
+								title = task_manage_talent_court_position_appointed_t
+								left_icon = scope:councillor
+								right_icon = scope:new_court_position_holder
+								
+								scope:new_court_position_holder = {
+									if = {
+										limit = { liege != scope:councillor_liege }
+										set_employer = scope:councillor_liege
+									}
+								}
+								appoint_court_position = {
+									recipient = scope:new_court_position_holder
+									court_position = scope:designated_court_position
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	#random_events = {
+	#	chance_to_happen = 1
+	#}
+}

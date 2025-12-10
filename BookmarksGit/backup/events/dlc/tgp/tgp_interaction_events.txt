@@ -1,0 +1,1185 @@
+﻿namespace = tgp_interaction_event
+
+# Send Treasury interaction events
+tgp_interaction_event.0001 = {
+	type = letter_event
+	opening = char_interaction.0010.opening
+	desc = tgp_interaction_event.0001.desc
+	sender = scope:recipient
+	
+	trigger = {
+		scope:actor = {
+			is_alive = yes
+		}
+		scope:recipient = {
+			is_alive = yes
+		}
+	}
+	
+	immediate = {
+		# Let's calculate a reward
+		random_list = {
+			10 = { # Give hook
+				trigger = {
+					can_add_hook = {
+						target = scope:recipient
+						type = favor_hook
+					}
+				}
+				modifier = {
+					is_liege_or_above_of = scope:recipient
+					factor = 1.5
+				}
+				modifier = { # Non-powerful families are more likely to offer a hook
+					scope:recipient.house ?= {
+						is_powerful_family = no
+						is_dominant_family = no
+					}
+					factor = 1.5
+				}
+				
+				save_scope_as = treasury_hook
+			}
+			10 = { # Become a disciple
+				trigger = {
+					scope:recipient = {
+						NOR = {
+							# Does not have any of these relations already
+							any_relation = { type = disciple }
+							any_relation = { type = elder }
+							
+							# And is someone who could actually be a disciple
+							has_trait = ambitious
+							has_trait = arrogant
+						}
+					}
+				}
+				modifier = {
+					scope:recipient = {
+						has_trait = trusting
+					}
+					add = 5
+				}
+				modifier = {
+					scope:recipient = {
+						has_trait = humble
+					}
+					add = 5
+				}
+				
+				save_scope_as = treasury_become_disciple
+			}
+			10 = { # Give influence
+				modifier = {
+					scope:recipient.influence_level > 3
+					add = 10
+				}
+				
+				save_scope_as = treasury_influence
+			}
+		}
+	}
+	
+	option = {
+		name = tgp_interaction_event.0001.a
+		
+		switch = {
+			trigger = exists
+			scope:treasury_hook = {
+				add_hook = {
+					target = scope:recipient
+					type = favor_hook
+				}
+			}
+			scope:treasury_become_disciple = {
+				set_elder_relation_effect = {
+					ELDER = scope:actor
+					DISCIPLE = scope:recipient
+					MERIT = minor_merit_gain
+				}
+			}
+			scope:treasury_influence = {
+				change_influence = medium_influence_gain
+			}
+		}
+	}
+}
+
+# Request Military Aid interaction events
+# Recipient receives the request
+tgp_interaction_event.0010 = {
+	type = letter_event
+	opening = tgp_interaction_event.0010.opening
+	desc = tgp_interaction_event.0010.desc
+	sender = scope:actor
+	
+	trigger = {
+		scope:actor = { is_alive = yes }
+		scope:recipient = { is_alive = yes }
+		scope:joining_governor = { is_alive = yes }
+	}
+	
+	option = { # Join the war yourself (if applicable)
+		name = tgp_interaction_event.0010.a
+		trigger = {
+			trigger_if = {
+				limit = {
+					this = top_liege
+				}
+				is_character_interaction_valid = {
+					recipient = scope:actor
+					interaction = join_vassal_war_interaction
+				}
+			}
+			trigger_else = {
+				vassal_contract_has_flag = celestial_military_appointment
+				NOR = {
+					this = scope:actor
+					any_war_ally = { this = scope:actor }
+					any_war_enemy = { this = scope:actor }
+					is_at_war_with = scope:actor
+				}
+			}
+		}
+		
+		save_scope_as = joining_character
+		if = {
+			limit = {
+				this = top_liege
+				is_character_interaction_valid = {
+					recipient = scope:actor
+					interaction = join_vassal_war_interaction
+				}
+			}
+			custom_tooltip = {
+				text = join_vassal_war_interaction_desc
+				open_interaction_window = {
+					interaction = join_vassal_war_interaction
+					actor = root
+					recipient = scope:actor
+				}
+			}
+		}
+		else = {
+			scope:actor = {
+				every_character_war = {
+					limit = {
+						is_war_leader = scope:actor
+						is_attacker = scope:actor
+					}
+					add_attacker = scope:joining_character
+				}
+				every_character_war = {
+					limit = {
+						is_war_leader = scope:actor
+						is_defender = scope:actor
+					}
+					add_defender = scope:joining_character
+				}
+				
+				# Send response to actor
+				trigger_event = tgp_interaction_event.0012
+			}
+		}
+		
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = { # Have any military governor join the war
+		name = tgp_interaction_event.0010.b
+		
+		scope:joining_governor = {
+			save_scope_as = joining_character
+			trigger_event = tgp_interaction_event.0011
+		}
+		scope:actor = {
+			every_character_war = {
+				limit = {
+					is_war_leader = scope:actor
+					is_attacker = scope:actor
+				}
+				add_attacker = scope:joining_character
+			}
+			every_character_war = {
+				limit = {
+					is_war_leader = scope:actor
+					is_defender = scope:actor
+				}
+				add_defender = scope:joining_character
+			}
+			
+			# Send response to actor
+			trigger_event = tgp_interaction_event.0012
+		}
+		
+		ai_chance = { # The AI always sends someone
+			base = 100
+		}
+	}
+	option = { # Players have the option to not send anyone, and use celestial_send_military_aid_interaction instead
+		name = tgp_interaction_event.0010.c
+		
+		custom_tooltip = {
+			text = celestial_send_military_aid_interaction
+			open_interaction_window = {
+				interaction = celestial_send_military_aid_interaction
+				actor = root
+				recipient = scope:actor
+			}
+		}
+		
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# Military governor receives an order to join the war
+tgp_interaction_event.0011 = {
+	type = letter_event
+	opening = tgp_interaction_event.0011.opening
+	desc = tgp_interaction_event.0011.desc
+	sender = scope:recipient
+	
+	immediate = {
+		show_as_tooltip = {
+			scope:actor = {
+				every_character_war = {
+					limit = {
+						is_war_leader = scope:actor
+						is_attacker = scope:actor
+					}
+					add_attacker = scope:joining_governor
+				}
+				every_character_war = {
+					limit = {
+						is_war_leader = scope:actor
+						is_defender = scope:actor
+					}
+					add_defender = scope:joining_governor
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = {
+			trigger = {
+				top_liege.cp:councillor_marshal ?= scope:recipient
+			}
+			text = tgp_interaction_event.0011.a
+		}
+		name = {
+			trigger = {
+				NOT = { top_liege.cp:councillor_marshal ?= scope:recipient }
+			}
+			text = tgp_interaction_event.0011.b
+		}
+	}
+}
+
+# Actor receives a response
+tgp_interaction_event.0012 = {
+	type = letter_event
+	opening = tgp_interaction_event.0011.opening
+	desc = {
+		triggered_desc = {
+			trigger = {
+				scope:joining_character = scope:recipient
+			}
+			desc = tgp_interaction_event.0012.desc_marshal
+		}
+		desc = tgp_interaction_event.0012.desc_governor
+	}
+	sender = scope:recipient
+	
+	immediate = {
+		show_as_tooltip = {
+			every_character_war = {
+				limit = {
+					is_war_leader = scope:actor
+					is_attacker = scope:actor
+				}
+				add_attacker = scope:joining_character
+			}
+			every_character_war = {
+				limit = {
+					is_war_leader = scope:actor
+					is_defender = scope:actor
+				}
+				add_defender = scope:joining_character
+			}
+		}
+	}
+	
+	option = {
+		name = tgp_interaction_event.0012.a
+	}
+}
+
+# Recipient/governor receives news of military governor joining war
+tgp_interaction_event.0015 = {
+	type = letter_event
+	opening = tgp_interaction_event.0010.opening
+	desc = tgp_interaction_event.0015.desc
+	sender = scope:actor
+	
+	immediate = {
+		custom_tooltip = celestial_send_military_aid_effect_desc
+	}
+	
+	option = {
+		name = tgp_interaction_event.0012.a
+	}
+}
+
+# Secondary recipient/military governor receives order to join war
+tgp_interaction_event.0016 = {
+	type = letter_event
+	opening = tgp_interaction_event.0010.opening
+	desc = tgp_interaction_event.0016.desc
+	sender = scope:actor
+	
+	immediate = {
+		custom_tooltip = celestial_send_military_aid_effect_desc
+	}
+	
+	option = {
+		name = tgp_interaction_event.0016.a
+	}
+}
+
+# Siphon Treasury starting event
+tgp_interaction_event.0020 = {
+	type = character_event
+	title = tgp_interaction_event.0020.t
+	desc = tgp_interaction_event.0020.desc
+	theme = generic_intrigue_scheme
+	left_portrait = {
+		character = root
+		animation = schadenfreude
+	}
+
+	option = {
+		name = tgp_interaction_event.0020.a
+		custom_tooltip = siphon_destination_gold_tt
+		scope:scheme = {
+			set_variable = {
+				name = siphon_destination
+				value = flag:gold
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				gold <= treasury
+				add = 100
+			}
+		}
+	}
+	option = {
+		name = tgp_interaction_event.0020.b
+		custom_tooltip = siphon_destination_treasury_tt
+		scope:scheme = {
+			set_variable = {
+				name = siphon_destination
+				value = flag:treasury
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				gold > treasury
+				add = 100
+			}
+		}
+	}
+}
+
+# Break with Elder notification event
+tgp_interaction_event.0030 = {
+	type = letter_event
+	opening = tgp_interaction_event.0010.opening
+	desc = {
+		desc = tgp_interaction_event.0030.desc
+		triggered_desc = {
+			trigger = { exists = scope:new_elder }
+			desc = tgp_interaction_event.0030.desc_new_elder			
+		}
+	}
+	sender = scope:actor
+	
+	immediate = {
+		show_as_tooltip = {
+			scope:actor = {
+				remove_relation_elder = scope:recipient
+				if = {
+					limit = {
+						exists = scope:new_elder
+					}
+					set_relation_elder = scope:new_elder
+					root = {
+						set_relation_grudge = scope:new_elder
+					}
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = {
+			trigger = {
+				exists = scope:new_elder
+			}
+			text = tgp_interaction_event.0030.a_new_elder
+		}
+		name = tgp_interaction_event.0030.a
+	}
+}
+
+# Find Elder notification event
+tgp_interaction_event.0031 = {
+	type = letter_event
+	opening = tgp_interaction_event.0031.opening
+	desc = tgp_interaction_event.0031.desc
+	sender = scope:actor
+	
+	immediate = {
+	}
+
+	option = {
+		name = tgp_interaction_event.0031.a
+		scope:actor = { trigger_event = tgp_interaction_event.00311 }
+		show_as_tooltip = {
+			scope:actor = {
+				set_elder_relation_effect = {
+					ELDER = scope:secondary_recipient
+					DISCIPLE = scope:actor
+					MERIT = minor_merit_gain
+				}
+			}
+		}
+		ai_will_select  = {
+			value = scope:secondary_recipient.find_elder_acceptance_value
+		}
+	}
+	option = {
+		name = tgp_interaction_event.0031.b	
+		scope:actor = {
+			send_interface_toast = {
+				type = event_toast_effect_bad
+				title = tgp_interaction_event.0031.b.tt
+				left_icon = scope:secondary_recipient
+				add_opinion = {
+					target = scope:secondary_recipient
+					modifier = refused_to_be_elder_opinion
+					opinion = -10
+				}
+			}
+		}
+		ai_will_select  = {
+			value = scope:secondary_recipient.find_elder_acceptance_value
+			multiply = -1
+		}
+	}
+}
+
+scripted_effect tgp_dynastic_cycle_add_to_elders_movement_effect = {
+	custom_tooltip = tgp_dynastic_cycle_add_to_elders_movement_effect_tt
+	if = {
+		limit = {
+			scope:secondary_recipient = {
+				top_participant_group:dynastic_cycle ?= {
+					participant_group_type = expansion_movement
+				}
+			}
+		}
+		set_variable = {
+			name = movement_member
+			value = flag:expansion
+		}
+	}
+	else_if = {
+		limit = {
+			scope:secondary_recipient = {
+				top_participant_group:dynastic_cycle ?= {
+					participant_group_type = advancement_movement
+				}
+			}
+		}
+		set_variable = {
+			name = movement_member
+			value = flag:advancement
+		}
+	}
+	else_if = {
+		limit = {
+			scope:secondary_recipient = {
+				top_participant_group:dynastic_cycle ?= {
+					participant_group_type = pro_hegemon_movement
+				}
+			}
+		}
+		set_variable = {
+			name = movement_member
+			value = flag:pro_hegemon
+		}
+	}
+	else_if = {
+		limit = {
+			scope:secondary_recipient = {
+				top_participant_group:dynastic_cycle ?= {
+					participant_group_type = conservative_movement
+				}
+			}
+		}
+		set_variable = {
+			name = movement_member
+			value = flag:conservative
+		}
+	}
+}
+
+tgp_interaction_event.00311 = {
+	type = letter_event
+	opening = tgp_interaction_event.00311.opening
+	desc = {
+		desc = tgp_interaction_event.00311.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					exists = scope:elder_movement
+				}
+				desc = tgp_interaction_event.00311.desc.movement
+			}
+			desc = tgp_interaction_event.00311.desc.no_movement
+		}
+	}
+	sender = scope:secondary_recipient
+	
+	immediate = {
+		scope:actor = {
+			set_elder_relation_effect = {
+				ELDER = scope:secondary_recipient
+				DISCIPLE = scope:actor
+				MERIT = minor_merit_gain
+			}
+		}
+		if = {
+			limit = {
+				situation:dynastic_cycle ?= {
+					any_situation_participant = {
+						this = scope:actor
+					}
+					any_situation_participant = {
+						this = scope:secondary_recipient
+					}
+				}
+				scope:secondary_recipient = {
+					NOT = {
+						top_participant_group:dynastic_cycle = { participant_group_type = undecided_movement }
+					}
+				}
+				scope:actor = {
+					NOT = { is_in_same_movement_as = { TARGET = scope:secondary_recipient } }
+				}
+			}
+			scope:secondary_recipient = {
+				top_participant_group:dynastic_cycle ?= { save_scope_as = elder_movement }
+			}
+			top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+		}
+	}
+
+	option = { # I'll join
+		name = tgp_interaction_event.00311.a
+		trigger = { exists = scope:elder_movement }
+		tgp_dynastic_cycle_add_to_elders_movement_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	
+	option = { # Nah
+		name = tgp_interaction_event.00311.b	
+		trigger = { exists = scope:elder_movement }
+		change_influence = major_influence_loss
+		scope:secondary_recipient = {
+			add_opinion = {
+				target = root
+				opinion = -20
+				modifier = disappointed_opinion
+			}
+		}
+		ai_chance = {
+			base = 100
+			modifier = { # AI will always join the movement if possible
+				exists = scope:elder_movement
+				factor = 0
+			}
+		}
+	}
+	
+	option = { # Not in China
+		name = tgp_interaction_event.00311.c	
+		trigger = {
+			NOT = { exists = scope:elder_movement }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Break with Disciple notification event
+tgp_interaction_event.0032 = {
+	type = letter_event
+	opening = tgp_interaction_event.0010.opening
+	desc = tgp_interaction_event.0032.desc
+
+	sender = scope:actor
+	
+	immediate = {
+		show_as_tooltip = {
+			scope:actor = {
+				remove_relation_disciple = scope:recipient
+			}
+		}
+	}
+	
+	option = {
+		name = tgp_interaction_event.0032.a
+	}
+}
+
+# Secretary Director changed his own mandate
+tgp_interaction_event.0041 = {
+	type = letter_event
+	opening = tgp_interaction_event.0010.opening
+	desc = tgp_interaction_event.0041.desc
+	sender = scope:actor
+	
+	immediate = {
+		show_as_tooltip = {
+			switch = {
+				trigger = yes
+				scope:placate_movements = {
+					set_diarchy_mandate = placate_movements
+					scope:actor = {
+						set_variable = {
+							name = diarch_forced_mandate
+							value = flag:placate_movements
+						}
+					}
+				}
+				scope:promote_might = {
+					set_diarchy_mandate = promote_might
+					scope:actor = {
+						set_variable = {
+							name = diarch_forced_mandate
+							value = flag:promote_might
+						}
+					}
+				}
+				scope:promote_merit = {
+					set_diarchy_mandate = promote_merit
+					scope:actor = {
+						set_variable = {
+							name = diarch_forced_mandate
+							value = flag:promote_merit
+						}
+					}
+				}
+			}
+		}
+	}
+	option = {
+		name = tgp_interaction_event.0041.a
+		scope:actor = {
+			tgp_activate_catalyst_against_hegemon_effect = {
+				HEGEMON = root
+				CATALYST = catalyst_diarch_mandate
+			}
+		}
+	}	
+}
+
+# Secretary Director trains knights
+tgp_interaction_event.0042 = {
+	type = character_event
+	title = ep3_contract_event.0091.t
+	desc = {
+		desc = ep3_contract_event.0091.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:helper = root }
+				desc = {
+					desc = ep3_contract_event.0091.desc_me
+					first_valid = {
+						triggered_desc = {
+							trigger = { root.prowess < high_skill_rating }
+							desc = ep3_contract_event.0091.desc_me_high_prowess
+						}
+						desc = ep3_contract_event.0091.desc_me_low_prowess
+					}
+				}
+			}
+			desc = {
+				desc = ep3_contract_event.0091.desc_helper
+				first_valid = {
+					triggered_desc = {
+						trigger = { scope:helper.prowess < high_skill_rating }
+						desc = ep3_contract_event.0091.desc_high_prowess
+					}
+					desc = ep3_contract_event.0091.desc_low_prowess
+				}
+			}
+		}
+		desc = ep3_contract_event.0091.desc_outro
+	}
+	theme = war
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				scope:helper = root
+				root.prowess < high_skill_rating
+			}
+			animation = random_weapon_yield
+		}
+		triggered_animation = {
+			trigger = {
+				scope:helper = root
+				root.prowess >= high_skill_rating
+			}
+			animation = inspect_weapon
+		}
+		triggered_animation = {
+			trigger = {
+				scope:helper != root
+				scope:helper.prowess < high_skill_rating
+			}
+			animation = stunned
+		}
+		triggered_animation = {
+			trigger = {
+				scope:helper != root
+				scope:helper.prowess >= high_skill_rating
+			}
+			animation = disappointed
+		}
+	}
+	right_portrait = {
+		character = scope:knight
+		triggered_animation = {
+			trigger = {
+				scope:helper = root
+				root.prowess < high_skill_rating
+			}
+			animation = random_weapon_celebrate
+		}
+		triggered_animation = {
+			trigger = {
+				scope:helper = root
+				root.prowess >= high_skill_rating
+			}
+			animation = random_weapon_yield
+		}
+		triggered_animation = {
+			trigger = {
+				scope:helper != root
+				scope:helper.prowess < high_skill_rating
+			}
+			animation = random_weapon_celebrate
+		}
+		triggered_animation = {
+			trigger = {
+				scope:helper != root
+				scope:helper.prowess >= high_skill_rating
+			}
+			animation = random_weapon_yield
+		}
+	}
+	lower_left_portrait = {
+		trigger = { scope:helper != root }
+		character = scope:helper
+	}
+	lower_right_portrait = {
+		character = scope:task_contract_councillor
+	}
+	lower_center_portrait = {
+		character = scope:task_contract_councillor_liege
+	}
+	
+	immediate = {
+		scope:recipient = {
+			save_scope_as = task_contract_employer
+			cp:councillor_marshal ?= {
+				if = {
+					limit = {
+						this != scope:knight
+					}
+					save_scope_as = task_contract_councillor
+				}
+			}
+		}
+		cp:councillor_marshal ?= {
+			add_to_list = helpers_list
+		}
+		# search for anyone that could help you train them
+		random_court_position_holder = {
+			type = grand_guardian_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = fire_dragon_engineer_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = chief_qadi_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = garuda_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = court_tutor_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = master_of_horse_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = master_of_hunt_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = bodyguard_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = champion_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = executioner_court_position
+			add_to_list = helpers_list
+		}
+		random_court_position_holder = {
+			type = master_assassin_court_position
+			add_to_list = helpers_list
+		}
+		random_in_list = {
+			list = helpers_list
+			save_scope_as = helper
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:helper }
+			}
+			save_scope_as = helper
+		}
+		scope:helper = {
+			random_character_trait = {
+				limit = {
+					has_trait_category = commander
+				}
+				save_scope_as = trait_to_teach
+			}
+		}
+		scope:helper = {
+			set_signature_weapon_effect = yes
+		}
+		scope:knight = {
+			set_signature_weapon_effect = yes
+		}
+	}
+
+	# steal the knight
+	option = {
+		name = ep3_contract_event.0091.a
+		trigger = { scope:knight = { is_landed = no } }
+		duel = {
+			skill = diplomacy
+			target = scope:knight
+			25 = {
+				desc = ep3_contract_event.0091_won_recruit
+				modifier = {
+					add = root.prestige_level
+					factor = 5
+				}
+				send_interface_toast = {
+					title = ep3_contract_event.0091_won_recruit
+					left_icon = root
+					right_icon = scope:knight
+					add_courtier = scope:knight
+					change_influence = {
+						value = scope:knight.prowess
+						multiply = -4
+					}
+					pay_short_term_gold = {
+						target = scope:recipient
+						gold = {
+							value = scope:knight.prowess
+							multiply = 5
+						}
+					}
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+			}
+			25 = {
+				desc = ep3_contract_event.0091_lost_recruit
+				send_interface_toast = {
+					title = ep3_contract_event.0091_lost_recruit
+					left_icon = root
+					right_icon = scope:knight
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = 5
+				}
+			}
+		}
+		stress_impact = {
+			impatient = minor_stress_impact_loss
+			just = minor_stress_impact_gain
+			honest = minor_stress_impact_gain
+			callous = minor_stress_impact_loss
+			deceitful = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 100
+				highest_skill = diplomacy
+			}
+		}
+	}
+
+	# teach them a trait you know
+	option = {
+		name = ep3_contract_event.0091.b
+		trigger = {
+			exists = scope:trait_to_teach
+			scope:knight = {
+				NOT = { has_trait = scope:trait_to_teach }
+			}
+		}
+		duel = {
+			skill = martial
+			target = scope:knight
+			25 = {
+				desc = ep3_contract_event.0091_won_trait
+				modifier = {
+					add = root.learning
+				}
+				send_interface_toast = {
+					title = ep3_contract_event.0091_won_trait
+					left_icon = root
+					right_icon = scope:knight
+					scope:knight = {
+						add_trait = scope:trait_to_teach
+					}
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+			}
+			25 = {
+				desc = ep3_contract_event.0091_lost
+				send_interface_toast = {
+					title = ep3_contract_event.0091_lost
+					left_icon = root
+					right_icon = scope:knight
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = 5
+				}
+			}
+		}
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			craven = minor_stress_impact_gain
+			humble = minor_stress_impact_gain
+			arrogant = minor_stress_impact_loss
+			stubborn = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 100
+				highest_skill = martial
+			}
+		}
+	}
+
+	# let helper teach them some prowess
+	option = {
+		name = ep3_contract_event.0091.c
+		trigger = {
+			exists = scope:helper
+			scope:helper != root
+		}
+		scope:helper = {
+			duel = {
+				skill = prowess
+				target = scope:knight
+				25 = {
+					desc = ep3_contract_event.0091_won_helper
+					send_interface_toast = {
+						title = ep3_contract_event.0091_won_helper
+						left_icon = root
+						right_icon = scope:knight
+						scope:knight = {
+							add_prowess_skill = {
+								value = scope:helper.prowess
+								subtract = scope:knight.prowess
+								divide = 4
+								add = {
+									value = scope:knight.ai_boldness
+									divide = 10
+								}
+								add = {
+									value = scope:helper.ai_boldness
+									divide = 10
+								}
+								min = 2
+								max = 5
+							}
+							force_character_skill_recalculation = yes
+						}
+					}
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 1
+					}
+				}
+				25 = {
+					desc = ep3_contract_event.0091_lost
+					send_interface_toast = {
+						title = ep3_contract_event.0091_lost
+						left_icon = root
+						right_icon = scope:knight
+					}
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = 5
+					}
+				}
+			}
+		}
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+			humble = minor_stress_impact_loss
+			shy = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 100
+				scope:helper.prowess > scope:knight.prowess
+			}
+		}
+	}
+
+	# teach them some prowess yourself
+	option = {
+		name = ep3_contract_event.0091.d
+		duel = {
+			skill = prowess
+			target = scope:knight
+			50 = {
+				desc = ep3_contract_event.0091_won
+				send_interface_toast = {
+					title = ep3_contract_event.0091_won
+					left_icon = root
+					right_icon = scope:knight
+					scope:knight = {
+						add_prowess_skill = {
+							value = root.prowess
+							subtract = scope:knight.prowess
+							divide = 4
+							add = {
+								value = scope:knight.ai_boldness
+								divide = 10
+							}
+							add = {
+								value = root.ai_boldness
+								divide = 10
+							}		
+							min = 1
+							max = 4
+						}
+						force_character_skill_recalculation = yes
+					}
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				modifier = {
+					add = {
+						value = scope:knight.ai_energy
+						divide = -10
+					}
+				}
+				modifier = {
+					add = {
+						value = root.ai_energy
+						divide = -10
+					}
+				}
+			}
+			50 = {
+				desc = ep3_contract_event.0091_lost
+				send_interface_toast = {
+					title = ep3_contract_event.0091_lost
+					left_icon = root
+					right_icon = scope:knight
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = 5
+				}
+				modifier = {
+					add = {
+						value = scope:knight.ai_energy
+						divide = 10
+					}
+				}
+				modifier = {
+					add = {
+						value = root.ai_energy
+						divide = 10
+					}
+				}
+			}
+		}
+		stress_impact = {
+			arrogant = minor_stress_impact_loss
+			ambitious = minor_stress_impact_loss
+			humble = minor_stress_impact_gain
+			shy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 100
+				prowess > scope:knight.prowess
+			}
+		}
+	}
+}

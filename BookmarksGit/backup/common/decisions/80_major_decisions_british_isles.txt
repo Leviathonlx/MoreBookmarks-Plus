@@ -1,0 +1,977 @@
+﻿#The culture of the people both high and low is veering towards Celtic - embrace it?
+### Reclaim Britannia ###
+reclaim_britannia_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_destiny_goal.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	desc = reclaim_britannia_decision_desc
+
+	is_shown = {
+		OR = {
+			culture = { has_cultural_pillar = heritage_goidelic }
+			culture = { has_cultural_pillar = heritage_brythonic }
+		}
+
+		is_landed_or_landless_administrative = yes
+		any_sub_realm_county = {
+			title_province = {  geographical_region = world_europe_west_britannia }
+			NOR = {
+				culture = { has_cultural_pillar = heritage_goidelic }
+				culture = { has_cultural_pillar = heritage_brythonic }
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:reclaim_britannia_decision
+			}
+		}
+	}
+
+	is_valid = {
+		completely_controls_region  = world_europe_west_britannia
+
+		# You can have no more than 1 powerful vassal with the "wrong" culture
+		custom_description = {
+			text = reclaim_britannia_custom_decision
+			
+			trigger_if = {
+				limit = {
+					any_vassal = {
+						is_powerful_vassal = yes
+						NOR = {
+							culture = { has_cultural_pillar = heritage_goidelic }
+							culture = { has_cultural_pillar = heritage_brythonic }
+						}
+					}
+				}
+				any_vassal = {
+					count <= 1
+					is_powerful_vassal = yes
+					NOR = {
+						culture = { has_cultural_pillar = heritage_goidelic }
+						culture = { has_cultural_pillar = heritage_brythonic }
+					}
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+		is_available_adult = yes
+		is_at_war = no
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:reclaim_britannia_decision
+		}
+		show_as_tooltip = {
+			reclaim_britannia_decision_effect = yes
+		}
+		trigger_event = british_isles.0001
+		# Send event to other players
+		every_player = {
+			limit = {
+				this != root
+				OR = {
+					culture = { has_cultural_pillar = heritage_west_germanic }
+					culture = { has_cultural_pillar = heritage_goidelic }
+					culture = { has_cultural_pillar = heritage_brythonic }
+					has_culture = culture:norman
+				}
+			}
+			trigger_event = british_isles.0002
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Embrace English Culture ###
+embrace_english_culture_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 12
+		empire = 12
+		hegemony = 12
+	}
+
+	desc = embrace_english_culture_decision_desc
+
+	is_shown = {
+		game_start_date < 1178.1.1
+		culture = {
+			OR = {
+				any_parent_culture = {
+					this = culture:norman
+				}
+				has_cultural_pillar = heritage_frankish
+			}
+			NOT = {
+				this = culture:english
+			}
+		}
+		OR = {
+			any_claim = {
+				this = title:e_britannia
+			}
+			any_claim = {
+				this = title:k_england
+			}
+			OR = {	
+				title:k_england = {
+					any_in_de_jure_hierarchy = {
+						root.primary_title = this
+					}
+				}
+				root.primary_title = title:e_britannia
+			}
+		}
+		
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:embrace_english_culture_decision
+			}
+		}
+	}
+
+	is_valid = {
+		custom_description = {
+			text = capital_in_england_region_tooltip
+			capital_province = {
+				geographical_region = custom_england
+			}
+		}
+		has_title = title:k_england
+		trigger_if = {
+			limit = {
+				has_dlc_feature = roads_to_power
+			}
+			OR = {
+				custom_description = {
+					text = harrying_ended_tooltip
+					NOT = {
+						has_global_variable = harrying_of_the_north
+					}
+				}
+				custom_description = {
+					text = high_pacification_tooltip
+					any_owned_story = {
+						type = story_cycle_harrying_of_the_north
+						var:pacification > var:resistance
+						var:pacification > 14
+						var:embrace_culture_decision_counter > 11
+					}
+				}
+			}
+		}
+		trigger_if = {
+			limit = {
+				OR = {
+					any_realm_county = {
+						culture = culture:english
+					}
+					culture.culture_head = {
+						any_realm_county = {
+							culture = culture:english
+						}
+					}
+					culture:english = {
+						exists = culture_head
+					}
+				}
+			}
+			culture = {
+				cultural_acceptance = {
+					target = culture:english
+					value >= 40
+				}
+			}
+		}
+		trigger_else = {
+			culture = {
+				cultural_acceptance = {
+					target = culture:anglo_saxon
+					value >= 40
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+		is_available_adult = yes
+		NOT = {
+			government_has_flag = government_is_landless_adventurer
+		}
+	}
+
+	effect = {
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:embrace_english_culture_decision
+		}
+		show_as_tooltip = {
+			embrace_english_culture_effect = yes
+		}
+
+		trigger_event = british_isles.2001
+	}
+	
+	ai_potential = {
+		is_playable_character = yes
+		culture = {
+			OR = {
+				any_parent_culture = {
+					this = culture:norman
+				}
+				has_cultural_pillar = heritage_frankish
+			}
+			NOT = {
+				this = culture:english
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:embrace_english_culture_decision
+			}
+		}
+		trigger_if = {
+			limit = {
+				OR = {
+					any_realm_county = {
+						culture = culture:english
+					}
+					culture.culture_head = {
+						any_realm_county = {
+							culture = culture:english
+						}
+					}
+					culture:english = {
+						exists = culture_head
+					}
+				}
+			}
+			culture = {
+				cultural_acceptance = {
+					target = culture:english
+					value >= 50
+				}
+			}
+		}
+		trigger_else = {
+			culture = {
+				cultural_acceptance = {
+					target = culture:anglo_saxon
+					value >= 50
+				}
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+# Request Laudabiliter - by Flavio
+### Request Claim on Ireland ###
+england_request_laudabiliter_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	}
+	desc = england_request_laudabiliter_decision_desc
+	selection_tooltip = england_request_laudabiliter_decision_tooltip
+	decision_group_type = major
+	ai_goal = yes
+
+	is_shown = {
+		is_ruler = yes
+		is_landed_or_landless_administrative = yes
+		root.faith = faith:catholic
+		exists = faith:catholic.religious_head
+		faith:catholic.religious_head = {
+			has_title = title:k_papal_state
+		}
+		NOT = {  # Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_england_requested_laudabiliter
+			}
+		}
+		highest_held_title_tier >= 4 # Kings and Emperors only.
+		OR = {
+			culture = { has_cultural_pillar = heritage_frankish }
+			culture = { has_cultural_pillar = heritage_west_germanic }
+			culture = { has_cultural_pillar = heritage_north_germanic }
+		}
+		# The ruler picking the decision should not already control Ireland.
+		NOT = {
+			completely_controls_region = custom_roman_hibernia
+		}
+		# The ruler asking it must be a King or Emperor in some way related to Britain.
+		OR = {
+			has_title = title:k_england
+			has_title = title:k_scotland
+			has_title = title:k_wales
+			has_title = title:k_brittany
+			has_title = title:k_france
+			has_title = title:e_britannia
+			has_title = title:e_france
+		}
+		government_has_flag = government_is_feudal
+		any_county_in_region = {
+			region = custom_roman_hibernia
+			OR = {
+				NOT = { faith = faith:catholic }
+				holder = {
+					NOT = { faith = faith:catholic }
+				}
+			}
+		}
+	}
+	
+	is_valid = {
+		piety_level >= 3
+		root.faith.religious_head = {
+			opinion = {
+				target = root
+				value >= very_high_positive_opinion
+			}
+		}
+		# Must control core territories of England already.
+		completely_controls = title:d_bedford
+		completely_controls = title:d_hereford
+		completely_controls = title:d_lancaster
+		completely_controls = title:d_york
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		is_at_war = no
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 1000
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 1000
+			}
+		}
+		piety = 2000
+	}
+
+	effect = {
+		show_as_tooltip = {
+			house = {
+				add_house_modifier = {
+					modifier = ireland_laudabiliter_modifier
+					years = 100
+				}
+			}
+		}
+		custom_tooltip = laudabiliter_decision_effects_tooltip
+		trigger_event = {
+			id = british_isles.3001
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_england_requested_laudabiliter
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 15
+		ai_value_modifier = {
+			ai_boldness = 1.0
+		}
+	}
+}
+
+#############################################
+# Negotiate the Danelaw						#
+# by Linnéa Thimrén & Ewan Cowhig Croft		#
+#############################################
+### Negotiate the Danelaw ###
+negotiate_the_danelaw_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 120
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = negotiate_the_danelaw_decision_desc
+
+	is_shown = {
+		# Standard filter checks.
+		negotiate_the_danelaw_basic_filter_trigger = yes
+		is_landed_or_landless_administrative = yes
+		# Must be in the vague region.
+		any_held_title = {
+			title_tier = county
+			title_province = { geographical_region = world_europe_west_britannia }
+		}
+		# Cannot have an existing k_england.
+		title:k_england = { is_title_created = no }
+		# Can only be fired by someone in the Tribal Era (though their rival need not be).
+		culture = {
+			NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+		}
+		# Not repeatable.
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:negotiate_the_danelaw_decision
+			}
+		}
+	}
+
+	is_valid = {
+		# Some extra standard-ish filtering.
+		negotiate_the_danelaw_additional_filter_trigger = yes
+		# Should have a decent prestige level.
+		prestige_level >= medium_prestige_level
+		# Must have a valid opponent to negotiate with.
+		custom_description = {
+			text = negotiate_the_danelaw.valid_opponent.tt
+			any_county_in_region = {
+				region = world_europe_west_britannia
+				holder = { negotiate_the_danelaw_valid_danelaw_opponent_trigger = yes }
+			}
+		}
+		# And completely control any two duchies within k_england.
+		custom_description = {
+			text = negotiate_the_danelaw.controlled_duchies.tt
+			any_held_title = {
+				count >= 2
+				title_tier = duchy
+				any_this_title_or_de_jure_above = { this = title:k_england }
+				save_temporary_scope_as = de_jure_duchy
+				root = { completely_controls = scope:de_jure_duchy }
+			}
+		}
+		# Can only be fired by someone in the Tribal Era (though their rival need not be).
+		## Reshow this here so players know they're on a timer.
+		culture = {
+			NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+		is_available_adult = yes
+		is_at_war = no
+	}
+
+	effect = {
+		# We can't show the effects in the decision window, since they rely on scopes & the tooltips will error, so just display a preview tooltip instead.
+		custom_tooltip = negotiate_the_danelaw.preview.tt
+		custom_tooltip = negotiate_the_danelaw.clarification.tt
+		trigger_event = british_isles.1011
+		# Notifying other players is handled in the response event for scope:ntd_recipient, since they might reject it.
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:negotiate_the_danelaw_decision
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Integrate English Duchy ###
+negotiate_the_danelaw_integrate_duchies_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 1
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = negotiate_the_danelaw_integrate_duchies_decision_desc
+
+	is_shown = {
+		# First off, k_england must currently be partitioned.
+		exists = global_var:partition_active_danelaw
+		# Then, you must be the holder of either k_england or k_danelaw.
+		OR = {
+			has_title = title:k_england
+			has_title = title:k_danelaw
+		}
+	}
+
+	cooldown = { years = 5 }
+
+	cost = { prestige = 500 }
+
+	is_valid = {
+		# Must completely control at least one duchy from the other side.
+		trigger_if = {
+			limit = { has_title = title:k_england }
+			custom_description = {
+				text = negotiate_the_danelaw_integrate_duchies_decision.duchies_within_danelaw.tt
+				title:k_danelaw = {
+					any_in_de_jure_hierarchy = {
+						tier = tier_duchy
+						save_temporary_scope_as = de_jure_duchy
+						root = { completely_controls = scope:de_jure_duchy }
+					}
+				}
+			}
+		}
+		trigger_if = {
+			limit = { has_title = title:k_danelaw }
+			custom_description = {
+				text = negotiate_the_danelaw_integrate_duchies_decision.duchies_within_england.tt
+				title:k_england = {
+					any_in_de_jure_hierarchy = {
+						tier = tier_duchy
+						save_temporary_scope_as = de_jure_duchy
+						root = { completely_controls = scope:de_jure_duchy }
+					}
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+		is_available_adult = yes
+		is_at_war = no
+		# Shouldn't ever happen, but just in case, let's avoid the edge-case.
+		NAND = {
+			has_title = title:k_england
+			has_title = title:k_danelaw
+		}
+	}
+
+	effect = {
+		# Integrate all valid duchies directly.
+		if = {
+			limit = { has_title = title:k_england }
+			title:k_danelaw = {
+				every_in_de_jure_hierarchy = {
+					limit = {
+						tier = tier_duchy
+						save_temporary_scope_as = de_jure_duchy
+						root = { completely_controls = scope:de_jure_duchy }
+					}
+					add_to_list = negotiate_the_danelaw_integrating_duchies_list
+				}
+			}
+			every_in_list = {
+				list = negotiate_the_danelaw_integrating_duchies_list
+				set_de_jure_liege_title = title:k_england
+			}
+			reverse_add_opinion = {
+				target = title:k_danelaw.holder
+				modifier = angry_opinion
+				opinion = -30
+			}
+		}
+		if = {
+			limit = { has_title = title:k_danelaw }
+			title:k_england = {
+				every_in_de_jure_hierarchy = {
+					limit = {
+						tier = tier_duchy
+						save_temporary_scope_as = de_jure_duchy
+						root = { completely_controls = scope:de_jure_duchy }
+					}
+					add_to_list = negotiate_the_danelaw_integrating_duchies_list
+				}
+			}
+			every_in_list = {
+				list = negotiate_the_danelaw_integrating_duchies_list
+				set_de_jure_liege_title = title:k_danelaw
+			}
+			reverse_add_opinion = {
+				target = title:k_england.holder
+				modifier = angry_opinion
+				opinion = -30
+			}
+		}
+		# Inform relevant parties.
+		## The major feuding lords first.
+		if = {
+			limit = { has_title = title:k_england }
+			send_interface_message = {
+				type = event_generic_good_text
+				title = negotiate_the_danelaw_integrate_duchies_decision.danelaw_side.t
+				desc = negotiate_the_danelaw_integrate_duchies_decision.danelaw_side.desc
+				right_icon = title:k_england.holder
+			}
+			title:k_danelaw.holder = {
+				send_interface_message = {
+					type = event_generic_bad_text
+					title = negotiate_the_danelaw_integrate_duchies_decision.danelaw_side.t
+					desc = negotiate_the_danelaw_integrate_duchies_decision.danelaw_side.desc
+					right_icon = title:k_england.holder
+				}
+			}
+		}
+		if = {
+			limit = { has_title = title:k_danelaw }
+			send_interface_message = {
+				type = event_generic_good_text
+				title = negotiate_the_danelaw_integrate_duchies_decision.england_side.t
+				desc = negotiate_the_danelaw_integrate_duchies_decision.england_side.desc
+				right_icon = title:k_danelaw.holder
+			}
+			title:k_england.holder = {
+				send_interface_message = {
+					type = event_generic_bad_text
+					title = negotiate_the_danelaw_integrate_duchies_decision.england_side.t
+					desc = negotiate_the_danelaw_integrate_duchies_decision.england_side.desc
+					right_icon = title:k_danelaw.holder
+				}
+			}
+		}
+		## But notify any affected players too.
+		if = {
+			limit = {
+				any_in_list = {
+					list = negotiate_the_danelaw_integrating_duchies_list
+					any_in_de_jure_hierarchy = {
+						holder ?= {
+							is_ai = no
+							NOR = {
+								this = title:k_england.holder
+								this = title:k_danelaw.holder
+							}
+						}
+					}
+				}
+			}
+			every_in_list = {
+				list = negotiate_the_danelaw_integrating_duchies_list
+				every_in_de_jure_hierarchy = {
+					limit = {
+						holder ?= {
+							is_ai = no
+							NOR = {
+								this = title:k_england.holder
+								this = title:k_danelaw.holder
+							}
+						}
+					}
+					holder = {
+						hidden_effect = {
+							send_interface_toast = {
+								type = event_toast_effect_neutral	
+								title = negotiate_the_danelaw_integrate_duchies_decision.inform_minor_players.t
+								left_icon = title:k_england.holder
+								right_icon = title:k_danelaw.holder
+								custom_tooltip = negotiate_the_danelaw_integrate_duchies_decision.inform_minor_players.tt
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	ai_potential = {
+		primary_title.tier >= tier_kingdom
+		# First off, k_england must currently be partitioned.
+		exists = global_var:partition_active_danelaw
+		# Then, you must be the holder of either k_england or k_danelaw.
+		OR = {
+			has_title = title:k_england
+			has_title = title:k_danelaw
+		}
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Formalize the Daneland ###
+formalise_the_daneland_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	desc = formalise_the_daneland_decision_desc
+
+	is_shown = {
+		# Has k_danelaw.
+		any_held_title = { this = title:k_danelaw }
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:formalise_the_daneland_decision
+			}
+		}
+	}
+
+	is_valid = {
+		# Should have a decent prestige level.
+		prestige_level >= high_prestige_level
+		# Must be in a suitably late era & must be past at least a reasonable date.
+		culture = { has_cultural_era_or_later = culture_era_high_medieval }
+		custom_description = {
+			text = formalise_the_daneland_decision.must_be_after_1100.tt
+			current_date >= 1100.1.1
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+		is_available_adult = yes
+		is_at_war = no
+	}
+
+	cost = { prestige = 750 }
+
+	effect = {
+		# Grab characters for loc & general effects.
+		save_scope_as = founder
+		## We want the King of England for portrait effects and such (there'll always be one, else this decision won't be available).
+		title:k_england.holder = { save_scope_as = england }
+		# Show consequences.
+		show_as_tooltip = { formalise_the_daneland_effect = yes }
+		# Send notification events.
+		## For scope:founder.
+		scope:founder = { trigger_event = british_isles.1061 }
+		## For scope:england.
+		scope:england = { trigger_event = british_isles.1062 }
+		## For other players in the region.
+		every_player = {
+			limit = {
+				NOR = {
+					this = scope:founder
+					this = scope:england
+				}
+				any_sub_realm_county = {
+					title_province = { geographical_region = world_europe_west_britannia }
+				}
+			}
+			trigger_event = british_isles.1063
+		}
+		# Mark the decision as completed.
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:formalise_the_daneland_decision
+		}
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+#############################################
+# #Restore Dumnonia to the map				#
+# by Ewan Cowhig Croft						#
+#############################################
+### Restore the Kingdom of Cornwall ###
+restore_dumnonia_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = restore_dumnonia_decision_desc
+	selection_tooltip = restore_dumnonia_decision_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		exists = dynasty # Everyone should have a dynasty, but in case they don't...
+		OR = {
+			OR = {
+				has_title = title:d_cornwall
+				has_title = title:c_cornwall
+				has_title = title:c_devon
+			}
+			dynasty = dynasty:1029001	#The Cornish royal house is always able to get away with these shenanigans.
+			culture = culture:cornish	#Cornish characters are always able to dream.
+		}
+		OR = {	#Must be a culture at least traditionally interlinked with Cornwall.
+			dynasty = dynasty:1029001	#The Cornish royal house is at it again.
+			culture = { has_cultural_pillar = heritage_brythonic }
+		}
+		NOT = {	#You can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_restored_dumnonia
+			}
+		}
+		OR = {
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_republic
+			government_has_flag = government_is_clan
+			government_allows = administrative
+			government_has_flag = government_is_landless_adventurer
+		}
+		highest_held_title_tier <= tier_duchy
+	}
+
+	is_valid = {
+		top_liege = this
+		prestige_level >= very_high_prestige_level
+		has_title = title:d_cornwall
+		completely_controls = title:d_cornwall
+		any_realm_province = { #You must have some realm support for your claims.
+			culture = { has_cultural_pillar = heritage_brythonic }
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_available_adult = yes
+	}
+
+	effect = {
+		show_as_tooltip = {
+			restore_dumnonia_decision_scripted_effect = yes
+		}
+		save_scope_as = founder
+		trigger_event = {
+			id = british_isles.4001
+		}
+		#Notify other players.
+		every_player = {
+			limit = {
+				this != root
+				is_within_diplo_range = { CHARACTER = root }
+			}
+			trigger_event = british_isles.4002
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_restored_dumnonia
+			}
+			set_global_variable = {
+				name = flag_restored_dumnonia
+				value = root
+			}
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 300
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 300
+			}
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}

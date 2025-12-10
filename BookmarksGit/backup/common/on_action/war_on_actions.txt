@@ -1,0 +1,2463 @@
+﻿# On actions for war events, triggered automatically by the game
+
+# called for wars after being transferred to a new defender
+# root is the primary attacker
+# scope:war is the war
+# scope:defender is the new defender
+
+on_war_transferred = {
+	events = {
+		war_event.2001 # allows attacker to back out of the war
+	}
+}
+
+# called for people joining as a secondary attacker or defender
+# root is the joiner
+# scope:war is the war
+
+on_join_war_as_secondary = {
+	effect = {
+		save_scope_as = war_joiner
+		scope:war = {
+			if = {
+				limit = {
+					is_attacker = root
+				}
+				primary_attacker = { save_scope_as = war_joiner_ally }
+				primary_defender = { save_scope_as = war_joiner_enemy }
+				root = {
+					create_character_memory = {
+						type = joined_allys_war
+
+						participants = {
+							ally = scope:war.primary_attacker
+							enemy = scope:war.primary_defender
+						}
+					}
+					scope:war.primary_attacker = {
+						ordered_memory = {
+							memory_type = offensive_war
+							limit = {
+								any_memory_participant = { this = scope:war.primary_defender }
+							}
+							order_by = memory_creation_date
+							save_scope_as = war_memory
+						}
+					}
+				}
+			}
+			else = {
+				primary_defender = { save_scope_as = war_joiner_ally }
+				primary_attacker = { save_scope_as = war_joiner_enemy }
+				root = {
+					create_character_memory = {
+						type = joined_allys_war
+
+						participants = {
+							ally = scope:war.primary_defender
+							enemy = scope:war.primary_attacker
+						}
+					}
+					scope:war.primary_defender = {
+						ordered_memory = {
+							memory_type = defensive_war
+							limit = {
+								any_memory_participant = { this = scope:war.primary_attacker }
+							}
+							order_by = memory_creation_date
+							save_scope_as = war_memory
+						}
+					}
+				}
+			}
+			root = {
+				if = {
+					limit = {
+						exists = house
+						is_house_head = yes
+						exists = scope:war_joiner_ally.house
+						scope:war_joiner_ally = {
+							OR = {
+								is_allied_to = scope:war.primary_attacker
+								is_allied_to = scope:war.primary_defender
+							}
+						}
+					}
+					house = {
+						change_house_relation_effect = {
+							HOUSE = scope:war_joiner_enemy.house
+							VALUE = house_relation_damage_minor_value
+							REASON = war_joined_ally
+							CHAR = root
+							TARGET_CHAR = scope:war_joiner_ally
+							TITLE = scope:dummy_gender
+						}
+					}
+				}
+				if = {
+					limit = {
+						exists = house
+						is_house_head = yes
+						exists = scope:war_joiner_enemy.house
+						scope:war_joiner_enemy = {
+							OR = {
+								is_allied_to = scope:war.primary_attacker
+								is_allied_to = scope:war.primary_defender
+							}
+						}
+					}
+					house = {
+						change_house_relation_effect = {
+							HOUSE = scope:war_joiner_enemy.house
+							VALUE = house_relation_damage_minor_value
+							REASON = war_joined_enemy
+							CHAR = scope:war_joiner_enemy
+							TARGET_CHAR = root
+							TITLE = scope:dummy_gender
+						}
+					}
+				}
+				ordered_memory = {
+					memory_type = joined_allys_war
+					limit = {
+						any_memory_participant = { this = scope:war.primary_attacker }
+						any_memory_participant = { this = scope:war.primary_defender }
+					}
+					order_by = memory_creation_date
+					if = {
+						limit = { exists = scope:war_memory.var:war_cb }
+						copy_war_memory_casus_belli_effect = { MEMORY = scope:war_memory }
+					}
+					else = { set_war_memory_casus_belli_effect = yes }
+					if = {
+						limit = {
+							root = { is_at_war_with = scope:war.primary_attacker }
+						}
+						set_variable = {
+							name = war_ally
+							value = scope:war.primary_defender
+						}
+					}
+					else = {
+						set_variable = {
+							name = war_ally
+							value = scope:war.primary_attacker
+						}
+					}
+				}
+				# If they're in an activity, let them decide whether or not to cancel
+				activity_on_war_declared_events_effect  = yes
+				# BP2: Joining war and have an enemy's hostage
+				if = {
+					limit = { # Let attacker's go first
+						NOT = {
+							any_warden_hostage = { home_court ?= scope:war_joiner }
+						}
+					}
+					trigger_event = { id = bp2_hostage_system.0120 days = 6 }
+				}
+			}
+			# BP2: Have a hostage of a newly joined enemy
+			every_war_participant = {
+				limit = { is_at_war_with = scope:war_joiner }
+				# Have a hostage of a newly joined enemy
+				trigger_event = { id = bp2_hostage_system.0130 days = 6 }
+			}
+			# Enroute hostage invalidation
+			scope:war_joiner = {
+				if = {
+					limit = {
+						any_close_family_member = {
+							is_travelling = yes
+							var:hostage_travelling_to_warden ?= { is_at_war_with = scope:war_joiner }
+						}
+					}
+					every_close_family_member = {
+						limit = {
+							is_travelling = yes
+							var:hostage_travelling_to_warden ?= { is_at_war_with = scope:war_joiner }
+						}
+						save_scope_as = invalidated_hostage
+						scope:war_joiner = {
+							send_interface_toast = {
+								type = event_toast_effect_neutral
+								title = hostage_invalidated_during_travel_title
+								left_icon = scope:invalidated_hostage
+								right_icon = scope:invalidated_hostage.var:hostage_travelling_to_warden
+								show_as_tooltip = {
+									scope:invalidated_hostage.current_travel_plan = {
+										if = {
+											limit = { can_cancel = yes }
+											cancel_travel_plan = yes
+										}
+									}
+								}
+							}
+						}
+						scope:invalidated_hostage.var:hostage_travelling_to_warden = {
+							send_interface_toast = {
+								type = event_toast_effect_neutral
+								title = hostage_invalidated_during_travel_title
+								left_icon = scope:invalidated_hostage
+								right_icon = scope:war_joiner
+								scope:invalidated_hostage = {
+									current_travel_plan = {
+										if = {
+											limit = { can_cancel = yes }
+											cancel_travel_plan = yes
+										}
+									}
+									remove_variable = hostage_travelling_to_warden
+								}
+							}
+						}
+					}
+				}
+			}
+			every_war_participant = {
+				save_scope_as = participant
+				if = {
+					limit = {
+						any_close_family_member = {
+							is_travelling = yes
+							var:hostage_travelling_to_warden ?= { is_at_war_with = scope:participant }
+						}
+					}
+					every_close_family_member = {
+						limit = {
+							is_travelling = yes
+							var:hostage_travelling_to_warden ?= { is_at_war_with = scope:participant }
+						}
+						save_scope_as = invalidated_hostage
+						scope:participant = {
+							send_interface_toast = {
+								type = event_toast_effect_neutral
+								title = hostage_invalidated_during_travel_title
+								left_icon = scope:invalidated_hostage
+								right_icon = scope:invalidated_hostage.var:hostage_travelling_to_warden
+								show_as_tooltip = {
+									scope:invalidated_hostage.current_travel_plan = {
+										if = {
+											limit = { can_cancel = yes }
+											cancel_travel_plan = yes
+										}
+									}
+								}
+							}
+						}
+						scope:invalidated_hostage.var:hostage_travelling_to_warden = {
+							send_interface_toast = {
+								type = event_toast_effect_neutral
+								title = hostage_invalidated_during_travel_title
+								left_icon = scope:invalidated_hostage
+								right_icon = scope:participant
+								scope:invalidated_hostage = {
+									current_travel_plan = {
+										if = {
+											limit = { can_cancel = yes }
+											cancel_travel_plan = yes
+										}
+									}
+									remove_variable = hostage_travelling_to_warden
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if = { #coronation_events_klank.1005 reward
+			limit = {
+				has_variable = coronation_event_1005_target
+				AND = {
+					any_ally = {
+						has_variable = coronation_event_1005_target
+						var:coronation_event_1005_target = root.var:coronation_event_1005_target
+					}
+					any_war_enemy = {
+						this = root.var:coronation_event_1005_target
+					}
+				}
+			}
+			remove_character_modifier = ach_partners_in_revanchism_passive_modifier
+			add_character_modifier = {
+				modifier = ach_partners_in_revanchism_active_modifier
+				years = 1
+			}
+
+			random_ally = {
+				limit = {
+					has_variable = coronation_event_1005_target
+					var:coronation_event_1005_target = root.var:coronation_event_1005_target
+				}
+				remove_character_modifier = ach_partners_in_revanchism_passive_modifier
+				add_character_modifier = {
+					modifier = ach_partners_in_revanchism_active_modifier
+					years = 1
+				}
+				remove_variable = coronation_event_1005_target
+			}
+			remove_variable = coronation_event_1005_target
+		}
+	}
+	events = {
+		war_event.3000 # Ally gets mad if you do not participate in their wars.
+		religious_decision.0200 # Stop mediation
+	}
+}
+
+# called when a war is started.
+# same scopes are available in these events as in the CBs' on_declaration, this just fires for all CBs instead of a specific CB.
+
+on_war_started = {
+	effect = {
+		if = {
+			limit = {
+				scope:defender.top_liege = {
+					this != scope:attacker.top_liege
+					this != scope:defender
+					can_vassals_be_attacked = yes
+				}
+				scope:war = {
+					using_civil_war_cb_trigger = no
+				}
+			}
+			debug_log = "Declared a border war"
+			debug_log_scopes = yes
+		}
+		scope:attacker = {
+			if = {
+				limit = {
+					any_vassal_or_below = { is_ai = no }
+				}
+				every_vassal_or_below = {
+					limit = { is_ai = no }
+					send_interface_toast = {
+						type = msg_war_declared_by_liege
+						title = msg_war_declared_by_liege
+						desc = msg_war_declared_by_liege_desc
+						left_icon = scope:attacker
+						right_icon = scope:defender
+					}
+				}
+			}
+			create_character_memory = {
+				type = offensive_war
+
+				participants = {
+					other_party = scope:defender
+				}
+			}
+			ordered_memory = {
+				memory_type = offensive_war
+				limit = {
+					any_memory_participant = { this = scope:defender }
+				}
+				order_by = memory_creation_date
+				save_scope_as = offensive_memory
+				set_war_memory_casus_belli_effect = yes
+			}
+			# If they're in an activity, let them decide whether or not to cancel
+			activity_on_war_declared_events_effect  = yes
+			# Achievements.
+			## Track whether the player has ever started a war — for various pacifist achievements.
+			if = {
+				limit = { is_ai = no }
+				set_global_variable = {
+					name = player_declared_war
+					value = yes
+				}
+			}
+			# BP2 Attacker has defender's hostage
+			if = {
+				limit = {
+					any_warden_hostage = { home_court ?= scope:defender }
+					# Let defenders go first
+					NOT = {
+						scope:defender = {
+							any_warden_hostage = { home_court ?= scope:attacker }
+						}
+					}
+				}
+				trigger_event = { id = bp2_hostage_system.0100 days = 3 }
+			}
+			# Enroute hostage invalidation
+			if = {
+				limit = {
+					any_close_family_member = {
+						is_travelling = yes
+						var:hostage_travelling_to_warden ?= { is_at_war_with = scope:attacker }
+					}
+				}
+				every_close_family_member = {
+					limit = {
+						is_travelling = yes
+						var:hostage_travelling_to_warden ?= { is_at_war_with = scope:attacker }
+					}
+					save_scope_as = invalidated_hostage
+					scope:attacker = {
+						send_interface_toast = {
+							type = event_toast_effect_neutral
+							title = hostage_invalidated_during_travel_title
+							left_icon = scope:invalidated_hostage
+							right_icon = scope:invalidated_hostage.var:hostage_travelling_to_warden
+							show_as_tooltip = {
+								scope:invalidated_hostage.current_travel_plan = {
+									if = {
+										limit = { can_cancel = yes }
+										cancel_travel_plan = yes
+									}
+								}
+							}
+						}
+					}
+					scope:invalidated_hostage.var:hostage_travelling_to_warden = {
+						send_interface_toast = {
+							type = event_toast_effect_neutral
+							title = hostage_invalidated_during_travel_title
+							left_icon = scope:invalidated_hostage
+							right_icon = scope:attacker
+							scope:invalidated_hostage = {
+								current_travel_plan = {
+									if = {
+										limit = { can_cancel = yes }
+										cancel_travel_plan = yes
+									}
+								}
+								remove_variable = hostage_travelling_to_warden
+							}
+						}
+					}
+				}
+			}
+			# Struggle Catalysts
+			## Log relative involvement for the war's end (since we may have title changes that mess us up otherwise).
+			### Involved.
+			if = {
+				limit = {
+					any_character_struggle = { involvement = involved }
+				}
+				random_character_struggle = {
+					involvement = involved
+					save_scope_as = struggle
+				}
+				scope:war = {
+					set_variable = {
+						name = struggle_involvement_attacker
+						value = flag:involved
+					}
+					set_variable = {
+						name = struggle_scope_attacker
+						value = scope:struggle
+					}
+					set_variable = {
+						name = struggle_attacker_tier
+						value = scope:attacker.highest_held_title_tier
+					}
+				}
+			}
+			### Interloper.
+			else_if = {
+				limit = {
+					any_character_struggle = { involvement = interloper }
+				}
+				random_character_struggle = {
+					involvement = interloper
+					save_scope_as = struggle
+				}
+				scope:war = {
+					set_variable = {
+						name = struggle_involvement_attacker
+						value = flag:interloper
+					}
+					set_variable = {
+						name = struggle_scope_attacker
+						value = scope:struggle
+					}
+					set_variable = {
+						name = struggle_attacker_tier
+						value = scope:attacker.highest_held_title_tier
+					}
+				}
+			}
+			## Unfair wars.
+			if = {
+				limit = {
+					has_trait = fp3_struggle_supporter
+					highest_held_title_tier > scope:defender.highest_held_title_tier
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_started }
+					}
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_supporter_declare_unfair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_supporter_declare_unfair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_supporter_declare_unfair_war_within_the_region
+						character = scope:attacker
+					}
+					scope:war = { set_variable = used_for_struggle_catalyst_on_war_started }
+					log_debug_variable_for_persian_struggle_effect = { VAR = stabil_catalyst_supporter_declare_unfair_war_within_the_region }
+				}
+			}
+			## Fair wars.
+			else_if = {
+				limit = {
+					has_trait = fp3_struggle_supporter
+					highest_held_title_tier <= scope:defender.highest_held_title_tier
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_started }
+					}
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_supporter_declare_fair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_supporter_declare_fair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_supporter_declare_fair_war_within_the_region
+						character = scope:attacker
+					}
+					scope:war = { set_variable = used_for_struggle_catalyst_on_war_started }
+					log_debug_variable_for_persian_struggle_effect = { VAR = stabil_catalyst_supporter_declare_fair_war_within_the_region }
+				}
+			}
+			# During the Persian Struggle, a detractor wins any war in the region.
+			## Unfair wars.
+			else_if = {
+				limit = {
+					has_trait = fp3_struggle_detractor
+					highest_held_title_tier > scope:defender.highest_held_title_tier
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_started }
+					}
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_detractor_declare_unfair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_detractor_declare_unfair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_detractor_declare_unfair_war_within_the_region
+						character = scope:attacker
+					}
+					scope:war = { set_variable = used_for_struggle_catalyst_on_war_started }
+					log_debug_variable_for_persian_struggle_effect = { VAR = unrest_catalyst_detractor_declare_unfair_war_within_the_region }
+				}
+			}
+			## Fair wars.
+			else_if = {
+				limit = {
+					has_trait = fp3_struggle_detractor
+					highest_held_title_tier <= scope:defender.highest_held_title_tier
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_started }
+					}
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_detractor_declare_fair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_detractor_declare_fair_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_detractor_declare_fair_war_within_the_region
+						character = scope:attacker
+					}
+					scope:war = { set_variable = used_for_struggle_catalyst_on_war_started }
+					log_debug_variable_for_persian_struggle_effect = { VAR = unrest_catalyst_detractor_declare_fair_war_within_the_region }
+				}
+			}
+			#####################
+			# Mandala Government
+			#####################
+			if = {
+				limit = { government_has_flag = government_is_mandala }
+				#Ye ain't serene anymore, son
+				if = {
+					limit = {
+						house ?= { has_house_power_parameter = aspect_of_serenity }
+					}
+					if = {
+						limit = { has_character_modifier = mandala_increments_of_peace_modifier }
+						mandala_reset_increment_of_peace_effect = yes
+					}
+					if = {
+						limit = { has_variable = serenity_mandala_years_of_non_aggression_war }
+						remove_variable = serenity_mandala_years_of_non_aggression_war
+						set_variable = {
+							name = serenity_mandala_years_of_non_aggression_war
+							value = 0
+						}
+					}
+				}
+			}
+		}
+		scope:defender = {
+			if = {
+				limit = {
+					any_vassal_or_below = { is_ai = no }
+				}
+				every_vassal_or_below = {
+					limit = { is_ai = no }
+					send_interface_toast = {
+						type = msg_war_declared_on_liege
+						title = msg_war_declared_on_liege
+						desc = msg_war_declared_on_liege_desc
+						left_icon = scope:defender
+						right_icon = scope:attacker
+					}
+				}
+			}
+			#life is just a joke tradition stress loss
+			if = {
+				limit = {
+					scope:defender.culture = { has_cultural_parameter = war_stress_loss }
+				}
+				stress_impact = {
+					base = medium_stress_loss
+				}
+			}
+			create_character_memory = {
+				type = defensive_war
+
+				participants = {
+					other_party = scope:attacker
+				}
+			}
+			ordered_memory = {
+				memory_type = defensive_war
+				limit = {
+					any_memory_participant = { this = scope:attacker }
+				}
+				order_by = memory_creation_date
+				copy_war_memory_casus_belli_effect = { MEMORY = scope:offensive_memory }
+			}
+			# If they're in an activity, let them decide whether or not to cancel
+			activity_on_war_declared_events_effect = yes
+			# BP2 Defender has attacker's hostage
+			if = {
+				limit = {
+					any_warden_hostage = { home_court ?= scope:attacker }
+				}
+				trigger_event = { id = bp2_hostage_system.0110 days = 3 }
+			}
+			# Enroute hostage invalidation
+			if = {
+				limit = {
+					any_close_family_member = {
+						is_travelling = yes
+						var:hostage_travelling_to_warden ?= { is_at_war_with = scope:defender }
+					}
+				}
+				every_close_family_member = {
+					limit = {
+						is_travelling = yes
+						var:hostage_travelling_to_warden ?= { is_at_war_with = scope:defender }
+					}
+					save_scope_as = invalidated_hostage
+					scope:defender = {
+						send_interface_toast = {
+							type = event_toast_effect_neutral
+							title = hostage_invalidated_during_travel_title
+							left_icon = scope:invalidated_hostage
+							right_icon = scope:invalidated_hostage.var:hostage_travelling_to_warden
+							show_as_tooltip = {
+								scope:invalidated_hostage.current_travel_plan = {
+									if = {
+										limit = { can_cancel = yes }
+										cancel_travel_plan = yes
+									}
+								}
+							}
+						}
+					}
+					scope:invalidated_hostage.var:hostage_travelling_to_warden = {
+						send_interface_toast = {
+							type = event_toast_effect_neutral
+							title = hostage_invalidated_during_travel_title
+							left_icon = scope:invalidated_hostage
+							right_icon = scope:defender
+							scope:invalidated_hostage = {
+								current_travel_plan = {
+									if = {
+										limit = { can_cancel = yes }
+										cancel_travel_plan = yes
+									}
+								}
+								remove_variable = hostage_travelling_to_warden
+							}
+						}
+					}
+				}
+			}
+			# BP2 Hostage War Aid request event
+			if = { # Exclude the following CBs
+				limit = {
+					scope:war = {
+						NOR = {
+							using_cb = peasant_war
+							using_cb = populist_war
+							using_cb = undirected_great_holy_war
+							using_cb = directed_great_holy_war
+						}
+					}
+					scope:attacker = {
+						is_ai = yes
+					}
+					scope:defender = {
+						has_bp2_dlc_trigger = yes
+					}
+				}
+				if = {
+					limit = {
+						is_hostage_warden = yes
+						# Check if the defender has any hostages whose home court is not the attacker and is not allied to the attacker
+						any_warden_hostage = {
+							OR = {
+								AND = {
+									home_court = {
+										is_ai = yes
+									}
+									opinion = {
+										target = scope:defender
+										value > 0
+									}
+								}
+								AND = {
+									home_court = {
+										is_ai = no
+									}
+									opinion = {
+										target = scope:defender
+										value > 20
+									}
+								}
+							}
+							age > 9
+							is_imprisoned = no
+							is_incapable = no
+							home_court ?= {
+								age > 4
+								is_imprisoned = no
+								is_at_war = no
+							}
+							NOR = {
+								home_court = scope:attacker
+								home_court = {
+									is_allied_to = scope:attacker
+									is_allied_to = scope:defender
+									is_at_war_with = scope:defender
+								}
+							}
+						}
+					}
+					random_warden_hostage = {
+						limit = {
+							OR = {
+								AND = {
+									home_court = {
+										is_ai = yes
+									}
+									opinion = {
+										target = scope:defender
+										value > 0
+									}
+								}
+								AND = {
+									home_court = {
+										is_ai = no
+									}
+									opinion = {
+										target = scope:defender
+										value > 20
+									}
+								}
+							}
+							age > 9
+							is_imprisoned = no
+							is_incapable = no
+							home_court ?= {
+								age > 4
+								is_imprisoned = no
+								is_at_war = no
+							}
+							NOR = {
+								home_court ?= scope:attacker
+								home_court ?= {
+									is_allied_to = scope:attacker
+									is_allied_to = scope:defender
+									is_at_war_with = scope:defender
+								}
+							}
+						}
+						save_scope_as = hostage
+						scope:hostage.home_court = {
+							save_scope_as = home_court
+						}
+					}
+					trigger_event = { id = bp2_yearly.6200 days = { 5 10 } }
+				}
+			}
+			# Struggle Catalysts
+			## Log relative involvement for the war's end (since we may have title changes that mess us up otherwise).
+			### Involved.
+			if = {
+				limit = {
+					any_character_struggle = { involvement = involved }
+				}
+				random_character_struggle = {
+					involvement = involved
+					save_scope_as = struggle
+				}
+				scope:war = {
+					set_variable = {
+						name = struggle_involvement_defender
+						value = flag:involved
+					}
+					set_variable = {
+						name = struggle_scope_defender
+						value = scope:struggle
+					}
+					set_variable = {
+						name = struggle_defender_tier
+						value = scope:defender.highest_held_title_tier
+					}
+				}
+			}
+			### Interloper.
+			else_if = {
+				limit = {
+					any_character_struggle = { involvement = interloper }
+				}
+				random_character_struggle = {
+					involvement = interloper
+					save_scope_as = struggle
+				}
+				scope:war = {
+					set_variable = {
+						name = struggle_involvement_defender
+						value = flag:interloper
+					}
+					set_variable = {
+						name = struggle_scope_defender
+						value = scope:struggle
+					}
+					set_variable = {
+						name = struggle_defender_tier
+						value = scope:defender.highest_held_title_tier
+					}
+				}
+			}
+
+			# if the top liege wasn't called in notify them
+			if = {
+				limit = {
+					# being attacked by someone out of the top liege's realm (from the outside)
+					top_liege != scope:attacker.top_liege
+					# is a vassal
+					liege != this
+					# top liege isn't being pulled in automatically
+					top_liege = {
+						can_vassals_be_attacked = yes
+					}
+				}
+				top_liege = {
+					send_interface_toast = {
+						type = msg_war_declared_on_vassal
+						title = declare_war_interaction_notification
+
+						left_icon = scope:defender
+						right_icon = scope:attacker
+
+						custom_tooltip = declare_war_interaction_notification_tooltip
+					}
+				}
+			}
+
+			#Notify defender's tributaries and suzerains
+			every_tributary = {
+				send_interface_toast = {
+					type = msg_war_declared_on_suzerain
+					title = declare_war_interaction_notification
+
+					left_icon = scope:defender
+					right_icon = scope:attacker
+
+					custom_tooltip = declare_war_interaction_notification_tooltip
+				}
+			}
+			if = {
+				limit = { suzerain != this } # is a tributary of someone else, notify them
+				#If both sides have the same suzerain, downplay this
+				if = {
+					limit = {
+						scope:attacker = { is_tributary = yes }
+						scope:defender = { is_tributary = yes }
+						scope:defender.suzerain = scope:attacker.suzerain
+					}
+					suzerain = {
+						send_interface_toast = {
+							type = msg_tributary_declared_war_on_tributary
+							title = declare_war_interaction_notification
+
+							left_icon = scope:defender
+							right_icon = scope:attacker
+
+							custom_tooltip = declare_war_interaction_notification_tooltip
+						}
+					}
+					if = {
+						limit = { suzerain != top_suzerain } # suzerain is a tributary to a top_suzerain, notify them too
+						top_suzerain = {
+							send_interface_toast = {
+								type = msg_tributary_declared_war_on_tributary
+								title = declare_war_interaction_notification
+
+								left_icon = scope:defender
+								right_icon = scope:attacker
+
+								custom_tooltip = declare_war_interaction_notification_tooltip
+							}
+						}
+					}
+				}
+				else = {
+					suzerain = {
+						send_interface_toast = {
+							type = msg_war_declared_on_tributary
+							title = declare_war_interaction_notification
+
+							left_icon = scope:defender
+							right_icon = scope:attacker
+
+							custom_tooltip = declare_war_interaction_notification_tooltip
+						}
+					}
+					if = {
+						limit = { suzerain != top_suzerain } # suzerain is a tributary to a top_suzerain, notify them too
+						top_suzerain = {
+							send_interface_toast = {
+								type = msg_war_declared_on_tributary
+								title = declare_war_interaction_notification
+
+								left_icon = scope:defender
+								right_icon = scope:attacker
+
+								custom_tooltip = declare_war_interaction_notification_tooltip
+							}
+						}
+					}
+				}
+
+			}
+			#Confederation kingdom join war promise
+			if = {
+				limit = {
+					has_variable_list = confed_vassals_defensive
+					#Is a confederation
+					primary_title = {
+						has_variable = confederation_culture
+					}
+				}
+				every_in_list = {
+					variable = confed_vassals_defensive
+					limit = {
+						is_allied_to = scope:defender
+						is_vassal_of = scope:defender
+						NOT = {
+							is_at_war_with = scope:defender
+						}
+					}
+					scope:war = {
+						add_defender = prev
+					}
+				}
+			}
+		}
+		#Admin governors notice war has been dragging on event
+		fire_governor_long_war_response_events = yes
+		if = {
+			limit = {
+				scope:war = {
+					OR = {
+						using_civil_war_cb_trigger = yes
+						using_non_ghw_holy_war_cb_trigger = yes
+						using_de_jure_cb_trigger = yes
+						using_conquest_cb_trigger = yes
+					}
+				}
+			}
+			every_player = {
+				limit = {
+					has_government = landless_adventurer_government
+					has_realm_law = camp_purpose_mercenaries
+					NOT = { is_participant_in_war = scope:war }
+					#check scripted range as it's smaller than the code trigger
+					OR = {
+						is_within_diplo_range = { CHARACTER = scope:attacker }
+						is_within_diplo_range = { CHARACTER = scope:defender }
+					}
+					#check if the contract is valid to create
+					OR = {
+						can_create_task_contract = {
+							type_name = laamp_join_war_contract
+							employer = scope:attacker
+						}
+						can_create_task_contract = {
+							type_name = laamp_join_war_contract
+							employer = scope:defender
+						}
+					}
+					save_temporary_scope_as = player_laamp
+				}
+				save_scope_as = player_laamp
+				spawn_join_war_contracts_effect = {
+					WAR = scope:war
+					LAAMP = scope:player_laamp
+					ATTACKER = scope:attacker
+					DEFENDER = scope:defender
+				}
+			}
+		}
+		#Confederation members automatically join defensive wars
+		scope:defender = {
+			if = {
+				limit = {
+					is_confederation_member = yes
+				}
+				mpo_confederation_join_defensive_war_effect = yes
+			}
+		}
+		# HOUSE RELATIONS
+		if = {
+			limit = {
+				exists = scope:attacker.house
+				exists = scope:defender.house
+			}
+			scope:attacker.house = {
+				change_house_relation_effect = {
+					HOUSE = scope:defender.house
+					VALUE = house_relation_damage_minor_value
+					REASON = war_declared
+					CHAR = scope:attacker
+					TARGET_CHAR = scope:defender
+					TITLE = scope:dummy_gender
+				}
+			}
+		}
+		# TGP situation catalysts
+		scope:defender = {
+			if = {
+				limit = {
+					has_title = title:h_china
+					scope:war = {
+						using_civil_war_cb_trigger = yes
+					}
+				}
+				situation:dynastic_cycle ?= {
+					if = {
+						limit = { situation_top_has_catalyst = catalyst_hegemon_in_civil_war }
+						trigger_situation_catalyst = {
+							catalyst = catalyst_hegemon_in_civil_war
+							character = scope:attacker
+						}
+					}
+				}
+			}
+		}
+		# TGP Blocs
+		scope:attacker = {
+			if = {
+				limit = {
+					is_house_head = yes
+					house.house_confederation ?= {
+						leading_house ?= scope:attacker.house
+						has_cohesion_level_parameter = bloc_members_join_leaders_offensive_internal_wars
+					}
+					scope:defender.top_liege = scope:attacker.top_liege
+				}
+				house.house_confederation = {
+					every_confederation_member_house = {
+						limit = {
+							NOT = { this = scope:attacker.house }
+						}
+						house_head = { add_to_list = strength_call_ins }
+					}
+				}
+				debug_log_scopes = yes
+				every_in_list = {
+					list = strength_call_ins
+					trigger_event = {
+						id = tgp_house_blocs.1001
+						days = 1
+					}
+				}
+			}
+		}
+	}
+}
+
+# called for when a casus belli resolves in one of the following ways.
+# same scopes are available in these events as in the CBs themselves, this just fires for all CBs instead of a specific CB.
+# note that any events/effects fired here WILL NOT show up in the war summary tooltip; they fire at the same time as the war resolution, but are not actually part of the war resolution itself.
+
+on_war_won_attacker = { # As in, won BY attacker. Only one of the two on_actions runs when a war ends.
+	# The war notifications are handled in `effect` instead of `events` due to order of operations.
+	# `effect` fires on THIS tick, `events` fires on the NEXT tick, and the war gets destroyed between this tick and the next.
+	effect = {
+		# Save scopes for localization.
+		scope:attacker = { save_scope_as = winner }
+		scope:defender = { save_scope_as = loser }
+		# Special rewards for Temüjin vs Jamukha
+		if = {
+			limit = {
+				scope:attacker = {
+					OR = {
+						this = character:125501
+						this = character:mpo_mongol_1
+					}
+					has_variable = temujin_jamukha_war_var
+				}
+				scope:defender = {
+					OR = {
+						this = character:125501
+						this = character:mpo_mongol_1
+					}
+				}
+			}
+			scope:attacker = {
+				add_prestige = major_prestige_gain
+			}
+		}
+
+		# Give out a legend seed for beating ya boi G Khan
+		if = {
+			limit = {
+				scope:loser = {
+					OR = {
+						mpo_has_greatest_of_khans_nickname_trigger = yes
+						has_trait = greatest_of_khans
+					}
+				}
+				scope:winner = {
+					NOT = {
+						has_character_flag = khan_beater
+					}
+				}
+			}
+			scope:winner = {
+				if = {
+					limit = { has_dlc_feature = legends }
+					add_character_flag = khan_beater
+					send_interface_toast = {
+						title = heroic_legend_seed_drop.t
+						create_legend_seed = {
+							type = heroic
+							quality = famed
+							chronicle = legendary_battle
+							properties = {
+								winner = scope:winner
+								loser = scope:loser
+								location = scope:winner.location
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Give out Legend Seed if GHW
+		if = {
+			limit = {
+				scope:attacker = {
+					has_dlc_feature = legends
+					NOT = { has_triggered_legend_seed = holy_warrior }
+					NOT = { has_game_rule = historical_legends_only }
+				}
+				scope:war ={
+					OR = {
+						using_cb = undirected_great_holy_war
+						using_cb = directed_great_holy_war
+					}
+				}
+				OR = {
+					scope:target_title.tier ?= tier_empire
+					scope:target_title.tier ?= tier_kingdom
+				}
+			}
+			random = {
+				chance = 75
+				scope:attacker = {
+					send_interface_toast = {
+						title = heroic_legend_seed_drop.t
+						create_legend_seed = {
+							type = heroic
+							quality = famed
+							chronicle = holy_warrior
+							properties = {
+								ancestor = scope:attacker
+								religion = scope:attacker.faith.religion
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Change legend chapters if this was a neat war
+		scope:winner = {
+			if = {
+				limit = {
+					NOT = {
+						has_legend_chapter_winner_trigger = { CHAPTER = battle }
+					}
+					has_legend_chapter_winner_trigger = { CHAPTER = extra_deed }
+					NOT = {
+						promoted_legend ?= {
+							has_legend_chapter = {
+								name = extra_deed
+								localization_key = legend_chapter_extra_deed_recent_battle
+							}
+						}
+					}
+				}
+				random = {
+					chance = 40
+					send_interface_toast = {
+						title = legend_chapter_winner_change_toast
+						left_icon = scope:winner
+						promoted_legend = {
+							set_legend_chapter = {
+								name = extra_deed
+								localization_key = legend_chapter_extra_deed_recent_battle
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Run scripted effect that iterates through all players and notifies them if necessary.
+		notify_players_about_neighboring_war_resolution_effect = yes
+
+		scope:war = {
+			every_war_participant = {
+				if = {
+					limit = {
+						is_ai = yes
+						has_character_flag = delayed_cleanse
+					}
+					trigger_event = { id = game_rule.3 days = 1 }
+				}
+			}
+			fp2_contract_assistance_war_pay_effect = yes # Pay out Contract Assistance money
+		}
+
+		# Add a variable to count recent losses
+		if = {
+			limit = { scope:defender = { has_variable = recently_lost_wars } }
+			scope:defender = {
+				save_temporary_scope_value_as = {
+					name = prev_lost_wars
+					value = var:recently_lost_wars
+				}
+
+				remove_variable = recently_lost_wars
+				set_variable = {
+					name = recently_lost_wars
+					value =  {
+						add = scope:prev_lost_wars
+						add = 1
+					}
+					years = 10
+				}
+			}
+		}
+		else = {
+			scope:defender = {
+				set_variable = {
+					name = recently_lost_wars
+					value =  1
+					years = 10
+				}
+			}
+		}
+
+		# Struggle Catalysts
+		## Special war checks for the caliph.
+		scope:defender = {
+			if = {
+				limit = {
+					fp3_struggle_scoped_is_the_arabian_caliph_trigger = yes
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_ended }
+						using_civil_war_cb_trigger = yes
+					}
+				}
+				# Direct scope because this is caliph-specific.
+				struggle:persian_struggle = {
+					if = {
+						limit = { phase_has_catalyst = catalyst_caliph_or_emperor_loses_revolt_war }
+						activate_struggle_catalyst = {
+							catalyst = catalyst_caliph_or_emperor_loses_revolt_war
+							character = scope:defender
+						}
+						scope:war = { set_variable = used_for_struggle_catalyst_on_war_ended }
+						log_debug_variable_for_persian_struggle_effect = { VAR = concession_catalyst_caliph_or_emperor_loses_revolt_war }
+					}
+				}
+			}
+		}
+		## (Mostly) general checks.
+		scope:attacker = {
+			# Win any war in the struggle region.
+			if = {
+				limit = {
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_ended }
+					}
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_win_any_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+				}
+				every_character_struggle = {
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_win_any_war_within_the_region
+							CHAR = scope:defender
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_win_any_war_within_the_region
+						character = scope:attacker
+					}
+					scope:war = { set_variable = used_for_struggle_catalyst_on_war_ended }
+				}
+			}
+			# During the Persian Struggle, a supporter wins any war in the region.
+			fp3_struggle_apply_supporter_detractor_war_won_catalysts_effect = yes
+			fp3_struggle_apply_catalyst_interloper_uninvolved_gain_struggle_titles = yes
+		}
+		# TGP parameters
+		scope:attacker = {
+			if = {
+				limit = {
+					exists = title:h_china.holder
+					top_participant_group:dynastic_cycle ?= {
+						has_participant_group_parameter = dynastic_cycle_hegemon_legitimacy_from_external_conquest
+					}
+					any_in_list = {
+						list = target_titles
+						tier >= tier_duchy
+						tier <= tier_kingdom
+						count >= 1
+					}
+				}
+				ordered_in_list = {
+					list = target_titles
+					limit = { tier = tier_kingdom }
+					alternative_limit = { tier = tier_duchy }
+					save_scope_as = highest_target_title
+				}
+				# show the outcome to the hegemon
+				title:h_china.holder = {
+					send_interface_message = {
+						type = event_struggle_good
+						title = dynastic_cycle_hegemon_legitimacy_from_external_conquest_title
+						left_icon = scope:defender
+						right_icon = scope:highest_target_title
+						add_legitimacy = {
+							value = minor_legitimacy_gain
+							multiply = scope:highest_target_title.tier
+						}
+					}
+				}
+				# if the hegemon wasn't the attacker, send the message to the attacker too, but don't trigger the effects
+				if = {
+					limit = {
+						title:h_china.holder != scope:attacker
+					}
+					send_interface_message = {
+						type = event_struggle_good
+						title = dynastic_cycle_hegemon_legitimacy_from_external_conquest_title
+						left_icon = scope:defender
+						right_icon = scope:highest_target_title
+						show_as_tooltip = {
+							title:h_china.holder = {
+								add_legitimacy = {
+									value = minor_legitimacy_gain
+									multiply = scope:highest_target_title.tier
+								}
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_title = title:h_china
+				}
+				situation:dynastic_cycle ?= {
+					if = {
+						limit = { situation_top_has_catalyst = catalyst_hegemon_won_war }
+						trigger_situation_catalyst = {
+							catalyst = catalyst_hegemon_won_war
+							character = scope:attacker
+						}
+					}
+				}
+			}
+		}
+		# TGP situation catalysts
+		scope:defender = {
+			if = {
+				limit = {
+					has_title = title:h_china
+				}
+				situation:dynastic_cycle ?= {
+					if = {
+						limit = { situation_top_has_catalyst = catalyst_hegemon_lost_war }
+						trigger_situation_catalyst = {
+							catalyst = catalyst_hegemon_lost_war
+							character = scope:attacker
+						}
+					}
+					if = {
+						limit = {
+							situation_top_has_catalyst = catalyst_hegemon_lost_defensive_territorial_war
+							any_in_list = { list = target_titles }
+						}
+						trigger_situation_catalyst = {
+							catalyst = catalyst_hegemon_lost_defensive_territorial_war
+							character = scope:attacker
+						}
+					}
+					if = {
+						limit = {
+							situation_top_has_catalyst = catalyst_hegemon_lost_capital_in_war
+							any_in_list = {
+								list = target_titles
+								this = scope:defender.capital_county
+							}
+						}
+						trigger_situation_catalyst = {
+							catalyst = catalyst_hegemon_lost_capital_in_war
+							character = scope:attacker
+						}
+					}
+				}
+			}
+		}
+		# Memories
+		scope:attacker = {
+			create_character_memory = {
+				type = war_won
+				participants = {
+					loser = scope:defender
+					winner = scope:attacker
+				}
+			}
+			set_war_over_memory_casus_belli_effect = {
+				STANCE = offensive
+				OUTCOME = won
+				SELF = attacker
+				OTHER = defender
+			}
+		}
+		scope:defender = {
+			create_character_memory = {
+				type = war_lost
+				participants = {
+					winner = scope:attacker
+					loser = scope:defender
+				}
+			}
+			set_war_over_memory_casus_belli_effect = {
+				STANCE = defensive
+				OUTCOME = lost
+				SELF = defender
+				OTHER = attacker
+			}
+			if = {
+				limit = {
+					any_owned_story = {
+						type = story_conqueror
+					}
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_variable = lost_wars
+						}
+					}
+					set_variable = {
+						name = lost_wars
+						value = 1
+					}
+				}
+				else = {
+					change_variable = {
+						name = lost_wars
+						add = 1
+					}
+				}
+			}
+		}
+
+		scope:war.casus_belli = {
+			ordered_in_list = {
+				list = target_titles
+				order_by = tier
+				save_scope_as = chronicle_title
+			}
+		}
+
+		if = {
+			limit = {
+				scope:war ={
+					NOR = {
+						using_cb = undirected_great_holy_war
+						using_cb = directed_great_holy_war
+					}
+				}
+				scope:chronicle_title.tier ?= tier_empire
+				scope:attacker = {
+					any_held_title = {
+						count = 1
+						this.tier >= scope:attacker.primary_title.tier
+					}
+				}
+			}
+			if = {
+				limit = {
+					scope:attacker = {
+						has_dlc_feature = legends
+						NOT = { has_game_rule = historical_legends_only }
+					}
+				}
+				random = {
+					chance = legend_seed_chance_medium
+					scope:attacker = {
+						send_interface_toast = {
+							type = msg_legend_seed_created
+							title = heroic_legend_seed_drop.t
+							create_legend_seed = {
+								type = heroic
+								quality = famed
+								chronicle = war_won_chronicle
+								properties = {
+									title = scope:chronicle_title
+									winner = scope:attacker
+									loser = scope:defender
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				scope:war ={
+					NOR = {
+						using_cb = undirected_great_holy_war
+						using_cb = directed_great_holy_war
+					}
+				}
+				scope:chronicle_title.tier ?= tier_kingdom
+				scope:attacker = {
+					any_held_title = {
+						count = 1
+						this.tier >= scope:attacker.primary_title.tier
+					}
+				}
+			}
+			if = {
+				limit = {
+					scope:attacker = {
+						has_dlc_feature = legends
+						NOT = { has_game_rule = historical_legends_only }
+					}
+				}
+				random = {
+					chance = legend_seed_chance_low
+					scope:attacker = {
+						send_interface_toast = {
+							type = msg_legend_seed_created
+							title = heroic_legend_seed_drop.t
+							create_legend_seed = {
+								type = heroic
+								quality = famed
+								chronicle = war_won_chronicle
+								properties = {
+									title = scope:chronicle_title
+									winner = scope:attacker
+									loser = scope:defender
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# EP3 - Give out the Populist Leader if you won through a Separatist Uprising
+		if = {
+			limit = {
+				scope:winner = {
+					has_dlc_feature = roads_to_power
+					has_variable_list = separatist_uprising_decision_target_var
+					is_target_in_variable_list = {
+						name = separatist_uprising_decision_target_var
+						target = scope:loser
+					}
+				}
+			}
+			if = {
+				limit = {
+					scope:winner = {
+						NOT = { has_trait = populist_leader }
+					}
+				}
+				scope:winner = {
+					trigger_event = {
+						id = ep3_decisions_event.6002
+						days = 1 # So it doesn't overlap with "Forks on the Road"
+					}
+				}
+			}
+			# We also give you a claim on the kingdom title
+			if = {
+				limit = {
+					scope:winner = {
+						NOT = {
+							primary_title.tier = tier_kingdom
+						}
+					}
+				}
+				scope:winner = { add_pressed_claim = scope:winner.location.county.kingdom }
+			}
+		}
+
+		# EP3 - Echoes of Empire Story Cycle
+		if = {
+			limit = {
+				has_ep3_dlc_trigger = yes
+				any_in_list = {
+					list = target_titles
+					this = title:e_byzantium
+				}
+				scope:winner = {
+					has_title = title:e_byzantium
+					NOT = {
+						any_owned_story = {
+							type = grand_ambitions_story_cycle
+							var:method ?= flag:scheme
+						}
+					}
+				}
+			}
+			scope:winner = {
+				trigger_event = {
+					id = grand_ambitions.0002
+					days = 5
+				}
+			}
+		}
+
+		# EP3 - Become Adventurer - Conquest/Deposition
+		# Previous holders of any contested title, which lost all titles through this war, can become landless adventurers
+		scope:war.casus_belli = {
+			every_in_list = {
+				list = target_titles
+				every_in_de_jure_hierarchy = {
+					limit = {
+						tier = tier_county
+						recent_history = { days <= 1 } #make sure that the titles changed hands
+					}
+					save_scope_as = lost_primary_title
+					previous_holder ?= {
+						if = {
+							limit = {
+								is_landed = no #make sure that they actually lost all the land
+							}
+							save_scope_as = title_loser
+							prev.holder = {
+								save_scope_as = new_holder #save the new title holder here, so that it is passed down to the setup event to trigger the correct follow up event
+							}
+							trigger_event = ep3_laamps.0002
+						}
+					}
+				}
+			}
+		}
+		# EP3 - Is it valid for a Byzantine triumph?
+		if = {
+			limit = {
+				scope:attacker = {
+					is_roman_emperor_trigger = yes
+					culture = { has_cultural_parameter = holds_triumphs }
+				}
+			}
+			scope:attacker = {
+				set_variable = {
+					name = ep3_valid_triumph_victory
+					value = scope:defender
+					years = 5
+				}
+			}
+		}
+		# EP3 - War Group Contracts
+		war_task_contracts_completion_effect = yes
+		# EP3 - LAAMPS hired as mercenaries
+		laamp_as_mercenary_payout_effect = yes
+		#EP3 Admin peace count
+		ep3_admin_war_aftermath_effect = yes
+		#EP3 victory domicile effect
+		scope:attacker = {
+			if = {
+				limit = {
+					exists = house
+					house.house_head.domicile ?= { has_domicile_parameter = trophy_room_victory_influence }
+				}
+				house = {
+					every_house_member = {
+						send_interface_message = {
+							type = event_war_good
+							title = house_gains_influence_victory
+							left_icon = scope:attacker
+							change_influence = medium_influence_gain
+						}
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				scope:attacker = {
+					is_ai = no
+					this = character:223523
+				}
+				scope:defender = {
+					this = character:226000
+				}
+			}
+			scope:attacker = {
+				add_achievement_global_variable_effect = {
+					VARIABLE = finished_kingdom_of_heaven_achievement
+					VALUE = yes
+				}
+			}
+		}
+
+		#Destroy weakened confederation
+		if = {
+			limit = {
+				scope:defender = {
+					is_confederation_member = yes
+					any_vassal = {
+						count < 1
+						highest_held_title_tier >= tier_county
+					}
+					confederation = {
+						is_house_based = no
+					}
+				}
+			}
+			scope:defender = {
+				confederation = {
+					disband_confederation = yes
+				}
+				if = {
+					limit = {
+						has_character_modifier = mpo_confederation_member_modifier
+					}
+					remove_character_modifier = mpo_confederation_member_modifier
+				}
+			}
+		}
+		#SuperSoryo follow up events triggered
+		if = {
+			limit = {
+				scope:war = {
+					using_cb = domination_cb
+				}
+				scope:winner = {
+					government_has_flag = government_is_japan_feudal
+				}
+			}
+			every_in_list = {
+				list = target_titles
+				save_scope_as = title_scope
+			}
+			scope:winner = {
+				trigger_event = tgp_japan_decision.9961
+			}
+		}
+
+		#allies befriending the war leader if they contributed, moved from join_war_interaction on_accept
+		allies_progress_towards_friendship_effect = yes
+
+		#Save variables for blood brothers
+		mpo_save_potential_blood_brother_war_allies_effect = yes
+	}
+}
+
+on_war_won_defender = {
+	effect = {
+		# Save scopes for localization.
+		scope:attacker = { save_scope_as = loser }
+		scope:defender = { save_scope_as = winner }
+
+		# Give a humiliating memory to nomadic attackers for losing a war they started
+		if = {
+			limit = {
+				scope:loser = {
+					government_has_flag = government_is_nomadic
+					root.war.attacker_war_score < 50
+				}
+			}
+			scope:loser = {
+				create_character_memory = {
+					type = nomad_showed_weakness_in_war
+					participants = {
+						victor = scope:winner
+					}
+				}
+			}
+		}
+		# Give a memory to defending tributaries whose suzerain came to their aid when they were attacked
+		if = {
+			limit = {
+				scope:winner.suzerain != scope:winner # winner is a tributary
+				root.war = { is_defender = scope:winner.suzerain } # the suzerain was a defender in the war
+			}
+			scope:winner = {
+				create_character_memory = {
+					type = suzerain_defended_me_in_war
+					participants = {
+						suzerain = scope:winner.suzerain
+						loser = scope:loser
+					}
+				}
+			}
+		}
+		# Give out a legend seed for beating ya boi G Khan
+		if = {
+			limit = {
+				scope:loser = {
+					OR = {
+						mpo_has_greatest_of_khans_nickname_trigger = yes
+						has_trait = greatest_of_khans
+					}
+				}
+				scope:winner = {
+					NOT = {
+						has_character_flag = khan_beater
+						has_dlc_feature = legends
+					}
+				}
+			}
+			scope:winner = {
+				add_character_flag = khan_beater
+				create_legend_seed = {
+					type = heroic
+					quality = famed
+					chronicle = legendary_battle
+					properties = {
+						winner = scope:winner
+						loser = scope:loser
+						location = scope:winner.location
+					}
+				}
+			}
+		}
+
+		# Give out Legend Seed if GHW
+		if = {
+			limit = {
+				scope:defender = {
+					has_dlc_feature = legends
+					NOT = { has_triggered_legend_seed = holy_warrior }
+					NOT = { has_game_rule = historical_legends_only }
+				}
+				scope:war = {
+					OR = {
+						using_cb = undirected_great_holy_war
+						using_cb = directed_great_holy_war
+					}
+				}
+				OR = {
+					scope:target_title.tier ?= tier_empire
+					scope:target_title.tier ?= tier_kingdom
+				}
+			}
+			random = {
+				chance = 75
+				scope:defender = {
+					send_interface_toast = {
+						title = heroic_legend_seed_drop.t
+						create_legend_seed = {
+							type = heroic
+							quality = famed
+							chronicle = holy_warrior
+							properties = {
+								ancestor = scope:defender
+								religion = scope:defender.faith.religion
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# Change legend chapters if this was a neat war
+		scope:winner = {
+			if = {
+				limit = {
+					NOT = {
+						has_legend_chapter_winner_trigger = { CHAPTER = battle }
+					}
+					has_legend_chapter_winner_trigger = { CHAPTER = extra_deed }
+					NOT = {
+						promoted_legend ?= {
+							has_legend_chapter = {
+								name = extra_deed
+								localization_key = legend_chapter_extra_deed_recent_battle
+							}
+						}
+					}
+				}
+				random = {
+					chance = 40
+					promoted_legend = {
+						set_legend_chapter = {
+							name = battle
+							localization_key = legend_chapter_extra_deed_recent_battle
+						}
+					}
+				}
+			}
+		}
+
+		# Run scripted effect that iterates through all players and notifies them if necessary.
+		notify_players_about_neighboring_war_resolution_effect = yes
+
+		scope:war = {
+			every_war_participant = {
+				if = {
+					limit = {
+						is_ai = yes
+						has_character_flag = delayed_cleanse
+					}
+					trigger_event = { id = game_rule.3 days = 1 }
+				}
+			}
+			fp2_contract_assistance_war_pay_effect = yes
+		}
+
+		# Add a variable to count recent losses
+		if = {
+			limit = { scope:attacker = {  has_variable = recently_lost_wars } }
+			scope:attacker = {
+				save_temporary_scope_value_as = {
+					name = prev_lost_wars
+					value = var:recently_lost_wars
+				}
+
+				remove_variable = recently_lost_wars
+				set_variable = {
+					name = recently_lost_wars
+					value =  {
+						add = scope:prev_lost_wars
+						add = 1
+					}
+					years = 10
+				}
+			}
+		}
+		else = {
+			scope:attacker = {
+				set_variable = {
+					name = recently_lost_wars
+					value =  1
+					years = 10
+				}
+			}
+		}
+
+		# Struggle Catalysts
+		## Special war checks for the caliph.
+		scope:attacker = {
+			if = {
+				limit = {
+					fp3_struggle_scoped_is_the_arabian_caliph_trigger = yes
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_ended }
+						using_civil_war_cb_trigger = yes
+					}
+				}
+				# Direct scope because this is caliph-specific.
+				struggle:persian_struggle = {
+					if = {
+						limit = { phase_has_catalyst = catalyst_caliph_or_emperor_loses_revolt_war }
+						activate_struggle_catalyst = {
+							catalyst = catalyst_caliph_or_emperor_loses_revolt_war
+							character = scope:attacker
+						}
+						scope:war = { set_variable = used_for_struggle_catalyst_on_war_ended }
+						log_debug_variable_for_persian_struggle_effect = { VAR = concession_catalyst_caliph_or_emperor_loses_revolt_war }
+					}
+				}
+			}
+		}
+		## During the Persian Struggle, a supporter wins any war in the region.
+		scope:attacker = { fp3_struggle_apply_supporter_detractor_war_won_catalysts_effect = yes }
+		# TGP situation catalysts
+		scope:attacker = {
+			if = {
+				limit = {
+					has_title = title:h_china
+				}
+				situation:dynastic_cycle ?= {
+					if = {
+						limit = { situation_top_has_catalyst = catalyst_hegemon_lost_war }
+						trigger_situation_catalyst = {
+							catalyst = catalyst_hegemon_lost_war
+							character = scope:defender
+						}
+					}
+				}
+			}
+		}
+		scope:defender = {
+			if = {
+				limit = {
+					has_title = title:h_china
+				}
+				situation:dynastic_cycle ?= {
+					if = {
+						limit = { situation_top_has_catalyst = catalyst_hegemon_won_war }
+						trigger_situation_catalyst = {
+							catalyst = catalyst_hegemon_won_war
+							character = scope:defender
+						}
+					}
+				}
+			}
+		}
+
+		scope:attacker = {
+			create_character_memory = {
+				type = war_lost
+				participants = {
+					winner = scope:defender
+					loser = scope:attacker
+				}
+			}
+
+			set_war_over_memory_casus_belli_effect = {
+				STANCE = offensive
+				OUTCOME = lost
+				SELF = attacker
+				OTHER = defender
+			}
+			if = {
+				limit = {
+					any_owned_story = {
+						type = story_conqueror
+					}
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_variable = lost_wars
+						}
+					}
+					set_variable = {
+						name = lost_wars
+						value = 1
+					}
+				}
+				else = {
+					change_variable = {
+						name = lost_wars
+						add = 1
+					}
+				}
+			}
+		}
+
+		scope:defender = {
+			create_character_memory = {
+				type = war_won
+				participants = {
+					loser = scope:attacker
+					winner = scope:defender
+				}
+			}
+			set_war_over_memory_casus_belli_effect = {
+				STANCE = defensive
+				OUTCOME = won
+				SELF = defender
+				OTHER = attacker
+			}
+		}
+
+		if = {
+			limit = {
+				scope:attacker.primary_title.tier > scope:defender.primary_title.tier
+				scope:defender.primary_title.tier <= tier_duchy
+				scope:defender = {
+					has_dlc_feature = legends
+					NOT = { has_game_rule = historical_legends_only }
+				}
+			}
+			random = {
+				chance = legend_seed_chance_high
+				scope:defender = {
+					send_interface_toast = {
+						type = msg_legend_seed_created
+						title = heroic_legend_seed_drop.t
+						create_legend_seed = {
+							type = heroic
+							quality = famed
+							chronicle = valiant_defense
+							properties = {
+								attacker = scope:attacker
+								defender = scope:defender
+							}
+						}
+					}
+				}
+			}
+		}
+
+		#Ep3 - Is it valid for a Byzantine triumph?
+		if = {
+			limit = {
+				scope:defender = {
+					is_roman_emperor_trigger = yes
+					culture = { has_cultural_parameter = holds_triumphs }
+				}
+			}
+			scope:defender = {
+				set_variable = {
+					name = ep3_valid_triumph_victory
+					value = scope:attacker
+					years = 5
+				}
+			}
+		}
+		# EP3 - War Group Contracts
+		war_task_contracts_completion_effect = yes
+		# EP3 - LAAMPS hired as mercenaries
+		laamp_as_mercenary_payout_effect = yes
+		#EP3 Admin peace count
+		ep3_admin_war_aftermath_effect = yes
+		#EP3 victory domicile effect
+		scope:defender = {
+			if = {
+				limit = {
+					exists = house
+					house.house_head.domicile ?= { has_domicile_parameter = trophy_room_victory_influence }
+				}
+				house = {
+					every_house_member = {
+						send_interface_message = {
+							type = event_war_good
+							title = house_gains_influence_victory
+							left_icon = scope:defender
+							change_influence = medium_influence_gain
+						}
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				scope:defender = {
+					is_ai = no
+					this = character:223523
+				}
+				scope:attacker = {
+					this = character:226000
+				}
+			}
+			scope:defender = {
+				add_achievement_global_variable_effect = {
+					VARIABLE = finished_kingdom_of_heaven_achievement
+					VALUE = yes
+				}
+			}
+		}
+		#SuperSoryo follow up events triggered
+		if = {
+			limit = {
+				scope:war = {
+					using_cb = domination_cb
+				}
+				scope:loser = {
+					government_has_flag = government_is_japan_feudal
+				}
+			}
+			every_in_list = {
+				list = target_titles
+				save_scope_as = title_scope
+			}
+			scope:loser = {
+				trigger_event = tgp_japan_decision.9962
+			}
+		}
+		#allies befriending the war leader if they contributed, moved from join_war_interaction on_accept
+		allies_progress_towards_friendship_effect = yes
+
+		#Save variables for blood brothers
+		mpo_save_potential_blood_brother_war_allies_effect = yes
+	}
+}
+
+on_war_white_peace = {
+	effect = {
+		scope:war = {
+			every_war_participant = {
+				if = {
+					limit = {
+						is_ai = yes
+						has_character_flag = delayed_cleanse
+					}
+					trigger_event = { id = game_rule.3 days = 1 }
+				}
+			}
+			fp2_contract_assistance_war_pay_effect = yes # Pay out Contract Assistance money
+
+			# FP3 Struggle
+			if = {
+				limit = {
+					scope:war = {
+						NOT = { has_variable = used_for_struggle_catalyst_on_war_ended }
+					}
+					fp3_struggle_involves_one_supporter_and_one_detractor = {
+						FIRST = scope:attacker
+						SECOND = scope:defender
+					}
+					scope:attacker = {
+						any_character_struggle = {
+							involvement = involved
+							activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+								CATALYST = catalyst_war_ends_in_white_peace_between_supporter_detractor
+								CHAR = scope:defender
+							}
+						}
+					}
+				}
+				scope:attacker = {
+					every_character_struggle = {
+						involvement = involved
+						limit = {
+							activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+								CATALYST = catalyst_war_ends_in_white_peace_between_supporter_detractor
+								CHAR = scope:defender
+							}
+						}
+						activate_struggle_catalyst = {
+							catalyst = catalyst_war_ends_in_white_peace_between_supporter_detractor
+							character = scope:attacker
+						}
+						scope:war = { set_variable = used_for_struggle_catalyst_on_war_ended }
+						log_debug_variable_for_persian_struggle_effect = { VAR = concession_catalyst_war_ends_in_white_peace_between_supporter_detractor }
+					}
+				}
+			}
+		}
+		scope:attacker = {
+			create_character_memory = {
+				type = war_white_peace_attacker
+				participants = {
+					attacker = scope:attacker
+					defender = scope:defender
+				}
+			}
+			set_war_over_memory_casus_belli_effect = {
+				STANCE = offensive
+				OUTCOME = white_peace_attacker
+				SELF = attacker
+				OTHER = defender
+			}
+			#Some punishment for Destruction Mandalas
+			if = {
+				limit = {
+					government_has_flag = government_is_mandala
+					house ?= { has_house_power_parameter = aspect_of_destruction }
+				}
+				add_piety = {
+					add = minor_piety_loss
+					multiply = scope:defender.primary_title.tier
+				}
+				add_legitimacy = {
+					add = medium_legitimacy_loss
+					divide = 2
+					multiply = scope:defender.primary_title.tier
+				}
+			}
+		}
+
+		scope:defender = {
+			create_character_memory = {
+				type = war_white_peace_defender
+				participants = {
+					attacker = scope:attacker
+					defender = scope:defender
+				}
+			}
+			set_war_over_memory_casus_belli_effect = {
+				STANCE = defensive
+				OUTCOME = white_peace_defender
+				SELF = defender
+				OTHER = attacker
+			}
+		}
+		# EP3 - War Group Contracts
+		war_task_contracts_completion_effect = yes
+		# EP3 - LAAMPS hired as mercenaries
+		laamp_as_mercenary_payout_effect = yes
+		#EP3 white peace domicile effect
+		scope:war = {
+			if = {
+				limit = {
+					any_war_participant = {
+						exists = house
+						domicile ?= { has_domicile_parameter = solar_white_peace_stress_loss }
+					}
+				}
+				every_war_participant = {
+					limit = {
+						exists = house
+						domicile ?= { has_domicile_parameter = solar_white_peace_stress_loss }
+					}
+					house = {
+						every_house_member = {
+							add_stress = major_stress_loss
+						}
+					}
+				}
+			}
+		}
+		#EP3 Admin peace count
+		ep3_admin_war_aftermath_effect = yes
+		#allies befriending the war leader if they contributed, moved from join_war_interaction on_accept
+		allies_progress_towards_friendship_effect = yes
+
+		#Save variables for blood brothers
+		mpo_save_potential_blood_brother_war_allies_effect = yes
+	}
+}
+
+on_war_invalidated = {
+	effect = {
+		scope:attacker = {
+			send_interface_message = {
+				type = event_war_invalidated
+				title = END_WAR_INVALIDATED_MESSAGE_TITLE
+				desc = END_WAR_INVALIDATED_MESSAGE_DESC
+				left_icon = scope:attacker
+				right_icon = scope:defender
+			}
+		}
+
+		scope:war = {
+			every_war_participant = {
+				if = {
+					limit = {
+						is_ai = yes
+						has_character_flag = delayed_cleanse
+					}
+					trigger_event = { id = game_rule.3 days = 1 }
+				}
+			}
+			fp2_contract_assistance_invalidated_effect = yes
+		}
+
+		#EP2 Accolade glory gain from ????
+		if = {
+			limit = {
+				scope:attacker = {
+					any_knight = {
+						OR = {
+							is_healthy = no
+							is_imprisoned = yes
+						}
+					}
+				}
+				scope:defender = {
+					any_knight = {
+						OR = {
+							is_healthy = no
+							is_imprisoned = yes
+						}
+					}
+				}
+			}
+			scope:attacker = { accolade_attacker_war_end_glory_gain_low_effect = yes }
+			scope:defender = { accolade_defender_war_end_glory_gain_low_effect = yes }
+		}
+		#EP3 Admin peace count
+		ep3_admin_war_aftermath_effect = yes
+
+		# EP3 - War Group Contracts
+		war_task_contracts_completion_effect = yes
+		# EP3 - LAAMPS hired as mercenaries
+		laamp_as_mercenary_payout_effect = yes
+
+		#Save variables for blood brothers
+		mpo_save_potential_blood_brother_war_allies_effect = yes
+	}
+}

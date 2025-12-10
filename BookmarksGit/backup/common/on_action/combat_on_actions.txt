@@ -1,0 +1,673 @@
+﻿# Root = Combat
+# Executed on combat start, when all starting armies have already been added to relevant sides
+on_combat_start = {
+}
+
+# Root = Combat side
+# scope:army = army joining side
+# Executed after an army joins combat, after the combat has already started
+on_combat_unit_join_side = {
+}
+
+# Root = Winning combat side
+# scope:wipe - Was this a wipe?
+on_combat_end_winner = {
+	events = {
+		combat_event.0001 # Victorious commander gains progress towards earning "The Undefeated" nickname (obtained after winning 100 victories without a loss).
+		combat_event.1001 # Winner imprisons commanders/knights on the losing side.
+		combat_event.2001 # # Commander may become known as a Gajapati if you have the prerequisites
+		fp1_shieldmaiden.0031 # Track shieldmaiden levelling.
+		historical_artifacts.0100 # #Save a memorable battle as potential topic for artifacts
+		combat_event.2101 #	Battle Won: glory goes up.
+		combat_event.2200 #	Hereward beat a Norman
+		combat_event.3000 # Battle PoI Creation
+	}
+	random_events = {
+		1000 = 0
+
+		20 = artifact.6000	# Chance to loot an enemy banner after winning a battle
+		1 = harm.0012		# A conk on the noggin' renders you a-foggin'.
+		20 = legend_spread_events.8140	# Make this part of your legend?
+	}
+	effect = {
+		#If you are el Cid you get a special events
+		if = {
+			limit = {
+				side_primary_participant = { has_variable = ongoing_cid_story_cycle }
+				enemy_side.side_commander.primary_title = title:k_valencia
+			}
+			enemy_side.side_commander ?= { save_scope_as = loser }
+			side_primary_participant = {
+				set_variable = {
+					name = cid_title_to_give
+					value = prev.enemy_side.side_commander.primary_title
+				}
+				trigger_event = cid.2000 #Tizona
+			}
+		}
+		else_if = {
+			limit = {
+				side_primary_participant = { has_variable = ongoing_cid_story_cycle }
+				OR = {
+					enemy_side.side_commander.primary_title = title:c_barcelona
+					enemy_side.side_commander.primary_title = title:d_barcelona
+				}
+			}
+			enemy_side.side_commander ?= { save_scope_as = loser }
+			side_primary_participant = {
+				set_variable = {
+					name = cid_title_to_give
+					value = prev.enemy_side.side_commander.primary_title
+				}
+				trigger_event = cid.2001 #Colada
+			}
+		}
+		else_if = {
+			limit = {
+				side_primary_participant = { has_variable = ongoing_cid_story_cycle }
+			}
+			random = {
+				chance = 10
+				enemy_side.side_commander ?= { save_scope_as = loser }
+				side_primary_participant = {
+					set_variable = {
+						name = cid_title_to_give
+						value = prev.enemy_side.side_commander.primary_title
+					}
+					trigger_event = cid.2000
+				}
+			}
+		}
+		if = {
+			limit = {
+				exists = side_commander
+				exists = enemy_side.side_commander
+			}
+			random = {
+				chance = {
+					value = 10
+					if = {
+						limit = {
+							exists = scope:wipe
+						}
+						add = 90
+					}
+					if = {
+						limit = {
+							exists = enemy_side.side_commander.primary_title
+							exists = side_commander.primary_title
+							enemy_side.side_commander.primary_title.tier >= side_commander.primary_title.tier
+						}
+						add = 90
+					}
+				}
+				combat.location = {
+					save_scope_as = battle_province
+				}
+				side_commander = {
+					create_character_memory = {
+						type = battle_won_memory
+								
+						participants = {
+							loser = root.enemy_side.side_commander
+							ruler = root.enemy_side.side_primary_participant
+						}
+
+					}
+					
+					scope:new_memory = {
+						save_scope_as = battle_memory
+					}
+					
+					scope:battle_memory = {
+						set_variable = {
+							name = battle_location
+							value = scope:battle_province
+						}
+					}
+				}
+			}
+		}
+		# setup for artifact.4010
+		if = {
+			limit = {
+				side_commander ?= {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+				}
+			}
+			side_commander = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+					set_variable = {
+						name = artifact_battles_won_var
+						value = 1
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				side_commander ?= {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						has_variable = artifact_battles_won_var
+					}
+				}
+			}
+			side_commander = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						has_variable = artifact_battles_won_var
+					}
+					change_variable = {
+						name = artifact_battles_won_var
+						add = 1
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_side_knight = {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+				}
+			}
+			every_side_knight = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+					set_variable = {
+						name = artifact_battles_won_var
+						value = 1
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				any_side_knight = {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						has_variable = artifact_battles_won_var
+					}
+				}
+			}
+			every_side_knight = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = primary_armament
+						has_variable = artifact_battles_won_var
+					}
+					change_variable = {
+						name = artifact_battles_won_var
+						add = 1
+					}
+				}
+			}
+		}
+		#setup for artifact.4020
+		if = {
+			limit = {
+				side_commander ?= {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+				}
+			}
+			side_commander = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+					set_variable = {
+						name = artifact_battles_won_var
+						value = 1
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				side_commander ?= {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						has_variable = artifact_battles_won_var
+					}
+				}
+			}
+			side_commander = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						has_variable = artifact_battles_won_var
+					}
+					change_variable = {
+						name = artifact_battles_won_var
+						add = 1
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_side_knight = {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+				}
+			}
+			every_side_knight = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						NOT = { has_variable = artifact_battles_won_var }
+					}
+					set_variable = {
+						name = artifact_battles_won_var
+						value = 1
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				any_side_knight = {
+					any_character_artifact = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						has_variable = artifact_battles_won_var
+					}
+				}
+			}
+			every_side_knight = {
+				random_character_artifact = {
+					limit = {
+						is_equipped = yes
+						artifact_slot_type = armor
+						has_variable = artifact_battles_won_var
+					}
+					change_variable = {
+						name = artifact_battles_won_var
+						add = 1
+					}
+				}
+			}
+		}
+		# Acclaimed reveller victory party!!!!! LADS LADS LADS!
+		if = {
+			limit = {
+				OR = {
+					any_side_knight = {
+						is_acclaimed = yes
+						accolade = {
+							has_accolade_parameter = acclaimed_knight_prestige_from_victory
+						}
+					}
+					any_side_commander = {
+						is_acclaimed = yes
+						accolade = {
+							has_accolade_parameter = acclaimed_knight_prestige_from_victory
+						}
+					}
+				}
+			}
+			every_side_knight = {
+				limit = {
+					is_acclaimed = yes
+					accolade = {
+						has_accolade_parameter = acclaimed_knight_prestige_from_victory
+					}
+				}
+				knight_army.army_owner = {
+					add_prestige = acclaimed_knight_prestige_from_victory_value
+				}
+			}
+			every_side_commander = {
+				limit = {
+					is_acclaimed = yes
+					accolade = {
+						has_accolade_parameter = acclaimed_knight_prestige_from_victory
+					}
+				}
+				commanding_army.army_owner = {
+					add_prestige = acclaimed_knight_prestige_from_victory_value
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					any_side_knight = {
+						is_acclaimed = yes
+						accolade = {
+							has_accolade_parameter = acclaimed_knight_prestige_from_victory_high
+						}
+					}
+					any_side_commander = {
+						is_acclaimed = yes
+						accolade = {
+							has_accolade_parameter = acclaimed_knight_prestige_from_victory_high
+						}
+					}
+				}
+			}
+			every_side_knight = {
+				limit = {
+					is_acclaimed = yes
+					accolade = {
+						has_accolade_parameter = acclaimed_knight_prestige_from_victory_high
+					}
+				}
+				knight_army.army_owner = {
+					add_prestige = acclaimed_knight_prestige_from_victory_value_high
+				}
+			}
+			every_side_commander = {
+				limit = {
+					is_acclaimed = yes
+					accolade = {
+						has_accolade_parameter = acclaimed_knight_prestige_from_victory_high
+					}
+				}
+				commanding_army.army_owner = {
+					add_prestige = acclaimed_knight_prestige_from_victory_value_high
+				}
+			}
+		}
+		# combat gold reward from Camp Mortifican's Tools upgrade: own victories
+		side_primary_participant = { add_to_list = potential_spoil_claimers }
+		every_side_commander = {
+			limit = {
+				this != root.side_primary_participant
+				trigger_if = {
+					limit = { exists = root.combat.combat_war }
+					is_participant_in_war = root.combat.combat_war
+				}
+			}
+			add_to_list = potential_spoil_claimers
+		}
+		every_in_list = {
+			list = potential_spoil_claimers
+			limit = {
+				domicile ?= { has_domicile_parameter = camp_gold_from_victories_or_nearby_battles }
+			}
+			root.enemy_side.side_primary_participant = { save_scope_as = losing_side_owner }
+			send_interface_message = {
+				type = msg_landless_adventurer_battle_gold
+				title = camp_gold_from_victories_or_nearby_battles_message_title
+				desc = camp_gold_from_victories_or_nearby_battles_message_desc_victory
+				left_icon = root.side_commander
+				right_icon = root.enemy_side.side_commander
+				add_short_term_gold = {
+					value = {
+						value = 0
+						add = root.enemy_side.side_max_army_size
+						divide = 100
+						min = 5
+					}
+				}
+			}
+		}
+		# combat gold reward from Camp Mortifican's Tools upgrade: nearby battles
+		combat.location.county = {
+			every_county_province = {
+				every_province_domicile = {
+					limit = {
+						has_domicile_parameter = camp_gold_from_victories_or_nearby_battles
+						save_temporary_scope_as = domicile_temp
+						NOR = {
+							root = {
+								any_side_commander = { this = scope:domicile_temp.owner }
+								enemy_side = {
+									any_side_commander = { this = scope:domicile_temp.owner }
+								}
+							}
+						}
+					}
+					root.enemy_side.side_primary_participant = { save_scope_as = losing_side_owner }
+					owner = {
+						send_interface_message = {
+							type = msg_landless_adventurer_battle_gold
+							title = camp_gold_from_victories_or_nearby_battles_message_title
+							desc = camp_gold_from_victories_or_nearby_battles_message_desc_nearby
+							left_icon = root.side_commander
+							right_icon = root.enemy_side.side_commander
+							add_short_term_gold = {
+								value = {
+									value = 0
+									add = root.enemy_side.side_max_army_size
+									divide = 100
+									min = 5
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		#Nomads recover head of fallen warrior
+		mpo_mongol_recovered_head_content_effect = yes
+
+		# Commander trait leveling
+		every_side_commander = {
+			commander_trait_leveling_leveling_effect = { XP = 1 } 
+		}
+		if = {
+			limit = {
+				any_side_participant = {
+					has_character_modifier = boasted_of_victories_modifier
+				}
+			}
+			every_side_participant = {
+				limit = {
+					has_character_modifier = boasted_of_victories_modifier
+				}
+				add_stress = miniscule_stress_loss
+				add_prestige = miniscule_prestige_gain
+			}
+		}
+	}
+}
+
+# Root = Losing combat side
+# scope:wipe - Was this a wipe?
+on_combat_end_loser = {
+	events = {
+		combat_event.0002 # Defeated commander loses shot at getting 'The Undefeated' nickname.
+		almohad.0003 # Check whether Ibn Tumert should die
+		fp1_shieldmaiden.0031 # Track shieldmaiden levelling.
+		combat_event.2111 # Battle Lost: glory goes down.
+	}
+	random_events = {
+		1000 = 0
+
+		1 = harm.0012		# A conk on the noggin' renders you a-foggin'.
+	}
+	effect = {
+		if = {
+			limit = {
+				exists = side_commander
+				exists = enemy_side.side_commander
+			}
+			combat.location = { save_scope_as = battle_province }
+			
+			side_commander = {
+				create_character_memory = {
+					type = battle_lost_memory
+						 	
+					participants = {
+						winner = root.enemy_side.side_commander
+						ruler = root.enemy_side.side_primary_participant
+					}
+				}
+				
+				scope:new_memory = {
+					save_scope_as = battle_memory
+				}
+
+				scope:battle_memory = {
+					set_variable = {
+						name = battle_location
+						value = scope:battle_province
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				combat = { warscore_value >= 15 }
+			}
+			combat.location = { save_scope_as = battle_province }
+			side_primary_participant = {
+				if = {
+					limit = { is_valid_for_legitimacy_change = yes }
+					send_interface_toast = {
+						type = msg_legitimacy_loss
+						title = legitimacy_loss_toast
+						left_icon = root.side_primary_participant
+						right_icon = root.enemy_side.side_primary_participant
+						custom_tooltip = legitimacy_loss_battle_tt
+						add_legitimacy = minor_legitimacy_loss
+					}
+				}
+			}
+			#BP4 marshal offers help event
+			if = {
+				limit = {
+					side_primary_participant = {
+						is_landed = yes
+						is_at_war = yes
+						any_character_war = {
+							NOT = {
+								using_cb = peasant_war
+							}
+							OR = {
+								AND = {
+									primary_defender = prev
+									defender_war_score <= -25
+								}
+								AND = {
+									primary_attacker = prev
+									attacker_war_score <= -25
+								}
+							}
+						}
+						NOT = { has_character_flag = had_ach_yearly_events_1003 }
+						any_councillor = {
+							has_council_position = councillor_marshal
+							basic_is_valid_for_yearly_events_trigger = yes
+							is_at_war = no
+							NOT = {
+								is_allied_to = root.enemy_side.side_primary_participant
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						exists = side_commander
+					}
+					side_commander = {
+						save_scope_as = commander
+					}
+				}
+				enemy_side.side_primary_participant = {
+					save_scope_as = foe
+				}
+				side_primary_participant = {
+					random_character_war = {
+						limit = {
+							NOR = {
+								using_cb = peasant_war
+								using_cb = nomadic_war
+							}
+							OR = {
+								AND = {
+									primary_defender = prev
+									any_war_attacker = {
+										this = scope:foe
+									}
+									defender_war_score <= -25
+								}
+								AND = {
+									primary_attacker = prev
+									any_war_defender = {
+										this = scope:foe
+									}
+									attacker_war_score <= -25
+								}
+							}
+						}
+						save_scope_as = liege_war
+					}
+					random_councillor = {
+						limit = {
+							has_council_position = councillor_marshal
+						}
+						random = {
+							chance = 50
+							modifier = {
+								add = 50
+								is_ai = no
+							}
+							trigger_event = ach_yearly_events.1003
+						}
+					}
+				}
+			}
+		}
+
+		#Nomads recover head of fallen warrior
+		mpo_mongol_recovered_head_content_effect = yes
+
+		# Commander trait leveling
+		every_side_commander = { 
+			commander_trait_leveling_leveling_effect = { XP = 0.5 } 
+		}
+
+		if = {
+			limit = {
+				any_side_participant = {
+					has_character_modifier = boasted_of_victories_modifier
+				}
+			}
+			every_side_participant = {
+				limit = {
+					has_character_modifier = boasted_of_victories_modifier
+				}
+				add_stress = miniscule_stress_gain
+				add_prestige = miniscule_prestige_gain
+			}
+		}
+	}
+}

@@ -1,0 +1,568 @@
+﻿#############################
+# Eparch Court Position Tasks
+#############################
+
+eparch_appease_populace = {
+	court_position_types = { eparch_court_position }
+	
+	# When task is made available
+	is_shown = {
+	}
+	
+	# Monthly cost for the task
+	cost = {
+		round = no
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = no
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = yes
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+	}
+
+	scaling_employer_modifiers = {
+	}
+	on_start = {
+		remove_other_eparch_modifiers_effect = yes
+		scope:liege ?= {
+			capital_province = {
+				add_province_modifier = ep3_eparch_county_opinion_modifier
+			}
+		}
+	}
+	on_end = {
+		scope:liege ?= {
+			# We check and scope to all counties to make sure we remove any stray modifiers in case the capital is moved, etc.
+			if = {
+				limit = {
+					any_realm_county = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_county_opinion_modifier
+						}
+					}
+				}
+				every_realm_county = {
+					limit = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_county_opinion_modifier
+						}
+					}
+					every_county_province = {
+						limit = {
+							has_province_modifier = ep3_eparch_county_opinion_modifier
+						}
+						remove_province_modifier = ep3_eparch_county_opinion_modifier
+					}
+				}
+			}
+		}
+	}
+	on_yearly = {
+	}
+
+	ai_will_do = {
+		value = 0
+		
+		if = {
+			limit = {
+				capital_county ?= { county_opinion < 0 }
+			}
+			# Personality
+			if = {
+				limit = { # Any social or domestically inclined rulers
+					OR = {
+						has_trait = just
+						has_trait = gregarious
+						has_trait = compassionate
+						has_trait = generous
+					}
+				}
+				add = 25
+			}
+			
+			# Other
+			if = {
+				limit = { # Diplomatic characters should want to be on the people's good side
+					has_trait = education_diplomacy
+				}
+				add = 25
+			}
+			
+			# Gold reasons
+			if = {
+				limit = {
+					has_treasury = no
+					monthly_character_income < monthly_court_position_task_cost_double
+				}
+				add = -1000
+			}
+			else_if = {
+				limit = {
+					has_treasury = yes
+					monthly_character_treasury_income < monthly_court_position_task_cost_double
+				}
+				add = -1000
+			}
+		}
+	}
+}
+
+eparch_support_troops = {
+	court_position_types = { eparch_court_position }
+	
+	# When task is made available
+	is_shown = {
+	}
+	
+	# Monthly cost for the task
+	cost = {
+		round = no
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = no
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = yes
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+	}
+
+	scaling_employer_modifiers = {
+	}
+	on_start = {
+		remove_other_eparch_modifiers_effect = yes
+		scope:liege ?= {
+			capital_province = {
+				add_province_modifier = ep3_eparch_troops_modifier
+			}
+		}
+	}
+	on_end = {
+		scope:liege ?= {
+			# We check and scope to all counties to make sure we remove any stray modifiers in case the capital is moved, etc.
+			if = {
+				limit = {
+					any_realm_county = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_troops_modifier
+						}
+					}
+				}
+				every_realm_county = {
+					limit = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_troops_modifier
+						}
+					}
+					every_county_province = {
+						limit = {
+							has_province_modifier = ep3_eparch_troops_modifier
+						}
+						remove_province_modifier = ep3_eparch_troops_modifier
+					}
+				}
+			}
+		}
+	}
+	on_yearly = {
+	}
+
+	ai_will_do = {
+		value = 0
+		
+		# Personality
+		if = {
+			limit = { # Any martially inclined rulers
+				OR = {
+					has_trait = zealous
+					has_trait = brave
+					has_trait = wrathful
+				}
+			}
+			add = 20
+		}
+		if = {
+			limit = { # Warlike AI should be more likely
+				OR = {
+					ai_has_warlike_personality = yes
+					has_variable = conqueror
+				}
+			}
+			add = 20
+		}
+		
+		# Other
+		if = {
+			limit = { # Rulers with a martial educatino favors better troops
+				has_trait = education_martial
+			}
+			add = 25
+		}
+		if = {
+			limit = { # Rulers at war should wants better troops
+				is_at_war = yes
+			}
+			add = 50
+		}
+		
+		# Gold reasons
+		if = {
+			limit = {
+				has_treasury = no
+				monthly_character_income < monthly_court_position_task_cost_double
+			}
+			add = -1000
+		}
+		else_if = {
+			limit = {
+				has_treasury = yes
+				monthly_character_treasury_income < monthly_court_position_task_cost_double
+			}
+			add = -1000
+		}
+	}
+}
+
+eparch_enforce_public_order = {
+	court_position_types = { eparch_court_position }
+	
+	# When task is made available
+	is_shown = {
+	}
+	
+	# Monthly cost for the task
+	cost = {
+		round = no
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = no
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = yes
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+	}
+
+	scaling_employer_modifiers = {
+	}
+	on_start = {
+		remove_other_eparch_modifiers_effect = yes
+		scope:liege ?= {
+			capital_province = {
+				add_province_modifier = ep3_eparch_control_modifier
+			}
+		}
+	}
+	on_end = {
+		scope:liege ?= {
+			# We check and scope to all counties to make sure we remove any stray modifiers in case the capital is moved, etc.
+			if = {
+				limit = {
+					any_realm_county = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_control_modifier
+						}
+					}
+				}
+				every_realm_county = {
+					limit = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_control_modifier
+						}
+					}
+					every_county_province = {
+						limit = {
+							has_province_modifier = ep3_eparch_control_modifier
+						}
+						remove_province_modifier = ep3_eparch_control_modifier
+					}
+				}
+			}
+		}
+	}
+	on_yearly = {
+	}
+
+	ai_will_do = {
+		value = 0
+		
+		if = {
+			limit = { # Don't bother unless we need to increase control
+				capital_county ?= { county_control < 90 }
+			}
+			# Personality
+			if = {
+				limit = { # Any martial or domestically inclined rulers
+					OR = {
+						has_trait = diligent
+						has_trait = ambitious
+						has_trait = just
+					}
+				}
+				add = 20
+			}
+			if = {
+				limit = {
+					OR = {
+						has_trait = greedy
+						has_trait = impatient
+					}
+				}
+				add = 10
+			}
+			if = {
+				limit = {
+					OR = {
+						has_trait = wrathful
+						has_trait = impatient
+					}
+				}
+				add = 10
+			}
+			
+			# Other
+			if = {
+				limit = { # Stewardship rulers want high control to get more taxes
+					has_trait = education_stewardship
+				}
+				add = 25
+			}
+			if = {
+				limit = {
+					OR = {
+						has_trait = overseer
+						has_trait = administrator
+					}
+				}
+				add = 10
+			}
+			
+			# Gold reasons
+			if = {
+				limit = {
+					has_treasury = no
+					monthly_character_income < monthly_court_position_task_cost_double
+				}
+				add = -1000
+			}
+			else_if = {
+				limit = {
+					has_treasury = yes
+					monthly_character_treasury_income < monthly_court_position_task_cost_double
+				}
+				add = -1000
+			}
+		}
+	}
+}
+
+eparch_development = {
+	court_position_types = { eparch_court_position }
+	
+	# When task is made available
+	is_shown = {
+	}
+	
+	# Monthly cost for the task
+	cost = {
+		round = no
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = no
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost
+					multiply = 4 # Quadruple the base cost
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = yes
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost
+					multiply = 4 # Quadruple the base cost
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+	}
+
+	scaling_employer_modifiers = {
+	}
+	on_start = {
+		remove_other_eparch_modifiers_effect = yes
+		scope:liege ?= {
+			capital_province = {
+				add_province_modifier = ep3_eparch_development_modifier
+			}
+		}
+	}
+	on_end = {
+		scope:liege ?= {
+			# We check and scope to all counties to make sure we remove any stray modifiers in case the capital is moved, etc.
+			if = {
+				limit = {
+					any_realm_county = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_development_modifier
+						}
+					}
+				}
+				every_realm_county = {
+					limit = {
+						any_county_province = {
+							has_province_modifier = ep3_eparch_development_modifier
+						}
+					}
+					every_county_province = {
+						limit = {
+							has_province_modifier = ep3_eparch_development_modifier
+						}
+						remove_province_modifier = ep3_eparch_development_modifier
+					}
+				}
+			}
+		}
+	}
+	on_yearly = {
+	}
+
+	ai_will_do = {
+		value = 0
+		
+		# Personality
+		if = {
+			limit = { # Any domestically inclined rulers
+				OR = {
+					has_trait = just
+					has_trait = diligent
+					has_trait = ambitious
+				}
+			}
+			add = 20
+		}
+		if = {
+			limit = { # Builder AI should be more likely
+				ai_has_economical_boom_personality = yes
+			}
+			add = 20
+		}
+		
+		# Other
+		if = {
+			limit = { # Rulers with a stewardship education has an overall preference for development
+				has_trait = education_stewardship
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				has_trait = overseer
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				has_trait = administrator
+			}
+			add = 10
+		}
+		
+		# Gold reasons
+		if = {
+			limit = {
+				has_treasury = no
+				monthly_character_income < monthly_court_position_task_cost_double
+			}
+			add = -1000
+		}
+		else_if = {
+			limit = {
+				has_treasury = yes
+				monthly_character_treasury_income < monthly_court_position_task_cost_double
+			}
+			add = -1000
+		}
+	}
+}

@@ -1,0 +1,236 @@
+################################################################################
+##### HUD Ruler Objective                                                  #####
+################################################################################
+
+widget = {
+	name = "hud_ruler_objective"
+	visible = "[And( GetPlayersRulerObjectiveDecision.IsValid, IsGameViewOpen( 'hud_ruler_objective' ) )]"
+	datacontext = "[GetPlayersRulerObjectiveDecision]"
+
+	layer = hud_layer
+	parentanchor = top|left
+	position = { 16 24 }
+	size = { 512 768 }
+
+	using = Animation_ShowHide_Quick
+
+	background = {
+		using = Background_Area_Dark
+		margin = { 0 5 }
+		margin_right = 5
+
+		using = Mask_Rough_Edges
+	}
+
+	vbox = {
+		layoutpolicy_horizontal = expanding
+		layoutpolicy_vertical = expanding
+		margin = { 8 12 }
+
+		widget_header_with_picture = {
+			layoutpolicy_horizontal = expanding
+			size = { 0 48 }
+
+			blockoverride "header_text" {
+				text = "RULER_OBJECTIVE_WINDOW_TITLE"
+			}
+
+			blockoverride "illustration_texture" {
+				texture = "[HudRulerObjective.GetDecisionPicture]"
+			}
+
+			blockoverride "button_close" {
+				onclick = "[HudRulerObjective.Close]"
+			}
+		}
+
+		vbox_ruler_objective_progress_info = {
+			layoutpolicy_horizontal = expanding
+		}
+
+		spacer = { size = { 4 8 } }
+
+		scrollbox = {
+			name = "hints"
+			layoutpolicy_vertical = expanding
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "scrollbox_content"
+			{
+				vbox = {
+					layoutpolicy_horizontal = expanding
+
+					# Advice player is already following..
+					text_label_center = {
+						text = "RULER_OBJECTIVE_WINDOW_ALREADY_DOING"
+						default_format = "#high"
+					}
+
+					vbox = {
+						layoutpolicy_horizontal = expanding
+						datamodel = "[HudRulerObjective.GetAdvice]"
+						spacing = 4
+
+						item = {
+							vbox_ruler_objective_advice_item = {
+								visible = "[RulerObjectiveAdvice.IsDoing]"
+								layoutpolicy_vertical = expanding
+								layoutpolicy_horizontal = expanding
+							}
+						}
+					}
+
+					spacer = { size = { 4 8 } }
+
+					# Advice for the player to consider..
+					text_label_center = {
+						text = "RULER_OBJECTIVE_WINDOW_CONSIDER_DOING"
+						default_format = "#high"
+					}
+
+					vbox = {
+						layoutpolicy_horizontal = expanding
+						datamodel = "[HudRulerObjective.GetAdvice]"
+						spacing = 4
+
+						item = {
+							vbox_ruler_objective_advice_item = {
+								visible = "[Not( RulerObjectiveAdvice.IsDoing )]"
+								layoutpolicy_vertical = expanding
+								layoutpolicy_horizontal = expanding
+							}
+						}
+					}
+				}
+
+				expand = {}
+			}
+		}
+
+		spacer = { size = { 4 8 } }
+
+		hbox = {
+			margin = { 16 8 }
+			spacing = 24
+
+			button_standard = {
+				onclick = "[CreateCommandPopup( AbandonPlayerRulerObjectiveDecision )]"
+				text = "RULER_OBJECTIVE_WINDOW_ABANDON"
+				tooltip = "[GetCommandDesc( AbandonPlayerRulerObjectiveDecision )]"
+			}
+
+			button_primary = {
+				onclick = "[HudRulerObjective.OpenDecisionDetailView]"
+				text = "[HudRulerObjective.GetDecisionConfirmText]"
+			}
+		}
+
+		# Developer convenience
+		hbox = {
+			visible = "[InDebugMode]"
+			margin = { 16 8 }
+			spacing = 24
+
+			button_standard = {
+				onclick = "[PostCommand( UpdatePlayerRulerObjectiveAdvice )]"
+				text = "RULER_OBJECTIVE_WINDOW_UPDATE_ADVICE"
+				tooltip = "[GetCommandDesc( UpdatePlayerRulerObjectiveAdvice )]"
+			}
+		}
+
+	}
+}
+
+types RulerObjective
+{
+	# Header summarizing the progress towards the objective.
+	type vbox_ruler_objective_progress_info = vbox {
+		name = "ruler_objective_progress_info"
+		margin = { 8 4 }
+		margin_left = 16
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			margin = { 4 4 }
+			spacing = 8
+
+			text_single = {
+				visible = "[HudRulerObjective.CanEstimateProgress]"
+				layoutpolicy_horizontal = expanding
+				margin_left = -1
+				text = "RULER_OBJECTIVE_WINDOW_PROGRESS"
+				default_format = "#medium"
+			}
+
+			debug_square = { size = { 192 24 } }
+		}
+
+		progressbar_standard = {
+			layoutpolicy_horizontal = expanding
+			size = { -1 15 }
+			value = "[HudRulerObjective.GetEstimatedProgress]"
+			max = 100
+		}
+	}
+
+
+	# An individual piece of advice.
+	type vbox_ruler_objective_advice_item = vbox {
+		button_tertiary = {
+			layoutpolicy_horizontal = expanding
+			# onclick = "[TitleAdviceItem.ToggleDetails]"
+
+			size = { -1 52 }
+
+			hbox = {
+				name = "ruler_objective_summary"
+				layoutpolicy_horizontal = expanding
+
+				margin = { 8 2 }
+				spacing = 5
+
+				coa_title_tiny = {
+					datacontext = "[RulerObjectiveAdvice.GetTitle]"
+				}
+
+				text_single = {
+					visible = "[InDebugMode]"
+					text = "[PdxGuiWidget.GetIndexInDataModel]"
+					default_format = "#D"
+				}
+
+				text_single = {
+					text = "[RulerObjectiveAdvice.GetSummary]"
+					default_format = "#high"
+					using = Font_Size_Medium
+				}
+
+				text_single = {
+					visible = "[InDebugMode]"
+					text = "RULER_OBJECTIVE_ADVICE_ITEM_RELEVANCE"
+					default_format = "#D"
+					using = Font_Size_Small
+				}
+
+				expand = {}
+			}
+		}
+
+		vbox = {
+			name = "ruler_objective_details"
+			# visible = "[RulerObjectiveAdvice.IsShowingDetails]"
+			layoutpolicy_horizontal = expanding
+
+			margin = { 12 8 }
+			margin_bottom = 16
+
+			text_multi = {
+				layoutpolicy_horizontal = expanding
+				autoresize = yes
+				max_width = 448
+				min_height = 64
+				text = "[RulerObjectiveAdvice.GetDescription]"
+			}
+		}
+	}
+}

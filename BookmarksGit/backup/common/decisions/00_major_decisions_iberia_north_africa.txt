@@ -1,0 +1,1596 @@
+﻿### Form Portugal ###
+form_portugal_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 60
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+	desc = form_portugal_decision_desc
+
+	is_shown = {
+		culture = { has_cultural_pillar = heritage_iberian }
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:form_portugal_decision
+			}
+		}
+		title:k_portugal = {
+			is_title_created = no
+		}
+	}
+
+	is_valid = {
+		culture = { has_cultural_pillar = heritage_iberian }
+
+		trigger_if = {
+			limit = {
+				has_fp2_dlc_trigger = yes
+				exists = struggle:iberian_struggle
+			}
+			OR = {
+				custom_tooltip = {
+					text = struggle_iberia_form_portugal_decision_correct_phase_tt
+					any_character_struggle = {
+						involvement = involved
+						is_struggle_type = iberian_struggle
+						is_struggle_phase = struggle_iberia_phase_opportunity
+					}
+				}
+				top_liege = this
+			}
+
+		}
+		trigger_else = {
+			top_liege = this
+		}
+
+		highest_held_title_tier < tier_kingdom
+
+		has_title = title:d_porto
+		has_title = title:d_coimbra
+		has_title = title:d_beja
+		has_title = title:d_algarve
+	}
+	
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	effect = {
+		save_scope_as = portugal_former
+		gain_heroic_legend_seed_tooltip_effect = yes
+		show_as_tooltip = { form_portugal_decision_effects = yes } #Actually applied in iberia_north_africa.0001 - title changes, prestige, culture swap etc.
+
+		#Events
+		trigger_event = iberia_north_africa.0001
+		every_player = {
+			limit = {
+				this != scope:portugal_former
+				is_within_diplo_range = { CHARACTER = scope:portugal_former }
+			}
+			trigger_event = iberia_north_africa.0002
+		}
+		every_vassal_or_below = {
+			limit = {
+				is_ai = yes
+				capital_province ?= {
+					county = {
+						any_this_title_or_de_jure_above = {
+							this = title:k_portugal
+						}
+					}
+				}
+			}
+			trigger_event = iberia_north_africa.0002 #So they can convert
+		}
+
+		#Can only happen once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:form_portugal_decision
+		}
+		set_global_variable = {
+			name = form_portugal_decision
+			value = scope:portugal_former
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 300
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 300
+			}
+		}
+	}
+
+	ai_potential = {
+		# Only for the AI if independent ruler
+		top_liege = this
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Unite the Spanish Thrones ###
+unite_the_spanish_thrones_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 60
+		empire = 0
+		hegemony = 0
+	}
+	desc = unite_the_spanish_thrones_decision_desc
+
+	is_shown = {
+		culture = { has_cultural_pillar = heritage_iberian }
+		game_start_date >= 1000.1.1
+		OR = {
+			calc_true_if = { #At least 2 of the titles has de jure land
+				amount >= 2
+				title:k_castille = { any_in_de_jure_hierarchy = { tier = tier_county } }
+				title:k_leon = { any_in_de_jure_hierarchy = { tier = tier_county } }
+				title:k_spanish_galicia = { any_in_de_jure_hierarchy = { tier = tier_county } }
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:unite_the_spanish_thrones_decision
+			}
+		}
+		highest_held_title_tier < tier_empire
+	}
+
+	is_valid = {
+		culture = { has_cultural_pillar = heritage_iberian }
+		trigger_if = {
+			limit = { title:k_castille = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
+			completely_controls = title:k_castille
+			has_title = title:k_castille
+		}
+		trigger_if = {
+			limit = { title:k_leon = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
+			completely_controls = title:k_leon
+			has_title = title:k_leon
+		}
+		trigger_if = {
+			limit = { title:k_spanish_galicia = { any_in_de_jure_hierarchy = { tier = tier_county } } } #Has de jure land
+			completely_controls = title:k_spanish_galicia
+			has_title = title:k_spanish_galicia
+		}
+		custom_description = {
+   			text = unite_the_spanish_thrones_decision_primary
+			OR = {
+				has_primary_title = title:k_castille
+				has_primary_title = title:k_leon
+				has_primary_title = title:k_spanish_galicia
+				has_primary_title = title:k_portugal
+				has_primary_title = title:k_aragon
+				has_primary_title = title:k_navarra
+				has_primary_title = title:k_andalusia
+				has_primary_title = title:k_badajoz
+				has_primary_title = title:k_valencia
+				has_primary_title = title:k_toledo
+			}
+		}
+		#Must not be too early
+		culture = { has_cultural_era_or_later = culture_era_high_medieval }
+		OR = {
+			has_realm_law = crown_authority_2
+			has_realm_law = crown_authority_3
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		save_scope_as = spain_uniter
+
+		show_as_tooltip = { unite_the_spanish_thrones_decision_effects = yes } #Actually applied in iberia_north_africa.0005 - prestige, laws, title changes
+
+		#Events
+		trigger_event = iberia_north_africa.0005
+		every_player = {
+			limit = {
+				this != scope:spain_uniter
+				is_within_diplo_range = { CHARACTER = scope:spain_uniter }
+			}
+			trigger_event = iberia_north_africa.0006
+		}
+
+		#Can only be done once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:unite_the_spanish_thrones_decision
+		}
+		set_global_variable = {
+			name = unite_the_spanish_thrones_decision
+			value = scope:spain_uniter
+		}
+		set_global_variable = {
+			name = unite_the_spanish_thrones_decision_title
+			value = scope:spain_uniter.primary_title
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Unite Africa ###
+unite_africa_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+	decision_group_type = major
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					faith = {
+						OR = {
+							religion_tag = west_african_roog_religion
+							religion_tag = west_african_religion
+						}
+					}
+				}
+				desc = unite_africa_decision_ancestors_desc
+			}
+			triggered_desc = {
+				trigger = { faith = { religion_tag = west_african_bori_religion } }
+				desc = unite_africa_decision_spirits_desc
+			}
+			desc = unite_africa_decision_generic_desc
+		}
+	}
+
+	is_shown = {
+		OR = {
+			culture = {
+				OR = {
+					has_cultural_pillar = heritage_berber
+					has_cultural_pillar = heritage_west_african
+					has_cultural_pillar = heritage_sahelian
+					has_cultural_pillar = heritage_senegambian
+					has_cultural_pillar = heritage_akan
+					has_cultural_pillar = heritage_central_african
+					has_cultural_pillar = heritage_yoruba
+					has_cultural_pillar = heritage_east_african
+					has_cultural_pillar = heritage_somalian
+					this = culture:egyptian
+					any_parent_culture_or_above = {
+						OR = {
+							has_cultural_pillar = heritage_berber
+							has_cultural_pillar = heritage_west_african
+							has_cultural_pillar = heritage_sahelian
+							has_cultural_pillar = heritage_senegambian
+							has_cultural_pillar = heritage_akan
+							has_cultural_pillar = heritage_central_african
+							has_cultural_pillar = heritage_yoruba
+							has_cultural_pillar = heritage_east_african
+							has_cultural_pillar = heritage_somalian
+							this = culture:egyptian
+						}
+					}
+				}
+			}
+		}
+		capital_province ?= { geographical_region = world_africa }
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:unite_africa_decision
+			}
+		}
+	}
+
+	is_valid = {
+		completely_controls_region = world_africa
+		capital_province = { geographical_region = world_africa }
+	}
+	
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		save_scope_as = africa_uniter
+
+		show_as_tooltip = { unite_africa_decision_effects = yes } #Actually applied in iberia_north_africa.0010 - prestige & religion bonuses
+
+		#Events
+		trigger_event = iberia_north_africa.0010
+		every_player = {
+			limit = {
+				this != scope:africa_uniter
+				is_within_diplo_range = { CHARACTER = scope:africa_uniter }
+			}
+			trigger_event = iberia_north_africa.0011
+		}
+
+		#Can only be done once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:unite_africa_decision
+		}
+		set_global_variable = {
+			name = unite_africa_decision
+			value = scope:africa_uniter
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Avenge the Battle of Tours ###
+avenge_the_battle_of_tours_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_destiny_goal.dds"
+	}
+	decision_group_type = major
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 60
+		empire = 60
+		hegemony = 60
+	}
+	desc = avenge_the_battle_of_tours_decision_desc
+
+	is_shown = {
+		faith = { religion_tag = islam_religion }
+		capital_province ?= {
+			OR = {
+				geographical_region = world_europe_west_francia
+				geographical_region = world_europe_west_iberia
+				geographical_region = custom_south_francia
+				geographical_region = world_africa_north_west
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:avenge_the_battle_of_tours_decision
+			}
+		}
+	}
+
+	is_valid = {
+		completely_controls_region = world_europe_west_iberia
+		completely_controls_region = custom_south_francia
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	effect = {
+		gain_holy_legend_seed_tooltip_effect = yes
+		save_scope_as = avenger
+
+		#Christian penalty scope save
+		title:e_france = {
+			random_de_jure_county_holder = { #If there's a big christian presence in France
+				limit = {
+					faith = { religion_tag = christianity_religion }
+					culture = { has_cultural_pillar = heritage_frankish }
+					highest_held_title_tier = tier_empire
+				}
+				alternative_limit = {
+					faith = { religion_tag = christianity_religion }
+					culture = { has_cultural_pillar = heritage_frankish }
+					highest_held_title_tier = tier_kingdom
+				}
+				alternative_limit = {
+					faith = { religion_tag = christianity_religion }
+					culture = { has_cultural_pillar = heritage_frankish }
+					highest_held_title_tier = tier_duchy
+				}
+				faith = {
+					save_scope_as = frankish_christian_faith
+				}
+			}
+		}
+
+		show_as_tooltip = { avenge_the_battle_of_tours_decision_effects = yes } #Actually applied in iberia_north_africa.0015 - Prestige, religion bonuses
+
+		#Events
+		trigger_event = iberia_north_africa.0015
+		every_player = {
+			limit = {
+				this != scope:avenger
+				is_within_diplo_range = { CHARACTER = scope:avenger }
+			}
+			trigger_event = iberia_north_africa.0016
+		}
+
+		#Can only be done once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:avenge_the_battle_of_tours_decision
+		}
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+#Kingdom of Canarias
+### Consolidate the Canaries ###
+declare_canarias_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 600
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+	desc = declare_canarias_decision_desc
+
+	is_shown = {
+		OR = {
+			culture = { has_cultural_pillar = heritage_iberian }
+			faith = faith:north_african_acham_pagan
+			has_primary_title = title:d_canarias
+		}
+		any_sub_realm_county = {
+			duchy = title:d_canarias
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:declare_canarias_decision
+			}
+		}
+	}
+
+	is_valid = {
+
+		OR = {
+			top_liege = this
+			top_liege = {
+				highest_held_title_tier >= tier_empire
+			}
+		}
+
+		OR = {
+			culture = { has_cultural_pillar = heritage_iberian }
+			faith = faith:north_african_acham_pagan
+			has_primary_title = title:d_canarias
+		}
+		completely_controls = title:d_canarias
+		has_title = title:d_canarias
+		custom_tooltip = {
+			text = government_is_feudal_tt
+			government_has_flag = government_is_feudal
+		}
+
+		custom_description = {
+			text = canarias_must_be_developed_tt
+			title:d_canarias = {
+				any_in_de_jure_hierarchy = {
+					count = all
+					trigger_if = {
+						limit =  { tier = tier_county }
+						development_level >= 10
+					}
+					trigger_else = {
+						always = yes
+					}
+				}
+			}
+		}
+		custom_description = {
+			text = canarias_must_be_filled_tt
+			title:d_canarias = {
+				any_in_de_jure_hierarchy = {
+					count = all
+					trigger_if = {
+						limit =  { tier = tier_barony }
+						title_province = { has_holding = yes }
+					}
+					trigger_else = {
+						always = yes
+					}
+				}
+			}
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		save_scope_as = canarias_former
+
+		show_as_tooltip = {
+			declare_canarias_decision_effects = yes
+		} #Actually applied in iberia_north_africa.9101 - title changes, prestige, etc.
+
+		#Events
+		trigger_event = iberia_north_africa.9101
+
+		#Can only happen once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:declare_canarias_decision
+		}
+		set_global_variable = {
+			name = declare_canarias_decision
+			value = scope:canarias_former
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 300
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 300
+			}
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+##################################################
+# Form the Kingdom of Aragon
+# by Sean Hughes & Ewan Cowhig Croft
+##################################################
+
+### Found the Kingdom of Aragon ###
+form_the_kingdom_of_aragon_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 60
+		duchy = 60
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = form_the_kingdom_of_aragon_decision_desc
+	selection_tooltip = form_the_kingdom_of_aragon_decision_tooltip
+
+	is_shown = {
+		is_playable_character = yes # Redundancy check
+		# Can't form Aragon if Aragon already formed.
+		game_start_date < 1035.10.18
+		# Not relevant for characters who are already kings.
+		highest_held_title_tier <= tier_duchy
+		# Cast a broad net for folks who might like to try this.
+		capital_province = { geographical_region = dlc_fp2_form_aragon_region }
+		# Aaaaand it can't have happened already.
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_kingdom_of_aragon
+			}
+		}
+	}
+
+	is_valid = {
+		top_liege = this
+		completely_controls = title:d_aragon
+		OR = {
+			completely_controls = title:d_barcelona
+			completely_controls = title:d_valencia
+			completely_controls = title:d_navarra
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		# Grab scopes for loc.
+		save_scope_as = founder
+		culture = { save_scope_as = founder_culture }
+		culture:aragonese = { save_scope_as = aragonese_culture }
+		title:k_aragon = { save_scope_as = k_aragon }
+		title:d_aragon = { save_scope_as = d_aragon }
+		title:d_valencia = { save_scope_as = d_valencia }
+		title:d_barcelona = { save_scope_as = d_barcelona }
+		title:d_navarra = { save_scope_as = d_navarra }
+		# Create kingdom title.
+		create_title_and_vassal_change = {
+			type = created
+			save_scope_as = change
+		}
+		title:k_aragon = {
+			change_title_holder = {
+				holder = scope:founder
+				change = scope:change
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+		# Gain some prestige.
+		add_prestige = major_prestige_gain
+		# You shift to Aragonese culture, but will have a chance to change it.
+		## We do the actual change inside the event for nicer tooltip grouping.
+		show_as_tooltip = { set_culture = culture:aragonese }
+		custom_tooltip = form_the_kingdom_of_aragon_decision.tt.form_aragonese
+		trigger_event = iberia_north_africa.0131
+		# De jure shifts.
+		## Take care of the preferred empire.
+		if = {
+			limit = { NOT = { title:k_aragon.empire = title:d_aragon.empire } }
+			title:k_aragon = { set_de_jure_liege_title = title:d_aragon.empire }
+		}
+		## The heartlands drift over.
+		title:d_aragon = { set_de_jure_liege_title = title:k_aragon }
+		## Various neighbouring duchies can be preemptively integrated.
+		### From Valencia.
+		if = {
+			limit = { completely_controls = title:d_valencia }
+			title:d_valencia = { set_de_jure_liege_title = title:k_aragon }
+		}
+		else = { custom_tooltip = form_the_kingdom_of_aragon_decision.tt.drift.d_valencia }
+		### From Aquitaine.
+		if = {
+			limit = { completely_controls = title:d_barcelona }
+			title:d_barcelona = { set_de_jure_liege_title = title:k_aragon }
+		}
+		else = { custom_tooltip = form_the_kingdom_of_aragon_decision.tt.drift.d_barcelona }
+		### From Navarre.
+		if = {
+			limit = { completely_controls = title:d_navarra }
+			title:d_navarra = { set_de_jure_liege_title = title:k_aragon }
+		}
+		else = { custom_tooltip = form_the_kingdom_of_aragon_decision.tt.drift.d_navarra }
+		# Plus, call the place Aragon rather than Zaragoza.
+		title:d_aragon = { reset_title_name = yes }
+		# Once per game.
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:flag_formed_kingdom_of_aragon
+		}
+		# Note this for books and such.
+		set_global_variable = {
+			name = flag_formed_kingdom_of_aragon
+			value = scope:founder
+		}
+
+		# Reward suggested by Ewan
+		house = {
+			add_house_modifier = {
+				modifier = fp2_aragon_title_reward_house_modifier # Mountains/hills bonus + hard casualty bonus
+				years = 200
+			}
+		}
+	}
+
+	cost = {
+		gold = {
+			# Since we want this to happen, it free for the AI...
+			value = 0
+			# ... but costs for players
+			if = {
+				limit = {
+					has_treasury = no
+					is_ai = no
+				}
+				add = 200
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+					is_ai = no
+				}
+				add = 200
+			}
+		}
+	}
+
+	ai_potential = {
+		any_held_title = { this = title:d_aragon }
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+##################################################
+# Bind the Faith to Rome
+# by Ewan Cowhig Croft
+##################################################
+### Bind the Faith to Rome ###
+mozarabic_bind_the_faith_to_rome_decision = {
+	picture = {
+		trigger = {
+			NOR = {
+				government_has_flag = government_is_tribal
+				government_has_flag = government_is_theocracy
+				top_liege ?= { government_has_flag = government_is_tribal }
+				top_liege ?= { government_has_flag = government_is_theocracy }
+			}
+			OR = {
+				culture = { has_cultural_pillar = heritage_byzantine }
+				top_liege ?= {
+					OR = {
+						culture = { has_cultural_pillar = heritage_byzantine }
+						capital_barony ?= title:b_constantinople
+						is_roman_emperor_primary_title_trigger = yes
+					}
+				}
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/ep3_cerimonial_decision.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_knight_kneeling.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	desc = mozarabic_bind_the_faith_to_rome_decision_desc
+	selection_tooltip = mozarabic_bind_the_faith_to_rome_decision_tooltip
+
+	is_shown = {
+		# Standard filter checks.
+		is_playable_character = yes
+		exists = dynasty
+		# Must be Mozarabic, and neither decision has been taken yet.
+		faith = faith:mozarabic_church
+		NOR = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:mozarabic_bound_to_rome
+			}
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:mozarabic_broke_with_rome
+			}
+		}
+		# The Pope must exist.
+		exists = faith.religious_head
+	}
+
+	is_valid = {
+		OR = {
+			AND = {
+				# Requires a solid piety level.
+				piety_level >= high_piety_level
+				# Needs a solid chunk of Mozarabic counties.
+				custom_description = {
+					text = mozarabic_fate_county_count.need_at_least_twenty_same_faith_counties
+					any_sub_realm_county = {
+						count >= mozarabic_fate_county_count
+						faith = root.faith
+					}
+				}
+				# The Pope's gotta be a big fan of yours.
+				faith.religious_head = {
+					opinion = {
+						target = root
+						value >= very_high_positive_opinion
+					}
+				}
+			}
+			AND = {
+				trigger_if = {
+					limit = { is_ai = yes }
+					ai_honor <= 0
+					ai_zeal <= 0
+				}
+				has_strong_usable_hook = faith.religious_head
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_at_peace_adult = yes
+		# If you piss off the Pope badly enough, he'll just refuse your overtures.
+		NOR = {
+			has_relation_rival = faith.religious_head
+			has_relation_nemesis = faith.religious_head
+		}
+	}
+
+	effect = {
+		save_scope_as = religious_leader
+		faith.religious_head = { save_scope_as = pope }
+
+		if = {
+			limit = {
+				NAND = { # Explicit, necessary
+					# Requires a solid piety level.
+					piety_level >= high_piety_level
+					# Needs a solid chunk of Mozarabic counties.
+					custom_description = {
+						text = mozarabic_fate_county_count.need_at_least_twenty_same_faith_counties
+						any_sub_realm_county = {
+							count >= mozarabic_fate_county_count
+							faith = root.faith
+						}
+					}
+					# The Pope's gotta be a big fan of yours.
+					faith.religious_head = {
+						opinion = {
+							target = root
+							value >= very_high_positive_opinion
+						}
+					}
+				}
+				has_strong_usable_hook = scope:pope
+			}
+			custom_tooltip = mozarabic_bind_the_faith_to_rome_decision.threaten_pope
+			
+			send_interface_toast = {
+				type = event_toast_effect_bad
+				title = mozarabic_bind_the_faith_to_rome_decision
+				left_icon = scope:pope
+				right_icon = scope:pope.primary_title
+			
+				use_hook = scope:pope
+				reverse_add_opinion = {
+					modifier = fabricate_hook_threatened_me
+					target = scope:pope
+				}
+			}
+			hidden_effect = { # You made powerful enemies!
+				scope:pope = {
+					if = {
+						limit = { NOT = { has_trait = craven } }
+						progress_towards_rival_effect = {
+							CHARACTER = root
+							REASON = rival_generic_coerced_with_strong_hook
+							OPINION = 0
+						}
+					}
+				}
+			}
+		}
+
+		# Keep the Pope forever, but stay ecumenical.
+		custom_tooltip = mozarabic_bind_the_faith_to_rome_decision.tt.hof_and_ecumenism_warning
+		# Display the various paths.
+		show_as_tooltip = {
+			random_list = {
+				100 = {
+					show_chance = no
+					desc = mozarabic_bind_the_faith_to_rome_decision.path_fundamentalist
+					mozarabic_bind_the_faith_to_rome_decision_fundamentalist_path_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = mozarabic_bind_the_faith_to_rome_decision.path_righteous
+					mozarabic_bind_the_faith_to_rome_decision_righteous_path_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = mozarabic_bind_the_faith_to_rome_decision.path_pluralist
+					mozarabic_bind_the_faith_to_rome_decision_pluralist_path_scripted_effect = yes
+				}
+			}
+		}
+		# If we're inside the Iberian Struggle, switch the phase.
+		if = {
+			limit = { any_character_struggle = { is_struggle_type = iberian_struggle } }
+			random_character_struggle = {
+				limit = { is_struggle_type = iberian_struggle }
+				change_struggle_phase = struggle_iberia_phase_opportunity
+			}
+		}
+		# Send the event.
+		trigger_event = iberia_north_africa.0101
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:mozarabic_bound_to_rome
+			}
+		}
+	}
+
+	cost = { piety = 1000 }
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 0
+
+		# The AI will only consider this if they match certain trait requirements.
+		modifier = {
+			add = 25
+			has_trait = zealous
+		}
+		modifier = {
+			add = 25
+			has_trait = theologian
+		}
+		modifier = {
+			add = 25
+			has_trait = scholar
+		}
+		# Or else they're just sufficiently nerdy.
+		modifier = {
+			add = 25
+			learning >= extremely_high_skill_rating
+		}
+		# Plus, relations with the Pope are clinchers...
+		## ... either positively...
+		modifier = {
+			add = 100
+			AND = {
+				exists = faith.religious_head
+				faith.religious_head = { has_any_good_relationship_with_root_trigger = yes }
+			}
+		}
+		## ... or negatively.
+		modifier = {
+			add = -100
+			AND = {
+				exists = faith.religious_head
+				faith.religious_head = { has_any_bad_relationship_with_root_trigger = yes }
+			}
+		}
+	}
+}
+
+##################################################
+# Break with Rome
+# by Ewan Cowhig Croft
+##################################################
+
+### Break with Rome ###
+mozarabic_break_with_rome_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_invite_knights.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	desc = mozarabic_break_with_rome_decision_desc
+	selection_tooltip = mozarabic_break_with_rome_decision_tooltip
+
+	is_shown = {
+		# Standard filter checks.
+		is_playable_character = yes
+		exists = dynasty
+		# Must be Mozarabic, and neither decision has been taken yet.
+		faith = faith:mozarabic_church
+		NOR = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:mozarabic_broke_with_rome
+			}
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:mozarabic_bound_to_rome
+			}
+		}
+		# The Pope must exist.
+		exists = faith.religious_head
+	}
+
+	is_valid = {
+		# Requires a solid piety level.
+		piety_level >= very_high_piety_level
+		# Needs a solid chunk of Mozarabic counties.
+		custom_description = {
+			text = mozarabic_fate_county_count.need_at_least_twenty_same_faith_counties
+			any_sub_realm_county = {
+				count >= mozarabic_fate_county_count
+				faith = root.faith
+			}
+		}
+		faith.religious_head = {
+			opinion = {
+				target = root
+				value < 0
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_at_peace_adult = yes
+	}
+
+	effect = {
+		save_scope_as = religious_leader
+		faith.religious_head = { save_scope_as = pope }
+		# Keep the Pope forever, but stay ecumenical.
+		custom_tooltip = mozarabic_break_with_rome_decision.tt.hof_and_ecumenism_warning
+		# Display the various paths.
+		show_as_tooltip = {
+			random_list = {
+				100 = {
+					show_chance = no
+					desc = mozarabic_break_with_rome_decision.path_fundamentalist
+					mozarabic_break_with_rome_decision_fundamentalist_path_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = mozarabic_break_with_rome_decision.path_righteous
+					mozarabic_break_with_rome_decision_righteous_path_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = mozarabic_break_with_rome_decision.path_pluralist
+					mozarabic_break_with_rome_decision_pluralist_path_scripted_effect = yes
+				}
+			}
+		}
+		# If we're inside the Iberian Struggle, switch the phase.
+		if = {
+			limit = {
+				any_character_struggle = { is_struggle_type = iberian_struggle }
+			}
+			random_character_struggle = {
+				limit = { is_struggle_type = iberian_struggle }
+				change_struggle_phase = struggle_iberia_phase_opportunity
+			}
+		}
+		# Send the event.
+		trigger_event = iberia_north_africa.0111
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:mozarabic_broke_with_rome
+			}
+		}
+	}
+
+	cost = { piety = 1500 }
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 0
+
+		# The AI will only consider this if they match certain trait requirements.
+		modifier = {
+			add = 25
+			has_trait = zealous
+		}
+		modifier = {
+			add = 25
+			has_trait = theologian
+		}
+		modifier = {
+			add = 25
+			has_trait = scholar
+		}
+		# Or else they're just sufficiently nerdy.
+		modifier = {
+			add = 25
+			learning >= extremely_high_skill_rating
+		}
+		# Plus, relations with the Pope are clinchers...
+		## ... either positively...
+		modifier = {
+			add = 100
+			AND = {
+				exists = faith.religious_head
+				faith.religious_head = { has_any_good_relationship_with_root_trigger = yes }
+			}
+		}
+		## ... or negatively.
+		modifier = {
+			add = -100
+			AND = {
+				exists = faith.religious_head
+				faith.religious_head = { has_any_bad_relationship_with_root_trigger = yes }
+			}
+		}
+	}
+}
+
+##################################################
+# Champion the Faith of the Country Basques
+# by Ewan Cowhig Croft
+##################################################
+
+### Champion the Faith of the Country Basques ###
+favour_the_countryside_basques_decision = {
+	picture = {
+		trigger = {
+			NOR = {
+				government_has_flag = government_is_tribal
+				government_has_flag = government_is_theocracy
+				top_liege ?= { government_has_flag = government_is_tribal }
+				top_liege ?= { government_has_flag = government_is_theocracy }
+			}
+			OR = {
+				culture = { has_cultural_pillar = heritage_byzantine }
+				top_liege ?= {
+					OR = {
+						culture = { has_cultural_pillar = heritage_byzantine }
+						capital_barony ?= title:b_constantinople
+						is_roman_emperor_primary_title_trigger = yes
+					}
+				}
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/ep3_cerimonial_decision.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_knight_kneeling.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	desc = favour_the_countryside_basques_decision_desc
+	selection_tooltip = favour_the_countryside_basques_decision_tooltip
+
+	is_shown = {
+		# Standard filter checks.
+		is_playable_character = yes
+		exists = dynasty
+		# Must either have a Basque county or be Basque/recently Basque (in some form).
+		OR = {
+			favour_the_countryside_basques_counts_as_basque_trigger = yes
+			any_held_title = {
+				title_tier = county
+				favour_the_countryside_basques_counts_as_basque_trigger = yes
+			}
+		}
+		# And we're before 1200 or so, so there's enough non-Christianised ways left to try and forge something meaningful out of it.
+		current_date <= 1200.1.1
+		# Plus, we're at least vaguely within the area that'll need to be held.
+		any_sub_realm_county = {
+			title_province = {
+				OR = {
+					geographical_region = world_europe_west_francia
+					geographical_region = world_europe_west_iberia
+				}
+			}
+		}
+		# Filter out anyone who's their own HoF, since they can't convert.
+		trigger_if = {
+			limit = { exists = faith.religious_head }
+			this != faith.religious_head
+		}
+		# The decision cannot have been taken yet.
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:favoured_the_old_basque_ways
+			}
+		}
+	}
+
+	is_valid = {
+		# You need some clear spiritual reasons for pulling the switcharoo.
+		## We keep these isolated in a scripted trigger file so that we can maintain easy parity between the decision rationales & the event desc rationales.
+		OR = {
+			custom_description = {
+				text = favour_the_countryside_basques_decision.have_sinful_piety_level
+				favour_the_countryside_basques_rationale_negative_piety_level_trigger = yes
+			}
+			favour_the_countryside_basques_rationale_sinful_traits_trigger = yes
+			custom_description = {
+				text = favour_the_countryside_basques_decision.you_have_x_or_more_traits_virtuous_to_basque_paganism
+				favour_the_countryside_basques_rationale_virtuous_basque_pagan_traits_trigger = yes
+			}
+			favour_the_countryside_basques_rationale_excommunicated_trigger = yes
+			# AI need to be cynical to access the decision, so we require a little something extra from them first.
+			favour_the_countryside_basques_rationale_naked_cynicism_trigger = yes
+			favour_the_countryside_basques_rationale_hof_rivalry_trigger = yes
+		}
+		# You must completely control at least X counties from within the (generously diasporic) region of Old Vasconia.
+		custom_description = {
+			text = favour_the_countryside_basques_decision.completely_control_X_counties_from_old_vasconia
+			any_county_in_region = {
+				region = dlc_fp2_old_vasconia
+				count >= favour_the_countryside_basques_decision_counties_to_control_value
+				save_temporary_scope_as = county_temp
+				root = { completely_controls = scope:county_temp }
+			}
+		}
+		# We repeat the date clause here so that folks know they're on a timer.
+		custom_description = {
+			text = favour_the_countryside_basques_decision.before_last_date
+			current_date <= 1200.1.1
+		}
+		# For the sake of feasibility, we require independence. Lieges of any kind really complicate likely outcomes.
+		top_liege = this
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_at_peace_adult = yes
+	}
+
+	effect = {
+		gain_holy_legend_seed_tooltip_effect = yes
+		# Grab some scopes for loc.
+		save_scope_as = religious_leader
+		faith = { save_scope_as = old_faith }
+		faith:basque_pagan = { save_scope_as = basque_faith }
+		religion:islam_religion = { save_scope_as = islam_religion }
+		## Try to pick a religious figure who can look upset in the events.
+		if = {
+			limit = { exists = faith.religious_head }
+			faith.religious_head = { save_scope_as = scandalised_cleric }
+		}
+		else_if = {
+			limit = { exists = cp:councillor_court_chaplain }
+			cp:councillor_court_chaplain = { save_scope_as = scandalised_cleric }
+		}
+		else_if = {
+			limit = {
+				any_vassal_or_below = { government_has_flag = government_is_theocracy }
+			}
+			random_vassal_or_below = {
+				limit = { government_has_flag = government_is_theocracy }
+				save_scope_as = scandalised_cleric
+			}
+		}
+
+		# Display the various paths.
+		show_as_tooltip = {
+			favour_the_countryside_basques_decision_generic_effects_scripted_effect = yes # Show the generic effect. (Hidden as it fires from follow-up event)
+			random_list = {
+				100 = {
+					show_chance = no
+					desc = favour_the_countryside_basques_decision.path_default
+					favour_the_countryside_basques_decision_default_path_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = favour_the_countryside_basques_decision.path_fundamentalist
+					favour_the_countryside_basques_decision_fundamentalist_path_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = favour_the_countryside_basques_decision.path_righteous
+					favour_the_countryside_basques_decision_righteous_path_scripted_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = favour_the_countryside_basques_decision.path_pluralist
+					favour_the_countryside_basques_decision_pluralist_path_scripted_effect = yes
+				}
+			}
+		}
+		# If we're inside the Iberian Struggle, switch the phase.
+		if = {
+			limit = {
+				any_character_struggle = {
+					is_struggle_type = iberian_struggle
+					NOT = { is_struggle_phase = struggle_iberia_phase_opportunity }
+				}
+			}
+			random_character_struggle = {
+				limit = { is_struggle_type = iberian_struggle }
+				change_struggle_phase = struggle_iberia_phase_opportunity
+			}
+		}
+		# Send the event.
+		trigger_event = iberia_north_africa.0121
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:favoured_the_old_basque_ways
+			}
+		}
+	}
+
+	cost = {
+		piety = 1000
+		prestige = 1000
+	}
+
+	ai_potential = {
+		# AI will only even consider this if they're cynical and already high-tier.
+		highest_held_title_tier >= tier_kingdom
+		has_trait = cynical
+	}
+
+	ai_will_do = {
+		base = 0
+
+		# Weight up a little if they think they know best.
+		modifier = {
+			add = 25
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 25
+			has_trait = stubborn
+		}
+		modifier = {
+			add = 25
+			has_trait = arbitrary
+		}
+		# If you've got a heavily Basque-leaning realm, that helps quite a lot too.
+		modifier = {
+			add = 75
+			any_sub_realm_county = {
+				percent >= 0.51
+				favour_the_countryside_basques_counts_as_basque_trigger = yes
+			}
+		}
+		# Plus, relations with their HoF are a clincher...
+		## ... either positively...
+		modifier = {
+			add = 150
+			AND = {
+				exists = faith.religious_head
+				faith.religious_head = { has_any_bad_relationship_with_root_trigger = yes }
+			}
+		}
+		## ... or negatively.
+		modifier = {
+			add = -150
+			AND = {
+				exists = faith.religious_head
+				faith.religious_head = { has_any_good_relationship_with_root_trigger = yes }
+			}
+		}
+	}
+}
+
+
+################
+# Restore Old Vasconia
+# by Joe Parkin
+################
+
+### Restore Old Vasconia ###
+restore_old_vasconia_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 120
+		duchy = 120
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = restore_old_vasconia_decision_desc
+	selection_tooltip = restore_old_vasconia_decision_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		is_landed = yes
+		exists = dynasty # Everyone should have a dynasty, but in case they don't...
+		OR = {
+			culture = culture:basque	#Must be Basque
+			culture = {
+				any_parent_culture_or_above = { this = culture:basque }
+				has_cultural_pillar = heritage_iberian
+			}
+		}
+		NOT = {	#You can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_restored_old_vasconia
+			}
+		}
+		OR = {
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_republic
+			government_has_flag = government_is_clan
+		}
+		highest_held_title_tier <= tier_kingdom
+	}
+
+	is_valid = {
+		top_liege = this
+		prestige_level >= very_high_prestige_level
+		custom_tooltip = {
+			text = restore_old_vasconia_decision_culture_tt
+			OR = {
+				culture = culture:basque	#Must be Basque
+				culture = {
+					any_parent_culture_or_above = { this = culture:basque }
+					has_cultural_pillar = heritage_iberian
+				}
+			}
+		}
+		custom_tooltip = {
+			text = restore_old_vasconia_decision_navarra_tt
+			OR = {
+				has_title = title:k_navarra
+				NOT = { exists = title:k_navarra.holder }
+			}
+		}
+		custom_tooltip = {
+			text = restore_old_vasconia_decision_counties_tt
+			any_realm_county = { #You must have some realm support for your claims.
+				count >= 4
+				culture = root.culture
+			}
+		}
+		calc_true_if = {
+			amount >= 4
+			completely_controls = title:d_navarra
+			completely_controls = title:d_gascogne
+			completely_controls = title:d_armagnac
+			completely_controls = title:d_languedoc
+			completely_controls = title:d_aragon
+			completely_controls = title:d_barcelona
+			completely_controls = title:d_cantabria
+		}
+		
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	effect = {
+		# Old Vasconia
+		title:d_aragon = { add_to_list = vasconia_duchies }
+		title:d_gascogne = { add_to_list = vasconia_duchies }
+		title:d_armagnac = { add_to_list = vasconia_duchies }
+		title:d_castilla = { add_to_list = vasconia_duchies }
+		title:d_cantabria = { add_to_list = vasconia_duchies }
+		title:d_barcelona = { add_to_list = vasconia_duchies }
+		title:d_languedoc = { add_to_list = vasconia_duchies }
+		# In case of drift
+		title:d_viscaya = { add_to_list = vasconia_duchies }
+		title:d_navarra = { add_to_list = vasconia_duchies }
+		# Kingdom titles
+		every_in_list = {
+			list = vasconia_duchies
+			de_jure_liege = { add_to_list = vasconia_kingdoms }
+		}
+		save_scope_as = founder
+		custom_tooltip = restore_old_vasconia_decision_vasconia_tt
+		custom_tooltip = restore_old_vasconia_decision_effects_de_jure_tt
+		custom_tooltip = restore_old_vasconia_decision_superseded_tt
+		restore_old_vasconia_decision_scripted_effect = yes
+		trigger_event = iberia_north_africa.2100
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_restored_old_vasconia
+			}
+			set_global_variable = {
+				name = flag_restored_old_vasconia
+				value = root
+			}
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 300
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 300
+			}
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}

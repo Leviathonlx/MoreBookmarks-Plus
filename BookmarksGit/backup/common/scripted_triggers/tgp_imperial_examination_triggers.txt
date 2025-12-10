@@ -1,0 +1,247 @@
+﻿
+activity_has_met_failee_quota_trigger = {
+	any_guest_subset = {
+		name = failees
+		count >= imperial_examination_failee_quota_value
+	}
+}
+
+activity_has_ai_entrants_trigger = {
+	any_guest_subset = {
+		name = entrants
+		count >= 1
+		is_ai = yes
+	}
+}
+
+#Activity Option: Exam focus
+activity_is_learning_focus_trigger = {
+	has_activity_option = {
+		category = special_type
+		option = imperial_examination_focus_learning
+	}
+}
+
+activity_is_martial_focus_trigger = {
+	has_activity_option = {
+		category = special_type
+		option = imperial_examination_focus_martial
+	}
+}
+
+activity_is_stewardship_focus_trigger = {
+	has_activity_option = {
+		category = special_type
+		option = imperial_examination_focus_stewardship
+	}
+}
+
+#Activity Option: Passing grade
+activity_has_extreme_grade_trigger = {
+	has_activity_option = {
+		category = imperial_examination_passing_grade
+		option = imperial_examination_passing_grade_extreme
+	}
+}
+
+activity_has_high_grade_trigger = {
+	has_activity_option = {
+		category = imperial_examination_passing_grade
+		option = imperial_examination_passing_grade_high
+	}
+}
+
+activity_has_mediocre_grade_trigger = {
+	has_activity_option = {
+		category = imperial_examination_passing_grade
+		option = imperial_examination_passing_grade_mediocre
+	}
+}
+
+activity_has_low_grade_trigger = {
+	has_activity_option = {
+		category = imperial_examination_passing_grade
+		option = imperial_examination_passing_grade_low
+	}
+}
+
+#Activity Option: Number of exams
+activity_has_imperial_exams_trigger = {
+	has_activity_option = {
+		category = imperial_examination_breadth
+		option = imperial_examination_breadth_open
+	}
+}
+
+activity_has_grand_exams_trigger = {
+	has_activity_option = {
+		category = imperial_examination_breadth
+		option = imperial_examination_breadth_restricted
+	}
+}
+
+activity_has_palace_exams_trigger = {
+	has_activity_option = {
+		category = imperial_examination_breadth
+		option = imperial_examination_breadth_exclusive
+	}
+}
+
+#What's a good examiner
+is_available_imperial_examiner_trigger = {
+	is_available_healthy_ai_adult = yes
+	is_lowborn = no
+	is_landed = no
+	OR = {
+		AND = {
+			exists = involved_activity
+			involved_activity = $ATTENDING_CHAR$.involved_activity
+		}
+		can_join_activity = $ATTENDING_CHAR$.involved_activity
+	}
+	location = $ATTENDING_CHAR$.location
+	age > 35
+	trigger_if = {
+		limit = {
+			$ATTENDING_CHAR$ = { 
+				involved_activity = { has_activity_type = activity_imperial_examination }
+			}
+		}
+		OR = {
+			trigger_if = {
+				limit = { 
+					$ATTENDING_CHAR$ = { 
+						involved_activity = { activity_is_martial_focus_trigger = yes }
+					}
+				}
+				OR = {
+					has_trait = education_martial_3
+					has_trait = education_martial_4
+					has_trait = education_martial_5
+				}
+				martial >= decent_skill_rating
+			}
+			trigger_else_if = {
+				limit = { 
+					$ATTENDING_CHAR$ = { 
+						involved_activity = { activity_is_stewardship_focus_trigger = yes }
+					}
+				}
+				OR = {
+					has_trait = education_stewardship_3
+					has_trait = education_stewardship_4
+					has_trait = education_stewardship_5
+				}
+				stewardship >= decent_skill_rating
+			}
+			trigger_else = {
+				OR = {
+					has_trait = education_learning_3
+					has_trait = education_learning_4
+					has_trait = education_learning_5
+				}
+				learning >= decent_skill_rating
+			}
+		}
+	}
+	trigger_else = {
+		OR = {
+			has_trait = education_learning_3
+			has_trait = education_learning_4
+			has_trait = education_learning_5
+		}
+		learning >= decent_skill_rating
+	}
+	trigger_if = {
+		limit = {
+			$ATTENDING_CHAR$.involved_activity.activity_host.faith = { has_doctrine = doctrine_gender_female_dominated }
+		}
+		is_female = yes
+	}
+	trigger_else_if = {
+		limit = {
+			$ATTENDING_CHAR$.involved_activity.activity_host.faith = { has_doctrine = doctrine_gender_male_dominated }
+		}
+		is_female = no
+	}
+	trigger_else = {
+		always = yes
+	}
+}
+
+has_perfect_score_trigger = {
+	has_variable = $SCORE_VAR$
+	var:$SCORE_VAR$ >= imperial_examination_perfect_score_value
+}
+
+has_good_score_trigger = {
+	has_variable = $SCORE_VAR$
+	var:$SCORE_VAR$ < imperial_examination_perfect_score_value
+	var:$SCORE_VAR$ >= imperial_examination_great_score_value
+}
+
+has_decent_score_trigger = {
+	has_variable = $SCORE_VAR$
+	var:$SCORE_VAR$ < imperial_examination_great_score_value
+	var:$SCORE_VAR$ >= imperial_examination_decent_score_value
+}
+
+has_questionable_score_trigger = {
+	has_variable = $SCORE_VAR$
+	var:$SCORE_VAR$ < imperial_examination_decent_score_value
+}
+
+#Do you have any cheats?
+has_any_exam_cheats_trigger = {
+	OR = {
+		has_variable = has_bribed_examiner
+		has_variable = has_exam_taker
+		has_variable = has_blackmailed_examiner
+		has_variable = has_planted_answers
+		has_variable = parent_has_bribed_examiner
+	}
+}
+
+is_bribed_examiner_trigger = {
+	OR = {
+		AND = {
+			$EXAMINEE$ = { has_variable = has_bribed_examiner }
+			$EXAMINER$ = $EXAMINEE$.var:has_bribed_examiner
+		}
+		AND = {
+			$EXAMINEE$ = { has_variable = has_blackmailed_examiner }
+			$EXAMINER$ = $EXAMINEE$.var:has_blackmailed_examiner
+		}
+		AND = {
+			$EXAMINEE$ = { has_variable = has_planted_answers }
+			$EXAMINER$ = $EXAMINEE$.var:has_planted_answers
+		}
+		AND = {
+			$EXAMINEE$ = { has_variable = parent_has_bribed_examiner }
+			$EXAMINER$ = $EXAMINEE$.var:parent_has_bribed_examiner
+		}
+	}
+}
+
+is_wrong_examination_gender = {
+	OR = {
+		AND = {
+			scope:host = {
+				OR = {
+					has_realm_law = male_only_law 
+					has_realm_law = male_preference_law
+				}
+			}
+			is_female = yes
+		}
+		AND = {
+			scope:host = {
+				OR = {
+					has_realm_law = female_only_law
+					has_realm_law = female_preference_law
+				}
+			}
+			is_male = yes
+		}
+	}
+}

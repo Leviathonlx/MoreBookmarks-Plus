@@ -1,0 +1,927 @@
+﻿##################################################
+# #Interaction
+
+bp2_hostage_relative_strength_modifier = { # Comparative strength, excluding allies
+	modifier = {
+		NOR = { # Close in power
+			$SENDER$.current_strength_ninety_percent_value > $RECEIVER$.current_military_strength
+			$SENDER$.current_military_strength < $RECEIVER$.current_strength_ninety_percent_value
+		}
+		add = 10
+		desc = HOSTAGE_SIMILAR_STRENGTH_REASON
+	}
+	modifier = {
+		# Sender is more powerful
+		$SENDER$.current_strength_ninety_percent_value > $RECEIVER$.current_military_strength
+		add = {
+			value = $SENDER$.current_military_strength # 1828
+			divide = {
+				value = $RECEIVER$.current_military_strength # 1382
+				min = 1
+			}
+			# 1828 / 1382 = 1.32
+			subtract = 1 # 1.32 - 1 = 0.32
+			multiply = 50 # 0.32 * 50 = 16
+			max = 50
+			min = -50
+		}
+		desc = HOSTAGE_RELATIVE_MILITARY_POWER_REASON
+	}
+	modifier = {
+		# Sender is less powerful
+		$SENDER$.current_military_strength < $RECEIVER$.current_strength_ninety_percent_value
+		add = {
+			value = $RECEIVER$.current_military_strength # 1828
+			divide = {
+				value = $SENDER$.current_military_strength # 1382
+				min = 1
+			}
+			# 1828 / 1382 = 1.32
+			subtract = 1 # 1.32 - 1 = 0.32
+			multiply = -50 # 0.32 * -50 = -16
+			max = 50
+			min = -50
+		}
+		desc = HOSTAGE_RELATIVE_MILITARY_POWER_REASON
+	}
+	modifier = {
+		OR = { # Some allies must exist
+			$SENDER$ = { any_ally = { exists = this } }
+			$RECEIVER$ = { any_ally = { exists = this } }
+		}
+		# Strength with allies must be greater than enemies base strength
+		OR = {
+			$SENDER$.current_strength_with_allies_value >= $RECEIVER$.current_strength_ninety_percent_value
+			$RECEIVER$.current_strength_with_allies_value >= $SENDER$.current_strength_ninety_percent_value
+		}
+		add = {
+			value = {
+				value = 0
+				$SENDER$ = {
+					every_ally = { add = current_military_strength } # 1828
+				}
+			}
+			divide = {
+				value = {
+					value = 0
+					$RECEIVER$ = {
+						every_ally = { add = current_military_strength } # 1382
+					}
+				}
+				min = 1
+			}
+			# 1828 / 1382 = 1.32
+			subtract = 1 # 1.32 - 1 = 0.32
+			multiply = 100 # 0.32 * 100 = 32
+			divide = 2 # 32 / 2 = 16
+			max = 25
+			min = -25
+		}
+		desc = HOSTAGE_ALLY_MILITARY_POWER_REASON
+	}
+}
+
+bp2_hostage_claims_casus_bellis_modifier = {
+	modifier = { # Casus bellis on truce target
+		$RECEIVER$ = { has_any_cb_on = $SENDER$ }
+		add = -15
+		desc = HOSTAGE_CASUS_BELLI_REASON
+	}
+	modifier = { # Claims on truce target
+		$SENDER$ = {
+			any_held_title = {
+				title_tier >= county 
+				save_temporary_scope_as = title_temp
+			}
+		}
+		$RECEIVER$ = { has_claim_on = scope:title_temp }
+		add = {
+			value = 0
+			$SENDER$ = {
+				every_held_title = {
+					limit = {
+						any_claimant = { this = $RECEIVER$ }
+						save_temporary_scope_as = title_temp
+					}
+					add = {
+						value = -5
+						if = { # Strong claims worth more
+							limit = {
+								$RECEIVER$ = { has_strong_claim_on = scope:title_temp }
+							}
+							multiply = 2
+						}
+						multiply = { # Higher titles worth more
+							value = {
+								value = tier
+								add = -1
+							}
+						}
+					}
+				}
+			}
+		}
+		desc = HOSTAGE_CLAIMS_REASON
+	}
+}
+
+bp2_hostage_vassals_lieges_modifier = {
+	modifier = { # Vassals are already protected
+		add = -50
+		$RECEIVER$ = { top_liege != this }
+		NOR = {
+			$RECEIVER$.liege ?= $SENDER$
+			$SENDER$.liege ?= $RECEIVER$.liege
+		}
+		desc = HOSTAGE_PROTECTED_BY_LIEGE_REASON
+	}
+	modifier = { # Reluctance to make truces with other realm's vassals
+		$SENDER$ = { top_liege != this } # Sender is a vassal
+		$RECEIVER$ = {
+			trigger_if = {
+				limit = { top_liege != this }
+				NOT = { $SENDER$.liege = $RECEIVER$.liege }
+			}
+		}
+		add = {
+			value = -25
+			if = {
+				limit = {
+					NOT = { $RECEIVER$.liege = $SENDER$.top_liege }
+				}
+				add = -15
+			}
+		}
+		desc = HOSTAGE_VASSAL_REASON
+	}
+}
+
+bp2_hostage_recall_vassals_lieges_modifier = {
+	modifier = { # Vassals are already protected
+		add = 50
+		$RECALLER$ = { top_liege != this }
+		NOR = {
+			$WARDEN$.liege ?= $RECALLER$
+			$RECALLER$.liege ?= $WARDEN$.liege
+		}
+		desc = HOSTAGE_PROTECTED_BY_LIEGE_REASON
+	}
+	modifier = { # Reluctance to make truces with other realm's vassals
+		$RECALLER$ = { top_liege != this } # Sender is a vassal
+		$WARDEN$ = {
+			trigger_if = {
+				limit = { top_liege != this }
+				NOT = { $RECALLER$.liege = $WARDEN$.liege }
+			}
+		}
+		add = {
+			value = 25
+			if = {
+				limit = {
+					NOT = { $WARDEN$.liege = $RECALLER$.top_liege }
+				}
+				add = 15
+			}
+		}
+		desc = HOSTAGE_VASSAL_REASON
+	}
+}
+
+bp2_hostage_tier_neighbor_modifier = {
+	modifier = { # Flattered by higher tier
+		$RECEIVER$.highest_held_title_tier < $SENDER$.highest_held_title_tier
+		add = {
+			value = 20
+			multiply = {
+				value = $SENDER$.highest_held_title_tier
+				subtract = $RECEIVER$.highest_held_title_tier
+				min = 1
+			}
+		}
+		desc = HOSTAGE_RANK_DIFFERENCE_REASON
+	}
+	modifier = { # Dismissive of lower tier
+		$RECEIVER$.highest_held_title_tier > $SENDER$.highest_held_title_tier
+		add = {
+			value = -20
+			multiply = {
+				value = $RECEIVER$.highest_held_title_tier
+				subtract = $SENDER$.highest_held_title_tier
+				min = 1
+			}
+		}
+		desc = HOSTAGE_RANK_DIFFERENCE_REASON
+	}
+	modifier = { # Not direct neighbors
+		NOT = { $SENDER$.top_liege = $RECEIVER$.top_liege }
+		NOR = {
+			$SENDER$ = { character_is_land_realm_neighbor = $RECEIVER$ }
+			$RECEIVER$ = { character_is_land_realm_neighbor = $SENDER$ }
+		}
+		add = -20
+		desc = HOSTAGE_NOT_NEIGHBORING_REALM_REASON
+	}
+	modifier = { # Distant neighbors
+		$SENDER$ = {
+			NOR = {
+				character_is_realm_neighbor = $RECEIVER$
+				top_liege = $RECEIVER$.top_liege
+			}
+		}
+		$RECEIVER$ = {
+			NOR = {
+				character_is_land_realm_neighbor = $SENDER$
+				capital_province ?= {
+					squared_distance = { target = $SENDER$.capital_province value < 200000 }
+				}
+			}
+		}
+		add = -20
+		desc = HOSTAGE_DISTANT_REALM_REASON
+	}
+}
+
+bp2_hostage_recall_tier_neighbor_modifier = {
+	modifier = { # Flattered by higher tier
+		$WARDEN$.highest_held_title_tier < $RECALLER$.highest_held_title_tier
+		add = {
+			value = -20
+			multiply = {
+				value = $WARDEN$.highest_held_title_tier
+				subtract = $RECALLER$.highest_held_title_tier
+				min = 1
+			}
+		}
+		desc = HOSTAGE_RANK_DIFFERENCE_REASON
+	}
+	modifier = { # Dismissive of lower tier
+		$WARDEN$.highest_held_title_tier > $RECALLER$.highest_held_title_tier
+		add = {
+			value = 20
+			multiply = {
+				value = $RECALLER$.highest_held_title_tier
+				subtract = $WARDEN$.highest_held_title_tier
+				min = 1
+			}
+		}
+		desc = HOSTAGE_RANK_DIFFERENCE_REASON
+	}
+	modifier = { # Not direct neighbors
+		NOT = { $RECALLER$.top_liege = $WARDEN$.top_liege }
+		NOR = {
+			$RECALLER$ = { character_is_land_realm_neighbor = $WARDEN$ }
+			$WARDEN$ = { character_is_land_realm_neighbor = $RECALLER$ }
+		}
+		add = 20
+		desc = HOSTAGE_NOT_NEIGHBORING_REALM_REASON
+	}
+	modifier = { # Distant neighbors
+		$RECALLER$ = {
+			NOR = {
+				character_is_realm_neighbor = $WARDEN$
+				top_liege = $WARDEN$.top_liege
+			}
+		}
+		$WARDEN$ = {
+			NOR = {
+				character_is_land_realm_neighbor = $RECALLER$
+				capital_province ?= {
+					squared_distance = { target = $RECALLER$.capital_province value < 200000 }
+				}
+			}
+		}
+		add = 20
+		desc = HOSTAGE_DISTANT_REALM_REASON
+	}
+}
+
+bp2_hostage_culture_faith_modifier = {
+	modifier = {
+		$RECEIVER$.culture = {
+			NOT = { this = $SENDER$.culture }
+			cultural_acceptance = { target = $SENDER$.culture value < 75 }
+			cultural_acceptance = { target = $SENDER$.culture value >= 50 }
+		}
+		add = -5
+		desc = HOSTAGE_CULTURAL_ACCEPTANCE_REASON
+	}
+	modifier = {
+		$RECEIVER$.culture = {
+			NOT = { this = $SENDER$.culture }
+			cultural_acceptance = { target = $SENDER$.culture value < 50 }
+			cultural_acceptance = { target = $SENDER$.culture value >= 25 }
+		}
+		add = -10
+		desc = HOSTAGE_CULTURAL_ACCEPTANCE_REASON
+	}
+	modifier = {
+		$RECEIVER$.culture = {
+			NOT = { this = $SENDER$.culture }
+			cultural_acceptance = { target = $SENDER$.culture value < 25 }
+		}
+		add = -15
+		desc = HOSTAGE_CULTURAL_ACCEPTANCE_REASON
+	}
+	modifier = {
+		$RECEIVER$.faith = {
+			NOT = { this = $SENDER$.faith }
+			faith_hostility_level = {
+				target = $SENDER$.faith
+				value = faith_evil_level
+			}
+		}
+		add = -15
+		desc = HOSTAGE_FAITH_EVIL
+	}
+	modifier = {
+		$RECEIVER$.faith = {
+			NOT = { this = $SENDER$.faith }
+			faith_hostility_level = {
+				target = $SENDER$.faith
+				value = faith_hostile_level
+			}
+		}
+		add = -10
+		desc = HOSTAGE_FAITH_HOSTILE
+	}
+	modifier = {
+		$RECEIVER$.faith = {
+			NOT = { this = $SENDER$.faith }
+			faith_hostility_level = {
+				target = $SENDER$.faith
+				value = faith_astray_level
+			}
+		}
+		add = -5
+		desc = HOSTAGE_FAITH_ASTRAY
+	}
+}
+
+bp2_hostage_relation_modifier = {
+	modifier = { # Friend
+		desc = offer_vassalization_interaction_aibehavior_friend_tt
+		trigger = {
+			scope:recipient = {
+				has_relation_friend = scope:actor
+				NOT = { has_relation_best_friend = scope:actor }
+			}
+		}
+		add = 15
+	}
+	modifier = { # Best Friend
+		desc = offer_vassalization_interaction_aibehavior_best_friend_tt
+		trigger = {
+			scope:recipient = { has_relation_best_friend = scope:actor }
+		}
+		add = 30
+	}
+	modifier = { # Lover
+		desc = interaction_lover
+		trigger = {
+			scope:recipient = {
+				has_relation_lover = scope:actor
+				NOT = { has_relation_soulmate = scope:actor }
+			}
+		}
+		add = 15
+	}
+	modifier = { # Soulmate
+		desc = interaction_soulmate
+		trigger = {
+			scope:recipient = { has_relation_soulmate = scope:actor }
+		}
+		add = 30
+	}
+	modifier = { # Rival 
+		desc = offer_vassalization_interaction_aibehavior_rival_tt
+		trigger = {
+			scope:recipient = {
+				has_relation_rival = scope:actor
+				NOT = { has_relation_nemesis = scope:actor }
+			}
+		}
+		add = -25
+	}
+	modifier = { # Nemesis
+		desc = offer_vassalization_interaction_aibehavior_nemesis_tt
+		trigger = {
+			scope:recipient = { has_relation_nemesis = scope:actor }
+		}
+		add = -50
+	}
+}
+
+bp2_hostage_dread_modifier = {
+	modifier = {
+		add = intimidated_halved_reason_value
+		scope:recipient = {
+			has_dread_level_towards = { target = scope:actor level = 1 }
+		}
+		desc = INTIMIDATED_REASON
+	}
+	modifier = {
+		add = cowed_halved_reason_value
+		scope:recipient = {
+			has_dread_level_towards = { target = scope:actor level = 2 }
+		}
+		desc = COWED_REASON
+	}
+}
+
+bp2_hostage_importance_exchange_modifier = {
+	#Let's aim for a similar age
+	modifier = {
+		exists = scope:secondary_actor
+		exists = scope:secondary_recipient
+		scope:secondary_actor.age <= scope:secondary_recipient.age_plus_5
+		scope:secondary_actor.age >= scope:secondary_recipient.age_minus_5
+		desc = HOSTAGE_SIMILAR_AGE_REASON
+		add = {
+			value = 10
+			if = {
+				limit = {
+					scope:secondary_actor.age <= scope:secondary_recipient.age_plus_3
+					scope:secondary_actor.age >= scope:secondary_recipient.age_minus_3
+				}
+				add = 10
+			}
+		}
+	}
+	modifier = {
+		exists = scope:secondary_actor
+		exists = scope:secondary_recipient
+		OR = {
+			scope:secondary_actor.age > scope:secondary_recipient.age_plus_5
+			scope:secondary_actor.age < scope:secondary_recipient.age_minus_5
+		}
+		desc = HOSTAGE_SIMILAR_AGE_REASON
+		add = {
+			value = -10
+			if = {
+				limit = {
+					OR = {
+						scope:secondary_actor.age > scope:secondary_recipient.age_plus_10
+						scope:secondary_actor.age < scope:secondary_recipient.age_minus_10
+					}
+				}
+				add = -10
+			}
+		}
+	}
+	#Heir comparisons
+	modifier = { # Offered hostage is higher than demanded
+		scope:secondary_actor ?= { is_heir_of = scope:actor }
+		exists = scope:secondary_recipient
+		OR = {
+			hostage_secondary_actor_place_in_succession > hostage_secondary_recipient_place_in_succession
+			NOT = {
+				scope:secondary_recipient = { is_heir_of = scope:recipient }
+			}
+		}
+		desc = HOSTAGE_RELATIVE_SUCCESSION_PLACE_REASON
+		add = {
+			value = hostage_secondary_actor_place_in_succession
+			subtract = hostage_secondary_recipient_place_in_succession
+			multiply = 5
+		}
+	}
+	modifier = { # Offered hostage is same as demanded
+		scope:secondary_actor ?= { is_heir_of = scope:actor }
+		scope:secondary_recipient ?= { is_heir_of = scope:recipient }
+		hostage_secondary_recipient_place_in_succession = hostage_secondary_actor_place_in_succession
+		desc = HOSTAGE_RELATIVE_SUCCESSION_PLACE_REASON
+		add = 20
+	}
+	modifier = { # Offered hostage is worse than demanded
+		scope:secondary_actor ?= { is_heir_of = scope:actor }
+		scope:secondary_recipient ?= { is_heir_of = scope:recipient }
+		OR = {
+			hostage_secondary_actor_place_in_succession < hostage_secondary_recipient_place_in_succession
+			hostage_secondary_recipient_place_in_succession > hostage_secondary_actor_place_in_succession
+		}
+		desc = HOSTAGE_RELATIVE_SUCCESSION_PLACE_REASON
+		add = -10
+	}	
+	modifier = { # Offered hostage is worse than demanded
+		scope:secondary_actor ?= { is_female = yes }
+		scope:secondary_recipient ?= { is_female = no }
+		desc = HOSTAGE_SEX_DIFFERENCE_REASON
+		add = -10
+	}
+	modifier = { # Offered hostage is worse than demanded
+		scope:secondary_actor ?= { is_female = no }
+		scope:secondary_recipient ?= { is_female = yes }
+		desc = HOSTAGE_SEX_DIFFERENCE_REASON
+		add = 10
+	}
+}
+
+bp2_hostage_offer_personality_modifier = {
+	modifier = { # Cowardly characters more willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_boldness < 0
+		add = {
+			value = scope:recipient.ai_boldness
+			multiply = -0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_BOLDNESS
+	}
+	modifier = { # Compassionate characters are less willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_compassion > 0
+		add = {
+			value = scope:recipient.ai_compassion
+			multiply = -0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_COMPASSION
+	}
+	modifier = { # Greedy characters are more willing to gain but not give hostage
+		exists = scope:recipient
+		scope:recipient.ai_greed != 0
+		add = {
+			value = scope:recipient.ai_greed
+			if = {
+				limit = { scope:recipient.ai_greed < 0 }
+				multiply = -0.5
+			}
+			else = { multiply = 0.5 }
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_GREED
+	}
+	modifier = { # Honorable characters are more willing to use hostages, dishonorable only when to take them
+		exists = scope:recipient
+		scope:recipient.ai_honor != 0
+		add = {
+			value = scope:recipient.ai_honor
+			if = {
+				limit = { scope:recipient.ai_honor < 0 }
+				multiply = -0.5
+			}
+			else = {
+				multiply = 0.5
+				if = {
+					limit = {
+						exists = scope:actor
+						scope:recipient = { is_vassal_of = scope:actor }
+						scope:actor = { has_realm_law_flag = vassal_refusal_is_treason }
+					}
+					multiply = 2
+				}
+			}
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_HONOR
+	}
+	modifier = { # Crown authority makes it even more dishonorable
+		exists = scope:recipient
+		scope:recipient.ai_honor > 0
+		exists = scope:actor
+		scope:recipient = { is_vassal_of = scope:actor }
+		scope:actor = { has_realm_law_flag = vassal_refusal_is_treason }
+		add = {
+			value = scope:recipient.ai_honor
+			multiply = 0.5
+		}
+		desc = HOSTAGE_REALM_LAW_REASON
+	}
+	modifier = { # Rational characters are more willing to use hostages, dishonorable only when to take them
+		exists = scope:recipient
+		scope:recipient.ai_rationality != 0
+		add = {
+			value = scope:recipient.ai_rationality
+			multiply = 0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_RATIONALITY
+	}
+	modifier = { # Zealous characters are more willing to take hostages from hostile/evil faiths
+		exists = scope:recipient.faith
+		exists = scope:actor.faith
+		scope:recipient.ai_zeal != 0
+		scope:recipient.faith ?= {
+			faith_hostility_level = { target = scope:actor.faith value >= faith_hostile_level }
+		}
+		add = {
+			value = scope:recipient.ai_zeal
+			multiply = 0.5
+			if = {
+				limit = {
+					scope:recipient.faith ?= {
+						faith_hostility_level = { target = scope:actor.faith value >= faith_evil_level }
+					}
+				}
+				multiply = 2
+			}
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_ZEAL
+	}
+	# Cultural traditions
+	modifier = {
+		scope:recipient.culture = { has_cultural_parameter = more_hostage_acceptance }
+		add = 25
+		desc = HOSTAGE_CULTURAL_PARAMETER_REASON
+	}
+	modifier = {
+		scope:recipient = {
+			is_vassal_of = scope:actor
+			culture = { has_cultural_parameter = more_hostage_acceptance_for_vassals }
+		}
+		add = 25
+		desc = HOSTAGE_CULTURAL_PARAMETER_REASON
+	}
+}
+
+bp2_hostage_demand_personality_modifier = {
+	modifier = { # Cowardly characters more willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_boldness < 0
+		add = {
+			value = scope:recipient.ai_boldness
+			multiply = -0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_BOLDNESS
+	}
+	modifier = { # Compassionate characters are less willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_compassion > 0
+		add = {
+			value = scope:recipient.ai_compassion
+			multiply = -0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_COMPASSION
+	}
+	modifier = { # Greedy characters are more willing to gain but not give hostage
+		exists = scope:recipient
+		scope:recipient.ai_greed != 0
+		add = {
+			value = scope:recipient.ai_greed
+			if = {
+				limit = { scope:recipient.ai_greed < 0 }
+				multiply = 0.5
+			}
+			else = { multiply = -0.5 }
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_GREED
+	}
+	modifier = { # Honorable characters are more willing to use hostages, dishonorable only when to take them
+		exists = scope:recipient
+		scope:recipient.ai_honor != 0
+		add = {
+			value = scope:recipient.ai_honor
+			multiply = 0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_HONOR
+	}
+	modifier = { # Honorable characters are more willing to use hostages, dishonorable only when to take them
+		exists = scope:recipient
+		scope:recipient.ai_honor > 0
+		exists = scope:actor
+		scope:recipient = { is_vassal_of = scope:actor }
+		scope:actor = { has_realm_law_flag = vassal_refusal_is_treason }
+		add = {
+			value = scope:recipient.ai_honor
+			multiply = 0.5
+		}
+		desc = HOSTAGE_REALM_LAW_REASON
+	}
+	modifier = { # Rational characters are more willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_rationality != 0
+		add = {
+			value = scope:recipient.ai_rationality
+			multiply = 0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_RATIONALITY
+	}
+	modifier = { # Zealous characters are less willing to give hostages to hostile/evil faiths
+		exists = scope:recipient.faith
+		exists = scope:actor.faith
+		scope:recipient.ai_zeal > 0
+		scope:recipient.faith ?= {
+			faith_hostility_level = { target = scope:actor.faith value >= faith_hostile_level }
+		}
+		add = {
+			value = scope:recipient.ai_zeal
+			if = {
+				limit = {
+					scope:recipient.faith ?= {
+						faith_hostility_level = { target = scope:actor.faith value >= faith_evil_level }
+					}
+				}
+				multiply = 2
+			}
+			multiply = -0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_ZEAL
+	}
+}
+
+bp2_hostage_exchange_personality_modifier = {
+	modifier = { # Cowardly characters more willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_boldness < 0
+		add = {
+			value = scope:recipient.ai_boldness
+			multiply = -0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_BOLDNESS
+	}
+	modifier = { # Compassionate characters are less willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_compassion > 0
+		add = {
+			value = scope:recipient.ai_compassion
+			multiply = -0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_COMPASSION
+	}
+	modifier = { # Greedy characters are more willing to gain but not give hostage
+		exists = scope:recipient
+		scope:recipient.ai_greed != 0
+		add = {
+			value = scope:recipient.ai_greed
+			if = {
+				limit = { scope:recipient.ai_greed < 0 }
+				multiply = 0.25
+			}
+			else = { multiply = -0.25 }
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_GREED
+	}
+	modifier = { # Honorable characters are more willing to use hostages, dishonorable only when to take them
+		exists = scope:recipient
+		scope:recipient.ai_honor != 0
+		add = {
+			value = scope:recipient.ai_honor
+			multiply = 0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_HONOR
+	}
+	modifier = { # Honorable characters are more willing to use hostages, dishonorable only when to take them
+		exists = scope:recipient
+		scope:recipient.ai_honor > 0
+		exists = scope:actor
+		scope:recipient = { is_vassal_of = scope:actor }
+		scope:actor = { has_realm_law_flag = vassal_refusal_is_treason }
+		add = {
+			value = scope:recipient.ai_honor
+			multiply = 0.5
+		}
+		desc = HOSTAGE_REALM_LAW_REASON
+	}
+	modifier = { # Rational characters are more willing to use hostages
+		exists = scope:recipient
+		scope:recipient.ai_rationality != 0
+		add = {
+			value = scope:recipient.ai_rationality
+			multiply = 0.5
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_RATIONALITY
+	}
+	modifier = { # Zealous characters are less willing to give hostages to hostile/evil faiths
+		exists = scope:recipient.faith
+		exists = scope:actor.faith
+		scope:recipient.ai_zeal > 0
+		scope:recipient.faith ?= {
+			faith_hostility_level = { target = scope:actor.faith value >= faith_hostile_level }
+		}
+		add = {
+			value = scope:recipient.ai_zeal
+			if = {
+				limit = {
+					scope:recipient.faith ?= {
+						faith_hostility_level = { target = scope:actor.faith value >= faith_evil_level }
+					}
+				}
+				multiply = 2
+			}
+			multiply = -0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_ZEAL
+	}
+	# Cultural traditions
+	modifier = {
+		scope:recipient.culture = { has_cultural_parameter = more_hostage_acceptance }
+		add = 25
+		desc = HOSTAGE_CULTURAL_PARAMETER_REASON
+	}
+	modifier = {
+		scope:recipient = {
+			is_vassal_of = scope:actor
+			culture = { has_cultural_parameter = more_hostage_acceptance_for_vassals }
+		}
+		add = 25
+		desc = HOSTAGE_CULTURAL_PARAMETER_REASON
+	}
+}
+
+bp2_hostage_return_personality_modifier = {
+	modifier = { # Cowardly characters less willing to return hostages
+		$WARDEN$.ai_boldness < 0
+		add = {
+			value = $WARDEN$.ai_boldness
+			multiply = -0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_BOLDNESS
+	}
+	modifier = { # Compassionate characters are more willing to return hostages
+		exists = $WARDEN$
+		$WARDEN$.ai_compassion > 0
+		add = {
+			value = $WARDEN$.ai_compassion
+			multiply = 0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_COMPASSION
+	}
+	modifier = { # Greedy characters are less willing to return hostages, generous more
+		exists = $WARDEN$
+		$WARDEN$.ai_greed != 0
+		add = {
+			value = $WARDEN$.ai_greed
+			if = {
+				limit = { $WARDEN$.ai_greed < 0 }
+				multiply = -0.25
+			}
+			else = { multiply = -0.25 }
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_GREED
+	}
+	modifier = { # Honorable characters more willing to return hostages, dishonorable less
+		exists = $WARDEN$
+		$WARDEN$.ai_honor != 0
+		add = {
+			value = $WARDEN$.ai_honor
+			multiply = 0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_HONOR
+	}
+	modifier = { # Rational characters are more willing to return hostages
+		exists = $WARDEN$
+		$WARDEN$.ai_rationality != 0
+		add = {
+			value = $WARDEN$.ai_rationality
+			multiply = 0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_RATIONALITY
+	}
+	modifier = { # Zealous characters are less willing to return hostages to hostile/evil faiths
+		exists = $WARDEN$.faith
+		exists = $HOME_COURT$.faith
+		$WARDEN$.ai_zeal > 0
+		$WARDEN$.faith ?= {
+			faith_hostility_level = { target = $HOME_COURT$.faith value >= faith_hostile_level }
+		}
+		add = {
+			value = $WARDEN$.ai_zeal
+			if = {
+				limit = {
+					$WARDEN$.faith ?= {
+						faith_hostility_level = { target = $HOME_COURT$.faith value >= faith_evil_level }
+					}
+				}
+				multiply = 2
+			}
+			multiply = -0.25
+		}
+		desc = HOSTAGE_AI_VALUE_MODIFIER_ZEAL
+	}
+	# Cultural traditions
+	modifier = {
+		$WARDEN$.culture ?= { has_cultural_tradition = tradition_equitable }
+		add = 25
+		desc = HOSTAGE_EQUITABLE_TRADITION_REASON
+	}
+	modifier = {
+		$WARDEN$.culture ?= { has_cultural_tradition = tradition_esteemed_hospitality }
+		add = 25
+		desc = HOSTAGE_ESTEEMED_HOSPITALITY_TRADITION_REASON
+	}
+	modifier = {
+		$WARDEN$ = {
+			is_vassal_of = $HOME_COURT$
+			culture = { has_cultural_tradition = tradition_loyal_soldiers }
+		}
+		add = 25
+		desc = HOSTAGE_LOYAL_SUBJECTS_TRADITION_REASON
+	}
+}
+
+bp2_hostage_recipient_cultural_traditions_modifier = {
+	modifier = {
+		scope:recipient.culture ?= { has_cultural_tradition = tradition_equitable }
+		add = 25
+		desc = HOSTAGE_EQUITABLE_TRADITION_REASON
+	}
+	modifier = {
+		scope:recipient.culture ?= { has_cultural_tradition = tradition_esteemed_hospitality }
+		add = 25
+		desc = HOSTAGE_ESTEEMED_HOSPITALITY_TRADITION_REASON
+	}
+	modifier = {
+		exists = scope:actor
+		scope:recipient ?= {
+			is_vassal_of = scope:actor
+			culture = { has_cultural_tradition = tradition_loyal_soldiers }
+		}
+		add = 25
+		desc = HOSTAGE_LOYAL_SUBJECTS_TRADITION_REASON
+	}
+}

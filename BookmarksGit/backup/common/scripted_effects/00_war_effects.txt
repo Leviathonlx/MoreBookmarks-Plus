@@ -1,0 +1,3060 @@
+﻿
+#####################################################################
+# EFFECT LIST
+#####################################################################
+# !!! Remember to add all new effects with a short description here !!!
+
+# on_declared_war
+#
+# [...]
+#
+# send_captured_combatant_message: Sends the specified message to a character about a combatant being captured after a battle.
+# send_slain_combatant_message: Sends the specified message to a character about a combatant being slain after (or in) a battle.
+# add_truce_attacker_victory_effect: Used to set truces in a CB's on_victory
+# add_truce_white_peace_effect: Used to set truces in a CB's on_white_peace
+# add_truce_attacker_defeat_effect: Used to set truces in a CB's on_defeat
+
+
+#####################################################################
+# EFFECTS
+#####################################################################
+
+on_declared_war = {
+	###############################
+	##### Attacker music
+	###############################
+	if = {
+		limit = {
+			exists = scope:war # silence error when building description before war exists
+			scope:war = { using_holy_war_cb_trigger = yes } # going CB->war->is this war's CB a certain type->yes
+		}
+		scope:attacker = { play_music_cue = mx_cue_crusade_starts }
+	}
+	else_if = {
+		limit = {
+			exists = scope:war
+			has_mpo_dlc_trigger = yes
+			OR = {
+				scope:attacker = {
+					government_has_flag = government_is_nomadic
+			  		any_character_situation = {
+			  			this = situation:the_great_steppe
+			  		}
+				}
+				scope:defender = {
+					government_has_flag = government_is_nomadic
+			  		any_character_situation = {
+			  			this = situation:the_great_steppe
+			  		}
+				}
+			}
+		}
+		scope:attacker = { play_music_cue = mx_cue_the_khans_glory }
+	}
+	else_if = {
+		limit = {
+			exists = scope:war
+			OR = {
+				scope:attacker = { fp3_character_any_involvement_persian_struggle_trigger = yes }
+				scope:defender = { fp3_character_any_involvement_persian_struggle_trigger = yes }
+			}
+		}
+		scope:attacker = { play_music_cue = strugglewar_cue }
+	}
+	else_if = {
+		limit = {
+			exists = scope:war
+			OR = {
+				scope:attacker = { fp2_character_any_involvement_iberian_struggle_trigger = yes }
+				scope:defender = { fp2_character_any_involvement_iberian_struggle_trigger = yes }
+			}
+		}
+		scope:attacker = { play_music_cue = mx_IberiaWar }
+	}
+	else_if = {
+		limit = {
+			exists = scope:war
+			scope:attacker = { fp1_is_norse_tribal = yes }
+		}
+		scope:attacker = { play_music_cue = mx_raid }
+	}
+	else = {
+		scope:attacker = { play_music_cue = mx_cue_war_declared }
+	}
+	###############################
+	##### Defender music
+	###############################
+	if = {
+		limit = {
+			exists = scope:war
+			OR = {
+				scope:attacker = { fp2_character_any_involvement_iberian_struggle_trigger = yes }
+				scope:defender = { fp2_character_any_involvement_iberian_struggle_trigger = yes }
+			}
+		}
+		scope:defender = { play_music_cue = mx_IberiaWar }
+	}
+	else_if = {
+		limit = {
+			exists = scope:war
+			has_mpo_dlc_trigger = yes
+			OR = {
+				scope:attacker = {
+					government_has_flag = government_is_nomadic
+			  		any_character_situation = {
+			  			this = situation:the_great_steppe
+			  		}
+				}
+				scope:defender = {
+					government_has_flag = government_is_nomadic
+			  		any_character_situation = {
+			  			this = situation:the_great_steppe
+			  		}
+				}
+			}
+		}
+		scope:defender = { play_music_cue = mx_cue_the_khans_glory }
+	}
+	else_if = {
+		limit = {
+			exists = scope:war
+			OR = {
+				scope:attacker = { fp3_character_any_involvement_persian_struggle_trigger = yes }
+				scope:defender = { fp3_character_any_involvement_persian_struggle_trigger = yes }
+			}
+		}
+		scope:defender = { play_music_cue = strugglewar_cue }
+	}
+	else_if = {
+		limit = {
+			exists = scope:war
+			scope:attacker = { fp1_is_norse_tribal = yes }
+		}
+		scope:defender = { play_music_cue = mx_raid }
+	}
+
+	else = {
+		scope:defender = {
+			play_music_cue = mx_cue_war_declared
+		}
+	}
+
+	###############################
+	##### Effects
+	###############################
+
+	#There is no fighting in the admin room!
+	if = {
+		limit = {
+			scope:attacker = {
+				OR = {
+					government_has_flag = government_is_feudal
+					government_has_flag = government_is_clan
+					government_has_flag = government_is_tribal
+				}			
+				liege ?= {
+					government_has_flag = government_is_administrative
+				}
+			}
+			scope:defender = {
+				government_has_flag = government_is_administrative
+				liege ?= scope:attacker.liege
+			}
+		}
+		custom_description_no_bullet = {
+			text = on_declared_war_in_admin
+		}
+		scope:attacker.liege = {
+			add_opinion = {
+				target = scope:attacker
+				modifier = declared_war_in_admin
+			}
+		}
+	}
+
+	# Breaking Truce
+	if = {
+		limit = {
+			scope:attacker = {
+				has_truce = scope:defender
+				NOT = { has_character_flag = allowed_war_declaration_sans_truce_penalties }
+			}
+		}
+		scope:attacker = {
+			custom_description_no_bullet = {
+				text = attack_breaking_truce_text
+			}
+
+			# Remove the war target from the bought_truce_list if they're in it
+			if = {
+				limit = {
+					has_purchased_truce_with_char = { TARGET = scope:defender }
+				}
+				remove_list_variable = {
+					name = bought_truce_list
+					target = scope:recipient
+				}
+			}
+
+			if = {
+				limit = {
+					NOT = { has_perk = flexible_truces_perk }
+				}
+				add_prestige = break_truce_prestige_loss
+				add_prestige_level = break_truce_prestige_level_loss
+			}
+
+			if = {
+				limit = { 
+					government_has_flag = government_is_mandala
+					scope:defender = { var:recent_mandala_suzerain ?= scope:attacker }
+				}
+				add_legitimacy = {
+					value = medium_legitimacy_loss
+					multiply = primary_title.tier
+				}
+				add_piety_experience = massive_piety_loss
+				add_character_modifier = {
+					modifier = mandala_broke_truce_modifier
+					years = 5
+				}
+			}
+			else = {
+				add_legitimacy = {
+					value = medium_legitimacy_loss
+					multiply = primary_title.tier
+				}
+			}
+			add_character_modifier = {
+				modifier = broke_truce
+				years = 3
+			}
+
+			# Struggle Catalysts.
+			if = {
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_broke_truce_against_important_character
+							CHAR = scope:defender
+						}
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_broke_truce_against_important_character
+							CHAR = scope:defender
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_broke_truce_against_important_character
+						character = scope:attacker
+					}
+				}
+			}
+		}
+	}
+	# Breaking Betrothals
+	if = {
+		limit = {
+			scope:attacker = {
+				is_allied_to = scope:defender
+				any_close_family_member = {
+					court_owner = scope:attacker
+					is_betrothed = yes
+					betrothed = {
+						court_owner = scope:defender
+						is_close_family_of = scope:defender
+					}
+				}
+			}
+		}
+		scope:attacker = {
+			custom_description_no_bullet = {
+				text = attack_breaking_betrothal_text
+			}
+			add_prestige = {
+				value = break_truce_prestige_loss
+				multiply = break_betrothal_prestige_cost
+			}
+			#Did you promise a grand wedding?
+			if = {
+				limit = {
+					has_variable = promised_grand_wedding_marriage_countdown
+					any_close_family_member = {
+						court_owner = scope:attacker
+						is_betrothed = yes
+						has_been_promised_grand_wedding = yes
+						betrothed = {
+							court_owner = scope:defender
+							is_close_family_of = scope:defender
+							has_been_promised_grand_wedding = yes
+						}
+					}
+				}
+				random_close_family_member = {
+					limit = {
+						court_owner = scope:attacker
+						is_betrothed = yes
+						has_been_promised_grand_wedding = yes
+						betrothed = {
+							court_owner = scope:defender
+							is_close_family_of = scope:defender
+							has_been_promised_grand_wedding = yes
+						}
+					}
+					save_scope_as = victim
+				}
+				#Start a house feud, if possible.
+				if = {
+					limit = {
+						has_dlc_feature = friends_and_foes
+						exists = scope:attacker.house.house_head
+						exists = scope:defender.house.house_head
+						NOT = { scope:attacker.house = scope:defender.house}
+					}
+					house_feud_start_effect = {
+						#Feuding House Head
+						ACTOR = scope:attacker.house.house_head
+						#Target House Head
+						TARGET = scope:defender.house.house_head
+						#Feud Reason
+						REASON = family_broke_gw_betrothal
+						#House Member attacker if relevant
+						ATTACKER = scope:attacker
+						#House Member victim if relevant
+						VICTIM = scope:victim
+					}
+				}
+				#Then remove promise
+				remove_variable = promised_grand_wedding_marriage_countdown
+			}
+			every_close_family_member = {
+				limit = {
+					court_owner = scope:attacker
+					is_betrothed = yes
+					betrothed = {
+						court_owner = scope:defender
+						is_close_family_of = scope:defender
+					}
+				}
+				break_betrothal = betrothed
+			}
+		}
+	}
+	# Breaking Alliance
+	else_if = {
+		limit = {
+			scope:attacker = {
+				is_allied_to = scope:defender
+			}
+		}
+		scope:attacker = {
+			break_alliance_due_to_attack_effect = { TARGET = scope:defender }
+		}
+	}
+	# Breaking Tributary
+	if = {
+		limit = {
+			OR = {
+				scope:attacker = { is_tributary_of = scope:defender	}
+				scope:defender = { is_tributary_of = scope:attacker	}
+			}
+		}
+		scope:attacker = {
+			break_tributary_contract_due_to_attack_effect = { DEFENDER = scope:defender }
+		}
+	}
+	# BP2: Attacking Warden
+	if = {
+		limit = {
+			scope:attacker = {
+				any_home_court_hostage = { is_hostage_of = scope:defender }
+			}
+		}
+		scope:attacker = {
+			add_prestige = break_truce_prestige_loss
+			add_prestige_level = break_truce_prestige_level_loss
+			add_character_modifier = {
+				modifier = attacked_warden
+				years = 5
+			}
+			# Hostages they hold (yours)
+			every_home_court_hostage = {
+				save_scope_as = hostage
+				every_close_family_member = {
+					limit = {
+						this != scope:attacker
+					}
+					custom = attacked_warden_tt
+					add_opinion = {
+						modifier = attacked_warden
+						target = scope:attacker
+					}
+				}
+				if = {
+					limit = { is_hostage_of = scope:defender }
+					custom_description_no_bullet = {
+						text = attack_breaking_truce_hostage
+						subject = scope:defender
+						object = scope:hostage
+					}
+				}
+			}
+		}
+	}
+	# BP2: Attacking Home Court
+	if = {
+		limit = {
+			scope:attacker = {
+				any_warden_hostage = { is_hostage_from = scope:defender }
+			}
+		}
+		scope:attacker = {
+			# Hostages you hold (theirs)
+			every_warden_hostage = {
+				save_scope_as = hostage
+				if = {
+					limit = { is_hostage_from = scope:defender }
+					custom_description_no_bullet = {
+						text = attack_breaking_truce_hostage
+						subject = scope:attacker
+						object = scope:hostage
+					}
+				}
+			}
+			add_prestige = break_truce_prestige_loss
+			add_prestige_level = break_truce_prestige_level_loss
+			add_character_modifier = {
+				modifier = attacked_home_court
+				years = 5
+			}
+			# Hostages they hold (yours)
+			every_home_court_hostage = {
+				save_scope_as = hostage
+				every_close_family_member = {
+					limit = {
+						this != scope:attacker
+					}
+					custom = attacked_warden_tt
+					add_opinion = {
+						modifier = attacked_home_court
+						target = scope:attacker
+					}
+				}
+				if = {
+					limit = { is_hostage_of = scope:defender }
+					custom_description_no_bullet = {
+						text = attack_breaking_truce_hostage
+						subject = scope:defender
+						object = scope:hostage
+					}
+				}
+			}
+		}
+	}
+
+	# Opinion
+	scope:defender = {
+		add_opinion = {
+			target = scope:attacker
+			modifier = declared_war
+		}
+	}
+	if = {
+		limit = {
+			NOT = {
+				scope:attacker = {
+					is_parent_of = scope:defender
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:defender = {
+					has_father = yes
+				}
+			}
+			scope:defender = {
+				father = {
+					add_opinion = {
+						target = scope:attacker
+						modifier = declared_war_on_son_daughter
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:defender = {
+					has_mother = yes
+				}
+			}
+			scope:defender = {
+				mother = {
+					add_opinion = {
+						target = scope:attacker
+						modifier = declared_war_on_son_daughter
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			scope:attacker.culture != scope:defender.culture
+			scope:attacker = { is_landed = yes }
+			scope:defender = { is_landed = yes }
+		}
+		scope:defender.culture = {
+			change_cultural_acceptance = {
+				target = scope:attacker.culture
+				value = declare_war_culture_acceptance_impact
+				desc = cultural_acceptance_loss_declared_war
+			}
+		}
+	}
+	
+	scope:attacker = {
+		if = {
+			limit = {
+				any_vassal = {
+					vassal_stance = parochial
+				}
+				eighty_percent_of_current_military_strength <= scope:defender.current_military_strength
+			}
+			custom_tooltip = parochial_vassal_disapproves_war
+			hidden_effect = {
+				every_vassal = {
+					vassal_stance = parochial
+					add_opinion = {
+						target = scope:attacker
+						modifier = parochial_disapproves_strong_war_enemy_opinion
+					}
+				}
+			}
+		}
+	}
+	
+	# If we're a clan this interaction affects unity
+	add_clan_unity_interaction_effect = {
+		CHARACTER = scope:attacker
+		TARGET = scope:defender
+		VALUE = massive_unity_loss
+		DESC = clan_unity_declared_war.desc
+		REVERSE_NON_HOUSE_TARGET = no
+	}
+	
+	intrigue_duel_on_attack_effect = yes
+}
+
+break_alliance_due_to_attack_effect = {
+	custom_description_no_bullet = { text = attack_ally_text }
+	add_prestige = attack_ally_prestige_loss
+	add_prestige_level = attack_ally_prestige_level_loss
+	add_character_modifier = {
+		modifier = attacked_ally
+		years = 3
+	}
+	break_alliance = $TARGET$
+}
+
+break_tributary_contract_due_to_attack_effect = {
+	save_scope_as = attacker
+	if = {
+		limit = { is_tributary_of = $DEFENDER$ }
+		reverse_add_opinion = {
+			modifier = tributary_ceased_payments_opinion
+			target = $DEFENDER$
+		}
+		$DEFENDER$ = {
+			send_interface_toast = {
+				type = msg_tributary_contract_broken_due_to_war
+				left_icon = $DEFENDER$
+				right_icon = scope:attacker
+			}
+		}
+		send_interface_toast = {
+			type = msg_tributary_contract_broken_due_to_war
+			left_icon = scope:attacker
+			right_icon = $DEFENDER$
+		}
+		end_tributary = yes
+	}
+	else = {
+		if = {
+			limit = {
+				scope:attacker = {
+					NOT = { has_character_flag = allowed_war_declaration_sans_truce_penalties }
+				}
+			}
+			reverse_add_opinion = {
+				modifier = betrayal_opinion
+				target = $DEFENDER$
+				opinion = -50
+			}
+		}	
+		send_interface_toast = {
+			type = msg_tributary_contract_broken_due_to_war
+			left_icon = scope:attacker
+			right_icon = $DEFENDER$
+		}
+		$DEFENDER$ = {
+			send_interface_toast = {
+				type = msg_tributary_contract_broken_due_to_war
+				left_icon = $DEFENDER$
+				right_icon = scope:attacker
+			}
+			end_tributary = yes
+		}
+	}
+}
+
+conquest_cb_title_transfer = {
+	save_scope_as = target_title # For the vassalization trigger.
+
+	# Compile a list of all counties in the kingdom we will take from the defender.
+	every_in_de_jure_hierarchy = {
+		continue = {
+			tier > tier_county
+		}
+		limit = {
+			tier = tier_county
+
+			# Current holder must be a (sub)vassal of the defender (no poaching titles from 3rd parties!)
+			holder ?= {
+				OR = {
+					this = scope:defender
+					target_is_liege_or_above = scope:defender
+				}
+			}
+		}
+		add_to_list = titles_taken
+	}
+
+	# If we can take the current holder of a title as a vassal instead of siezing their land directly, do so.
+	every_in_de_jure_hierarchy = {
+		limit = {
+			tier >= tier_county
+			trigger_if = {
+				limit = { $RELIGIOUS_WAR$ = yes }
+				religious_cb_holder_under_target_can_be_vassalized = yes
+			}
+			trigger_else = {
+				conquest_cb_holder_under_target_can_be_vassalized = yes
+			}
+		}
+
+		# Mark this vassal as being eligible to transfer from the defender to the attacker.
+		holder = {
+			if = {
+				limit = {
+					NOT = { is_in_list = potential_vassals}
+				}
+				add_to_list = potential_vassals
+			}
+		}
+	}
+	ordered_in_list = {
+		list = potential_vassals
+		order_by = highest_held_title_tier
+		max = 99
+		check_range_bounds = no
+
+		if = {
+			# If a liege has already been added to the vassalization list, skip us (we will remain our liege's vassal.)
+			limit = {
+				save_temporary_scope_as = this_vassal
+				any_in_list = {
+					list = vassals_taken
+					target_is_vassal_or_below = scope:this_vassal
+				}
+			}
+		}
+		else = {
+			# Flag this character to be vassalized instead of usurped.
+			add_to_list = vassals_taken
+
+			# Remove the counties this vassal holds from the siezed title list (the vassal gets to keep their land when switching allegiance!)
+			every_sub_realm_county = {
+				remove_from_list = titles_taken
+			}
+		}
+	}
+}
+
+expansion_cb_title_transfer = {
+	save_scope_as = target_title # For the vassalization trigger.
+
+	# Compile a list of all counties in the target title we will take from the defender.
+	every_in_de_jure_hierarchy = {
+		continue = {
+			tier > tier_county
+		}
+		limit = {
+			tier = tier_county
+
+			# Current holder must be a (sub)vassal of the defender (no poaching titles from 3rd parties!)
+			holder ?= {
+				OR = {
+					this = scope:defender
+					target_is_liege_or_above = scope:defender
+				}
+			}
+		}
+		add_to_list = titles_taken
+	}
+	
+	if = {
+		limit = {
+			save_temporary_scope_as = checked_title
+			
+			tier >= scope:attacker.highest_held_title_tier
+			OR = {
+				AND = {
+					is_title_created = yes
+					holder = {
+						NOT = {
+							any_sub_realm_county = {
+								NOT = { target_is_de_jure_liege_or_above = scope:checked_title }
+							}
+						}
+					}
+				}
+				AND = {
+					is_title_created = no
+					any_de_jure_county = {
+						percent > 0.5
+						holder ?= {
+							OR = {
+								this = scope:defender
+								any_liege_or_above = { this = scope:defender }
+							}
+						}
+					}
+				}
+			}
+		}
+		add_to_list = target_title_taken
+	}
+
+	# If we can take the current holder of a title as a vassal instead of siezing their land directly, do so.
+	every_in_de_jure_hierarchy = {
+		limit = {
+			tier >= tier_county
+			conquest_cb_holder_under_target_can_be_vassalized = yes
+		}
+
+		# Mark this vassal as being eligible to transfer from the defender to the attacker.
+		holder = {
+			if = {
+				limit = {
+					NOT = { is_in_list = potential_vassals}
+				}
+				add_to_list = potential_vassals
+			}
+		}
+	}
+	ordered_in_list = {
+		list = potential_vassals
+		order_by = highest_held_title_tier
+		max = 99
+		check_range_bounds = no
+
+		if = {
+			# If a liege has already been added to the vassalization list, skip us (we will remain our liege's vassal.)
+			limit = {
+				save_temporary_scope_as = this_vassal
+				any_in_list = {
+					list = vassals_taken
+					target_is_vassal_or_below = scope:this_vassal
+				}
+			}
+		}
+		else = {
+			# Flag this character to be vassalized instead of usurped.
+			add_to_list = vassals_taken
+
+			# Remove the counties this vassal holds from the siezed title list (the vassal gets to keep their land when switching allegiance!)
+			every_sub_realm_county = {
+				remove_from_list = titles_taken
+			}
+		}
+	}
+}
+
+expedition_cb_title_transfer = {
+	save_scope_as = target_title # For the vassalization trigger.
+
+	# Compile a list of all counties in the kingdom we will take from the defender.
+	every_in_de_jure_hierarchy = {
+		continue = {
+			tier > tier_county
+		}
+		limit = {
+			OR = {
+				tier = tier_county
+				tier = tier_duchy
+			}
+
+			# Current holder must be a (sub)vassal of the defender (no poaching titles from 3rd parties!)
+			holder ?= {
+				OR = {
+					this = scope:defender
+					target_is_liege_or_above = scope:defender
+				}
+			}
+		}
+		add_to_list = titles_taken
+	}
+
+	# If we can take the current holder of a title as a vassal instead of siezing their land directly, do so.
+	every_in_de_jure_hierarchy = {
+		limit = {
+			tier >= tier_county
+			trigger_if = {
+				limit = { $RELIGIOUS_WAR$ = yes }
+				religious_cb_holder_under_target_can_be_vassalized = yes
+			}
+			trigger_else = {
+				conquest_cb_holder_under_target_can_be_vassalized = yes
+			}
+		}
+
+		# Mark this vassal as being eligible to transfer from the defender to the attacker.
+		holder = {
+			if = {
+				limit = {
+					NOT = { is_in_list = potential_vassals}
+				}
+				add_to_list = potential_vassals
+			}
+		}
+	}
+	ordered_in_list = {
+		list = potential_vassals
+		order_by = highest_held_title_tier
+		max = 99
+		check_range_bounds = no
+
+		if = {
+			# If a liege has already been added to the vassalization list, skip us (we will remain our liege's vassal.)
+			limit = {
+				save_temporary_scope_as = this_vassal
+				any_in_list = {
+					list = vassals_taken
+					target_is_vassal_or_below = scope:this_vassal
+				}
+			}
+		}
+		else = {
+			# Flag this character to be vassalized instead of usurped.
+			add_to_list = vassals_taken
+
+			# Remove the counties this vassal holds from the siezed title list (the vassal gets to keep their land when switching allegiance!)
+			every_sub_realm_county = {
+				remove_from_list = titles_taken
+			}
+		}
+	}
+}
+
+struggle_cb_title_transfer = {
+	save_scope_as = target_title # For the vassalization trigger.
+
+	# Compile a list of all counties in the kingdom we will take from the defender.
+	every_in_de_jure_hierarchy = {
+		continue = {
+			tier > tier_county
+		}
+		limit = {
+			tier = tier_county
+
+			# Current holder must be a (sub)vassal of the defender (no poaching titles from 3rd parties!)
+			holder ?= {
+				OR = {
+					this = scope:defender
+					target_is_liege_or_above = scope:defender
+				}
+			}
+		}
+		add_to_list = titles_taken
+	}
+
+	every_in_list = {
+		list = target_titles
+		limit = {
+			tier = tier_county
+			holder ?= {
+				highest_held_title_tier < scope:attacker.highest_held_title_tier
+				OR = {
+					this = scope:defender
+					target_is_liege_or_above = scope:defender
+				}
+				any_sub_realm_county = {
+					count = all
+					is_in_list = titles_taken
+				}
+			}
+		}
+		holder = {
+			if = {
+				limit = {
+					NOT = { is_in_list = potential_vassals }
+				}
+				add_to_list = potential_vassals
+			}
+		}
+	}
+
+	ordered_in_list = {
+		list = potential_vassals
+		order_by = highest_held_title_tier
+		max = 99
+		check_range_bounds = no
+
+		if = {
+			# If a liege has already been added to the vassalization list, skip us (we will remain our liege's vassal.)
+			limit = {
+				save_temporary_scope_as = this_vassal
+				any_in_list = {
+					list = vassals_taken
+					target_is_vassal_or_below = scope:this_vassal
+				}
+			}
+		}
+		else = {
+			# Flag this character to be vassalized instead of usurped.
+			add_to_list = vassals_taken
+
+			# Remove the counties this vassal holds from the siezed title list (the vassal gets to keep their land when switching allegiance!)
+			every_held_county = {
+				remove_from_list = titles_taken
+			}
+			every_sub_realm_county = {
+				remove_from_list = titles_taken
+			}
+		}
+	}
+}
+
+excommunication_cb_piety_change = {
+
+	#Amount of piety gain is scaled based on the highest tier title the defender has.
+	if = {
+		limit = {
+			scope:defender.highest_held_title_tier = tier_empire
+		}
+		$WINNER$ = {
+			if = {
+				limit = {
+					$WINNER$ = scope:attacker
+				}
+				add_piety = {
+					add = religious_cb_piety_gain_empire
+					multiply = excommunication_cb_piety_change_multiplier
+				}
+			}
+			else = {
+				add_piety = religious_cb_piety_gain_empire
+			}
+		}
+		$LOSER$ = {
+			add_piety = religious_cb_piety_loss_empire
+		}
+	}
+
+	else_if = {
+		limit = {
+			scope:defender.highest_held_title_tier = tier_kingdom
+		}
+		$WINNER$ = {
+			if = {
+				limit = {
+					$WINNER$ = scope:attacker
+				}
+				add_piety = {
+					add = religious_cb_piety_gain_kingdom
+					multiply = excommunication_cb_piety_change_multiplier
+				}
+			}
+			else = {
+				add_piety = religious_cb_piety_gain_kingdom
+			}
+		}
+		$LOSER$ = {
+			add_piety = religious_cb_piety_loss_kingdom
+		}
+	}
+	else_if = {
+		limit = {
+			scope:defender.highest_held_title_tier = tier_duchy
+		}
+		$WINNER$ = {
+			if = {
+				limit = {
+					$WINNER$ = scope:attacker
+				}
+				add_piety = {
+					add = religious_cb_piety_gain_duchy
+					multiply = excommunication_cb_piety_change_multiplier
+				}
+			}
+			else = {
+				add_piety = religious_cb_piety_gain_duchy
+			}
+		}
+		$LOSER$ = {
+			add_piety = religious_cb_piety_loss_duchy
+		}
+	}
+	else = {
+		$WINNER$ = {
+			if = {
+				limit = {
+					$WINNER$ = scope:attacker
+				}
+				add_piety = {
+					add = religious_cb_piety_gain_county
+					multiply = excommunication_cb_piety_change_multiplier
+				}
+			}
+			else = {
+				add_piety = religious_cb_piety_gain_county
+			}
+		}
+		$LOSER$ = {
+			add_piety = religious_cb_piety_loss_county
+		}
+	}
+}
+
+on_lost_aggression_war_discontent_loss = {
+	scope:loser = {
+		if = {
+			limit = {
+				has_targeting_faction = yes
+			}
+			add_targeting_factions_discontent  = 25
+		}
+	}
+}
+
+
+# Imprison all faction-members (rebelling vassals if there's no faction) if they lose a revolt-war and add a revoke reason
+on_lost_faction_revolt_war = {
+	scope:defender = { save_scope_as = imprisoner }
+	if = {
+		limit = {
+			exists = scope:attacker.joined_faction
+		}
+		scope:attacker.joined_faction = {
+			set_variable = {
+				name = peasant_destroying
+				value = yes
+			}
+			every_faction_member = {
+				if = {
+					limit = {
+						exists = scope:attacker.joined_faction # Can get destroyed as we loop through
+					}
+					leave_faction_with_cooldown_effect = {
+						FACTION = scope:attacker.joined_faction
+						YEARS = faction_war_defeat_cooldown
+					}
+				}
+				else = {
+					add_faction_cooldown_effect = { YEARS = faction_war_defeat_cooldown }
+				}
+			}
+		}
+	}
+	war = {
+		every_war_attacker = {
+			limit = {
+				exists = liege
+				any_liege_or_above = { this = scope:defender }
+			}
+			if = {
+				limit = {
+					has_title = title:k_chrysanthemum_throne
+					exists = title:k_chrysanthemum_throne.current_heir
+				}
+				title:k_chrysanthemum_throne.current_heir = { save_scope_as = new_emperor }
+				create_title_and_vassal_change = {
+					type = revoked
+					save_scope_as = title_change
+				}
+				title:k_chrysanthemum_throne = {
+					change_title_holder = {
+						holder = scope:new_emperor
+						change = scope:title_change
+					}
+				}
+				resolve_title_and_vassal_change = scope:title_change
+			}
+			if = { # Imprison them if they aren't imprisoned.
+				limit = {
+					is_imprisoned = no
+				}
+				hard_imprison_character_effect = {
+					TARGET = this
+					IMPRISONER = scope:defender
+				}
+			}
+			scope:defender = {
+				add_opinion = {
+					target = prev
+					modifier = vassal_lost_faction_revolt_war
+				}
+			}
+			hidden_effect = {
+				#block them from joining factions if they aren't blocked yet, hidden because you should always see it through the effect applied to every_faction_member above
+				if = {
+					limit = {
+						NOT = { has_character_flag = joining_faction_block }
+					}
+					add_faction_cooldown_effect = { YEARS = faction_war_defeat_cooldown }
+				}
+			}
+		}
+	}
+}
+
+# Imprison all revolters on lost request revolt.
+on_lost_request_revolt_war = {
+	war = {
+		every_war_attacker = {
+			limit = {
+				exists = liege
+				any_liege_or_above = { this = scope:defender }
+			}
+			if = {
+				limit = { is_imprisoned = no }
+				hard_imprison_character_effect = {
+					TARGET = this
+					IMPRISONER = scope:defender
+				}
+			}
+			if = {
+				limit = { liege = scope:defender }
+				add_faction_cooldown_effect = { YEARS = faction_war_defeat_cooldown }
+			}
+			scope:defender = {
+				add_opinion = {
+					target = prev
+					modifier = vassal_lost_faction_revolt_war
+				}
+			}
+		}
+	}
+}
+
+# Add revoke reason on all faction-members if they white peace a revolt-war
+on_white_peace_faction_revolt_war = {
+	if = {
+		limit = { exists = scope:attacker.joined_faction  }
+		scope:attacker.joined_faction = {
+			save_scope_as = current_faction
+			every_faction_member = {
+				if = {
+					limit = {
+						exists = scope:current_faction # Can get destroyed as we loop through
+					}
+					leave_faction_with_cooldown_effect = {
+						FACTION = scope:current_faction
+						YEARS = faction_war_white_peace_cooldown
+					}
+				}
+				else = {
+					add_faction_cooldown_effect = { YEARS = faction_war_white_peace_cooldown }
+				}
+				scope:defender = {
+					add_opinion = {
+						target = prev
+						modifier = vassal_wp_faction_revolt_war
+					}
+				}
+			}
+		}
+		scope:current_faction ?= { add_faction_discontent = -200 }
+	}
+}
+
+#Add revoke reason to all attackers if they white peace on request war.
+on_white_peace_request_revolt_war = {
+	war = {
+		every_war_attacker = {
+			limit = {
+				exists = liege
+				any_liege_or_above = { this = scope:defender }
+			}
+			scope:defender = {
+				add_opinion = {
+					target = prev
+					modifier = vassal_wp_faction_revolt_war
+				}
+			}
+			if = {
+				limit = { liege = scope:defender }
+				add_faction_cooldown_effect = { YEARS = faction_war_white_peace_cooldown }
+			}
+		}
+	}
+}
+
+change_liege_or_become_independent = {
+	$CHANGE$ = { save_scope_as = change }
+	$VASSAL$ = { save_scope_as = vassal }
+	scope:vassal.liege = { save_scope_as = liege }
+
+	if = {
+		limit = {
+			scope:liege = {
+				top_liege = this
+			}
+		}
+		scope:vassal = {
+			becomes_independent = {
+				change = scope:change
+			}
+		}
+	}
+	else = {
+		scope:vassal = {
+			change_liege = {
+				liege = scope:liege.liege
+				change = scope:change
+			}
+		}
+	}
+}
+
+on_peasant_faction_war_win_common = {
+	create_title_and_vassal_change = {
+		type = conquest
+		save_scope_as = change
+		add_claim_on_loss = yes
+	}
+
+	setup_claim_cb = {
+		titles = $TARGET_TITLES$
+		attacker = $ATTACKER$
+		defender = $DEFENDER$
+		claimant = $CLAIMANT$
+		change = scope:change
+	}
+
+	resolve_title_and_vassal_change = scope:change
+}
+
+on_claimant_faction_war_win_common = {
+	$DEFENDER$ = {
+		if = {
+			limit = {
+				is_tributary = yes
+				exists = suzerain
+				$CLAIMANT$ = {
+					is_tributary = no
+					OR = {
+						is_ruler = no
+						is_vassal_or_below_of = $DEFENDER$
+					}
+				}
+			}
+			suzerain = { save_scope_as = handover_suzerain }
+		}
+	}
+	$CLAIMANT$ = {
+		save_scope_as = the_claimant
+	}
+	
+	# If the claimant is the prisoner of the defender, free the claimant (it doesn't make much sense to leave the new king in the old king's dungeon)
+	scope:the_claimant = {
+		if = {
+			limit = {
+				is_imprisoned_by = $DEFENDER$
+			}
+			release_from_prison = yes
+		}
+	}
+
+	# Add mutual opinion bonuses between claimant and faction members, as well as a hook on the claimant if possible.
+	$ATTACKER$.joined_faction = {
+		every_faction_member = {
+			custom = FACTION_CLAIMANT_EVERY_FACTION_MEMBER
+			limit = {
+				NOT = { this = $ATTACKER$.joined_faction.special_character }
+			}
+			hidden_effect = {
+				add_opinion = {
+					modifier = claimant_faction_member_opinion
+					target = $ATTACKER$.joined_faction.special_character
+				}
+				reverse_add_opinion = {
+					modifier = claimant_faction_claimant_opinion
+					target = $ATTACKER$.joined_faction.special_character
+				}
+			}
+			if = {
+				limit = {
+					can_add_hook = {
+						type = favor_hook
+						target = $ATTACKER$.joined_faction.special_character
+					}
+				}
+				add_hook = {
+					type = favor_hook
+					target = $ATTACKER$.joined_faction.special_character
+				}
+			}
+			# Struggle boost
+			if = {
+				limit = {
+					culture = $ATTACKER$.joined_faction.special_character.culture
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = struggle_prestige_install_same_culture_claimant
+					}
+				}
+				add_prestige = major_prestige_gain
+			}
+			
+			# Save the number of faction members for use further down
+			add_to_list = num_faction_members
+		}
+	}
+
+	# Give the claimant their new title.
+	create_title_and_vassal_change = {
+		type = faction_demand
+		save_scope_as = change
+		add_claim_on_loss = yes
+	}
+
+	# Ceremonial Liege
+	if = {
+		limit = {
+			exists = top_liege.primary_title.var:administrative_ui_special_title
+			scope:faction_targeted_title = $DEFENDER$.top_liege.primary_title.var:administrative_ui_special_title
+		}
+		$DEFENDER$ = {
+			every_held_title = {
+				limit = {
+					is_noble_family_title = no
+					is_landless_type_title = no
+					tier >= scope:faction_targeted_title.tier
+				}
+				add_to_list = faction_titles
+			}
+		}
+	}
+	every_in_list = {
+		list = $TARGET_TITLES$
+		add_to_list = faction_titles
+		holder = {
+			save_scope_as = target_holder
+		}
+	}
+	scope:target_holder ?= {
+		if = {
+			limit = {
+				top_liege = this
+				government_allows = administrative
+				primary_title = { is_in_list = faction_titles }
+			}
+			every_held_title = {
+				title_tier > barony
+				limit = {
+					is_noble_family_title = no
+				}
+				add_to_list = faction_titles
+			}
+		}
+	}
+	ordered_in_list = {
+		list = $TARGET_TITLES$
+		position = 0
+		order_by = tier
+		save_scope_as = target_title
+	}
+	$ATTACKER$.joined_faction = {
+		every_faction_county_member = {
+			limit = {
+				NOT = { is_in_list = faction_titles }
+			}
+			add_to_list = faction_titles
+		}
+	}
+
+	setup_claim_cb = {
+		titles = faction_titles
+		attacker = $ATTACKER$
+		defender = $DEFENDER$
+		claimant = scope:the_claimant
+		change = scope:change
+		civil_war = yes
+	}
+
+	# Ensure that the liege structure is preserved
+	if = {
+		limit = {
+			scope:target_title.holder = { top_liege != this }
+			scope:the_claimant.primary_title.tier < scope:target_title.tier
+		}
+		scope:the_claimant = {
+			change_liege = {
+				liege = scope:target_title.holder.liege
+				change = scope:change
+			}
+		}
+	}
+
+	# Preserve Grandeur
+	if = {
+		limit = {
+			scope:target_title.holder = {
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+			}
+			scope:the_claimant = {
+				has_royal_court = no
+			}
+		}
+		scope:the_claimant = {
+			set_variable = {
+				name = previous_holder_grandeur_value
+				value = scope:target_title.holder.court_grandeur_current
+			}
+		}
+	}
+	
+	hidden_effect = {
+		if = {
+			limit = {
+				exists = scope:target_title.holder.dynasty
+				exists = scope:the_claimant.dynasty
+				scope:target_title.holder = {
+					has_variable = conqueror
+					scope:target_title.holder.dynasty = scope:the_claimant.dynasty
+				}
+				scope:the_claimant = {
+					OR = {
+						is_ai = no
+						ai_has_cautious_personality = no
+					}
+					NOT = { has_variable = conqueror }
+				}
+			}
+			scope:the_claimant = {
+				if = {
+					limit = {
+						is_ai = no
+					}
+					trigger_event = {
+						id = conqueror.0001
+						days = 10
+					}
+				}
+				else = {
+					trigger_event = conqueror.0001
+				}
+			}
+		}
+	}
+
+	resolve_title_and_vassal_change = scope:change
+	
+	# We give you decent Legitimacy so you don't get immediately deposed - people _really_ want you in the throne
+	# Can you even get Legitimacy?
+	if = {
+		limit = {
+			scope:the_claimant = {
+				is_valid_for_legitimacy_change = yes
+			}
+		}
+		# Per tier
+		if = {
+			limit = {
+				scope:target_title.tier = tier_empire
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 1000
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				scope:target_title.tier = tier_kingdom
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 750
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				scope:target_title.tier = tier_duchy
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 500
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		else = {
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 300
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		# Per number of faction members
+		if = {
+			limit = {
+				list_size:num_faction_members > 0
+				scope:the_claimant = {
+					is_valid_for_legitimacy_change = yes
+				}
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = list_size:num_faction_members
+					multiply = 50
+				}
+			}
+		}
+		
+	}
+
+	# Add Appropriate Grandeur
+	scope:the_claimant = {
+		if = {
+			limit = {
+				exists = var:previous_holder_grandeur_value
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+			}
+			hidden_effect = {
+				change_current_court_grandeur = -100 # Reset to 0
+				change_current_court_grandeur = var:previous_holder_grandeur_value
+				remove_variable = previous_holder_grandeur_value
+			}
+			change_current_court_grandeur = massive_court_grandeur_gain # Gain a bonus to Grandeur for winning a claim faction
+		}
+	}
+
+	# Byzantine flavor
+	if = {
+		limit = {
+			scope:target_title = title:e_byzantium
+			has_ep3_dlc_trigger = yes
+		}
+		scope:the_claimant = { 
+			trigger_event = {
+				id = ep3_emperor_yearly.2030
+				days = 15
+			}
+		}
+	}
+	
+	if = {
+		limit = {
+			exists = scope:handover_suzerain
+		}
+		start_tributary_interaction_effect = {
+			TRIBUTARY = scope:the_claimant
+			SUZERAIN = scope:handover_suzerain
+		}
+	}
+
+}
+
+
+#To release the winners prisoners when the war ends
+#Needs the arguments ATTACKER and WINNER. ATTACKER is weather the attacker won or not (y/n) and WINNER is the scope of the winner.
+release_prisoners_of_war_effect = {
+	#Prisoners of defenders
+	every_war_defender = {
+		every_prisoner = {
+			limit = {
+				OR = {
+					this = scope:war.primary_attacker
+					scope:war.primary_attacker.primary_title = {
+						place_in_line_of_succession = {
+							target = prev
+							value <= 3
+						}
+					}
+				}
+			}
+			add_to_list = defender_valuable_prisoners_list
+			release_from_prison = yes
+		}
+		scope:war.primary_defender = {
+			set_variable = {
+				name = valuable_prisoners
+				value = list_size:defender_valuable_prisoners_list
+			}
+		}
+	}
+	#Prisoners of attackers
+	every_war_attacker = {
+		every_prisoner = {
+			limit = {
+				OR = {
+					this = scope:war.primary_defender
+					scope:war.primary_defender.primary_title = {
+						place_in_line_of_succession = {
+							target = prev
+							value <= 3
+						}
+					}
+				}
+			}
+			add_to_list = attacker_valuable_prisoners_list
+			release_from_prison = yes
+		}
+		scope:war.primary_attacker = {
+			set_variable = {
+				name = valuable_prisoners
+				value = list_size:attacker_valuable_prisoners_list
+			}
+		}
+	}
+}
+
+
+send_captured_combatant_message = {
+	# The positioning of the character portraits needs to sync up with the loc-string we're using.
+	if = {
+		limit = {
+			$IS_ENEMY_MESSAGE$ = no
+		}
+		root = {
+			save_scope_as = right_character
+		}
+		scope:enemy_army_owner = {
+			save_scope_as = left_character
+		}
+	}
+	else = {
+		root = {
+			save_scope_as = left_character
+		}
+		scope:enemy_army_owner = {
+			save_scope_as = right_character
+		}
+	}
+
+	# Send either a toast or a message to this character, depending on what variable was passed in.
+	if = {
+		limit = {
+			$TOAST$ = yes
+		}
+		send_interface_toast = {
+			message_filter_type = combat_prisoners
+			title = $DESC$
+			left_icon = scope:left_character
+			right_icon = scope:right_character
+		}
+	}
+	else_if = {
+		limit = {
+			$IS_ENEMY_MESSAGE$ = no
+		}
+		send_interface_message = {
+			type = event_captured_combatants_good
+			title = $TITLE$
+			desc = $DESC$
+			left_icon = scope:left_character
+			right_icon = scope:right_character
+		}
+	}
+	else = {
+		send_interface_message = {
+			type = event_captured_combatants_bad
+			title = $TITLE$
+			desc = $DESC$
+			left_icon = scope:left_character
+			right_icon = scope:right_character
+		}
+	}
+}
+
+send_slain_combatant_message = {
+	# The positioning of the character portraits needs to sync up with the loc-string we're using.
+	if = {
+		limit = {
+			$IS_ENEMY_MESSAGE$ = no
+		}
+		root = {
+			save_scope_as = right_character
+		}
+		$KILLER$ = {
+			save_scope_as = left_character
+		}
+	}
+	else = {
+		root = {
+			save_scope_as = left_character
+		}
+		$KILLER$ = {
+			save_scope_as = right_character
+		}
+	}
+
+	# Send either a toast or a message to this character, depending on what variable was passed in.
+	if = {
+		limit = {
+			$TOAST$ = yes
+		}
+		send_interface_toast = {
+			message_filter_type = combat_casualties
+			title =  $DESC$
+			left_icon = scope:left_character
+			right_icon = scope:right_character
+		}
+	}
+	#
+	else_if = {
+		limit = {
+			$IS_ENEMY_MESSAGE$ = no
+		}
+		send_interface_message = {
+			type = event_slain_combatants_good
+			title = $TITLE$
+			desc = $DESC$
+			left_icon = scope:left_character
+			right_icon = scope:right_character
+		}
+	}
+	else = {
+		send_interface_message = {
+			type = event_slain_combatants_bad
+			title = $TITLE$
+			desc = $DESC$
+			left_icon = scope:left_character
+			right_icon = scope:right_character
+		}
+	}
+}
+
+send_new_alliance_message = {
+	$THIS_CHARACTER$ = {
+		every_character_war = {
+			limit = {
+				# As a pure notification thing, we only care about players. No need to waste CPU cycles for AI-only wars.
+				any_war_participant = {
+					is_ai = no
+				}
+				# Only if we're the primary attacker or defender (non-primary participants can't call their own allies)
+				OR = {
+					primary_attacker = $THIS_CHARACTER$
+					primary_defender = $THIS_CHARACTER$
+				}
+				# Don't send messages about alliances to landless courtiers (who can't actually join wars, alliance or no)
+				$THIS_CHARACTER$ = { is_playable_character = yes }
+				$OTHER_CHARACTER$ = { is_playable_character = yes }
+			}
+			save_scope_as = this_war
+			$THIS_CHARACTER$ = { save_scope_as = this_character }
+			$OTHER_CHARACTER$ = { save_scope_as = other_character }
+			every_war_participant = {
+				limit = {
+					is_ai = no
+					# We only want to alert people of potential new enemies
+					any_war_enemy = { this = scope:this_character}
+				}
+				send_interface_toast = {
+					type = msg_war_enemy_new_ally
+					title = enemy_gained_new_ally
+					left_icon = scope:this_character
+					right_icon = scope:other_character
+					custom_tooltip = enemy_gained_new_ally_tt
+				}
+			}
+		}
+	}
+}
+
+# TRUCES
+# Add attacker truce on victory
+add_truce_attacker_victory_effect = {
+	scope:attacker = { # Vassal Stance opinion effect
+		if = {
+			limit = {
+				any_vassal = {
+					vassal_stance = glory_hound
+				}
+			}
+			custom_tooltip = glory_hound_approves_war_victory
+			hidden_effect = {
+				every_vassal = {
+					vassal_stance = glory_hound
+					add_opinion = {
+						target = scope:attacker
+						modifier = glory_hound_approves_war_victory_opinion
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= { has_house_unity_stage = antagonistic }	
+				any_vassal = {
+					house ?= scope:attacker.house
+				}
+			}
+			custom_tooltip = antagonistic_house_approves_war_victory
+			hidden_effect = {
+				every_vassal = {
+					limit = {
+						house ?= scope:attacker.house
+					}
+					add_opinion = {
+						target = scope:attacker
+						modifier = antagonistic_house_approves_war_victory_opinion
+					}
+				}
+			}
+		}
+	}
+	scope:defender ?= { # Vassal Stance opinion effect
+		if = {
+			limit = {
+				any_vassal = {
+					vassal_stance = glory_hound
+				}
+			}
+			custom_tooltip = glory_hound_disapproves_war_defeat_defender
+			hidden_effect = {
+				every_vassal = {
+					vassal_stance = glory_hound
+					add_opinion = {
+						target = scope:defender
+						modifier = glory_hound_disapproves_war_defeat_opinion
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= { has_house_unity_stage = antagonistic }	
+				any_vassal = {
+					house ?= scope:defender.house
+				}
+			}
+			custom_tooltip = antagonistic_house_disapproves_war_defeat_defender
+			hidden_effect = {
+				every_vassal = {
+					limit = {
+						house ?= scope:defender.house
+					}
+					add_opinion = {
+						target = scope:defender
+						modifier = antagonistic_house_disapproves_war_defeat_opinion
+					}
+				}
+			}
+		}
+	}
+	scope:attacker = {
+		hidden_effect = {
+			add_truce_one_way = {
+				character = scope:defender
+				days = standard_truce_duration_days
+				war = root.war
+				result = victory
+			}
+		}
+	}
+	# Feud
+	scope:attacker.house = {
+		change_house_relation_feud_score_effect = {
+			TARGET = scope:defender.house
+			REASON = war
+			VALUE = house_feud_medium_counter_value
+		}
+	}
+	# Tooltips for hostage exchange, handled here as it's shared between casus belli
+	bp2_hostage_war_end_tooltip_effect = yes
+}
+
+# Add white peace truce
+add_truce_white_peace_effect = {
+	scope:attacker = { # Vassal Stance opinion effect
+		if = {
+			limit = {
+				any_vassal = {
+					vassal_stance = glory_hound
+				}
+			}
+			custom_tooltip = glory_hound_disapproves_war_white_peace
+			hidden_effect = {
+				every_vassal = {
+					vassal_stance = glory_hound
+					add_opinion = {
+						target = scope:attacker
+						modifier = glory_hound_disapproves_war_white_peace_opinion
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= { has_house_unity_stage = antagonistic }	
+				any_vassal = {
+					house ?= scope:attacker.house
+				}
+			}
+			custom_tooltip = antagonistic_house_disapproves_war_white_peace
+			hidden_effect = {
+				every_vassal = {
+					limit = {
+						house ?= scope:attacker.house
+					}
+					add_opinion = {
+						target = scope:attacker
+						modifier = antagonistic_house_disapproves_war_white_peace_opinion
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_active_accolade = {
+					accolade_parameter = accolade_champions_white_peace
+				}
+			}
+			add_prestige = accolade_white_peace_prestige_value
+		}
+	}
+	scope:defender = { # Vassal Stance opinion effect
+		if = {
+			limit = {
+				any_vassal = {
+					vassal_stance = glory_hound
+				}
+			}
+			custom_tooltip = glory_hound_disapproves_war_white_peace_defender
+			hidden_effect = {
+				every_vassal = {
+					vassal_stance = glory_hound
+					add_opinion = {
+						target = scope:defender
+						modifier = glory_hound_disapproves_war_white_peace_opinion
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= { has_house_unity_stage = antagonistic }	
+				any_vassal = {
+					house ?= scope:defender.house
+				}
+			}
+			custom_tooltip = antagonistic_house_disapproves_war_white_peace_defender
+			hidden_effect = {
+				every_vassal = {
+					limit = {
+						house ?= scope:defender.house
+					}
+					add_opinion = {
+						target = scope:defender
+						modifier = antagonistic_house_disapproves_war_white_peace_opinion
+					}
+				}
+			}
+		}
+	}
+	hidden_effect = {
+		scope:attacker = {
+			add_truce_one_way = {
+				character = scope:defender
+				days = standard_truce_duration_days
+				war = root.war
+				result = white_peace
+			}
+		}
+	}
+	scope:attacker = {
+		if = {
+			limit = {
+				house_has_feud_relation_with_trigger = { TARGET = scope:defender }
+			}
+			house = {
+				every_house_member = {
+					limit = { is_ai = no }
+					send_interface_message = {
+						type = house_feud_white_peace_message
+						left_icon = scope:attacker
+						right_icon = scope:defender
+						title = msg_house_feud_white_peace
+						desc = msg_house_feud_white_peace_desc
+					}
+				}
+			}
+			scope:defender.house = {
+				every_house_member = {
+					limit = { is_ai = no }
+					send_interface_message = {
+						type = house_feud_white_peace_message
+						left_icon = scope:defender
+						right_icon = scope:attacker
+						title = msg_house_feud_white_peace
+						desc = msg_house_feud_white_peace_desc
+					}
+				}
+			}
+		}
+	}
+	# Tooltips for hostage exchange, handled here as it's shared between casus belli
+	bp2_hostage_war_end_tooltip_effect = yes
+}
+
+# Add attacker truce on defeat
+add_truce_attacker_defeat_effect = {
+	scope:attacker = { # Vassal Stance opinion effect
+		if = {
+			limit = {
+				any_vassal = {
+					vassal_stance = glory_hound
+				}
+			}
+			custom_tooltip = glory_hound_disapproves_war_defeat
+			hidden_effect = {
+				every_vassal = {
+					vassal_stance = glory_hound
+					add_opinion = {
+						target = scope:attacker
+						modifier = glory_hound_disapproves_war_defeat_opinion
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= { has_house_unity_stage = antagonistic }	
+				any_vassal = {
+					house ?= scope:attacker.house
+				}
+			}
+			custom_tooltip = antagonistic_house_disapproves_war_defeat
+			hidden_effect = {
+				every_vassal = {
+					limit = {
+						house ?= scope:attacker.house
+					}
+					add_opinion = {
+						target = scope:attacker
+						modifier = antagonistic_house_disapproves_war_defeat_opinion
+					}
+				}
+			}
+		}
+	}
+	hidden_effect = {
+		scope:attacker = {
+			add_truce_one_way = {
+				character = scope:defender
+				days = standard_truce_duration_days
+				war = root.war
+				result = defeat
+			}
+		}
+	}
+	scope:defender = {
+		# Feud
+		house = {
+			change_house_relation_feud_score_effect = {
+				TARGET = scope:attacker.house
+				REASON = war
+				VALUE = house_feud_medium_counter_value
+			}
+		}
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= { has_house_unity_stage = antagonistic }
+				any_vassal = {
+					house ?= scope:defender.house
+				}
+			}
+			custom_tooltip = antagonistic_house_approves_war_victory_defensive
+			hidden_effect = {
+				every_vassal = {
+					limit = {
+						house ?= scope:defender.house
+					}
+					add_opinion = {
+						target = scope:defender
+						modifier = antagonistic_house_approves_war_victory_defensive_opinion
+					}
+				}
+			}
+		}
+	}
+	# Tooltips for hostage exchange, handled here as it's shared between casus belli
+	bp2_hostage_war_end_tooltip_effect = yes
+}
+
+# Add GHW truces on attacker victory.
+add_truce_GHW_attacker_victory_effect = {
+	hidden_effect = {
+		scope:attacker.faith.great_holy_war = {
+			every_pledged_defender = {
+				add_truce_both_ways = {
+					character = scope:title_recipient
+					days = 3650
+					war = root.war
+					result = defeat
+				}
+			}
+		}
+	}
+}
+
+# Force a white peace on any forced.
+force_truce_GHW_defenders_effect = {
+	hidden_effect = {
+		#if any defender
+			#owns lands in target kingdom
+			#is primary in war with another defender who
+				#owns land in target kingdom
+				#is also a primary
+			#then end that war with a white peace
+		scope:the_ghw = {
+			every_pledged_defender = {
+				save_temporary_scope_as = white_peace_attacker
+				every_character_war = {
+					if = {
+						limit = {
+							primary_attacker = scope:white_peace_attacker
+							primary_defender = {
+								save_temporary_scope_as = white_peace_defender
+								OR = {
+									scope:the_ghw = { has_forced_defender = scope:white_peace_defender }
+									AND = {
+										scope:target_kingdom = {
+											any_de_jure_county_holder = {
+												OR = {
+													this = scope:white_peace_defender
+													any_liege_or_above = { this = scope:white_peace_defender }
+												}
+											}
+										}
+										top_liege = {
+											save_temporary_scope_as = white_peace_liege
+											scope:the_ghw = { has_forced_defender = scope:white_peace_liege }
+										}
+									}
+								}
+							}
+						}
+						end_war = white_peace
+					}
+				}
+			}
+		}
+	}
+}
+
+notify_players_about_neighboring_war_resolution_effect = {
+	every_player = {
+		limit = {
+			NOT = { is_participant_in_war = scope:war}
+		}
+		save_scope_as = this_player
+
+		# Checks if this player should be notified at all about the war resolution (e.g., either attacker or defender are neighbors).
+		if = {
+			limit = {
+				should_notify_player_about_neighboring_rulers_wars_trigger = { TARGET_CHARACTER = scope:winner }
+
+				# Only notify about revolts if rebels win
+				trigger_if = {
+					limit = {
+						scope:war = {
+							OR = {
+								using_cb = peasant_war
+								using_cb = independence_faction_war
+								using_cb = liberty_faction_war
+								using_cb = populist_war
+								using_cb = depose_war
+								using_cb = claimant_faction_war
+							}
+						}
+					}
+					scope:winner = scope:attacker
+				}
+			}
+
+			# Check which type of message we need to send to the player.
+			if = {
+				limit = {
+					always = yes
+					should_notify_player_about_neighboring_rulers_wars_trigger = { TARGET_CHARACTER = scope:loser }
+				}
+				# Send combined message about both the winner and the loser.
+				send_interface_message = {
+					type = msg_war_ended_neighbor
+					left_icon = scope:winner
+					right_icon = scope:loser
+					title = war_event.neighbor_war.both_neighbors.t
+					desc = war_event.neighbor_war.both_neighbors.desc
+				}
+			}
+			else = {
+				# Send message only about the winner.
+				send_interface_message = {
+					type = msg_war_ended_neighbor
+					left_icon = scope:winner
+					right_icon = scope:loser
+					title = war_event.neighbor_war.only_winner.t
+					desc = war_event.neighbor_war.only_winner.desc
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				should_notify_player_about_neighboring_rulers_wars_trigger = { TARGET_CHARACTER = scope:loser }
+
+				# Only notify about revolts if rebels win
+				trigger_if = {
+					limit = {
+						scope:war = {
+							OR = {
+								using_cb = peasant_war
+								using_cb = independence_faction_war
+								using_cb = liberty_faction_war
+								using_cb = populist_war
+								using_cb = depose_war
+								using_cb = claimant_faction_war
+							}
+						}
+					}
+					scope:winner = scope:attacker
+				}
+			}
+
+			# Send message only about the loser.
+			send_interface_message = {
+				type = msg_war_ended_neighbor
+				left_icon = scope:loser
+				right_icon = scope:winner
+				title = war_event.neighbor_war.only_loser.t
+				desc = war_event.neighbor_war.only_loser.desc
+			}
+		}
+	}
+}
+
+show_pow_release_message_effect = {
+	if = {
+		limit = {
+			any_character_war = {
+				primary_attacker = scope:attacker
+				primary_defender = scope:defender
+			}
+		}
+		every_character_war = {
+			limit = {
+				primary_attacker = scope:attacker
+				primary_defender = scope:defender
+			}
+			save_scope_as = war
+		}
+		if = {
+			limit = { prisoners_of_war_trigger = yes }
+			custom_tooltip = release_pow_at_end_of_war
+		}
+	}
+}
+
+add_prestige_war_defender_effect = {
+	add_prestige = {
+		value = $PRESTIGE_VALUE$
+		if = {
+			limit= {
+				scope:defender.culture = {
+					has_cultural_parameter = more_fame_for_successful_defensive_wars
+				}
+			}
+			multiply = 2
+		}
+	}
+}
+
+pay_short_term_gold_reparations_effect = {
+	if = {
+		limit = { has_government = landless_adventurer_government }
+		pay_short_term_gold = {
+			gold = {
+				value = medium_gold_value
+				multiply = $GOLD_VALUE$
+				if = {
+					limit= {
+						scope:defender.culture = { has_cultural_parameter = more_gold_for_successful_defensive_wars }
+					}
+					multiply = 2
+				}
+			}
+			target = scope:defender
+		}
+	}
+	else = {
+		pay_short_term_gold = {
+			gold = {
+				value = $GOLD_VALUE$
+				if = {
+					limit= {
+						scope:defender.culture = { has_cultural_parameter = more_gold_for_successful_defensive_wars }
+					}
+					multiply = 2
+				}
+			}
+			target = scope:defender
+			yearly_income = yes # STANDARD
+		}
+	}
+}
+
+pay_short_term_gold_reparations_prefer_greater_income_effect = {
+	if = {
+		limit = { scope:defender.yearly_character_income >= scope:attacker.yearly_character_income }
+		pay_short_term_gold = {
+			gold = {
+				value = scope:defender.yearly_character_income
+				multiply = {
+					add = $FACTOR$
+					if = {
+						limit= {
+							scope:defender.culture = {
+								has_cultural_parameter = more_gold_for_successful_defensive_wars
+							}
+						}
+						multiply = 2
+					}
+				}
+			}
+			target = scope:defender
+		}
+	}
+	else = {
+		pay_short_term_gold = {
+			gold = {
+				value = yearly_character_income
+				multiply = {
+					add = $FACTOR$
+					if = {
+						limit= {
+							scope:defender.culture = {
+								has_cultural_parameter = more_gold_for_successful_defensive_wars
+							}
+						}
+						multiply = 2
+					}
+				}
+			}
+			target = scope:defender
+		}
+	}
+}
+
+
+mongol_invasion_county_looting_chance_effect = {
+	save_temporary_scope_as = county
+	if = {
+		limit = {
+			NOR = {
+				exists = var:looted_by_mongols
+				holder = scope:attacker
+			}
+		}
+		random = {
+			chance = scope:attacker.martial
+			# Each County should only be devastated once
+			set_variable = {
+				name = looted_by_mongols
+				value = yes
+			}
+			# Send a message (and gold!) to the Mongol Emperor
+			scope:attacker = {
+				send_interface_message = {
+					type = event_war_bad
+					title = mongols_sieged_county.t
+					left_icon = scope:county.holder
+					right_icon = scope:county
+					if = {
+						limit = {
+							scope:county.development_level >= 1
+						}
+						add_gold = {
+							add = scope:county.development_level
+							multiply = 5
+						}
+					}
+					if = {
+						limit = { dread < 150 }
+						add_dread = 2
+					}
+				}
+				save_scope_as = mongol_emperor
+				# Send a message to the County's owner
+				scope:county.holder = {
+					send_interface_message = {
+						type = event_war_bad
+						title = mongols_sieged_county.t
+						left_icon = scope:mongol_emperor
+						right_icon = scope:county
+						scope:county = { mongols_devastate_county_effect = yes }
+					}
+				}
+			}
+		}
+	}
+}
+
+intrigue_duel_on_attack_effect = {
+	scope:attacker = {
+		if = {
+			limit = {
+				has_character_flag = intrigue_duel_on_attack
+			}
+			duel = {
+				skill = intrigue
+				value = scope:defender.intrigue
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					desc = intrigue_duel_on_attack_effect.success
+					send_interface_toast = {
+						title = armies_hampered
+						left_icon = scope:attacker
+						right_icon = scope:defender
+						scope:defender = {
+							add_character_modifier = {
+								modifier = hampered_by_false_information_modifier
+								years = 5
+							}
+						}
+					}
+					hidden_effect = {
+						show_as_tooltip = {
+							send_interface_toast = {
+								title = armies_hampered
+								left_icon = scope:attacker
+								right_icon = scope:defender
+								scope:defender = {
+									add_character_modifier = {
+										modifier = hampered_by_false_information_modifier
+										years = 5
+									}
+								}
+							}
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					desc = intrigue_duel_on_attack_effect.failure
+					send_interface_toast = {
+						title = armies_unhampered
+						left_icon = scope:attacker
+						right_icon = scope:defender
+					}
+				}
+			}
+		}
+	}
+}
+
+allies_progress_towards_friendship_effect = {
+	scope:war = {
+		every_war_participant = {
+			limit = {
+				is_target_in_variable_list = {
+					name = joined_as_ally
+					target = scope:war
+				}
+			}
+			if = {
+				limit = {
+					is_defender_in_war = scope:war						
+				}
+				scope:defender = {
+					save_scope_as = actor
+				}
+			}
+			else = {
+				scope:attacker = {
+					save_scope_as = actor
+				}
+			}
+			save_scope_as = ally
+			if = {
+				limit = {
+					is_ai = yes
+					scope:war = {
+						war_contribution = {
+							target = scope:ally
+							value > 0
+						}	
+					}
+				}
+				scope:actor = {
+					progress_towards_friend_effect = {
+						CHARACTER = scope:ally
+						OPINION = 0
+						REASON = friend_alliance
+					}
+				}
+			}
+			else = {
+				hidden_effect = { #To nudge friendship
+					scope:actor = {
+						if = {
+							limit = {
+								NOR = {
+									has_relation_friend = scope:ally
+									has_relation_potential_friend = scope:ally
+								}
+								scope:war = {
+									war_contribution = {
+										target = scope:ally
+										value > 0
+									}	
+								}
+							}
+							set_relation_potential_friend = scope:ally
+						}
+					}
+				}
+			}
+			remove_list_variable = {
+				name = joined_as_ally
+				target = scope:war
+			}
+		}
+	}
+}
+
+# ROOT is a combat side in this scripted effect, but the THIS scope should be the commander
+commander_trait_leveling_leveling_effect = {
+	if = { # Terrain Based
+		limit = {
+			OR = {
+				has_trait = desert_warrior
+				has_trait = open_terrain_expert
+				has_trait = rough_terrain_expert
+				has_trait = forest_fighter
+				has_trait = jungle_stalker
+			}
+		}
+		if = {
+			limit = {
+				has_trait = desert_warrior
+				location = {
+					OR = {
+						terrain = drylands 
+						terrain = desert
+						terrain = desert_mountains
+						terrain = oasis
+					}
+				}
+			}
+			add_trait_xp = {
+				trait = desert_warrior
+				value = {
+					value = $XP$
+					multiply = 2
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_trait = open_terrain_expert
+				location = {
+					OR = {
+						terrain = farmlands
+						terrain = plains
+						terrain = steppe
+					}
+				}
+			}
+			add_trait_xp = {
+				trait = open_terrain_expert
+				value = {
+					value = $XP$
+					multiply = 2
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_trait = rough_terrain_expert
+				location = {
+					OR = {
+						terrain = hills
+						terrain = mountains
+						terrain = wetlands
+					}
+				}
+			}
+			add_trait_xp = {
+				trait = rough_terrain_expert
+				value = {
+					value = $XP$
+					multiply = 2
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_trait = forest_fighter
+				location = {
+					OR = {
+						terrain = forest
+						terrain = taiga
+					}
+				}
+			}
+			add_trait_xp = {
+				trait = forest_fighter
+				value = {
+					value = $XP$
+					multiply = 2
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_trait = jungle_stalker
+				location = {
+					terrain = jungle
+				}
+			}
+			add_trait_xp = {
+				trait = jungle_stalker
+				value = {
+					value = $XP$
+					multiply = 2
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+	}
+	if = { # Forder
+		limit = {
+			has_trait = forder
+			location = {
+				OR = {
+					is_coastal = yes
+					is_riverside_province = yes
+				}
+			}
+		}
+		add_trait_xp = {
+			trait = forder
+			value = {
+				value = $XP$
+				multiply = 2
+				add = {
+					value = martial
+					divide = 10
+				}
+			}
+		}
+	}
+	if = { # Attackers/Defenders
+		limit = {
+			OR = {
+				has_trait = aggressive_attacker
+				has_trait = unyielding_defender
+			}
+		}
+		if = {
+			limit = {
+				has_trait = aggressive_attacker
+				root = { is_combat_side_attacker = yes }
+			}
+			add_trait_xp = {
+				trait = aggressive_attacker
+				value = {
+					value = $XP$
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_trait = unyielding_defender
+				root = { is_combat_side_attacker = no }
+			}
+			add_trait_xp = {
+				trait = unyielding_defender
+				value = {
+					value = $XP$
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+	}
+	if = { # Flexible Leader
+		limit = {
+			has_trait = flexible_leader
+		}
+		add_trait_xp = {
+			trait = flexible_leader
+			value = {
+				value = $XP$
+				multiply = 0.5
+				add = {
+					value = martial
+					divide = 10
+				}
+			}
+		}
+	}
+	if = { # Religious
+		limit = {
+			has_trait = holy_warrior
+			root.enemy_side.side_commander.religion != root.side_commander.religion
+		}
+		add_trait_xp = {
+			trait = holy_warrior
+			value = {
+				value = $XP$
+				multiply = 0.75
+				add = {
+					value = martial
+					divide = 10
+				}
+			}
+		}
+	}
+	if = { # Larger Armies
+		limit = {
+			OR = {
+				has_trait = reckless
+				has_trait = cautious_leader
+			}
+			root = { troops_ratio < 0.95 }
+		}
+		if = {
+			limit = {
+				has_trait = reckless
+			}
+			add_trait_xp = {
+				trait = reckless
+				value = {
+					value = $XP$
+					multiply = 3
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_trait = cautious_leader
+			}
+			add_trait_xp = {
+				trait = cautious_leader
+				value = {
+					value = $XP$
+					multiply = 3
+					add = {
+						value = martial
+						divide = 10
+					}
+				}
+			}
+		}
+	}
+	if = { # Seasonal
+		limit = {
+			has_trait = winter_soldier
+			location = { has_winter_combat_trigger = yes }
+		}
+		add_trait_xp = {
+			trait = winter_soldier
+			value = {
+				value = $XP$
+				multiply = 0.75
+				add = {
+					value = martial
+					divide = 10
+				}
+			}
+		}
+	}
+	if = { # Peasant Leader fighting non peasants
+		limit = {
+			has_trait = peasant_leader
+			root.enemy_side.side_commander = {
+				is_lowborn = no
+			}
+		}
+		add_trait_xp = {
+			trait = peasant_leader
+			value = {
+				value = $XP$
+				multiply = 0.75
+				add = {
+					value = martial
+					divide = 10
+				}
+			}
+		}
+	}
+}
+
+on_ceremonial_claimant_faction_war_win_common = {
+	$TITLE$ = {
+		save_scope_as = target_title
+		holder = { save_scope_as = previous_emperor }
+	}
+	$CLAIMANT$ = {
+		save_scope_as = the_claimant
+		# If the claimant is the prisoner of the defender, free the claimant (it doesn't make much sense to leave the new king in the old king's dungeon)
+		if = {
+			limit = { is_imprisoned_by = $DEFENDER$ }
+			release_from_prison = yes
+		}
+	}
+
+	# Add mutual opinion bonuses between claimant and faction members, as well as a hook on the claimant if possible.
+	$ATTACKER$.joined_faction = {
+		every_faction_member = {
+			custom = FACTION_CLAIMANT_EVERY_FACTION_MEMBER
+			limit = {
+				NOT = { this = $ATTACKER$.joined_faction.special_character }
+			}
+			hidden_effect = {
+				add_opinion = {
+					modifier = ceremonial_claimant_faction_member_opinion
+					target = $ATTACKER$.joined_faction.special_character
+				}
+				reverse_add_opinion = {
+					modifier = ceremonial_claimant_faction_claimant_opinion
+					target = $ATTACKER$.joined_faction.special_character
+				}
+			}
+			if = {
+				limit = {
+					can_add_hook = {
+						type = favor_hook
+						target = $ATTACKER$.joined_faction.special_character
+					}
+				}
+				add_hook = {
+					type = favor_hook
+					target = $ATTACKER$.joined_faction.special_character
+				}
+			}
+			# Struggle boost
+			if = {
+				limit = {
+					culture = $ATTACKER$.joined_faction.special_character.culture
+					any_character_struggle = {
+						involvement = involved
+						has_struggle_phase_parameter = struggle_prestige_install_same_culture_claimant
+					}
+				}
+				add_prestige = major_prestige_gain
+			}
+			
+			# Save the number of faction members for use further down
+			add_to_list = num_faction_members
+		}
+	}
+
+	scope:the_claimant = {
+		if = {
+			limit = { is_landed = yes }
+			force_step_down_landed_titles = yes
+		}
+	}
+
+	# Give the claimant their new title.
+	create_title_and_vassal_change = {
+		type = faction_demand
+		save_scope_as = change
+		add_claim_on_loss = yes
+	}
+
+	# Preserve Grandeur
+	if = {
+		limit = {
+			scope:target_title.holder = {
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+			}
+			scope:the_claimant = {
+				has_royal_court = no
+			}
+		}
+		scope:the_claimant = {
+			set_variable = {
+				name = previous_holder_grandeur_value
+				value = scope:target_title.holder.court_grandeur_current
+			}
+		}
+	}
+
+	scope:the_claimant = {
+		if = {
+			limit = { has_trait = former_emperor }
+			remove_trait = former_emperor
+		}
+	}
+
+	scope:target_title = {
+		change_title_holder = {
+			holder = scope:the_claimant
+			change = scope:change
+		}
+	}
+
+	resolve_title_and_vassal_change = scope:change
+
+	scope:previous_emperor = {
+		add_trait = former_emperor
+	}
+	
+	# We give you decent Legitimacy so you don't get immediately deposed - people _really_ want you in the throne
+	# Can you even get Legitimacy?
+	if = {
+		limit = {
+			scope:the_claimant = {
+				is_valid_for_legitimacy_change = yes
+			}
+		}
+		# Per tier
+		if = {
+			limit = {
+				scope:target_title.tier = tier_empire
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 1000
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				scope:target_title.tier = tier_kingdom
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 750
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				scope:target_title.tier = tier_duchy
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 500
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		else = {
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = 300
+					multiply = nomadic_legitimacy_claimant_multiplier
+				}
+			}
+		}
+		# Per number of faction members
+		if = {
+			limit = {
+				list_size:num_faction_members > 0
+				scope:the_claimant = {
+					is_valid_for_legitimacy_change = yes
+				}
+			}
+			scope:the_claimant = {
+				add_legitimacy = {
+					value = list_size:num_faction_members
+					multiply = 50
+				}
+			}
+		}
+		
+	}
+
+	# Add Appropriate Grandeur
+	scope:the_claimant = {
+		if = {
+			limit = {
+				exists = var:previous_holder_grandeur_value
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+			}
+			hidden_effect = {
+				change_current_court_grandeur = -100 # Reset to 0
+				change_current_court_grandeur = var:previous_holder_grandeur_value
+				remove_variable = previous_holder_grandeur_value
+			}
+			change_current_court_grandeur = massive_court_grandeur_gain # Gain a bonus to Grandeur for winning a claim faction
+		}
+	}
+}

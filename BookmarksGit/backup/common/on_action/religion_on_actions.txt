@@ -1,0 +1,1012 @@
+﻿#On actions related to religion
+
+# Code on-action: character creates a faith
+# Root is the creator
+# scope:old_faith is the faith they used to have
+on_faith_created = {
+	effect = {
+		remove_character_modifier = religious_reformer_modifier
+		# If you have a legend maybe we change it?
+		if = {
+			limit = {
+				has_legend_chapter_trigger = { CHAPTER = opening }
+				promoted_legend ?= {
+					exists = legend_property:faith
+					exists = legend_property:religion
+				}
+				NOT = {
+					promoted_legend ?= {
+						has_legend_chapter = {
+							name = opening
+							localization_key = legend_chapter_opening_new_faith
+						}
+					}
+				}
+			}
+			send_interface_toast = {
+				title = legend_chapter_change_toast
+				left_icon = root
+				promoted_legend = {
+					set_legend_chapter = {
+						name = opening
+						localization_key = legend_chapter_opening_new_faith
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_legend_chapter_trigger = { CHAPTER = opening }
+			}
+			random = {
+				chance = 75
+				send_interface_toast = {
+					title = legend_chapter_change_toast
+					left_icon = root
+					promoted_legend = {
+						set_legend_chapter = {
+							name = opening
+							localization_key = legend_chapter_opening_new_faith_generic
+						}
+					}
+				}
+			}
+		}
+		scope:old_faith = {
+			if = {
+				limit = { has_doctrine_parameter = unreformed }
+				set_variable = { name = has_been_reformed }
+				root = {
+					if = {
+						limit = {
+							NOT = { has_character_flag = reformer_legend }
+							has_dlc_feature = legends
+							NOT = { has_game_rule = historical_legends_only }
+						}
+						add_character_flag = reformer_legend
+						create_legend_seed = {
+							type = holy
+							quality = famed
+							chronicle = new_faith_legend
+							properties = {
+								reformer = root
+								faith = root.faith
+								religion = root.religion
+								reason = flag:pagan_reformation
+							}
+						}
+					}
+				}
+				every_faith_character = {
+					limit = {
+						has_character_flag = forced_conversion_on_reform
+					}
+					set_character_faith = root.faith
+					every_vassal_or_below = {
+						limit = { faith = scope:old_faith }
+						random = {
+							chance = 75
+							set_character_faith = root.faith
+						}
+					}
+					every_sub_realm_county = {
+						limit = { faith = scope:old_faith }
+						random = {
+							chance = 75
+							set_county_faith = root.faith
+						}
+					}
+				}
+			}
+			else = {
+				root = {
+					if = {
+						limit = {
+							NOT = { has_character_flag = reformer_legend }
+							has_dlc_feature = legends
+							NOT = { has_game_rule = historical_legends_only }
+						}
+						add_character_flag = reformer_legend
+						create_legend_seed = {
+							type = holy
+							quality = famed
+							chronicle = new_faith_legend
+							properties = {
+								reformer = root
+								faith = root.faith
+								religion = root.religion
+								reason = flag:new_faith
+							}
+						}
+					}
+				}
+			}
+		
+			root = { play_music_cue = "mx_cue_faith_conversion" }
+		}
+		set_variable = {
+			name = has_created_a_faith
+		}
+		check_for_equal_doctrine_effect = yes
+		# Set up diff-faith HoFs.
+		faith = {
+			# If we have a diff-faith HoF, we want to account for that.
+			## Islamic use-case: we want same-Mohammad's Succession faiths to keep following their appropriate caliphs.
+			if = {
+				limit = {
+					# Are we in the correct religion?
+					religion = religion:islam_religion
+					# Faiths with no HoF or a spiritual head aren't relevant for these calculations.
+					has_doctrine = doctrine_temporal_head
+				}
+				# Grab a scope for tooltip loc, since they complain about root.
+				root = { save_scope_as = reformer }
+				# Sunni path.
+				if = {
+					limit = { has_doctrine = muhammad_succession_sunni_doctrine }
+					root = { trigger_event = head_of_faith.0001 }
+				}
+				# Shia path.
+				else_if = {
+					limit = { has_doctrine = muhammad_succession_shia_doctrine }
+					root = { trigger_event = head_of_faith.0011 }
+				}
+				# Muhakkima path.
+				else_if = {
+					limit = { has_doctrine = muhammad_succession_muhakkima_doctrine }
+					root = { trigger_event = head_of_faith.0021 }
+				}
+				# Zandaqa path.
+				else_if = {
+					limit = { has_doctrine = muhammad_succession_zandaqa_doctrine }
+					root = { trigger_event = head_of_faith.0031 }
+				}
+			}
+			## Faiths with the Rite tenet get to keep their old HoF.
+			else_if = {
+				limit = {
+					# Assuming they exist.
+					exists = scope:old_faith.religious_head
+					# & have the appropriate doctrine parameter.
+					has_doctrine_parameter = maintains_head_of_faith_on_creation
+				}
+				set_religious_head_title = scope:old_faith.religious_head_title
+				# Christian faiths also get to keep ecumenism.
+				if = {
+					limit = {
+						scope:old_faith = { has_doctrine = special_doctrine_ecumenical_christian }
+					}
+					add_doctrine = special_doctrine_ecumenical_christian
+				}
+			}
+			## Otherwise, everyone else should lose their HoF, so we don't need to do anything.
+		}
+		# Achievements.
+		root = {
+			add_achievement_flag_effect = { FLAG = achievement_its_not_a_cult_flag }
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = west_african_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_siguic
+				VALUE = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = west_african_orisha_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_orisha
+				VALUE = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = west_african_bori_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_bori
+				VALUE = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = west_african_roog_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_roog_sene
+				VALUE = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = akom_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_akom
+				VALUE = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = kushitism_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_kushitism
+				VALUE = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = waaqism_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_waaqism
+				VALUE = yes
+			}
+		}
+		if = {
+			limit = {
+				scope:old_faith = {
+					religion_tag = north_african_religion
+					has_doctrine_parameter = unreformed
+				}
+			}
+			add_achievement_global_variable_effect = {
+				VARIABLE = achievement_mother_of_us_all_achamanism
+				VALUE = yes
+			}
+		}
+	}
+
+	events = {
+		faith_conversion.0001 # Convert capital county
+		faith_conversion.0003 # Convert close family
+		faith_creation.0001 # Temporal rel head setup
+		faith_creation.0002 # Spiritual rel head setup
+		faith_creation.0003 # Faith flags
+		faith_creation.1000 # Notification event
+	}
+}
+
+# Code on-action: character converts faith. Only fired when using the convert window, or the script effect that uses the same logic
+# Root is the converted character
+# scope:old_faith is the faith they used to have
+# scope:actor is the character instigating the conversion
+on_faith_conversion = {
+	events = {
+		faith_conversion.0001	# Convert capital county
+		faith_conversion.0003	# Convert close family
+		faith_conversion.1002	# Player-only narrative-notification event
+		faith_conversion.1101   # Notify vassals of conversion
+	}
+
+	effect = {
+		# EP3 - State Faith
+		if = {
+			limit = {
+				OR = {
+					government_allows = state_faith
+					top_liege = { government_allows = state_faith }
+				}
+			}
+			# Character uses decision to Adopt State Faith
+			if = {
+				limit = { has_character_flag = adopted_state_faith }
+				top_liege = {
+					if = {
+						limit = {
+							has_opinion_modifier = {
+								target = root
+								modifier = converted_to_state_faith_opinion
+							}
+						}
+						remove_opinion = {
+							target = root
+							modifier = converted_to_state_faith_opinion
+						}
+					}
+					every_vassal = {
+						custom = every_governor_of_state_faith
+						limit = {
+							has_opinion_modifier = {
+								target = root
+								modifier = converted_to_state_faith_opinion
+							}
+						}
+						remove_opinion = {
+							target = root
+							modifier = converted_to_state_faith_opinion
+						}
+					}
+				}
+			}
+
+			# Character is converted to state faith and gains influence
+			if = {
+				limit = {
+					faith = top_liege.primary_title.state_faith
+					government_allows = administrative
+				}
+				change_influence = minor_influence_gain
+				hidden_effect = {
+					faith = { save_scope_as = old_faith }
+					top_liege.faith = { save_scope_as = new_faith }
+					create_character_memory = { type = adopted_state_faith_memory }
+					scope:new_memory = {
+						set_variable = {
+							name = old_faith
+							value = scope:old_faith
+						}
+						set_variable = {
+							name = new_faith
+							value = scope:new_faith
+						}
+						set_variable = {
+							name = title
+							value = root.top_liege.primary_title
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Code on-action: character changes faith. Not called when a character gets a faith on birth, creation, and similar
+# Root is the character
+# scope:old_faith is the faith they used to have
+on_character_faith_change = {
+	effect = {
+		check_for_equal_doctrine_effect = yes
+		every_held_title = {
+			update_dynamic_coa = yes
+		}
+
+		# Struggles
+		## Struggle Catalysts
+		### Heir changes culture while under age
+		if = {
+			limit = {
+				catalyst_very_important_child_change_culture_or_faith_preliminary_trigger = yes
+			}
+			random_parent = {
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					activate_struggle_catalyst = {
+						catalyst = catalyst_very_important_child_change_culture_or_faith
+						character = root
+					}
+				}
+			}
+		}
+		## Struggle Effects
+		### persian_struggle: switching faith to anything that isn't an orthodox Sunni creed'll flip you to detractor.
+		if = {
+			limit = {
+				# Gotta be in the appropriate struggle.
+				any_character_struggle = { this = struggle:persian_struggle }
+				# Filter out pre-existing detractors.
+				NOT = { has_trait = fp3_struggle_detractor }
+				# Now, check the new faith.
+				exists = title:d_sunni.holder
+				OR = {
+					NOT = { exists = faith.religious_head }
+					NOT = { faith.religious_head = title:d_sunni.holder }
+				}
+			}
+			send_interface_toast = {
+				type = event_toast_effect_neutral
+				title = persian_struggle.tt.converted_away_from_sunni_orthodoxy
+				left_icon = root
+				hidden_effect = { remove_trait = fp3_struggle_supporter }
+				add_trait_force_tooltip = fp3_struggle_detractor
+			}
+		}
+
+		# Local conversion
+		if = {
+			limit = {
+				exists = root.capital_province
+				root.capital_province.faith = root.faith
+				any_character_struggle = {
+					involvement = involved
+					phase_has_catalyst = catalyst_convert_local_culture_faith
+					is_faith_involved_in_struggle = root.faith
+				}
+			}
+			every_character_struggle = {
+				involvement = involved
+				activate_struggle_catalyst = {
+					catalyst = catalyst_convert_local_culture_faith
+					character = root
+				}
+			}
+		}
+		else_if = { # Forced conversion
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					is_faith_involved_in_struggle = root.faith
+					phase_has_catalyst = catalyst_forced_conversion
+				}
+			}
+			every_character_struggle = {
+				involvement = involved
+				activate_struggle_catalyst = {
+					catalyst = catalyst_forced_conversion
+					character = root
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_trait = fp3_struggle_supporter
+				any_character_struggle = {
+					involvement = involved
+					is_faith_involved_in_struggle = root.faith
+					phase_has_catalyst = catalyst_supporter_forced_conversion
+				}
+			}
+			every_character_struggle = {
+				involvement = involved
+				activate_struggle_catalyst = {
+					catalyst = catalyst_supporter_forced_conversion
+					character = root
+				}
+				log_debug_variable_for_persian_struggle_effect = { VAR = unrest_catalyst_supporter_forced_conversion }
+			}
+		}
+		else_if = {
+			limit = {
+				has_trait = fp3_struggle_detractor
+				any_character_struggle = {
+					involvement = involved
+					is_faith_involved_in_struggle = root.faith
+					phase_has_catalyst = catalyst_detractor_forced_conversion
+				}
+			}
+			every_character_struggle = {
+				involvement = involved
+				activate_struggle_catalyst = {
+					catalyst = catalyst_detractor_forced_conversion
+					character = root
+				}
+				log_debug_variable_for_persian_struggle_effect = { VAR = stabil_catalyst_detractor_forced_conversion }
+			}
+		}
+
+
+		# Achievements
+		if = {
+			limit = { is_ai = no }
+
+			if = { # FP2 - Basque In My Glory
+				limit = { faith = faith:basque_pagan }
+				add_achievement_global_variable_effect = {
+					VARIABLE = fp2_basque_in_my_glory_achievement_unlocked
+					VALUE = yes
+				}
+			}
+		}
+
+		# Hostage story cycle
+		if = {
+			limit = {
+				is_hostage = yes
+				is_adult = no
+				# Did they just change to their captor's culture
+				faith = warden.faith
+			}
+			save_scope_as = hostage
+			warden = {
+				trigger_event = bp2_yearly.8050
+			}
+		}
+
+		if = {
+			limit = {
+				has_variable = japan_1010_discount
+				var:japan_1010_discount = faith 
+			}
+			remove_variable = japan_1010_discount
+		}
+
+		if = {
+			limit = {
+				has_character_flag = tgp_japan_1040_discount
+				faith.religion = religion:shintoism_religion
+			}
+			remove_character_flag = tgp_japan_1040_discount
+		}
+
+		#Lose Mandala if you change to a monotheist faith
+		mandala_no_longer_polytheist_effect = yes
+	}
+	events = {
+		faith_conversion.0002 # Remove obsolete modifiers
+		faith_conversion.0004 # Convert Theocracies
+		faith_conversion.0005 # Update marriage opinions
+		great_holy_war.0025 # Replace Recipient for ongoing GHW
+		great_holy_war.0029 # Beneficiary converted, remove and replace.
+		great_holy_war.0059 # Clear Crusader traits on conversion.
+		great_holy_war.0084 # Replace fallback ghw recipient
+		great_holy_war.0085 # Remove pledged vassals upon conversion of their liege.
+		war_event.3100		# Handles invalidation of religious wars
+	}
+}
+
+# Code on-action: once a month for each faith
+# Root is the faith
+on_faith_monthly = {
+	on_actions = {
+		faith_holy_order_land_acquisition_pulse
+		delay = { days = { 5 10 }}
+		faith_heresy_events_pulse
+		delay = { days = { 15 20 }}
+		faith_fervor_events_pulse
+	}
+	events = {
+		hajj.0010 #Someone changed their capital to Mecca without having the Hajjaj trait
+		great_holy_war.0010 #Great Holy Wars are unlocked for a Faith.
+		great_holy_war.0001
+		great_holy_war.0022 #Pope harasses players for not pledging support to Crusade yet.
+		great_holy_war.0030 #Monthly cleanup for Beneficiaries becoming unfit for various reasons.
+	}
+	effect = {
+		# Religious migrants created by the County Conversion council task move somewhere safe
+		random = {
+			chance = 4 # Roughly once every 2 years
+			save_scope_as = target_faith
+			if = {
+				limit = {
+					exists = var:converted_development
+					var:converted_development >= 1
+					NOT = {
+						has_doctrine_parameter = unreformed
+					}
+				}
+				# Save all suitable rulers
+				random = {
+					chance = var:converted_development
+					save_scope_as = faith_target
+					every_independent_ruler = {
+						limit = {
+							is_landed = yes
+							NOT = { government_has_flag = government_is_herder }
+							# A very large area - enough for a province in north-western india to reach all of Borneo
+							"this.capital_province.squared_distance(root.var:associated_county.title_province)" <= squared_distance_mega
+							any_sub_realm_county = {
+								faith = prev.faith
+							}
+							trigger_if = {
+								limit = {
+									has_variable_list = faiths_converted_in_counties
+								}
+								NOT = {
+									is_target_in_variable_list = {
+										name = faiths_converted_in_counties
+										target = scope:target_faith
+									}
+								}
+							}
+						}
+						add_to_list = migration_targets
+						every_vassal = {
+							limit = {
+								is_landed = yes
+								highest_held_title_tier >= tier_duchy
+								any_sub_realm_county = {
+									faith = prev.faith
+								}
+								trigger_if = {
+									limit = {
+										has_variable_list = faiths_converted_in_counties
+									}
+									NOT = {
+										is_target_in_variable_list = {
+											name = faiths_converted_in_counties
+											target = scope:target_faith
+										}
+									}
+								}
+							}
+							add_to_list = migration_targets
+						}
+					}
+					every_player = {
+						limit = {
+							is_landed = yes
+							NOT = { government_has_flag = government_is_herder }
+							NOT = { is_in_list = migration_targets }
+							# A vary large area - enough for a province in north-western india to reach all of Borneo
+							"this.capital_province.squared_distance(root.var:associated_county.title_province)" <= squared_distance_mega
+							any_sub_realm_county = {
+								faith = prev.faith
+							}
+							trigger_if = {
+								limit = {
+									has_variable_list = faiths_converted_in_counties
+								}
+								NOT = {
+									is_target_in_variable_list = {
+										name = faiths_converted_in_counties
+										target = scope:target_faith
+									}
+								}
+							}
+						}
+						add_to_list = migration_targets
+					}
+					# If the faith is still large, they only want to move to same-faith rulers
+					if = {
+						limit = {
+							num_county_followers >= 40
+						}
+						random_in_list = {
+							list = migration_targets
+							limit = {
+								faith = root
+								any_sub_realm_county = {
+									faith = root
+								}
+								# Do NOT go within the same realm as you were converted from
+								top_liege != scope:target_faith.var:associated_county.holder.top_liege
+							}
+							weight = {
+								base = 1
+								modifier = {
+									add = 3
+									is_ai = no
+								}
+								modifier = {
+									add = 3
+									government_has_flag = government_is_mandala
+								}
+								modifier = {
+									add = 10
+									highest_held_title_tier >= tier_kingdom
+								}
+								modifier = {
+									add = root.var:converted_development
+									NOT = { government_has_flag = government_is_nomadic }
+									any_sub_realm_county = {
+										count >= {
+											value = root.var:converted_development
+											divide = 2
+										}
+										faith = root
+									}
+								}
+								modifier = {
+									add = 0.1
+									government_has_flag = government_is_nomadic
+								}
+								modifier = {
+									add = 0.1
+									highest_held_title_tier <= tier_county
+								}
+							}
+							save_scope_as = ruler_target
+							save_scope_as = seeking_same_faith_counties
+							trigger_event = global_religion.1000
+						}
+					}
+					# Smaller faiths can go wherever
+					else = {
+						random_in_list = {
+							list = migration_targets
+							limit = {
+								NOR = {
+									top_liege = scope:target_faith.var:associated_county.holder.top_liege # Do NOT go within the same realm as you were converted from
+									faith = { has_doctrine = doctrine_pluralism_fundamentalist }
+									culture = { has_cultural_tradition = tradition_zealous_people }
+								}
+								OR = {
+									faith = {
+										faith_hostility_level = {
+											target = root
+											value <= faith_astray_level
+										}
+									}
+									faith = { has_doctrine = tenet_adaptive }
+									faith = { has_doctrine_parameter = unreformed }
+									faith = { has_doctrine = doctrine_pluralism_pluralistic }
+									culture = { has_cultural_tradition = tradition_religion_blending }
+									culture = { has_cultural_parameter = less_likely_to_force_conversion }
+									has_trait = nomadic_philosophy
+									AND = {
+										is_ai = no
+										has_perk = open_minded_perk
+									}
+								}
+								any_held_title = {
+									tier = tier_county
+									faith = prev.faith
+									trigger_if = {
+										limit = {
+											has_variable_list = faiths_converted_in_the_county
+										}
+										NOT = {
+											is_target_in_variable_list = {
+												name = faiths_converted_in_the_county
+												target = scope:target_faith
+											}
+										}
+									}
+									trigger_if = {
+										limit = {
+											holder = {
+												is_ai = yes
+											}
+										}
+										holder = {
+											is_ai = yes
+										}
+									}
+								}
+							}
+							weight = {
+								base = 1
+								modifier = {
+									add = 3
+									is_ai = no
+								}
+								modifier = {
+									add = 3
+									government_has_flag = government_is_mandala
+								}
+								modifier = {
+									add = 10
+									highest_held_title_tier >= tier_kingdom
+								}
+								modifier = {
+									add = root.var:converted_development
+									NOT = { government_has_flag = government_is_nomadic }
+									any_sub_realm_county = {
+										count >= {
+											value = root.var:converted_development
+											divide = 2
+										}
+										faith = prev.faith
+									}
+								}
+								modifier = {
+									add = 0.1
+									government_has_flag = government_is_nomadic
+								}
+								modifier = {
+									add = 0.1
+									highest_held_title_tier <= tier_county
+								}
+							}
+							save_scope_as = ruler_target
+							save_scope_as = seeking_any_counties
+							trigger_event = global_religion.1000
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+faith_holy_order_land_acquisition_pulse = {
+	trigger = {
+		any_faith_holy_order = {
+			always = yes
+		}
+	}
+
+	random_events = {
+		chance_to_happen = 17 # ~1 every six months
+		chance_of_no_event = {
+			value = 100
+			every_faith_holy_order = {
+				subtract = 5
+			}
+			every_ruler = {
+				limit = {
+					holy_order_1000_request_target_trigger = yes
+				}
+				subtract = 5
+			}
+			if = {
+				limit = {
+					NOT = {
+						any_faith_holy_order = {
+							num_leased_titles < holy_order_barony_number_soft_threshold
+						}
+					}
+				}
+				add = 80
+			}
+			min = 30
+		}
+		100 = 0
+		500 = holy_order.1000
+	}
+}
+
+faith_heresy_events_pulse = {
+	trigger = {
+		fervor <= 40
+		NOR = {
+			has_doctrine_parameter = unreformed
+			has_variable = current_heresy
+		}
+	}
+
+	random_events = {
+		chance_to_happen = 25
+		chance_of_no_event = {
+			if = {
+				limit = { fervor > 30 }
+				value = 90
+			}
+			else_if = {
+				limit = { fervor > 20 }
+				value = 70
+			}
+			else_if = {
+				limit = { fervor > 10 }
+				value = 40
+			}
+		}
+		100 = heresy.0001
+		100 = heresy.0005
+	}
+}
+
+faith_fervor_events_pulse = {
+	trigger = {
+		NOR = {
+			has_doctrine_parameter = unreformed
+			has_variable = recent_fervor_event
+		}
+	}
+
+	random_events = {
+		chance_to_happen = 6 # ~53% chance of occuring within a given year. 90% chance within 3 years, 99.8% chance within 5.
+		100 = fervor.1001
+		100 = fervor.2001
+	}
+}
+
+pagan_conversion_pulse = {
+	trigger = { #Is the character ready to convert?
+		is_ai = yes
+		OR = {
+			top_liege = this
+			AND = { # Steppe people convert a bit more often & freely
+				capital_province ?= { geographical_region = world_steppe }
+				primary_title.tier >= tier_duchy
+			}
+		}
+		government_has_flag = government_is_tribal
+		OR = {
+			has_realm_law = tribal_authority_2
+			has_realm_law = tribal_authority_3
+		}
+		faith = { has_doctrine_parameter = unreformed }
+		prestige_level >= 1 #lower than the regular requirement to make sure some rulers can convert
+		trigger_if = { # Lighten the dev requirements progressively
+			limit = {
+				OR = {
+					current_date <= 950.1.1
+					AND = {
+						capital_province ?= { geographical_region = world_steppe }
+						primary_title.tier >= tier_duchy
+					}
+				}
+			}
+			capital_province.county = {
+				development_level >= 7 #lower than the regular requirement to make sure some rulers can convert
+			}
+		}
+		trigger_else_if = {
+			limit = {
+				current_date <= 1000.1.1
+			}
+			capital_province.county = {
+				development_level >= 6 #lower than the regular requirement to make sure some rulers can convert
+			}
+		}
+		trigger_else = {
+			capital_province.county = {
+				development_level >= 5 #lower than the regular requirement to make sure some rulers can convert
+			}
+		}
+
+		culture = {
+			calc_true_if = {
+				amount >= 7
+				has_innovation = innovation_motte
+				has_innovation = innovation_catapult
+				has_innovation = innovation_barracks
+				has_innovation = innovation_mustering_grounds
+				has_innovation = innovation_bannus
+				has_innovation = innovation_quilted_armor
+				has_innovation = innovation_gavelkind
+				has_innovation = innovation_crop_rotation
+				has_innovation = innovation_city_planning
+				has_innovation = innovation_casus_belli
+				has_innovation = innovation_plenary_assemblies
+				has_innovation = innovation_ledger
+				has_innovation = innovation_development_01
+				has_innovation = innovation_currency_01
+			}
+		}
+	}
+
+	events = {
+		global_religion.0001 #Pagan reformed by neighbor, spouse, soulmate, friend, or geographic location
+	}
+}
+
+# Code on-action: when a great holy war no longer has a valid target, and there was no one left in the target kingdom to replace them. The target scopes will still point to the last target at this point
+# If a new target is not picked in script, the GHW will be invalidated
+# Root is the great holy war
+on_potential_great_holy_war_invalidation = {
+	events = {
+		great_holy_war.0004
+	}
+}
+
+# Code on-action: when on_potential_great_holy_war_invalidation did not find a new target, and the GHW is about to be destroyed. no way out at this point
+# Root is the great holy war
+on_great_holy_war_invalidation = {
+	events = {
+		great_holy_war.0055 #Send notifications to players.
+	}
+}
+
+# Code on-action: when the GHW's war launch countdown hits zero. If a war is not started at this point, the GHW will invalidate, bypassing on_potential_great_holy_war_invalidation but not on_great_holy_war_invalidation
+# Root is the great holy war
+on_great_holy_war_countdown_end = {
+	trigger = { #Only launch the holy war if attacker strength is above one third of defender. 
+		ghw_attackers_strength >= third_of_defenders_strength
+	}
+	events = {
+		great_holy_war.0005
+	}
+}
+
+# Code on-action: when a character in a GHW is replaced. This can only happen when the war has begun, and a participant dies; if they get replaced in the war by someone of the right faith, then this will get called. Can be used to validate their benficiary, for instance
+# Root is character being replaced
+# scope:great_holy_war is the GHW
+# scope:replacement is the replacement character
+on_great_holy_war_participant_replaced = {
+	events = {
+		great_holy_war.0027 #Refresh Beneficiary for AI.
+	}
+}

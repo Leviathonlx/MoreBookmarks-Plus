@@ -1,0 +1,4562 @@
+﻿#Events for chivalry lifestyle focus
+
+#CHIVALRY REGULAR EVENTS
+	# 0001 		- A practice duel gone terribly wrong, Peter Vilberg
+	# 0002-0007 - Horse Riding Accident, by Petter Vilberg
+	# 0010 		- Train with your signature weapon, by Linnéa Thimrén
+	# 1011-1012 - Find an old castle, by Linnéa Thimrén
+	# 1021 		- Stress triggers bad battle practice
+	# 2010 		- Practice duel (Prowess skill challenge), Petter Vilberg
+	# 3000-3005	- Vassal struggling to train new recruits, Sean Hughes
+	# 4000		- A Ride at Midnight, by Jason Cantalini
+	# 4000-4001/5000?		- (FP2) A Bard For A King By Hugo Cortell
+	# 5000		- Rumors about you sleeping with your liege's spouse, Veronica Pazos
+	# 6000-6003 - You find an abandoned church, Veronica Pazos
+
+#CHIVALRY SPECIAL EVENTS
+	# 1201-1204	- Mounted Warrior Practice, by Petter Vilberg
+	# 1601-1699	- Train a warhorse, by Linnéa Thimrén
+
+
+############################
+# CHIVALRY: REGULAR EVENTS #
+############################
+
+namespace = martial_chivalry
+
+#A practice duel gone terribly wrong
+	#by Petter Vilberg
+martial_chivalry.0001 = {
+	type = character_event
+	title = martial_chivalry.0001.t
+	desc = {
+		desc = martial_chivalry.0001.opening
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					prowess < scope:duel_opponent.prowess
+				}
+				desc = martial_chivalry.0001.hard_fight
+			}
+			triggered_desc = {
+				desc = martial_chivalry.0001.easy_fight
+			}
+		}
+		desc = martial_chivalry.0001.conclusion
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+
+	left_portrait = {
+		character = root
+		animation = celebrate_wooden_sword
+	}
+	right_portrait = {
+		character = scope:duel_opponent
+		animation = wrestling_yield_start
+	}
+
+	trigger = {
+		NOT = { has_character_flag = had_duel_gone_wrong_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { #More likely to occur if the character has a little Dread
+			add = 1
+			dread > 10
+		}
+		modifier = { #More likely if you are into duels
+			add = 2
+			has_trait = lifestyle_blademaster		
+		}
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_duel_gone_wrong_event
+			days = 3650
+		}
+		hidden_effect = {
+			create_character = {
+				location = root.capital_province
+				save_scope_as = duel_opponent
+				trait = brave
+				trait = wrathful
+				culture = root.culture
+				faith = root.faith
+				gender_female_chance = root_soldier_female_chance
+				prowess = 15
+			}
+		}
+	}
+
+	option = { #This person could serve me well!
+		name = martial_chivalry.0001.a
+		add_courtier = scope:duel_opponent
+		reverse_add_opinion = {
+			modifier = duel_mutual_respect_opinion
+			target = scope:duel_opponent
+		}
+		add_opinion = {
+			modifier = duel_mutual_respect_opinion
+			target = scope:duel_opponent
+		}
+		stress_impact = {
+			sadistic = minor_stress_impact_gain
+			paranoid = major_stress_impact_gain
+			vengeful = medium_stress_impact_gain
+			wrathful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_honor = 0.25
+				ai_vengefulness = -1
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	option = { #Lecture them on honor
+		name = martial_chivalry.0001.b
+		add_prestige = medium_prestige_gain
+		add_piety = medium_piety_gain
+		stress_impact = {
+			sadistic = medium_stress_impact_gain
+			vengeful = medium_stress_impact_gain
+			paranoid = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_honor = 2
+				ai_compassion = 1
+				ai_energy = -0.25
+				ai_boldness = -0.25
+			}
+		}
+	}
+
+	option = { #Kill them
+		name = martial_chivalry.0001.c
+		scope:duel_opponent = {
+			death = {
+				death_reason = death_duel
+				killer = root
+			}
+		}
+		add_dread = medium_dread_gain
+		stress_impact = {
+			forgiving = major_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_vengefulness = 1
+				ai_rationality = -0.25
+				ai_zeal = 0.25
+				ai_energy = 0.25
+			}
+		}
+	}
+
+	after = {
+		hidden_effect = { add_focus_progress = standard_lifestyle_focus_progress }
+		scope:duel_opponent = {
+			silent_disappearance_ai_effect = yes
+		}
+	}
+}
+
+
+#Horse Riding Accident
+	#by Petter Vilberg
+martial_chivalry.0002 = {
+	type = character_event
+	title = martial_chivalry.0002.t
+	desc = martial_chivalry.0002.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = jockey_gallop
+		camera = camera_event_horse_left
+	}
+
+	trigger = {
+		NOT = { has_character_flag = had_horseriding_accident_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		#Less and less likely the more hurt you already are.
+		modifier = {
+			add = -0.5
+			has_trait_rank = {
+				trait = wounded
+				rank = 1
+			}
+		}
+		modifier = {
+			add = -0.8
+			has_trait_rank = {
+				trait = wounded
+				rank = 1
+			}
+		}
+		modifier = {
+			add = -1
+			has_trait_rank = {
+				trait = wounded
+				rank = 3
+			}
+		}
+		modifier = { #You really shouldn't go riding if you're wounded, but if you insist, my lord.
+			add = 0.5
+			has_trait = wounded
+			has_trait = stubborn
+		}
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_horseriding_accident_event
+			days = 3650
+		}
+	}
+
+	option = { #Try to stay on the horse!
+		name = martial_chivalry.0002.a
+		duel = {
+			skill = prowess
+			value = high_skill_rating
+			20 = {
+				desc = martial_chivalry.0002.a_success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 1
+					min = -19
+				}
+				show_as_tooltip = {
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+					add_character_modifier = {
+						modifier = improved_horse_mastery_modifier
+						days = 3650
+					}
+				}
+				hidden_effect = {
+					trigger_event = martial_chivalry.0003 #Gain an improved horse mastery modifier
+				}
+			}
+			20 = {
+				desc = martial_chivalry.0002.a_failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1
+					min = -19
+				}
+				show_as_tooltip = {
+					increase_wounds_effect = {
+						REASON = horse_riding_accident
+					}
+				}
+				hidden_effect = {
+					trigger_event = { #Things don't go well
+						on_action = horse_riding_accident_outcome
+					}
+				}
+			}
+		}
+		stress_impact = {
+			craven = minor_stress_impact_gain
+			lazy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -50
+				has_trait_rank = {
+					trait = wounded
+					rank >= 2
+				}
+			}
+			ai_value_modifier = {
+				ai_boldness = 0.5
+				ai_energy = 0.5
+			}
+		}
+	}
+
+	option = { #Make for a safe - if humble - landing
+		name = martial_chivalry.0002.b
+		add_prestige = miniscule_prestige_loss
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+			brave = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+#You successfully rein in the horse and stay atop!
+martial_chivalry.0003 = {
+	type = character_event
+	title = martial_chivalry.0003.t
+	desc = martial_chivalry.0003.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = jockey_walk
+		camera = camera_event_horse_left
+	}
+
+
+	immediate = {
+		add_character_modifier = {
+			modifier = improved_horse_mastery_modifier
+			days = 3650
+		}
+
+		#Chance at starting the warhorse story?
+		hidden_effect = {
+			random = {
+				chance = 25
+				compare_modifier = {
+					value = prowess
+					multiplier = 2
+				}
+				save_scope_value_as = {
+					name = warhorse
+					value = yes
+				}
+			}
+		}
+	}
+
+	option = { #I made it!
+		name = martial_chivalry.0003.a
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	option = { #I made it! Start warhorse story
+		name = martial_chivalry.0003.b
+		trigger = {
+			exists = scope:warhorse
+			NOR = {
+				has_character_flag = had_event_martial_chivalry_special_1601
+				has_character_flag = had_warhorse_story
+			}
+		}
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+
+		start_warhorse_story_cycle_effect = yes
+
+		stress_impact = {
+			base = minor_stress_impact_gain
+			lazy = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+#You fall to the ground, hurting yourself a little
+martial_chivalry.0004 = {
+	type = character_event
+	title = martial_chivalry.0004.t
+	desc = martial_chivalry.0004.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = scope:duel_opponent
+		animation = pain
+	}
+
+	trigger = {
+		NOT = {
+			has_trait_rank = {
+				trait = wounded
+				rank > 0
+			}
+		}
+	}
+
+	immediate = {
+		increase_wounds_effect = {
+			REASON = horse_riding_accident
+		}
+	}
+
+	option = { #Damn horse!
+		name = martial_chivalry.0004.a
+	}
+}
+
+#You fall to the ground, hurting yourself severely
+martial_chivalry.0005 = {
+	type = character_event
+	title = martial_chivalry.0005.t
+	desc = martial_chivalry.0005.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = scope:duel_opponent
+		animation = pain
+	}
+
+
+	trigger = {
+		has_trait_rank = {
+			trait = wounded
+			rank = 1
+		}
+	}
+
+	immediate = {
+		increase_wounds_effect = {
+			REASON = horse_riding_accident
+		}
+	}
+
+	option = { #Damn horse!
+		name = martial_chivalry.0005.a
+	}
+}
+
+#You fall to the ground, nearly killing yourself
+martial_chivalry.0006 = {
+	type = character_event
+	title = martial_chivalry.0006.t
+	desc = martial_chivalry.0006.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = scope:duel_opponent
+		animation = pain
+	}
+
+
+	trigger = {
+		has_trait_rank = {
+			trait = wounded
+			rank = 2
+		}
+	}
+
+	immediate = {
+		increase_wounds_effect = {
+			REASON = horse_riding_accident
+		}
+	}
+
+	option = { #Damn horse!
+		name = martial_chivalry.0006.a
+	}
+}
+
+#You fall to the ground, dying
+martial_chivalry.0007 = {
+	type = character_event
+	title = martial_chivalry.0007.t
+	desc = martial_chivalry.0007.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = scope:duel_opponent
+		animation = pain
+	}
+
+	trigger = {
+		has_trait_rank = {
+			trait = wounded
+			rank = 3
+		}
+	}
+
+	option = { #Damn horse, for real this time!!
+		name = martial_chivalry.0007.a
+		increase_wounds_effect = {
+			REASON = horse_riding_accident
+		}
+	}
+}
+
+
+#Train with your signature weapon
+	#by Linnéa Thimrén
+martial_chivalry.0010 = {
+	type = character_event
+	title = martial_chivalry.0010.t
+	desc = martial_chivalry.0010.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = armory
+	}
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	artifact = { # To display the artifact in the event-window
+		target = root.var:signature_weapon_scope
+		position = lower_center_portrait
+		trigger = { exists = root.var:signature_weapon_scope }
+	}
+
+	trigger = {
+		NOT = { has_character_flag = had_event_martial_chivalry_0010 }
+	}
+
+	weight_multiplier = {
+		base = 1
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_event_martial_chivalry_0010
+			days = 3650
+		}
+		set_signature_weapon_effect = yes
+	}
+
+	option = {
+		name = martial_chivalry.0010.a
+		hidden_effect = { add_focus_progress = standard_lifestyle_focus_progress }
+		add_character_modifier = {
+			modifier = respected_expertise
+		}
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				has_trait_rank = {
+					trait = wounded
+					rank >= 2
+				}
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry.0010.b
+		hidden_effect = { add_focus_progress = standard_lifestyle_focus_progress }
+		random_list = {
+			70 = {
+				desc = martial_chivalry.0010.b.tt1
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = martial_chivalry.0010.b.tt1
+					left_icon = root
+					add_prestige = minor_prestige_gain
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+				}
+			}
+			30 = {
+				desc = martial_chivalry.0010.b.tt2
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry.0010.b.tt2
+					left_icon = root
+					increase_wounds_effect = { REASON = training_accident }
+					add_martial_lifestyle_xp = minor_lifestyle_experience
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_boldness = 0.25
+			}
+		}
+	}
+}
+
+
+#Find an old castle, rt craven/at brave/prowess/gold or stress
+	#by Linnéa Thimrén
+
+martial_chivalry.1011 = {
+	type = character_event
+	title = martial_chivalry.1011.t
+	desc = martial_chivalry.1011.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = terrain
+	}
+	left_portrait = {
+		character = root
+		animation = survey
+	}
+
+	trigger = {
+		NOT = { has_character_flag = had_haunted_castle_event }
+
+	}
+
+	weight_multiplier = {
+		base = 1
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		hidden_effect = {
+			get_quirk_character_effect = yes
+		}
+		add_character_flag = {
+			flag = had_haunted_castle_event
+			days = 3650
+		}
+	}
+
+	option = {
+		name = martial_chivalry.1011.a
+		stress_impact = {
+			craven = minor_stress_impact_gain
+		}
+		custom_tooltip = martial_chivalry.1011.a.tt
+		trigger_event = {
+			id = martial_chivalry.1012
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				has_trait = brave
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry.1011.b
+		add_character_modifier = {
+			modifier = hightened_troop_morale_modifier
+			days = 3650
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				has_trait = craven
+			}
+		}
+	}
+}
+
+#You went inside, search cellar or upper floors?
+martial_chivalry.1012 = {
+	type = character_event
+	title = martial_chivalry.1012.t
+	desc = martial_chivalry.1012.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = corridor_night
+	}
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	option = {
+		name = martial_chivalry.1012.a
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				has_trait = greedy
+			}
+		}
+		duel = {
+			skill = stewardship
+			value = average_skill_rating
+
+			50 = {
+				desc = martial_chivalry.1012.a.success
+
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = martial_chivalry.1012.a.success
+					left_icon = root
+					add_gold = major_gold_value
+				}
+			}
+			50 = {
+				desc = martial_chivalry.1012.a.failure
+
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry.1012.a.failure
+					left_icon = root
+					add_gold = minor_gold_value
+				}
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry.1012.b
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				has_trait = brave
+			}
+		}
+		random_list = {
+			50 = {
+				desc = martial_chivalry.1012.b.success
+
+				compare_modifier = {
+					value = ai_boldness
+					multiplier = 0.5
+					min = -49
+				}
+
+				if = {
+					limit = {
+						AND = {
+							is_ai = no #no ai should be able to gain brave- to keep the type of characters in the game diverse
+							stress <= 25
+							NOT = { has_trait = brave }
+							number_of_personality_traits <= 3
+						}
+					}
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = martial_chivalry.1012.b.success
+						left_icon = root
+						add_trait_force_tooltip = brave
+					}
+				}
+				else_if = {
+					limit = {
+						OR = {
+							number_of_personality_traits = 4
+							is_ai = yes
+							stress > 25
+							has_trait = brave
+						}
+					}
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = martial_chivalry.1012.b.success
+						left_icon = root
+						add_character_modifier = {
+							modifier = faced_my_fears
+							years = 10
+						}
+					}
+				}
+			}
+			50 = {
+				desc = martial_chivalry.1012.b.tt1
+
+				compare_modifier = {
+					value = ai_boldness
+					multiplier = -0.5
+					min = -49
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry.1012.b.failure
+					left_icon = root
+					add_dread = medium_dread_loss
+					stress_impact = {
+						base = medium_stress_gain
+					}
+				}
+			}
+		}
+		stress_impact = {
+			craven = medium_stress_impact_gain
+		}
+	}
+}
+
+#Stress triggers bad battle practice
+	#by Linnéa Thimrén
+martial_chivalry.1021 = {
+	type = character_event
+	title = martial_chivalry.1021.t
+	desc = martial_chivalry.1021.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		scripted_animation = duel_wield_weapon
+	}
+
+	trigger = {
+		is_available_healthy_adult = yes
+		stress > 60
+		NOT = { has_character_flag = had_stressful_battle_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = root
+			value = stress
+			multiplier = 0.01 # 1.4 total @ 100 Stress, 3.4 total @ 300 Stress.
+			offset = -60
+		}
+		modifier = {
+			factor = 0.5
+			has_trait_rank = {
+				trait = wounded
+				rank = 1
+			}
+		}
+		modifier = {
+			factor = 0.2
+			has_trait_rank = {
+				trait = wounded
+				rank = 2
+			}
+		}
+		modifier = {
+			factor = 0
+			has_trait_rank = {
+				trait = wounded
+				rank = 3
+			}
+		}
+		modifier = {
+			add = 0.5
+			has_trait = wounded
+			has_trait = stubborn
+		}
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_stressful_battle_event
+			days = 3650
+		}
+		add_character_flag  = {
+			flag = single_combat_duel_armor
+			days = 30 # just in case
+		}
+	}
+
+	option = {
+		name = martial_chivalry.1021.b
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+		stress_impact = {
+			craven = minor_stress_impact_gain
+		}
+
+		duel = {
+			skill = prowess
+			value = average_skill_rating
+
+			50 = {
+				desc = martial_chivalry.1021.b.success
+
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -19
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = martial_chivalry.1021.b.success
+					left_icon = root
+					add_character_modifier = {
+						modifier = respected_vigor
+						years = 5
+					}
+				}
+			}
+			20 = {
+				desc = martial_chivalry.1021.b.failure
+
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -19
+				}
+				compare_modifier = {
+					value = stress
+					multiplier = 0.5 # +30 at 60 Stress; +150 at 300 Stress
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry.1021.b.failure
+					left_icon = root
+					increase_wounds_effect = { REASON = training_accident }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				OR = {
+					has_trait = brave
+					has_trait = aggressive_attacker
+				}
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry.1021.a
+		stress_impact = {
+			base = medium_stress_impact_loss
+			craven = minor_stress_impact_loss
+			brave = minor_stress_impact_gain
+			wrathful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	after = { remove_character_flag = single_combat_duel_armor }
+}
+
+#Practice duel
+	#by Petter Vilberg
+#Someone challenges you
+martial_chivalry.2010 = {
+	type = character_event
+	title = martial_chivalry.2010.t
+	desc = {
+		desc = martial_chivalry.2010.start.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					reverse_opinion = {
+						target = scope:challenger
+						value >= 0
+					}
+				}
+				desc = martial_chivalry.2010.like.desc
+			}
+			desc = martial_chivalry.2010.dislike.desc
+		}
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		scripted_animation = duel_wield_weapon
+		outfit_tags = { military_outfit }
+	}
+	right_portrait = {
+		character = scope:challenger
+		animation = personality_bold
+		outfit_tags = { military_outfit }
+	}
+
+	trigger = {
+		NOT = { has_character_flag = had_event_martial_chivalry_2010 }
+		NOT = {
+			has_trait_rank = {
+				trait = wounded
+				rank > 1
+			}
+		}
+		OR = {
+			any_relation = {
+				type = soldier_friend
+				is_available_healthy_ai_adult = yes
+			}
+			any_knight = {
+				is_available_healthy_ai_adult = yes
+			}
+			any_relation = { type = rival
+				target_is_liege_or_above = root
+				is_available_healthy_ai_adult = yes
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = -0.5
+			has_trait_rank = {
+				trait = wounded
+				rank = 1
+			}
+		}
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_event_martial_chivalry_2010
+			years = 5
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					trigger = {
+						any_relation = {
+							type = soldier_friend
+							is_available_healthy_ai_adult = yes
+						}
+					}
+					random_relation = { type = soldier_friend
+						limit = {
+							is_available_healthy_ai_adult = yes
+						}
+						save_scope_as = challenger
+					}
+				}
+				30 = {
+					trigger = {
+						any_knight = {
+							is_available_healthy_ai_adult = yes
+						}
+					}
+					random_knight = {
+						limit = {
+							is_available_healthy_ai_adult = yes
+						}
+						save_scope_as = challenger
+					}
+				}
+				30 = {
+					trigger = {
+						any_relation = { type = rival
+							is_available_healthy_ai_adult = yes
+							OR = {
+								is_knight_of = root
+								is_knight_of = root.liege
+								target_is_liege_or_above = root
+							}
+						}
+					}
+					random_relation = {
+						type = rival
+						limit = {
+							is_available_healthy_ai_adult = yes
+							OR = {
+								is_knight_of = root
+								is_knight_of = root.liege
+								target_is_liege_or_above = root
+							}
+						}
+						save_scope_as = challenger
+					}
+				}
+			}
+
+			scope:challenger = { set_signature_weapon_effect = yes }
+			set_signature_weapon_effect = yes
+		}
+	}
+
+	option = { #Accept challenge
+		name = martial_chivalry.2010.a
+
+		duel = {
+			skill = prowess
+			target = scope:challenger
+			20 = { #You have the advantage
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 1
+					min = -19
+				}
+				desc = martial_chivalry.2010.a.success.tt
+				trigger_event = martial_chivalry.2011
+				show_as_tooltip = {
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+					add_character_modifier = {
+						modifier = won_practice_duel
+						years = 5
+					}
+				}
+			}
+			20 = {  #They have the advantage (they are nice), mutually exclusive with other failure
+				trigger = {
+					reverse_opinion = {
+						target = scope:challenger
+						value >= 0
+					}
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1
+					min = -19
+				}
+				show_as_tooltip = {
+					add_martial_lifestyle_xp = minor_lifestyle_experience
+				}
+				trigger_event = martial_chivalry.2012 #They're nice about their advantage
+				desc = martial_chivalry.2010.a.failure1.tt
+			}
+			20 = { #They have the advantage (they are an ass), mutually exclusive with other failure
+				trigger = {
+					reverse_opinion = {
+						target = scope:challenger
+						value < 0
+					}
+				}
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1
+					min = -19
+				}
+				desc = martial_chivalry.2010.a.failure2.tt
+				trigger_event = martial_chivalry.2013  #They're an ass about their advantage
+				show_as_tooltip = {
+					increase_wounds_effect = { REASON = training_accident }
+					add_prestige = medium_prestige_loss
+				}
+			}
+		}
+
+		stress_impact = {
+			lazy = minor_stress_impact_gain
+			craven = medium_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 75
+
+			modifier = {
+				has_trait = brave
+				add = 75
+			}
+		}
+	}
+
+	option = { #Decline challenge
+		name = martial_chivalry.2010.b
+
+		if = {
+			limit = {
+				reverse_opinion = {
+					target = scope:challenger
+					value < 0
+				}
+			}
+			add_prestige = minor_prestige_loss
+			stress_impact = {
+				arrogant = medium_stress_impact_gain
+				brave = medium_stress_impact_gain
+			}
+		}
+		else = {
+			add_prestige = miniscule_prestige_loss
+			stress_impact = {
+				brave = medium_stress_impact_gain
+			}
+		}
+		scope:challenger = {
+			add_opinion = {
+				target = root
+				modifier = respect_opinion
+				opinion = -10
+			}
+		}
+
+		ai_chance = {
+			base = 25
+
+			modifier = {
+				has_trait = lazy
+				add = 50
+			}
+			modifier = {
+				has_trait = craven
+				add = 100
+			}
+			modifier = {
+				has_trait = wounded
+				add = 200
+			}
+		}
+	}
+}
+
+#You gained the upper hand in the mock duel
+martial_chivalry.2011 = {
+	type = character_event
+	title = martial_chivalry.2011.t
+	desc = {
+		desc = martial_chivalry.2011.start.desc
+		desc = martial_chivalry.2011.end.desc
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		scripted_animation = duel_celebrate
+	}
+	right_portrait = {
+		character = scope:challenger
+		animation = fear
+	}
+
+	immediate = {
+		show_as_tooltip = {
+			add_martial_lifestyle_xp = medium_lifestyle_experience
+			add_character_modifier = {
+				modifier = won_practice_duel
+				years = 5
+			}
+		}
+	}
+
+	option = { #You end the duel gracefully
+		name = martial_chivalry.2011.a
+
+		add_prestige = minor_prestige_gain
+		reverse_add_opinion = {
+			target = scope:challenger
+			modifier = honorable_duelist
+		}
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_rationality = 0.25
+			}
+		}
+	}
+
+	option = { #You humiliate them
+		name = martial_chivalry.2011.b
+
+		add_dread = minor_dread_gain
+
+		scope:challenger = {
+			increase_wounds_effect = { REASON = training_accident }
+			add_opinion = {
+				target = root
+				modifier = dishonorable_duelist
+			}
+			add_prestige = medium_prestige_loss
+		}
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_vengefulness = 0.25
+			}
+		}
+	}
+}
+
+#The challenger gains the upper hand in the mock duel
+martial_chivalry.2012 = {
+	type = character_event
+	title = martial_chivalry.2012.t
+	desc = {
+		desc = martial_chivalry.2011.start.desc
+		desc = martial_chivalry.2012.end.desc
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = wrestling_yield_start
+	}
+	right_portrait = {
+		character = scope:challenger
+		scripted_animation = duel_celebrate
+	}
+
+	immediate = {
+		add_martial_lifestyle_xp = minor_lifestyle_experience
+	}
+
+	option = { #Yield
+		name = martial_chivalry.2012.a
+
+		reverse_add_opinion = {
+			target = scope:challenger
+			modifier = honorable_duelist
+		}
+
+		stress_impact = {
+			brave = minor_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+			stubborn = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 75
+		}
+	}
+
+	option = { #Keep fighting
+		name = martial_chivalry.2012.b
+
+		duel = {
+			skill = prowess
+			target = scope:challenger
+			10 = { #You win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 1
+					min = -9
+				}
+				desc = martial_chivalry.2010.a.success.tt
+				trigger_event = martial_chivalry.2014
+				show_as_tooltip = {
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+					add_prestige = minor_prestige_gain
+					add_character_modifier = {
+						modifier = won_practice_duel
+						years = 5
+					}
+				}
+			}
+			20 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1
+					min = -19
+				}
+				desc = martial_chivalry.2010.a.failure2.tt
+				trigger_event = martial_chivalry.2015
+				show_as_tooltip = {
+					increase_wounds_effect = { REASON = training_accident }
+					add_prestige = medium_prestige_loss
+				}
+			}
+		}
+
+		stress_impact = {
+			craven = medium_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+#The challenger gains the upper hand in the practice duel and they're being an ass about it!
+martial_chivalry.2013 = {
+	type = character_event
+	title = martial_chivalry.2013.t
+	desc = {
+		desc = martial_chivalry.2011.start.desc
+		desc = martial_chivalry.2013.end.desc
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = wrestling_yield_start
+	}
+	right_portrait = {
+		character = scope:challenger
+		scripted_animation = duel_celebrate
+	}
+
+	option = {
+		name = martial_chivalry.2013.a
+
+		increase_wounds_effect = { REASON = training_accident }
+		add_prestige = medium_prestige_loss
+		add_opinion = {
+			target = scope:challenger
+			modifier = dishonorable_duelist
+		}
+	}
+}
+
+#You won the duel, what a miracle!
+martial_chivalry.2014 = {
+	type = character_event
+	title = martial_chivalry.2014.t
+	desc = martial_chivalry.2014.desc
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		scripted_animation = duel_celebrate
+	}
+	right_portrait = {
+		character = scope:challenger
+		animation = wrestling_yield_start
+	}
+
+	option = {
+		name = martial_chivalry.2014.a
+
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+		add_prestige = minor_prestige_gain
+		add_character_modifier = {
+			modifier = won_practice_duel
+			years = 5
+		}
+
+	}
+}
+
+#You make a fool of yourself...
+martial_chivalry.2015 = {
+	type = character_event
+	title = martial_chivalry.2015.t
+	desc = martial_chivalry.2015.desc
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	right_portrait = {
+		character = scope:challenger
+		scripted_animation = duel_celebrate
+	}
+
+	option = {
+		name = martial_chivalry.2015.a
+
+		increase_wounds_effect = { REASON = training_accident }
+		add_prestige = medium_prestige_loss
+	}
+}
+
+
+################################################################
+# "A Bard For A King" By Hugo Cortell
+# Originally an FP2 event, but reworked into martial lifestyle
+# 5000 - 5000
+################################################################
+martial_chivalry.5100 = {
+	type = character_event
+	title = fp2_struggle.2023.t
+	desc = fp2_struggle.2023.desc
+	theme = martial_chivalry_focus # prev. friendly
+	override_background = { reference = army_camp }
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	right_portrait = {
+		character = scope:fp2_2023_enemy_knight
+		animation = ecstasy
+	}
+	lower_right_portrait = scope:fp2_2023_foreign_king
+
+	trigger = {
+		has_fp2_dlc_trigger = yes # Part of FP2 DLC
+		any_neighboring_top_liege_realm_owner = {
+			this != ROOT
+			any_knight = {
+				is_available_ai_adult = yes
+				is_landed = no
+			}
+		}
+	}
+
+	immediate = {
+		add_character_flag = single_combat_duel_armor # Visuals
+		random_neighboring_top_liege_realm_owner = {
+			limit = {
+				this != ROOT
+				any_knight = {
+					is_available_ai_adult = yes
+					is_landed = no
+				}
+			}
+			save_scope_as = fp2_2023_foreign_king
+			random_knight = {
+				limit = {
+					is_available_ai_adult = yes
+					is_landed = no
+				}
+				save_scope_as = fp2_2023_enemy_knight
+			}
+		}
+	}
+
+	option = { # Fool! Do you know who you are speaking to?
+		name = fp2_struggle.2023.a.a
+		flavor = fp2_struggle.2023.a.desc
+
+		send_interface_toast = {
+			type = event_toast_effect_good
+			title = fp2_struggle.2023.a.a
+			left_icon = root
+			right_icon = scope:fp2_2023_enemy_knight
+
+			reverse_add_opinion = {
+				target = scope:fp2_2023_enemy_knight
+				modifier = refusal_opinion
+				opinion = -30
+			}
+			add_prestige = minor_prestige_gain
+			add_dread = minor_dread_gain
+		}
+
+		remove_character_flag = single_combat_duel_armor
+	}
+
+	option = { # I will write mocking poetry against your liege
+		name = fp2_struggle.2023.b
+		flavor = fp2_struggle.2023.b.desc
+
+		duel = {
+			skill = learning
+			value = scope:fp2_2023_enemy_knight.learning
+
+			10 = { # Failure Outcome
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1.5
+				}
+				modifier = {
+					add = 20
+					has_trait = lifestyle_poet
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = fp2_struggle.2023.b.b
+					left_icon = root
+
+					add_dread = medium_dread_loss
+					remove_short_term_gold = minor_gold_value
+				}
+			}
+			10 = { # Success Outcome
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 1.5
+				}
+				modifier = {
+					add = 20
+					has_trait = lifestyle_poet
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = fp2_struggle.2023.b.a
+					left_icon = root
+
+					add_prestige = minor_prestige_gain
+					scope:fp2_2023_foreign_king = {
+						add_prestige = minor_prestige_loss
+						add_dread = minor_dread_loss
+					}
+				}
+			}
+		}
+
+		remove_character_flag = single_combat_duel_armor
+	}
+
+	option = { # Fight me! (mandatory stabbing option)
+		name = fp2_struggle.2023.c
+		flavor = fp2_struggle.2023.c.desc
+
+		custom_tooltip = engage_in_single_combat # removed start_bout_interaction due to it involving board games too
+		custom_tooltip = fp2_struggle.2023.c.exptooltip
+		root = { save_scope_as = fp2_2023_root_in_duel }
+		configure_start_single_combat_effect = {
+			SC_INITIATOR = root
+			SC_ATTACKER = scope:fp2_2023_enemy_knight
+			SC_DEFENDER = root
+			FATALITY = no
+			FIXED = no
+			LOCALE = army_camp
+			OUTPUT_EVENT = martial_chivalry.5101
+			INVALIDATION_EVENT = martial_chivalry.5101
+		}
+	}
+
+	option = { # Drink up!
+		name = fp2_struggle.2023.d
+
+		if = { # If the player's faith forbids drinking, notify the player to ensure they are not confused about why the cost is there
+			limit = { religion = religion:islam_religion }
+			custom_tooltip = action_considered_haram_warning
+			add_piety = medium_piety_loss
+		}
+
+		duel = {
+			skill = prowess
+			value = scope:fp2_2023_enemy_knight.prowess
+
+			10 = { # Failure Outcome
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1.5
+				}
+				modifier = {
+					add = -35
+					scope:fp2_2023_enemy_knight = { has_trait = drunkard }
+				}
+				modifier = {
+					add = -15
+					scope:fp2_2023_enemy_knight = { has_trait = gregarious }
+				}
+				modifier = {
+					add = -10
+					scope:fp2_2023_enemy_knight = { has_trait = gluttonous }
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = fp2_struggle.2023.d.a
+					left_icon = root
+
+					add_prestige = medium_prestige_loss
+					remove_short_term_gold = minor_gold_value
+					hidden_effect = {
+						if = {
+							limit = {
+								has_any_nickname = no
+								has_trait = drunkard
+							}
+							random = {
+								chance = 45
+								give_nickname  = nick_the_drunkard # A drunk who cannot hold their ale will be made mockery of, good sire!
+							}
+						}
+					}
+				}
+			}
+			10 = { # Success Outcome
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 1.5
+				}
+				modifier = {
+					add = 35
+					has_trait = drunkard
+				}
+				modifier = {
+					add = 15
+					has_trait = gregarious
+				}
+				modifier = {
+					add = 10
+					has_trait = gluttonous
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = fp2_struggle.2023.d.b
+					left_icon = root
+
+					reverse_add_opinion = {
+						target = scope:fp2_2023_enemy_knight
+						modifier = respect_opinion
+						opinion = 30
+					}
+					add_prestige = medium_prestige_gain
+				}
+			}
+		}
+
+		remove_character_flag = single_combat_duel_armor
+	}
+
+	after = { add_martial_lifestyle_xp = minor_lifestyle_experience } # Removed remove_character_flag = single_combat_duel_armor due to issues with duel
+}
+
+martial_chivalry.5101 = {
+	hidden = yes
+	immediate = {
+		if = {
+			limit = { scope:sc_victor = root }
+			send_interface_toast = {
+				type = event_toast_effect_good
+				title = fp2_struggle.2023.c.a
+				right_icon = root
+
+				add_prestige = medium_prestige_gain
+				hidden_effect = { add_martial_lifestyle_xp = minor_lifestyle_experience } # We are adding an extra [minor] EXP, but already gave [minor] in the after
+				show_as_tooltip = {
+					add_martial_lifestyle_xp = { # So, to make the numbers add up on the UI, we show a [minor] + the extra [minor], even though we only add one [minor] here
+						value = minor_lifestyle_experience
+						add = minor_lifestyle_experience
+					}
+				}
+			}
+		}
+		else = {
+			send_interface_toast = {
+				type = event_toast_effect_bad
+				title = fp2_struggle.2023.c.b
+				right_icon = root
+
+				add_prestige = minor_prestige_loss
+				remove_short_term_gold = minor_gold_value
+				show_as_tooltip = { add_martial_lifestyle_xp = minor_lifestyle_experience } # Showing the one you gained before in the after
+			}
+		}
+		
+		remove_character_flag = single_combat_duel_armor
+	}
+}
+
+
+##################################################
+# Poor Commander
+# by Sean Hughes
+# 3000-3005
+##################################################
+
+scripted_trigger martial_chivalry_3000_is_valid_commander_trigger = {
+	can_be_combatant_based_on_gender_trigger = {ARMY_OWNER = root}
+	is_available_healthy_adult = yes
+	is_landed = yes
+	martial <= 9
+	any_liege_or_above = {
+		this = root
+	}
+}
+
+martial_chivalry.3000 = {
+	type = character_event
+	title = martial_chivalry.3000.t
+	desc = {
+		desc = martial_chivalry.3000.desc #Standard introduction text for all characters
+		first_valid = {
+				triggered_desc = { #Conclusion flavor text for Compassionate characters.
+				trigger = { has_trait = compassionate }
+				desc = martial_chivalry.3000.desc.compassionate
+			}
+			triggered_desc = { #Conclusion flavor text for Callous characters.
+				trigger = { has_trait = callous }
+				desc = martial_chivalry.3000.desc.callous
+			}
+			desc = martial_chivalry.3000.desc.fallback #Standard conclusion text for other characters.
+		}
+	}
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = { has_trait = compassionate }
+			animation = personality_compassionate
+		}
+		triggered_animation = {
+			trigger = { has_trait = callous }
+			animation = disgust
+		}
+		animation = disapproval
+	}
+	right_portrait = {
+		character = scope:bad_commander
+		animation = stress
+	}
+
+	trigger = {
+		NOT = { has_character_flag = had_event_martial_chivalry_3000 } #Can only happen once every 5 years.
+		OR = {
+			any_vassal = {
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+			player_heir ?= {
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+			any_child = {
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+
+		modifier = {
+			add = 0.5
+			player_heir ?= {
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+		}
+
+		modifier = {
+			add = 0.3
+			any_vassal = {
+				is_powerful_vassal_of = root
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+		}
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_event_martial_chivalry_3000
+			days = 1825
+		}
+
+		save_scope_as = my_liege
+
+		every_child = {
+			limit = {
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+			add_to_list = potential_important_people
+		}
+		every_heir = {
+			limit = {
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+			add_to_list = potential_important_people
+		}
+		every_vassal = {
+			limit = {
+				martial_chivalry_3000_is_valid_commander_trigger = yes
+			}
+			add_to_list = potential_important_people
+		}
+
+		random_in_list = {
+			list = potential_important_people
+
+			weight = {
+				#Because the event can only fire on bad commanders, we need to make sure the event prefers firing on characters the player actually cares about.
+				base = 10
+				modifier = {
+					is_player_heir_of = root
+					factor = 10
+				}
+				modifier = {
+					is_child_of = root
+					factor = 10
+				}
+				modifier = {
+					is_powerful_vassal = yes
+					factor = 5
+				}
+				compare_modifier = {
+					value = highest_held_title_tier
+					multiplier = 2
+				}
+
+				#Even if the commander is bad, it would be nice if they weren't completely terrible.
+				compare_modifier = {
+					value = martial
+					multiplier = 5
+				}
+			}
+			save_scope_as = bad_commander
+		}
+	}
+
+
+
+	#Give advice(wanted or not) to the poor commander.
+	option = {
+		name = martial_chivalry.3000.b
+
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+
+		#This list is purely to create an informational tooltip for the player; all the actual effects happen in the follow-up events.
+		random_list = {
+			desc = martial_chivalry.3000.b.attempt
+			1 = {
+				desc = martial_chivalry.3000.b.tt.s
+				show_chance = no
+				show_as_tooltip = {
+					scope:bad_commander = {
+						if = {
+							limit = {martial <= 4}
+							add_martial_skill = 3
+						}
+						else_if = {
+							limit = {martial <= 7}
+							add_martial_skill = 2
+						}
+						else = {
+							add_martial_skill = 1
+						}
+						add_opinion = {
+							target = root
+							modifier = grateful_opinion
+							opinion = 20
+						}
+					}
+				}
+			}
+			1 = {
+				desc = martial_chivalry.3000.b.tt.f
+				show_chance = no
+				show_as_tooltip = {
+					scope:bad_commander = {
+						add_opinion = {
+							target = root
+								modifier = angry_opinion
+								opinion = -10
+						}
+					}
+				}
+			}
+		}
+
+		#Commander responds to advice given.
+		scope:bad_commander = {
+			trigger_event = { id = martial_chivalry.3002 days = 3 }
+		}
+
+		stress_impact = {
+				shy = medium_stress_impact_gain
+				wrathful = medium_stress_impact_gain
+				humble = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = 1
+				ai_boldness = 0.5
+			}
+		}
+	}
+
+	#Ignore the poor commander's mediocrity, befriend him instead.
+	option = {
+		name = martial_chivalry.3000.c
+
+		show_as_tooltip = {
+			progress_towards_friend_effect = {
+				CHARACTER = scope:bad_commander
+				OPINION = 20
+				REASON = friend_encouraged_growth
+			}
+		}
+
+		scope:bad_commander = {
+			hidden_effect = { root = { save_scope_as = my_liege } }
+			trigger_event = { id = martial_chivalry.3005 days = 3 }
+		}
+
+		stress_impact = {
+				shy = medium_stress_impact_gain
+				wrathful = medium_stress_impact_gain
+				impatient = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -1
+				ai_compassion = 1
+			}
+		}
+	}
+
+	#Berate the poor commander for his failure.
+	option = {
+		name = martial_chivalry.3000.a
+
+		add_dread = minor_dread_gain
+
+		#Only add opinion of other character if we are an AI(As player opinion has no effect).
+		if = {
+			limit = {
+				is_ai = yes
+			}
+			add_opinion = {
+				target = scope:bad_commander
+				modifier = disappointed_opinion
+				opinion = -20
+			}
+		}
+		reverse_add_opinion = {
+			target = scope:bad_commander
+			modifier = angry_opinion
+			opinion = -20
+		}
+
+		scope:bad_commander = {
+			show_as_tooltip = {
+				add_prestige = medium_prestige_loss
+			}
+
+			trigger_event = { id = martial_chivalry.3001 days = 3 }
+		}
+
+		stress_impact = {
+				forgiving = medium_stress_impact_gain
+				compassionate = medium_stress_impact_gain
+				calm = minor_stress_impact_gain
+				shy = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = 1
+				ai_compassion = -1
+			}
+		}
+	}
+}
+
+#Bad commander responds to being berrated.
+martial_chivalry.3001 = {
+	type = character_event
+	title = martial_chivalry.3001.t
+	desc = {
+		desc = martial_chivalry.3000.response.desc
+		desc = martial_chivalry.3001.desc
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = shame
+	}
+	right_portrait = {
+		character = scope:my_liege
+		animation = anger
+	}
+
+	immediate = {
+		show_as_tooltip = {
+			#Only add opinion of other character if we are an AI(As player opinion has no effect).
+			scope:my_liege = {
+				if = {
+					limit = {
+						is_ai = yes
+					}
+					add_opinion = {
+						target = root
+						modifier = disappointed_opinion
+						opinion = -20
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				add_opinion = {
+					target = scope:my_liege
+					modifier = angry_opinion
+					opinion = -20
+				}
+			}
+
+		}
+		#Prestige loss always happens(your liege watched you fail).
+		add_prestige = medium_prestige_loss
+	}
+
+	#Punish own troops for Dread.
+	option = {
+		name = martial_chivalry.3001.a
+		add_dread = minor_dread_gain
+
+		stress_impact = {
+				compassionate = medium_stress_impact_gain
+				forgiving = medium_stress_impact_gain
+				patient = medium_stress_impact_gain
+				just = medium_stress_impact_gain
+				ambitious = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = 100
+				ai_compassion = -100
+				ai_honor = -100
+			}
+		}
+	}
+
+	#Use failure as reason to work harder.
+	option = {
+		name = martial_chivalry.3001.b
+		add_character_modifier = {
+			modifier = warfare_motivated_instructor_modifier
+			days = 365
+		}
+
+		stress_impact = {
+				arrogant = medium_stress_impact_gain
+				lazy = medium_stress_impact_gain
+				content = medium_stress_impact_gain
+				wrathful = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_energy = 100
+				ai_boldness = 100
+				ai_greed = 100
+				ai_honor = 200
+			}
+		}
+	}
+
+	#Accept that you are just a bad commander.
+	option = {
+		name = martial_chivalry.3001.c
+
+		stress_impact = {
+			base = minor_stress_impact_gain
+			arrogant = medium_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_energy = -100
+				ai_boldness = -100
+			}
+		}
+	}
+}
+
+#Bad commander responds to advice given.
+martial_chivalry.3002 = {
+	type = character_event
+	title = martial_chivalry.3002.t
+	desc = {
+		desc = martial_chivalry.3000.response.desc
+		desc = martial_chivalry.3002.desc
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = interested_left
+	}
+	right_portrait = {
+		character = scope:my_liege
+		animation = debating
+	}
+
+	trigger = {
+		scope:my_liege = {
+			is_alive = yes
+		}
+	}
+
+	#Accept advice gratefully.
+	option = {
+		name = martial_chivalry.3002.a
+		if = {
+			limit = { martial <= 4 }
+			add_martial_skill = 3
+			save_scope_value_as = {
+				name = martial_increase
+				value = 3
+			}
+		}
+		else_if = {
+			limit = { martial <= 7 }
+			add_martial_skill = 2
+			save_scope_value_as = {
+				name = martial_increase
+				value = 2
+			}
+		}
+		else = {
+			add_martial_skill = 1
+			save_scope_value_as = {
+				name = martial_increase
+				value = 1
+			}
+		}
+
+		#Only add opinion of other character if we are an AI(As player opinion has no effect).
+		if = {
+			limit = {
+				is_ai = yes
+			}
+			add_opinion = {
+				target = scope:my_liege
+				modifier = grateful_opinion
+				opinion = low_positive_opinion
+			}
+		}
+		reverse_add_opinion = {
+			target = scope:my_liege
+			modifier = pleased_opinion
+			opinion = low_positive_opinion
+		}
+
+		scope:my_liege = {
+			trigger_event = { id = martial_chivalry.3003 days = 1 }
+		}
+
+		stress_impact = {
+			arrogant = medium_stress_impact_gain
+			stubborn = medium_stress_impact_gain
+			vengeful = medium_stress_impact_gain
+			lazy = medium_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = 100
+				ai_rationality = 200
+				ai_vengefulness = -100
+				ai_energy = 100
+			}
+		}
+	}
+
+	#Rudly reject advice!
+	option = {
+		name = martial_chivalry.3002.b
+		add_dread = minor_dread_gain
+
+		#Only add opinion of other character if we are an AI(As player opinion has no effect).
+		if = {
+			limit = {
+				is_ai = yes
+			}
+			add_opinion = {
+				target = scope:my_liege
+				modifier = angry_opinion
+				opinion = -10
+			}
+		}
+		reverse_add_opinion = {
+			target = scope:my_liege
+			modifier = disappointed_opinion
+			opinion = -10
+		}
+
+		scope:my_liege = {
+			trigger_event = { id = martial_chivalry.3004 days = 1 }
+		}
+
+		stress_impact = {
+			eccentric = medium_stress_impact_loss
+			diligent = medium_stress_impact_gain
+			ambitious = medium_stress_impact_gain
+			humble = medium_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = -200
+				ai_vengefulness = 200
+				ai_energy = -100
+			}
+		}
+	}
+}
+
+#Original character hears about the bad commander accepting his advice.
+martial_chivalry.3003 = {
+	type = character_event
+	title = martial_chivalry.3003.t
+	desc = {
+		desc = martial_chivalry.3003.desc.1
+		desc = martial_chivalry.3003.desc.2
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:bad_commander
+		animation = personality_bold
+	}
+
+	immediate = {
+		show_as_tooltip = {
+			scope:bad_commander = {
+				if = {
+					limit = {
+						scope:martial_increase = 3
+					}
+					add_martial_skill = 3
+				}
+				else_if = {
+					limit = {
+						scope:martial_increase = 2
+					}
+					add_martial_skill = 2
+				}
+				else = {
+					add_martial_skill = 1
+				}
+			}
+			reverse_add_opinion = {
+				target = scope:bad_commander
+				modifier = pleased_opinion
+				opinion = 20
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry.3003.a
+	}
+}
+
+#Original character hears about the bad commander rejecting his advice.
+martial_chivalry.3004 = {
+	type = character_event
+	title = martial_chivalry.3004.t
+	desc = martial_chivalry.3004.desc
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = disappointed
+	}
+	right_portrait = {
+		character = scope:bad_commander
+		animation = anger
+	}
+
+	immediate = {
+		show_as_tooltip = {
+			#Only add opinion of other character if we are an AI(As player opinion has no effect).
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				add_opinion = {
+					target = scope:bad_commander
+					modifier = angry_opinion
+					opinion = -10
+				}
+			}
+			reverse_add_opinion = {
+				target = scope:bad_commander
+				modifier = angry_opinion
+				opinion = -10
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry.3004.a
+	}
+}
+
+#Bad commander hears about how nice his liege was to ignore his failure.
+martial_chivalry.3005 = {
+	type = character_event
+	title = martial_chivalry.3005.t
+	desc = {
+		desc = martial_chivalry.3000.response.desc
+		desc = martial_chivalry.3005.desc
+	}
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = admiration
+	}
+	right_portrait = {
+		character = scope:my_liege
+		animation = personality_compassionate
+	}
+
+	immediate = {
+		progress_towards_friend_effect = {
+			CHARACTER = scope:my_liege
+			OPINION = 20
+			REASON = friend_encouraged_growth
+		}
+	}
+
+	option = {
+		name = martial_chivalry.3005.a
+
+		add_opinion = {
+			target = scope:my_liege
+			modifier = friendliness_opinion
+			opinion = 20
+		}
+		add_stress = minor_stress_loss
+	}
+}
+
+##################################################
+# A Ride At Midnight
+# by Jason Cantalini
+##################################################
+
+scripted_trigger martial_chivalry_4000_raiding_neighbor_trigger = {
+		highest_held_title_tier >= tier_county
+		can_raid_trigger = yes
+		is_ai = yes
+		NOR = {
+			this = root
+			target_is_liege_or_above = root
+			target_is_vassal_or_below = root
+			is_allied_to = root
+		}
+}
+
+martial_chivalry.4000 = {
+	type = character_event
+	title = martial_chivalry.4000.t
+	desc = {
+		desc = martial_chivalry.4000.desc
+		# ROOT personality affects the last little bit of the desc
+		triggered_desc = {
+			trigger = {
+				root = {
+					OR = {
+						has_trait = lazy
+						has_trait = craven
+						has_trait = hashishiyah
+						has_trait = calm
+					}
+				}	
+			}
+			desc = martial_chivalry.4000.sleepy
+		}
+		triggered_desc = {
+			trigger = {
+				root = {
+					NOR = {
+						has_trait = lazy
+						has_trait = craven
+						has_trait = hashishiyah
+						has_trait = calm
+					}
+				}
+			}
+			desc = martial_chivalry.4000.angry
+		}
+	}
+	theme = martial_chivalry_focus
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	lower_right_portrait = {
+		character = scope:raiders
+	}
+	cooldown = {
+		years = 5
+	}
+
+	trigger = {
+		has_focus = martial_chivalry_focus
+		NOT = { has_character_flag = is_in_martial_special_event }
+		is_available_healthy_adult = yes
+		is_landed = yes
+		highest_held_title_tier <= tier_duchy
+		highest_held_title_tier > tier_barony
+		any_knight = {
+			is_available_ai_adult = yes
+		}
+		#All the riding doesn't feel appropriate for a lot of Scandinavia
+		NOT = { 
+			capital_province = {
+				geographical_region = ghw_region_scandinavia
+			}
+		}	
+		trigger_if = {
+			limit = { top_liege != this }
+			any_neighboring_realm_same_rank_owner = {
+				martial_chivalry_4000_raiding_neighbor_trigger = yes
+			}
+		}
+		trigger_else = {
+			any_neighboring_top_liege_realm_owner = {
+				martial_chivalry_4000_raiding_neighbor_trigger = yes
+			}
+		}
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_combat_2"
+		# Who are you riding out with?
+		root = { add_to_list = your_warriors }
+		every_knight = {
+			limit = {
+				is_available_ai_adult = yes
+			}
+			add_to_list = your_warriors
+		}
+		# Grab a suitable neighbour
+		if = {
+			limit = {
+				top_liege != this
+				any_neighboring_realm_same_rank_owner = { 
+					martial_chivalry_4000_raiding_neighbor_trigger = yes
+				}
+			}
+			random_neighboring_realm_same_rank_owner = {
+				limit = {
+					martial_chivalry_4000_raiding_neighbor_trigger = yes
+				}
+				save_scope_as = raiders
+			}
+		}
+		else = {
+			random_neighboring_top_liege_realm_owner = {
+				limit = {
+					martial_chivalry_4000_raiding_neighbor_trigger = yes
+				}
+				save_scope_as = raiders
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry.4000.a
+		flavor = martial_chivalry_special.4000.a.tt
+		# Martial challenge as you try to outmaneuvre the thieves
+		duel = {
+			skill = martial
+			value = average_skill_rating
+			# You get them to flee
+			60 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3
+				}
+				desc = martial_chivalry_special.4000.a.tt_success
+				send_interface_toast = {
+					title = martial_chivalry_special.4000.a.tt_success
+					left_icon = root
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+					add_prestige = minor_prestige_gain
+				}
+			}
+			# You and your knights are beaten
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3
+				}
+				desc = martial_chivalry_special.4000.a.tt_failure
+				hidden_effect = {
+					random_in_list = {
+						list = your_warriors
+						weight = {
+							base = 1
+							modifier = {
+								add = {
+									value = prowess
+									multiply = -2
+								}
+							}
+						}
+						increase_wounds_no_death_effect = { REASON = fight }
+						save_scope_as = wounded
+					}
+				}
+				send_interface_toast = {	
+					title = martial_chivalry_special.4000.a.tt_failure
+					left_icon = root
+					custom_tooltip = martial_chivalry_special.4000.a.tt_failure_2
+					add_prestige = medium_prestige_loss
+					capital_county = {
+						change_county_control = medium_county_control_loss
+					}
+					stress_impact = {
+						arrogant = medium_stress_impact_gain
+						vengeful = minor_stress_impact_gain
+					}
+				}
+				hidden_effect = {
+					scope:raiders = {
+						add_gold = minor_gold_value
+						add_prestige = minor_prestige_gain
+					}
+				}
+			}
+		}
+		stress_impact = {
+			lazy = major_stress_impact_gain
+			craven = medium_stress_impact_gain
+			impatient = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = 0.50
+				ai_energy = 0.50
+				ai_rationality = 0.25
+			}
+			compare_modifier = {
+				target = root
+				value = martial
+				multiplier = 1.5
+			}
+			modifier = {
+				has_trait = impatient
+				add = -75
+			}
+			modifier = {
+				has_trait = lazy
+				add = -50
+			}
+			modifier = {
+				has_trait = craven
+				add = -50
+			}
+		}
+	}
+	option = {
+		name = martial_chivalry.4000.b
+		flavor = martial_chivalry_special.4000.b.tt
+		# Prowess challenge as you attack the thieves' leader
+		duel = {
+			skill = prowess
+			value = average_skill_rating
+			# You slay the insolent boy!
+			60 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.1
+				}
+				desc = martial_chivalry_special.4000.b.tt_success
+				send_interface_toast = {
+					title = martial_chivalry_special.4000.b.tt_success
+					left_icon = root
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+					add_prestige = medium_prestige_gain
+					add_dread = medium_dread_gain
+					scope:raiders = {
+						add_opinion = {
+							modifier = angry_opinion
+							target = root
+							opinion = -15
+						}
+					}
+					if = {
+						limit = {
+							can_set_relation_potential_rival_trigger = { CHARACTER = scope:raiders }
+						}
+						set_relation_potential_rival = scope:raiders
+					}
+					create_character_memory = {
+						type = slew_rustlers
+						participants = {
+							sent_rustlers = scope:raiders
+						}
+					}
+					stress_impact = {
+						vengeful = minor_stress_impact_loss
+					}
+				}
+			}
+			# You were over-confident
+			35 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.1
+					min = -33
+				}
+				desc = martial_chivalry_special.4000.b.tt_failure
+				send_interface_toast = {	
+					title = martial_chivalry_special.4000.b.tt_failure
+					left_icon = root
+					increase_wounds_no_death_effect = { REASON = fight }
+					add_prestige = medium_prestige_loss
+					capital_county = {
+						change_county_control = medium_county_control_loss
+					}
+					stress_impact = {
+						arrogant = medium_stress_impact_gain
+						vengeful = minor_stress_impact_gain
+					}
+				}
+				hidden_effect = {
+					scope:raiders = {
+						add_gold = minor_gold_value
+						add_prestige = minor_prestige_gain
+					}
+				}
+			}
+			# You get yourself beaten, trampled and humiliated
+			5 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.1
+					min = -3
+				}
+				desc = martial_chivalry_special.4000.b.tt_critical_failure
+				add_internal_flag = dangerous
+				send_interface_toast = {	
+					title = martial_chivalry_special.4000.b.tt_critical_failure
+					left_icon = root
+					custom_tooltip = martial_chivalry_special.4000.b.tt_critical_failure_2
+					add_prestige = major_prestige_loss
+					capital_county = {
+						change_county_control = medium_county_control_loss
+					}
+					hidden_effect = { maimed_in_battle_effect = yes }
+					stress_impact = {
+						arrogant = major_stress_impact_gain
+						vengeful = medium_stress_impact_gain
+					}
+				}
+				hidden_effect = {
+					scope:raiders = {
+						add_gold = minor_gold_value
+						add_prestige = minor_prestige_gain
+					}
+				}
+				create_character_memory = {
+					type = humiliated_by_rustlers
+					participants = {
+						sent_rustlers = scope:raiders
+					}
+				}
+			}
+		}
+		stress_impact = {
+			irritable = minor_stress_impact_loss
+			craven = massive_stress_impact_gain
+			lazy = massive_stress_impact_gain
+			forgiving = major_stress_impact_gain
+			compassionate = major_stress_impact_gain
+			patient = medium_stress_impact_gain
+			humble = medium_stress_impact_gain
+			calm = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_vengefulness = 1
+				ai_compassion = -0.75
+				ai_energy = 0.75
+			}
+			modifier = {
+				add = -100
+				has_trait_rank = {
+					trait = wounded
+					rank >= 2
+				}
+			}
+			modifier = {
+				has_trait = craven
+				add = -100
+			}
+			modifier = {
+				has_trait = arrogant
+				add = 25
+			}
+			modifier = {
+				has_trait = irritable
+				add = 25
+			}
+			modifier = {
+				has_trait = lazy
+				add = -100
+			}
+			compare_modifier = {
+				target = root
+				value = prowess
+				multiplier = 1.5
+			}
+		}
+	}
+	option = {
+		name = martial_chivalry.4000.c
+		flavor = martial_chivalry_special.4000.c.tt
+		capital_county = {
+			add_county_modifier = {
+				modifier = martial_chivalry_stolen_livestock_modifier
+				years = 5
+			}
+		}
+		add_prestige = minor_prestige_loss
+		hidden_effect = {
+			scope:raiders = {
+				add_gold = tiny_gold_value
+				add_prestige = minor_prestige_gain
+			}
+		}
+		stress_impact = {
+			lazy = minor_stress_impact_loss
+			impatient = massive_stress_impact_gain
+			wrathful = massive_stress_impact_gain
+			vengeful = massive_stress_impact_gain
+			diligent = major_stress_impact_gain
+			brave = medium_stress_impact_gain
+			stubborn = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 60
+			ai_value_modifier = {
+				ai_vengefulness = -1
+				ai_energy = -1
+				ai_boldness = -0.50
+				ai_honor = -0.25
+			}
+			modifier = {
+				has_trait = wrathful
+				add = -75
+			}
+			modifier = {
+				has_trait = diligent
+				add = -50
+			}
+			modifier = {
+				has_trait = brave
+				add = -50
+			}
+			modifier = {
+				has_trait = impatient
+				add = -50
+			}
+		}
+	}
+}
+
+##################################################
+# Unfounded Rumors
+# by Veronica Pazos
+# 5000
+##################################################
+
+scripted_trigger martial_chivalry_5000_is_valid_spouse_trigger = {
+	is_available_ai_adult = yes
+	is_attracted_to_gender_of = root
+	top_liege != this
+	NOR = {
+		has_trait = chaste
+		has_trait = celibate
+	}
+	save_temporary_scope_as = spouse_trigger
+	root = {
+		is_attracted_to_gender_of = scope:spouse_trigger
+	}
+}
+
+scripted_trigger martial_chivalry_5000_is_valid_liege_trigger = {
+	is_available_ai_adult = yes
+	is_landed = yes
+	is_married = yes
+	any_spouse = {
+		martial_chivalry_5000_is_valid_spouse_trigger = yes
+	}
+}
+
+martial_chivalry.5000 = {
+	type = character_event
+	title = martial_chivalry.5000.t
+	desc = {
+		desc = martial_chivalry.5000.intro #Standard introduction text for all characters
+		first_valid = {
+				triggered_desc = { #Flavor text for Lustful characters
+				trigger = { has_trait = lustful }
+				desc = martial_chivalry.5000.desc.lustful
+			}
+			triggered_desc = { #Flavor text for Honest/Chaste characters
+				trigger = {
+					OR = {
+						has_trait = honest
+						has_trait = chaste
+						has_trait = celibate
+					}
+				}
+				desc = martial_chivalry.5000.desc.honest_chaste
+			}
+			desc = martial_chivalry.5000.desc.fallback #Standard flavor text for other characters
+		}
+		desc = martial_chivalry.5000.desc.outro
+	}
+
+	theme = martial_chivalry_focus
+	cooldown = { years = 5 }
+	override_background = {
+		reference = corridor_night
+	}
+
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = { has_trait = lustful }
+			animation = happiness
+		}
+		animation = stress
+	}
+
+	right_portrait = {
+		character = scope:spymaster
+		animation = worry
+	}
+	lower_right_portrait = scope:spouse
+
+	trigger = {
+		NOT = { has_character_flag = had_event_martial_chivalry_5000 } #adjusts cooldown for this specific character
+		is_available_healthy_adult = yes
+		is_landed = yes
+		has_lifestyle = martial_lifestyle
+		top_liege != this #you actually have a lieges
+		accepts_adultery_without_penalty_trigger = no
+		liege = { #your liege and their spouse meet the conditions
+			martial_chivalry_5000_is_valid_liege_trigger = yes
+			any_spouse = {
+				martial_chivalry_5000_is_valid_spouse_trigger = yes
+			}
+			any_powerful_vassal = { #at least one relevant vassal dislikes you a bit
+				opinion = {
+					target = root
+					value <= -10
+				}
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { #much more likely to happen if you go around trying to seduce people
+			add = 1
+			has_trait = lustful
+		}
+		modifier = { #more likely to happen if someone really dislikes you
+			add = 0.5
+			any_powerful_vassal = {
+				opinion = {
+					target = root
+					value <= -20
+				}
+			}
+		}
+		modifier = { #more likely to happen if you have a competent spymaster that finds out about the rumors
+			add = 0.3
+			exists = cp:councillor_spymaster
+			cp:councillor_spymaster = {
+				NOT = { is_spouse_of = root }
+				intrigue >= medium_skill_rating
+			}
+		}
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = had_event_martial_chivalry_5000
+			days = 3650
+		}
+		liege = {
+			save_scope_as = my_liege
+			random_spouse = {
+				limit = {
+					martial_chivalry_5000_is_valid_spouse_trigger = yes
+				}
+				save_scope_as = spouse
+			}
+			random_powerful_vassal = {
+				limit = {
+					opinion = {
+						target = root
+						value <= -10
+					}
+				}
+				save_scope_as = rumor_spreader
+			}
+		}
+		if = { #someone finds out about these rumors
+			limit = {
+				exists = cp:councillor_spymaster
+				cp:councillor_spymaster = { this != scope:spouse }
+			}
+			cp:councillor_spymaster = { save_scope_as = spymaster }
+		}
+		else = {
+			ordered_vassal = {
+				limit = {
+					this != scope:spouse
+				}
+				order_by = intrigue
+				save_scope_as = spymaster
+			}
+		}
+	}
+
+	#Deny the rumors immediately
+	option = {
+		name = martial_chivalry.5000.a
+		duel = {
+			skill = intrigue
+			target = scope:rumor_spreader
+			50 = {
+				desc = martial_chivalry.5000.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				add_martial_lifestyle_xp = medium_lifestyle_experience #you're being gallant
+				reverse_add_opinion = {
+					target = liege
+					modifier = pleased_opinion
+					opinion = 10
+				}
+			}
+			50 = {
+				desc = martial_chivalry.5000.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				add_prestige = medium_prestige_loss
+				reverse_add_opinion = {
+					target = liege
+					modifier = suspicion_opinion
+					opinion = -20
+				}
+			}
+		}
+		stress_impact = {
+			base = medium_stress_impact_gain
+			honest = medium_stress_impact_loss
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = 0.5
+				ai_compassion = 1
+			}
+		}
+	}
+
+	#Ignore the rumors
+	option = {
+		name = martial_chivalry.5000.b
+		add_prestige = minor_prestige_loss #your reputation is damaged
+		stress_impact = {
+			arrogant = medium_stress_impact_gain
+			honest = medium_stress_impact_gain
+			chaste = medium_stress_impact_gain
+			celibate = medium_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 80
+			ai_value_modifier = {
+				ai_compassion = 0.5
+				ai_vengefulness = -0.5
+				ai_honor = -1
+			}
+		}
+	}
+
+	#Go talk to your liege yourself
+	option = {
+		name = martial_chivalry.5000.c
+		duel = {
+			skills = { diplomacy intrigue }
+			target = scope:my_liege
+			50 = {
+				desc = martial_chivalry.5000.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				reverse_add_opinion = {
+					target = liege
+					modifier = pleased_opinion
+					opinion = 20
+				}
+				reverse_add_opinion = {
+					target = scope:spouse
+					modifier = grateful_opinion
+					opinion = 10
+				}
+			}
+			50 = {
+				desc = martial_chivalry.5000.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				reverse_add_opinion = {
+					target = liege
+					modifier = suspicion_opinion
+					opinion = -30
+				}
+			}
+		}
+		stress_impact = {
+			base = minor_stress_impact_gain
+			shy = major_stress_impact_gain
+			craven = major_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 80
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_vengefulness = -0.5
+			}
+		}
+	}
+
+	#Use the rumors in your favor
+	option = {
+		name = martial_chivalry.5000.d
+		trigger = {
+			has_trait = lustful
+		}
+		flavor = martial_chivalry.5000.d.tt
+		custom_tooltip = martial_chivalry.5000.d.tt.warning
+		add_martial_lifestyle_xp = major_lifestyle_experience #you're being _extremely_ gallant (courtly love)
+		every_scheme = { #you drop everything to pursue her
+			limit = {
+				OR = {
+					scheme_type = befriend
+					scheme_type = sway
+					scheme_type = seduce
+					scheme_type = courting
+					scheme_type = elope
+					scheme_type = murder
+					scheme_type = abduct
+					scheme_type = claim_throne
+					scheme_type = fabricate_hook
+					scheme_type = convert_to_witchcraft
+				}
+			}
+			end_scheme = yes
+		}
+		start_scheme = {
+			target_character = scope:spouse
+			type = seduce
+		}
+		stress_impact = {
+			honest = major_stress_impact_gain
+			chaste = major_stress_impact_gain
+			celibate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200 #high weight since it only triggers if you have the lustful trait
+			ai_value_modifier = {
+				ai_vengefulness = 1
+				ai_boldness = 1
+				ai_compassion = -0.5
+				ai_honor = -1
+			}
+		}
+	}
+}
+
+##################################################
+# The Church in the Woods
+# by Veronica Pazos
+# 6000-6003
+##################################################
+
+martial_chivalry.6000 = {
+	type = character_event
+	title = martial_chivalry.6000.t
+	desc = martial_chivalry.6000.desc
+
+	theme = martial_chivalry_focus
+	cooldown = { years = 10 }
+	override_background = {
+		reference = terrain
+	}
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		NOT = { has_character_flag = had_event_martial_chivalry_6000 }
+		is_available_healthy_adult = yes
+		OR = {
+			AND = {
+				has_government = landless_adventurer_government
+				capital_province = {
+					is_wooded_trigger = yes
+				}
+			}
+			any_sub_realm_county = {
+				any_county_province = {
+					is_wooded_trigger = yes
+				}
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		upweight_for_focus_modifier = { FOCUS = martial_chivalry_focus }
+	}
+
+	immediate = {
+		add_character_flag = had_event_martial_chivalry_6000 #we stop the event from happening to the same character
+		if = {
+			limit = {
+				exists = cp:councillor_court_chaplain
+			}
+			cp:councillor_court_chaplain = {
+				save_scope_as = bishop
+			}
+		}
+		random_sub_realm_county = {
+			limit = {
+				any_county_province = {
+					is_wooded_trigger = yes
+				}
+			}
+			save_scope_as = church_county
+			random_county_province = {
+				limit = { is_wooded_trigger = yes }
+				save_scope_as = church_province #necessary for cool custom loc
+			}
+		}
+	}
+
+	option = { #explore it
+		name = martial_chivalry.6000.a
+		custom_tooltip = martial_chivalry.6000.a.tt
+		stress_impact = {
+			craven = medium_stress_impact_gain
+			lazy = minor_stress_impact_gain
+		}
+		hidden_effect = {
+			random_list = {
+				10 = { #you find a "monster"
+					trigger_event = martial_chivalry.6001
+					modifier = {
+						factor = 0.3
+						prowess >= high_skill_rating
+					}
+				}
+				10 = { #you find an artifact
+					trigger_event = martial_chivalry.6002
+					modifier = {
+						factor = 0.3
+						OR = {
+							has_trait = scholar
+							has_trait = education_learning_3
+							has_trait = education_learning_4
+							has_trait = education_learning_5
+						}
+					}
+				}
+				5 = { #you find a fair maiden/lad
+					trigger_event = martial_chivalry.6003
+					modifier = {
+						factor = 1
+						OR = {
+							has_focus = martial_chivalry_focus
+							has_trait = gallant
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				has_trait = brave
+			}
+			modifier = {
+				factor = 0.5
+				has_focus = martial_chivalry_focus
+			}
+		}
+	}
+
+	option = { #inform the bishop
+		name = martial_chivalry.6000.b
+		trigger = {
+			exists = cp:councillor_court_chaplain
+		}
+		add_piety = minor_piety_gain
+		scope:bishop = {
+			add_opinion = {
+				target = ROOT
+				modifier = trust_opinion
+				opinion = 20
+			}
+		}
+		stress_impact = {
+			brave = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 1.5
+				has_trait = zealous
+			}
+		}
+	}
+
+	option = { #leave
+		name = martial_chivalry.6000.c
+		if = {
+			limit = {
+				is_landed = yes
+			}
+			scope:church_county = {
+				add_county_modifier = {
+					modifier = ignored_church_modifier
+					years = 5
+				}
+			}
+		}
+		stress_impact = {
+			craven = minor_stress_impact_loss
+			brave = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0.5
+				has_trait = craven
+			}
+		}
+	}
+}
+
+# You find a "monster"
+martial_chivalry.6001 = {
+	type = character_event
+	title = martial_chivalry.6001.t
+	desc = martial_chivalry.6001.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = temple
+	}
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+
+	immediate = {
+		select_local_animal_effect = { TYPE = any } # Save scope to limit possible animals: any/big/small/dangerous/harmless/prowling
+	}
+
+	option = { #fight!
+		name = martial_chivalry.6001.a
+		duel = {
+			skill = prowess
+			value = medium_skill_rating
+			60 = {
+				desc = martial_chivalry.6001.a_success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				if = {
+					limit = {
+						NOT = { has_trait = forest_fighter }
+						number_of_commander_traits < commander_trait_limit
+					}
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = martial_chivalry.6001.a_success_toast
+						left_icon = root
+						add_trait = forest_fighter
+					}
+				}
+				else = {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = martial_chivalry.6001.a_success_toast
+						left_icon = root
+						add_martial_lifestyle_xp = major_lifestyle_experience
+					}
+				}
+			}
+			40 = {
+				desc = martial_chivalry.6001.a_failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry.6001.a_failure_toast
+					left_icon = root
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+					increase_wounds_effect = { REASON = wild_animal }
+				}
+			}
+		}
+		stress_impact = {
+			base = minor_stress_impact_gain
+			brave = minor_stress_impact_loss
+			lazy = medium_stress_impact_gain
+			weak = medium_stress_impact_gain
+			physique_bad_2 = medium_stress_impact_gain
+			physique_bad_3 = major_stress_impact_gain
+			craven = major_stress_impact_gain
+		}
+	}
+
+	option = { #flee
+		name = martial_chivalry.6001.b
+		duel = {
+			skill = intrigue
+			value = low_skill_rating
+			50 = {
+				desc = martial_chivalry.6001.b_success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				modifier = {
+					has_trait = athletic
+					factor = 2
+				}
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = martial_chivalry.6001.b_success_toast
+					left_icon = root
+					add_martial_lifestyle_xp = medium_lifestyle_experience
+				}
+			}
+			50 = {
+				desc = martial_chivalry.6001.b_failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry.6001.b_failure_toast
+					left_icon = root
+					add_martial_lifestyle_xp = minor_lifestyle_experience
+					increase_wounds_effect = { REASON = wild_animal }
+				}
+			}
+		}
+		stress_impact = {
+			base = minor_stress_impact_gain
+			brave = medium_stress_impact_gain
+			clubfooted = medium_stress_impact_gain
+			wheezing = medium_stress_impact_gain
+		}
+	}
+}
+
+# You find an artifact
+martial_chivalry.6002 = {
+	type = character_event
+	title = martial_chivalry.6002.t
+	desc = martial_chivalry.6002.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = temple
+	}
+	left_portrait = {
+		character = root
+		animation = admiration
+	}
+	artifact = {
+		target = scope:church_artifact_scope
+		position = lower_center_portrait
+	}
+
+	immediate = {
+		random_list = {
+			50 = {
+				if = {
+					limit = { artifacts_use_indian_books_trigger = yes }
+					create_artifact = {
+						name = church_artifact_book
+						description = church_artifact_book_desc
+						type = journal
+						visuals = indian_book
+						modifier = artifact_prowess_1_modifier
+						modifier = artifact_monthly_piety_gain_per_knight_add_3_modifier
+						save_scope_as = church_artifact_scope
+					}
+				}
+				else = {
+					create_artifact = {
+						name = church_artifact_book
+						description = church_artifact_book_desc
+						type = journal
+						visuals = book
+						modifier = artifact_prowess_1_modifier
+						modifier = artifact_monthly_piety_gain_per_knight_add_3_modifier
+						save_scope_as = church_artifact_scope
+					}
+				}
+				set_variable = church_artifact_book_var
+			}
+			25 = {
+				create_artifact = {
+					name = church_artifact_sword
+					description = church_artifact_sword_desc
+					type = sword
+					visuals = sword
+					modifier = artifact_monthly_piety_gain_per_knight_add_1_modifier
+					modifier = artifact_prowess_2_modifier
+					save_scope_as = church_artifact_scope
+				}
+				set_variable = church_artifact_sword_var
+			}
+			25 = {
+				create_artifact = {
+					name = church_artifact_dagger
+					description = church_artifact_dagger_desc
+					type = dagger
+					visuals = dagger
+					modifier = artifact_monthly_piety_gain_per_knight_add_2_modifier
+					modifier = artifact_intrigue_1_modifier
+					save_scope_as = church_artifact_scope
+				}
+				set_variable = church_artifact_dagger_var
+			}
+		}
+	}
+
+	option = { #mine! mine!
+		name = martial_chivalry.6002.a
+		if = {
+			limit = {
+				OR = {
+					has_variable = church_artifact_sword_var
+					has_variable = church_artifact_dagger_var
+				}
+			}
+			add_martial_lifestyle_xp = minor_lifestyle_experience
+		}
+		stress_impact = {
+			generous = medium_stress_impact_gain
+		}
+	}
+
+	option = { #study it
+		name = martial_chivalry.6002.book
+		custom_tooltip = martial_chivalry.6002.book_tt
+		trigger = {
+			has_variable = church_artifact_book_var
+		}
+		add_martial_lifestyle_xp = major_lifestyle_experience
+		stress_impact = {
+			dull = medium_stress_impact_gain
+			intellect_bad_1 = medium_stress_impact_gain
+			intellect_bad_2 = medium_stress_impact_gain
+			intellect_bad_3 = major_stress_impact_gain
+		}
+	}
+
+	option = { #give it to bishop
+		name = martial_chivalry.6002.b
+		trigger = {
+			exists = scope:bishop
+			scope:bishop = { can_equip_artifact = scope:church_artifact_scope }
+		}
+		scope:church_artifact_scope = {
+			set_owner = scope:bishop
+			equip_artifact_to_owner_replace = yes
+		}
+		add_piety = minor_piety_gain
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+	}
+
+	option = { #burn it!
+		name = martial_chivalry.6002.c
+		trigger = {
+			faith = {
+				has_doctrine = tenet_aniconism
+			}
+		}
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+		add_piety = medium_piety_gain
+	}
+
+	after = {
+		remove_variable = church_artifact_book_var
+	}
+}
+
+# You find a fair maiden/lad
+martial_chivalry.6003 = {
+	type = character_event
+	title = martial_chivalry.6003.t
+	desc = {
+		desc = martial_chivalry.6003.desc_intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						has_trait = disfigured
+						has_trait = beauty_bad
+					}
+				}
+				desc = martial_chivalry.6003.desc_ugly
+			}
+			triggered_desc = {
+				trigger = {
+					NOR = {
+						has_trait = disfigured
+						has_trait = beauty_bad
+					}
+				}
+				desc = martial_chivalry.6003.desc_pretty
+			}
+		}
+	}
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = temple
+	}
+	left_portrait = {
+		character = root
+		animation = admiration
+	}
+
+	immediate = {
+		dummy_attracted_gender_effect = { TARGET = root }
+	}
+
+	option = { #help them
+		name = martial_chivalry.6003.a
+		duel = {
+			skill = learning
+			value = medium_skill_rating
+			50 = {
+				desc = martial_chivalry.6003.a_success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2
+				}
+				modifier = {
+					OR = {
+						has_trait = forest_fighter
+						has_trait = jungle_stalker
+					}
+					add = 500
+				}
+				modifier = {
+					OR = {
+						has_trait = physique_good
+						has_trait = strong
+					}
+					add = 100
+				}
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = martial_chivalry.6003.a_success
+					left_icon = root
+					add_martial_lifestyle_xp = major_lifestyle_experience #so gallant!
+				}
+			}
+			50 = {
+				desc = martial_chivalry.6003.a_failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2
+				}
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry.6003.a_failure
+					left_icon = root
+					increase_wounds_no_death_effect = { REASON = lost_in_the_forest }
+					add_martial_lifestyle_xp = minor_lifestyle_experience #you tried
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = disfigured
+					has_trait = beauty_bad
+				}
+			}
+			stress_impact = {
+				disfigured = medium_stress_impact_gain
+				beauty_bad_3 = medium_stress_impact_gain
+				beauty_bad_1 = minor_stress_impact_gain
+				beauty_bad_2 = minor_stress_impact_gain
+				arrogant = major_stress_impact_gain
+			}
+		}
+	}
+
+	option = { #ignore
+		name = martial_chivalry.6003.b
+		trigger = {
+			NOR = {
+				has_trait = zealous
+				has_trait = lunatic
+				has_trait = paranoid
+				has_trait = disfigured
+				has_trait = beauty_bad
+			}
+		}
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+		stress_impact = {
+			craven = minor_stress_impact_loss
+			trusting = minor_stress_impact_gain
+			gregarious = minor_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+			brave = medium_stress_impact_gain
+			gallant = major_stress_impact_gain
+		}
+	}
+
+	option = { #a ghost!
+		name = martial_chivalry.6003.c
+		trigger = {
+			OR = { #not adding the ugly traits because you will still think they're a ghost
+				has_trait = zealous
+				has_trait = intellect_bad
+				has_trait = paranoid
+			}
+		}
+		add_piety = medium_piety_gain
+		stress_impact = {
+			base = medium_stress_impact_gain
+			brave = minor_stress_impact_gain
+		}
+	}
+
+	option = { #they refuse your help
+		name = martial_chivalry.6003.d
+		flavor = martial_chivalry.6003.d_tt
+		trigger = {
+			OR = {
+				has_trait = disfigured
+				has_trait = beauty_bad
+			}
+		}
+		add_martial_lifestyle_xp = medium_lifestyle_experience
+		stress_impact = {
+			base = medium_stress_impact_loss
+		}
+	}
+}
+
+############################
+# CHIVALRY: SPECIAL EVENTS #
+############################
+
+namespace = martial_chivalry_special
+
+
+###################################
+# Mounted Warrior Practice Battle # by Petter Vilberg
+###################################
+
+#Watch your knights in mock battle before the stablemaster brings out the horses
+martial_chivalry_special.1201 = {
+	type = character_event
+	title = martial_chivalry_special.1201.t
+	desc = martial_chivalry_special.1201.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = interested
+	}
+
+	trigger = {
+		OR = {
+			has_focus = martial_chivalry_focus
+			AND = {
+				has_lifestyle = martial_lifestyle
+				any_maa_regiment = {
+					OR = {
+						is_unit_type = light_cavalry
+						is_unit_type = heavy_cavalry
+					}
+				}
+			}
+		}
+		NOT = { has_character_flag = had_event_martial_chivalry_special_1201 }
+		NOT = { has_character_flag = is_in_martial_special_event }
+		any_knight = {
+			is_available_adult = yes
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = is_in_martial_special_event
+			days = 200
+		}
+		add_character_flag = had_event_martial_chivalry_special_1201
+		random_courtier = {
+			limit = { martial > 9 }
+			save_scope_as = soldier
+		}
+		random_knight = {
+			limit = {
+				is_available_adult = yes
+			}
+
+			weight = {
+				base = 0
+				compare_modifier = {
+					value = martial
+				}
+				compare_modifier = {
+					factor = martial
+				}
+			}
+			save_scope_as = soldier
+		}
+	}
+
+	option = { #Head out for a ride
+		name = martial_chivalry_special.1201.a
+		custom_tooltip = martial_lifestyle_perk_indication
+		hidden_effect = {
+			trigger_event = {
+				id = martial_chivalry_special.1202
+				days = { 1 5 }
+			}
+		}
+
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_energy = 0.25
+			}
+		}
+	}
+
+	option = { #Run the quintain
+		name = martial_chivalry_special.1201.b
+		add_character_modifier = {
+			modifier = mounted_warrior_practice_modifier
+			days = 1825
+		}
+		remove_character_flag = is_in_martial_special_event
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = -50
+				has_trait_rank = {
+					trait = wounded
+					rank >= 1
+				}
+			}
+		}
+	}
+}
+
+
+#Planning a charge with your cavalry
+martial_chivalry_special.1202 = {
+	type = character_event
+	title = martial_chivalry_special.1202.t
+	desc = martial_chivalry_special.1202.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = wilderness
+	}
+	left_portrait = {
+		character = root
+		animation = jockey_wave
+		camera = camera_event_horse_left
+	}
+	right_portrait = {
+		character = scope:soldier
+		animation = jockey_idle
+		camera = camera_event_horse_left
+	}
+
+	option = {
+		name = martial_chivalry_special.1202.a
+		hidden_effect = {
+			trigger_event = martial_chivalry_special.1203
+		}
+		show_as_tooltip = {
+			add_martial_lifestyle_perk_points = 1
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	option = {
+		name = martial_chivalry_special.1202.b
+		duel = {
+			skill = prowess
+			value = medium_skill_rating
+			20 = {
+				desc = martial_chivalry_special.1202.b_success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 0.5
+				}
+				show_as_tooltip = {
+					if = {
+						limit = {
+							NOT = { has_trait = aggressive_attacker }
+							number_of_commander_traits < commander_trait_limit
+						}
+						add_trait = aggressive_attacker
+					}
+					else = {
+						add_character_modifier = {
+							modifier = cavalry_charge_exercise_modifier
+							days = 3650
+						}
+					}
+				}
+				hidden_effect = {
+					trigger_event = martial_chivalry_special.1204
+				}
+			}
+			10 = {
+				desc = martial_chivalry_special.1202.b_failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -0.5
+				}
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = martial_chivalry_special.1202.b_failure
+					left_icon = root
+					increase_wounds_effect = { REASON = horse_riding_accident }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				NOT = { has_trait = aggressive_attacker }
+				number_of_commander_traits < commander_trait_limit
+			}
+		}
+	}
+}
+
+
+
+#Deft maneuvering - you rank up
+martial_chivalry_special.1203 = {
+	type = character_event
+	title = martial_chivalry_special.1203.t
+	desc = martial_chivalry_special.1203.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = wilderness
+	}
+	left_portrait = {
+		character = root
+		animation = jockey_gallop
+		camera = camera_event_horse_left
+	}
+
+	immediate = {
+		add_martial_lifestyle_perk_points = 1
+	}
+
+	option = {
+		name = martial_chivalry_special.1203.a
+	}
+
+	after = {
+		remove_character_flag = is_in_martial_special_event
+	}
+}
+
+
+#Vicious charge - You improve your cavalry's attack ability
+martial_chivalry_special.1204 = {
+	type = character_event
+	title = martial_chivalry_special.1204.t
+	desc = martial_chivalry_special.1204.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = wilderness
+	}
+	left_portrait = {
+		character = root
+		animation = jockey_gallop
+		camera = camera_event_horse_left
+	}
+
+	immediate = {
+		set_signature_weapon_effect = yes
+		if = {
+			limit = {
+				NOT = { has_trait = aggressive_attacker }
+				number_of_commander_traits < commander_trait_limit
+			}
+			add_trait = aggressive_attacker
+		}
+		else = {
+			add_character_modifier = {
+				modifier = cavalry_charge_exercise_modifier
+				days = 3650
+			}
+		}
+	}
+
+	option = {
+		name = martial_chivalry_special.1204.a
+	}
+
+	after = {
+		remove_character_flag = is_in_martial_special_event
+	}
+}
+
+
+#################################
+# Train a warhorse, by Linnéa Thimrén
+#################################
+martial_chivalry_special.1601 = {
+	type = character_event
+	title = martial_chivalry_special.1601.t
+	desc = martial_chivalry_special.1601.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = interested_left
+	}
+
+	trigger = {
+		OR = {
+			has_focus = martial_chivalry_focus
+			domicile ?= {
+				has_domicile_building = baggage_train_ample_steeds
+			}
+		}
+		NOR = {
+			has_character_flag = had_event_martial_chivalry_special_1601
+			has_character_flag = had_warhorse_story
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = is_in_martial_special_event
+			days = 200
+		}
+		add_character_flag = had_event_martial_chivalry_special_1601
+		random_dummy_gender_effect = yes #for horse gender
+		if = {
+			limit = {
+				has_royal_court = yes
+				employs_court_position = master_of_horse_court_position
+				any_court_position_holder = {
+					type = master_of_horse_court_position
+					is_available_ai_adult = yes
+				}
+			}
+			random_court_position_holder = {
+				type = master_of_horse_court_position
+				limit = { is_available_ai_adult = yes }
+				save_scope_as = m_horse
+			}
+			save_scope_as = horse_owner	# in part of the chain, the Master of the horse will become root, so I need to find the same liege
+		}
+	}
+
+	option = { #I'll do my best!
+		name = martial_chivalry_special.1601.a
+		custom_tooltip = martial_lifestyle_perk_indication
+		custom_tooltip = martial_chivalry_special.1601.a.tt
+		trigger_event = {
+			id = martial_chivalry_special.1603
+			days = { 7 10 }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {	#Call the Master of Horse
+		name = martial_chivalry_special.1601.d
+		trigger = {
+			exists = scope:m_horse
+		}
+		scope:m_horse = {
+			trigger_event = {
+				id = martial_chivalry_special.1603
+			}
+		}
+		custom_tooltip = martial_chivalry_special.1601.d.tt
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = { #Opt out gold
+		name = martial_chivalry_special.1601.b
+		add_gold = medium_gold_value
+		ai_chance = {
+			base = 0
+			ai_value_modifier = {
+				ai_greed = 0.75
+			}
+		}
+	}
+
+	option = { #Opt out modifier
+		name = martial_chivalry_special.1601.c
+		trigger = {
+			NOT = {
+				exists = scope:m_horse
+			}
+		}
+
+		add_character_modifier = {
+			modifier = warfare_stablemaster_tamed_wild_horse_modifier
+			years = 15
+		}
+
+		ai_chance = {
+			base = 20
+			ai_energy_target_modifier = { VALUE = -50 }
+		}
+	}
+}
+
+
+
+
+#How will you try to tame the horse?
+martial_chivalry_special.1603 = {
+	type = character_event
+	title = martial_chivalry_special.1601.t
+	desc = martial_chivalry_special.1603.desc
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	option = { #Direct approach - prowess/boldness
+		name = martial_chivalry_special.1603.a
+		flavor = martial_chivalry_special.1603.a.tt
+
+		hidden_effect = {
+			random_list = {
+				10 = {
+					#"Guaranteed" success
+					modifier = {
+						OR = {
+							prowess >= very_high_skill_rating
+							has_trait = brave
+						}
+						add = 100
+					}
+					#Success increase
+					modifier = {
+						add = {
+							value = prowess
+							subtract = average_skill_rating
+							multiply = 2 #10 at high skill
+						}
+					}
+					modifier = {
+						add = {
+							value = ai_boldness
+							divide = high_positive_ai_value
+							multiply = 10 #10 at high positive value
+						}
+					}
+					save_scope_value_as = {
+						name = success
+						value = yes
+					}
+				}
+				5 = { }
+			}
+		}
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_boldness = 0.75
+			}
+			compare_modifier = {
+				target = root
+				value = martial
+				multiplier = 1.5
+			}
+		}
+	}
+
+	option = { #Get it to trust you - diplomacy/compassion
+		name = martial_chivalry_special.1603.b
+		flavor = martial_chivalry_special.1603.b.tt
+		hidden_effect = {
+			random_list = {
+				10 = {
+					#"Guaranteed" success
+					modifier = {
+						OR = {
+							diplomacy >= very_high_skill_rating
+							has_trait = compassionate
+						}
+						add = 100
+					}
+					#Success increase
+					modifier = {
+						add = {
+							value = diplomacy
+							subtract = average_skill_rating
+							multiply = 2 #10 at high skill
+						}
+					}
+					modifier = {
+						add = {
+							value = ai_compassion
+							divide = high_positive_ai_value
+							multiply = 10 #10 at high positive value
+						}
+					}
+					save_scope_value_as = {
+						name = success
+						value = yes
+					}
+				}
+				5 = { }
+			}
+		}
+		ai_chance = {
+			base = 50
+			compare_modifier = {
+				target = root
+				value = diplomacy
+				multiplier = 2
+			}
+			compare_modifier = {
+				target = root
+				value = intrigue
+				multiplier = 1
+			}
+		}
+	}
+
+	option = { #Bribe it - intrigue/generosity
+		name = martial_chivalry_special.1603.c
+		flavor = martial_chivalry_special.1603.c.tt
+		hidden_effect = {
+			random_list = {
+				10 = {
+					#"Guaranteed" success
+					modifier = {
+						OR = {
+							intrigue >= very_high_skill_rating
+							has_trait = generous
+						}
+						add = 1000
+					}
+					#Success increase
+					modifier = {
+						add = {
+							value = intrigue
+							subtract = average_skill_rating
+							multiply = 2 #10 at high skill
+						}
+					}
+					modifier = {
+						add = {
+							value = ai_greed
+							divide = high_negative_ai_value
+							multiply = 10 #10 at high negative value
+						}
+					}
+					save_scope_value_as = {
+						name = success
+						value = yes
+					}
+				}
+				5 = { }
+			}
+		}
+		ai_chance = {
+			base = 50
+			compare_modifier = {
+				target = root
+				value = stewardship
+				multiplier = 2
+			}
+			compare_modifier = {
+				target = root
+				value = intrigue
+				multiplier = 1
+			}
+		}
+	}
+
+	after = {
+		trigger_event = {
+			id = martial_chivalry_special.1604
+			days = { 3 5 }
+		}
+	}
+}
+
+#How did it go? Opportunity to start the warhorse story if you did well!
+martial_chivalry_special.1604 = {
+	type = character_event
+	title = martial_chivalry_special.1601.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					exists = scope:success
+				}
+				desc = martial_chivalry_special.1604.desc_success
+			}
+			desc = martial_chivalry_special.1604.desc_failure
+		}
+	}
+
+	theme = martial_chivalry_focus
+	override_background = {
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		trigger = { NOT = { exists = scope:success } }
+		animation = shame
+	}
+	#it should be the left portrait again, but we can't have triggered cameras or 2 left portraits
+	right_portrait = {
+		character = root
+		trigger = { exists = scope:success }
+		animation = jockey_victory
+		camera = camera_event_horse_left
+	}
+
+	option = {
+		name = martial_chivalry_special.1604.a
+		trigger = {
+			exists = scope:success
+			trigger_if = {
+				limit = {
+					exists = scope:m_horse
+				}
+				scope:m_horse != root
+			}
+		}
+
+		start_warhorse_story_cycle_effect = yes
+		random_owned_story = {
+			type = story_cycle_martial_lifestyle_warhorse
+			if = {
+				limit = { scope:dummy_gender = { is_female = yes } }
+				assign_horse_gender_effect = { GENDER = female }
+			}
+			else = {
+				assign_horse_gender_effect = { GENDER = male }
+			}
+		}
+		add_martial_lifestyle_perk_points = 1
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = martial_chivalry_special.1604.a_2
+		trigger = {
+			exists = scope:success
+			trigger_if = {
+				limit = {
+					exists = scope:m_horse
+				}
+				NOT = {
+					scope:m_horse = {
+						this = root
+					}
+				}
+			}
+		}
+
+		add_character_modifier = {
+			modifier = warfare_tamer_of_horses_modifier
+			years = 10
+		}
+
+		add_martial_lifestyle_perk_points = 1
+
+		ai_chance = {
+			base = 0
+		}
+	}
+
+	option = {
+		name = martial_chivalry_special.1604.c
+		trigger = {
+			exists = scope:success
+			exists = scope:m_horse
+			scope:m_horse = {
+				this = root
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+		scope:horse_owner = {
+			random_owned_story = {
+				type = story_cycle_martial_lifestyle_warhorse
+				if = {
+					limit = { scope:dummy_gender = { is_female = yes } }
+					assign_horse_gender_effect = { GENDER = female }
+				}
+				else = {
+					assign_horse_gender_effect = { GENDER = male }
+				}
+			}
+			send_interface_message = {
+				type = event_martial_text_good
+				left_icon = root
+				title = martial_chivalry_special.1604.t
+				desc = martial_chivalry_special.1604.succcess
+				start_warhorse_story_cycle_effect = yes
+			}
+		}
+		add_martial_lifestyle_perk_points = 1
+	}
+
+	option = {
+		name = martial_chivalry_special.1604.b
+		trigger = {
+			NOT = { exists = scope:success }
+		}
+		add_character_modifier = {
+			modifier = warfare_almost_tamed_wild_horse_modifier
+			years = 5
+		}
+
+		add_stress = minor_stress_gain
+
+		if = {
+			limit = {
+				exists = scope:horse_owner
+				exists = scope:m_horse
+				scope:m_horse = {
+					this = root
+				}
+			}
+			scope:horse_owner = {
+				send_interface_message = {
+					type = event_martial_bad_with_text
+					left_icon = root
+					title = martial_chivalry_special.1604.t.2
+					desc = martial_chivalry_special.1604.failure
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_character_flag = is_in_martial_special_event
+			}
+			remove_character_flag = is_in_martial_special_event
+		}
+		if = {
+			limit = {
+				exists = scope:horse_owner
+				scope:horse_owner = { has_character_flag = is_in_martial_special_event }
+			}
+			scope:horse_owner = { remove_character_flag = is_in_martial_special_event }
+		}
+	}
+}

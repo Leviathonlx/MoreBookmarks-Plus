@@ -1,0 +1,191 @@
+﻿leverage_contribution = {
+	# Basic Setup
+	skill = intrigue
+	desc = "leverage_contribution_desc_general"
+	success_desc = "LEVERAGE_CONTRIBUTION_SUCCESS_DESC"
+	icon = icon_scheme_leverage_contribution
+	illustration = "gfx/interface/illustrations/event_scenes/corridor.dds"
+	category = political
+	target_type = character
+	is_secret = no
+	cooldown = { years = 5 }
+
+	# Parameters
+	speed_per_skill_point = t2_spsp_owner_value
+	spymaster_speed_per_skill_point = t2_spsp_owner_spy_value
+	target_spymaster_speed_per_skill_point = 0
+	tier_speed = 1
+	base_progress_goal = t3_base_phase_length_value
+	base_maximum_success = t2_base_max_success_value
+	phases_per_agent_charge = 1
+	success_chance_growth_per_skill_point = t2_scgpsp_value
+
+	# Core Triggers
+	allow = {
+		is_adult = yes
+		is_imprisoned = no
+		custom_tooltip = {
+			text = requires_trickery_aspect_tooltip
+			house = { has_house_head_parameter = unlock_leverage_contribution_scheme }
+		}
+		is_house_head = yes
+	}
+
+	valid = {
+		scope:target = {
+			is_alive = yes
+			in_diplomatic_range = prev
+			this != scope:owner
+		}
+		scope:owner = {
+			custom_tooltip = {
+				text = no_contributions_to_fund.tt
+				has_unfunded_contribution_in_planned_mandala_capital_trigger = yes
+			}
+			government_has_flag = government_is_mandala
+			is_house_head = yes
+		}
+	}
+
+	# Agents
+	agent_leave_threshold = -25
+	agent_join_chance = {
+		base = 0
+		ai_agent_join_chance_basic_suite_modifier = yes
+		ai_agent_join_chance_hostile_general_suite_modifier = yes
+	}
+	valid_agent = { is_valid_agent_standard_trigger = yes }
+	agent_groups_owner_perspective = { scripted_relations peer_vassals vassals family }
+	agent_groups_target_character_perspective = { peer_vassals vassals scripted_relations family }
+
+	odds_prediction = {
+		add = base_odds_prediction_target_is_char_value
+		add = odds_skill_contribution_intrigue_value
+		add = agent_groups_owner_perspective_value
+		add = agent_groups_target_character_perspective_value
+
+		add = odds_you_are_disbelieved_mandala_value
+
+		min = 0
+	}
+
+	# Base Chances
+	base_success_chance = {
+		base = 0
+
+		# Skill
+		scheme_type_skill_success_chance_modifier = { SKILL = INTRIGUE }
+
+		#Negative
+		modifier = {
+			scope:owner = { has_character_modifier = disbelieved_mandala_modifier }
+			desc = is_disbelieved_mandala
+			add = -10
+		}
+		modifier = {
+			scope:owner = { has_character_modifier = political_schemes_distracted_modifier }
+			desc = political_schemes_distracted_modifier
+			add = -10
+		}
+
+		# Countermeasures.
+		apply_political_scheme_success_chance_adjustments_modifier = yes
+
+	}
+
+	# On Actions
+	on_start = {
+		set_variable = {
+			name = apply_countermeasures
+			value = flag:indirect
+		}
+		# Fallback agents — a balanced config if you start the scheme from script.
+		if = {
+			limit = {
+				scheme_owner = {
+					NOT = { has_variable = agents_added }
+				}
+			}
+			add_agent_slot = agent_diplomat
+			add_agent_slot = agent_diplomat
+			add_agent_slot = agent_scribe
+			add_agent_slot = agent_cleric
+			add_agent_slot = agent_justiciar
+		}
+	}
+	on_phase_completed = {
+		suppress_scheme_follow_up_event_till_input_given_effect = yes
+		leverage_contribution_scheme_prep_effect = yes
+		cap_schemes_and_fire_reminders_effect = yes
+	}
+	on_hud_click = { leverage_contribution_scheme_prep_effect = yes }
+	on_monthly = {
+		scheme_owner = {
+			trigger_event = {
+				on_action = coerce_and_leverage_contribution_ongoing
+				days = { 1 30 }
+			}
+		}
+	}
+	on_semiyearly = {
+		if = {
+			limit = {
+				scheme_owner = { is_ai = yes }
+			}
+			leverage_contribution_scheme_prep_effect = yes
+			purge_ai_scheme_slots_effect = yes
+		}
+	}
+
+	## Invalidation
+	on_invalidated = {
+		scheme_target_character = {
+			save_scope_as = target
+		}
+		scheme_owner = {
+			save_scope_as = owner
+			send_interface_toast = {
+				type = event_toast_effect_neutral
+				title = leverage_contribution_invalidated_title
+				left_icon = scope:target
+				if = { # Invalidation due to death
+					limit = {
+						scope:target = { is_alive = no }
+						NOT = { block_death_event_trigger = { DEAD = scope:target } }
+					}
+					custom_tooltip = scheme_target_died
+				}
+				else_if = { # Diplo range: is it relevant here?
+					limit = {
+						scope:target = { 
+							NOT = { in_diplomatic_range = scope:owner } 
+						}
+					}
+					custom_tooltip = scheme_target_not_in_diplomatic_range
+				}
+				else_if = { # I'm not Mandala
+					limit = {
+						scope:owner = {
+							NOT = { government_has_flag = government_is_mandala }
+						}
+					}
+					custom_tooltip = scheme_owner_not_mandala
+				}
+				else_if = { # I'm not house head
+					limit = {
+						scope:owner = {
+							NOR = {
+								exists = house
+								is_house_head = yes
+							}	
+						}
+					}
+					custom_tooltip = scheme_owner_not_house_head
+				}
+				else = {
+					custom_tooltip = scheme_cancelled
+				}
+			}
+		}
+	}
+}

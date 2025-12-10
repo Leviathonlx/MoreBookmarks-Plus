@@ -1,0 +1,953 @@
+﻿namespace = tgp_dynastic_cycle_events
+
+###################################################################################
+## By Veronica Pazos
+## tgp_dynastic_cycle_events.0001 - Tilt the scales towards Advancement
+## tgp_dynastic_cycle_events.0010 - Disciple has a mental breakdown in Instability
+## tgp_dynastic_cycle_events.0020 - Rowdy peasants steal food during Instability
+## tgp_dynastic_cycle_events.0030 - In this time of Expansion you should become a Military Governor
+## tgp_dynastic_cycle_events.0040 - Steward is interested in the Silk Road
+## tgp_dynastic_cycle_events.0050 - Debate the Favoured Movement and get ahead of them
+###################################################################################
+
+# Tilt the scales towards Advancement
+scripted_trigger tgp_dynastic_cycle_events_0001_valid_servant = {
+	is_available_ai_adult = yes
+	is_lowborn = yes
+	has_any_court_position = no
+	is_councillor = no
+}
+
+tgp_dynastic_cycle_events.0001 = {
+	type = character_event
+	title = tgp_dynastic_cycle_events.0001.t
+	desc = tgp_dynastic_cycle_events.0001.desc
+	left_portrait = {
+		character = root
+		animation = thinking
+		camera = camera_event_right_fully_away
+	}
+	right_portrait = {
+		character = scope:servant
+		animation = serving_tray
+		camera = camera_event_right_to_the_right
+	}
+	theme = dynastic_cycle
+	override_background = { reference = garden }
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		NOT = {
+			situation:dynastic_cycle ?= {
+				situation_current_phase = situation_dynastic_cycle_phase_stability_advancement
+			}
+		}
+	}
+
+	immediate = {
+		situation:dynastic_cycle = { save_scope_as = my_situation }
+		top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+		random_courtier = {
+			limit = { tgp_dynastic_cycle_events_0001_valid_servant = yes }
+			save_scope_as = servant
+		}
+		if = {
+			limit = { NOT = { exists = scope:servant } }
+			hidden_effect_new_object = {
+				create_character = {
+					template = servant_character
+					dynasty = none
+					location = root.location
+					culture = root.location.culture
+					faith = root.location.faith
+					gender_female_chance = 50
+					save_scope_as = servant
+				}
+			}
+			hidden_effect = { add_courtier = scope:servant }
+		}
+		scope:servant = { assign_quirk_effect = yes }
+		if = {
+			limit = {
+				any_relation = {
+					type = potential_friend
+					is_available_ai_adult = yes
+					count >= 1
+				}
+			}
+			random_relation = {
+				type = potential_friend
+				limit = { is_available_ai_adult = yes }
+				save_scope_as = potential_friend
+			}
+		}
+		else_if = {
+			limit = {
+				any_relation = {
+					type = friend
+					is_available_ai_adult = yes
+					count >= 1
+				}
+			}
+			random_relation = {
+				type = friend
+				limit = { is_available_ai_adult = yes }
+				save_scope_as = friend
+			}
+		}
+	}
+
+	option = { #
+		name = tgp_dynastic_cycle_events.0001.aa
+		trigger = {
+			top_participant_group:dynastic_cycle ?= {
+				participant_group_type = advancement_movement
+			}
+		}
+		add_internal_flag = special
+		reason = movement
+		custom_tooltip = event_increase_movement_power_minor_effect_tooltip
+		scope:my_movement = {
+			event_change_movement_power_effect = {
+				VALUE = event_increase_movement_power_minor_value
+			}
+		}
+		situation:dynastic_cycle ?= {
+			if = {
+				limit = {
+					situation_top_has_catalyst = catalyst_event_advancement_medium_progress
+				}
+				trigger_situation_catalyst = {
+					catalyst = catalyst_event_advancement_medium_progress
+					character = root
+				}
+			}
+		}
+		stress_impact = {
+			ambitious = medium_stress_impact_loss
+			content = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = ambitious
+				factor = 2
+			}
+			modifier = {
+				has_trait = content
+				factor = 0
+			}
+		}
+	}
+
+	option = { # Focus on friendos
+		name = tgp_dynastic_cycle_events.0001.a
+		if = {
+			limit = {
+				exists = scope:potential_friend
+			}
+			custom_tooltip = tgp_dynastic_cycle_events.0001.a.potential_friend
+			set_relation_friend = {
+				target = scope:potential_friend
+				reason = friend_together_in_preparation
+			}
+		}
+		else_if = {
+			limit = {
+				exists = scope:friend
+			}
+			custom_tooltip = tgp_dynastic_cycle_events.0001.a.potential_friend
+			change_influence = major_influence_gain
+			scope:friend = { change_influence = major_influence_gain }
+		}
+		else = { change_influence = medium_influence_gain }
+		stress_impact = {
+			gregarious = medium_stress_impact_loss
+			callous = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = gregarious
+				factor = 2
+			}
+			modifier = {
+				has_trait = callous
+				factor = 0
+			}
+		}
+	}
+
+	option = { # Why wait?
+		name = tgp_dynastic_cycle_events.0001.b
+		add_character_modifier = {
+			modifier = tgp_advancement_focus_modifier
+			years = 20
+		}
+		stress_impact = {
+			impatient = medium_stress_impact_loss
+			patient = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = deceitful
+				factor = 2
+			}
+			modifier = {
+				has_trait = honest
+				factor = 0
+			}
+		}
+	}
+
+	option = { # We must focus on NOW
+		name = tgp_dynastic_cycle_events.0001.c
+		stress_impact = {
+			base = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Disciple has a mental breakdown in Instability
+scripted_trigger tgp_dynastic_cycle_events_0010_valid_disciple = {
+	is_available_ai_adult = yes
+	has_personality_dominant_trigger = no
+	has_a_stress_coping_trait_trigger = no
+}
+
+tgp_dynastic_cycle_events.0010 = {
+	type = character_event
+	title = tgp_dynastic_cycle_events.0010.t
+	desc = tgp_dynastic_cycle_events.0010.desc
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				has_personality_malicious_trigger = yes
+			}
+			animation = dismissal
+		}
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:disciple
+		animation = stress
+	}
+	theme = dynastic_cycle
+	override_background = { reference = relaxing_room }
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		situation:dynastic_cycle ?= {
+			situation_current_phase = situation_dynastic_cycle_phase_instability
+		}
+		any_relation = {
+			type = disciple
+			tgp_dynastic_cycle_events_0010_valid_disciple = yes
+		}
+	}
+
+	immediate = {
+		situation:dynastic_cycle = { save_scope_as = my_situation }
+		top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+		random_relation = {
+			type = disciple
+			limit = { tgp_dynastic_cycle_events_0010_valid_disciple = yes }
+			weight = {
+				base = 1
+				modifier = {
+					has_personality_emotional_trigger = yes
+					add = 10
+				}
+				modifier = {
+					age <= 35
+					add = 5
+				}
+			}
+			save_scope_as = disciple
+		}
+		random_list = {
+			1 = {
+				set_variable = {
+					name = stress_trait
+					value = flag:drunkard
+				}
+			}
+			1 = {
+				set_variable = {
+					name = stress_trait
+					value = flag:flagellant
+				}
+			}
+			1 = {
+				set_variable = {
+					name = stress_trait
+					value = flag:contrite
+				}
+			}
+			1 = {
+				set_variable = {
+					name = stress_trait
+					value = flag:irritable
+				}
+			}
+			1 = {
+				set_variable = {
+					name = stress_trait
+					value = flag:rakish
+				}
+			}
+			1 = {
+				set_variable = {
+					name = stress_trait
+					value = flag:hashishiyah
+				}
+			}
+		}
+	}
+
+	option = { # You gotta straighten up
+		name = tgp_dynastic_cycle_events.0010.a
+		switch = {
+			trigger = var:stress_trait
+			flag:drunkard = {
+				scope:disciple = { add_trait = drunkard }
+			}
+			flag:flagellant = {
+				scope:disciple = { add_trait = flagellant }
+			}
+			flag:contrite = {
+				scope:disciple = { add_trait = contrite }
+			}
+			flag:rakish = {
+				scope:disciple = { add_trait = rakish }
+			}
+			flag:hashishiyah = {
+				scope:disciple = { add_trait = hashishiyah }
+			}
+		}
+		scope:disciple = { add_stress = major_stress_impact_gain }
+		change_influence = medium_influence_gain
+		stress_impact = {
+			callous = medium_stress_impact_loss
+			compassionate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = callous
+				factor = 2
+			}
+			modifier = {
+				has_trait = compassionate
+				factor = 0
+			}
+		}
+	}
+
+	option = { # Comfort them
+		name = tgp_dynastic_cycle_events.0010.b
+		if = {
+			limit = {
+				can_add_hook = {
+					type = favor_hook
+					target = scope:disciple
+				}
+			}
+			add_hook = {
+				type = favor_hook
+				target = scope:disciple
+			}
+		}
+		scope:disciple = { add_stress = medium_stress_impact_loss }
+		stress_impact = {
+			compassionate = major_stress_impact_loss
+			callous = major_stress_impact_gain
+			sadistic = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				OR = {
+					has_trait = callous
+					has_trait = sadistic
+				}
+				factor = 0
+			}
+			modifier = {
+				has_trait = compassionate
+				factor = 2
+			}
+		}
+	}
+
+	option = { # Instability is actually good
+		name = tgp_dynastic_cycle_events.0010.c
+		gain_appropriate_lifestyle_medium_xp_effect = yes
+		scope:disciple = {
+			gain_appropriate_lifestyle_medium_xp_effect = yes
+			add_stress = medium_stress_impact_gain
+		}
+		stress_impact = {
+			content = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = content
+				factor = 2
+			}
+		}
+	}
+}
+
+# Rowdy peasants steal food during instability
+tgp_dynastic_cycle_events.0020 = {
+	type = character_event
+	title = tgp_dynastic_cycle_events.0020.t
+	desc = tgp_dynastic_cycle_events.0020.desc
+	left_portrait = {
+		character = root
+		animation = japanese_war_fan
+		camera = camera_event_very_left
+	}
+	right_portrait = {
+		character = scope:marshal
+		animation = relaxed_spear
+	}
+	theme = dynastic_cycle
+	override_background = { reference = throne_room }
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		situation:dynastic_cycle ?= {
+			situation_current_phase = situation_dynastic_cycle_phase_instability
+		}
+		any_held_county = {
+			county_control >= low_county_control
+		}
+	}
+
+	immediate = {
+		situation:dynastic_cycle = { save_scope_as = my_situation }
+		top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+		if = {
+			limit = {
+				exists = cp:councillor_marshal
+				cp:councillor_marshal = { is_available_healthy_ai_adult = yes }
+			}
+			cp:councillor_marshal = { save_scope_as = marshal }
+		}
+		else_if = {
+			limit = {
+				any_knight = { is_available_healthy_ai_adult = yes }
+			}
+			ordered_knight = {
+				limit = { is_available_healthy_ai_adult = yes }
+				order_by = martial
+				save_scope_as = marshal
+			}
+		}
+		else = {
+			hidden_effect_new_object = {
+				create_character = {
+					template = knight
+					dynasty = none
+					location = root.location
+					culture = root.location.culture
+					faith = root.location.faith
+					gender_female_chance = root_soldier_female_chance
+					save_scope_as = marshal
+				}
+			}
+		}
+		scope:marshal = {
+			assign_quirk_effect = yes
+			add_character_flag = need_military_outfit
+			hidden_effect = {
+				if = {
+					limit = {
+						NOR = {
+							is_courtier_of = root
+							is_vassal_of = root
+						}
+
+					}
+					root = { add_courtier = prev }
+				}
+			}
+		}
+		random_held_county = {
+			limit = { county_control >= low_county_control }
+			change_county_control = major_county_control_loss
+			save_scope_as = peasant_county
+		}
+	}
+
+	option = { # Execute them
+		name = tgp_dynastic_cycle_events.0020.a
+		trigger = {
+			has_focus = intrigue_intimidation_focus
+		}
+		reason = lifestyle_focus
+		add_internal_flag = special
+		add_dread = major_dread_gain
+		scope:peasant_county = {
+			add_county_modifier = {
+				modifier = tgp_executed_peasants_county_modifier
+				years = 10
+			}
+			change_county_control = medium_county_control_gain
+		}
+		stress_impact = {
+			callous = medium_stress_impact_loss
+			compassionate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = callous
+				factor = 2
+			}
+			modifier = {
+				has_trait = compassionate
+				factor = 0
+			}
+		}
+	}
+
+	option = { # Pay money to make Increase County Control better
+		name = tgp_dynastic_cycle_events.0020.b
+		pay_treasury_or_gold = {
+			target = scope:marshal
+			value = major_treasury_or_gold_value
+		}
+		scope:peasant_county = { change_county_control = medium_county_control_gain }
+		stress_impact = {
+			greedy = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				OR = {
+					has_trait = greedy
+					treasury_or_gold <= massive_treasury_or_gold_value
+				}
+				factor = 0
+			}
+		}
+	}
+
+	option = { # What can you do
+		name = tgp_dynastic_cycle_events.0020.c
+		stress_impact = {
+			lazy = medium_stress_impact_loss
+			diligent = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = lazy
+				factor = 2
+			}
+			modifier = {
+				has_trait = diligent
+				factor = 0
+			}
+		}
+	}
+}
+
+# In this time of Expansion you should become a Military Governor
+tgp_dynastic_cycle_events.0030 = {
+	type = character_event
+	title = tgp_dynastic_cycle_events.0030.t
+	desc = tgp_dynastic_cycle_events.0030.desc
+	left_portrait = {
+		character = root
+		animation = frontend_center_idle
+		camera = camera_event_very_left
+	}
+	right_portrait = {
+		character = scope:marshal
+		animation = celebrate_spear
+	}
+	theme = dynastic_cycle
+	override_background = { reference = courtyard }
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		situation:dynastic_cycle ?= {
+			situation_current_phase = situation_dynastic_cycle_phase_stability_expansion
+		}
+		NOT = { has_trait_with_flag = military_province } # You are not a Military Governor
+	}
+
+	immediate = {
+		situation:dynastic_cycle = { save_scope_as = my_situation }
+		top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+		assign_quirk_effect = yes
+		if = {
+			limit = {
+				exists = cp:councillor_marshal
+				cp:councillor_marshal = { is_available_healthy_ai_adult = yes }
+			}
+			cp:councillor_marshal = { save_scope_as = marshal }
+		}
+		else_if = {
+			limit = {
+				any_knight = { is_available_healthy_ai_adult = yes }
+			}
+			ordered_knight = {
+				limit = { is_available_healthy_ai_adult = yes }
+				order_by = martial
+				save_scope_as = marshal
+			}
+		}
+		else = {
+			hidden_effect_new_object = {
+				create_character = {
+					template = knight
+					dynasty = none
+					location = root.location
+					culture = root.location.culture
+					faith = root.location.faith
+					gender_female_chance = root_soldier_female_chance
+					save_scope_as = marshal
+				}
+			}
+		}
+		scope:marshal = {
+			assign_quirk_effect = yes
+			add_character_flag = need_military_outfit
+			hidden_effect = {
+				if = {
+					limit = { NOT = { is_courtier_of = root } }
+					root = { add_courtier = prev }
+				}
+			}
+		}
+	}
+
+	option = { # Let's do it!!!
+		name = tgp_dynastic_cycle_events.0030.a
+		custom_tooltip = {
+			text = change_to_military_career_desc
+			set_variable = {
+				name = appointment_trait_override
+				value = trait:education_martial_1
+			}
+		}
+		add_martial_lifestyle_perk_points = 1
+		add_martial_lifestyle_xp = massive_lifestyle_xp
+		stress_impact = {
+			base = major_stress_impact_gain
+			fickle = major_stress_impact_loss
+			arbitrary = major_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				OR = {
+					has_trait = fickle
+					has_trait = arbitrary
+				}
+				factor = 2
+			}
+		}
+	}
+
+	option = { # Thank you but no
+		name = tgp_dynastic_cycle_events.0030.b
+		custom_tooltip = {
+			text = tgp_movement_events.0001.c.tt
+			give_random_commander_trait_effect = yes
+		}
+		stress_impact = {
+			diligent = major_stress_impact_loss
+			lazy = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = lazy
+				factor = 0
+			}
+			modifier = {
+				has_trait = diligent
+				factor = 0
+			}
+		}
+	}
+
+	option = { # I am good thanks
+		name = tgp_dynastic_cycle_events.0030.c
+		change_merit = medium_merit_gain
+		stress_impact = {
+			content = medium_stress_impact_loss
+			lazy = medium_stress_impact_loss
+			fickle = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				OR = {
+					has_trait = content
+					has_trait = lazy
+				}
+				factor = 2
+			}
+			modifier = {
+				has_trait = fickle
+				factor = 0
+			}
+		}
+	}
+}
+
+# Steward is interested in the Silk Road
+tgp_dynastic_cycle_events.0040 = {
+	type = character_event
+	title = tgp_dynastic_cycle_events.0040.t
+	desc = tgp_dynastic_cycle_events.0040.desc
+	left_portrait = {
+		character = root
+		animation = interested
+	}
+	right_portrait = {
+		character = scope:steward
+		animation = steward
+	}
+	theme = dynastic_cycle
+	override_background = { reference = study }
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		exists = cp:councillor_steward
+		exists = situation:dynastic_cycle
+		exists = situation:silk_road_situation
+		culture = { culture_has_any_fascination = yes }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = {
+			situation:dynastic_cycle ?= {
+				situation_current_phase = situation_dynastic_cycle_phase_stability_advancement
+			}
+			add = 1.5
+		}
+		modifier = {
+			is_ai = yes
+			factor = 0.2
+		}
+	}
+
+	immediate = {
+		situation:dynastic_cycle = { save_scope_as = my_situation }
+		situation:silk_road_situation = { save_scope_as = silk_road_situation }
+		top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+		assign_quirk_effect = yes
+		cp:councillor_steward = {
+			assign_quirk_effect = yes
+			save_scope_as = steward
+		}
+	}
+
+	option = { # Special option if it's Advancement phase
+		name = tgp_dynastic_cycle_events.0040.a
+		trigger = {
+			situation:dynastic_cycle ?= {
+				situation_current_phase = situation_dynastic_cycle_phase_stability_advancement
+			}
+		}
+		add_internal_flag = special
+		reason = advancement_phase
+		pay_treasury_or_gold = {
+			target = scope:steward
+			value = medium_treasury_or_gold_value
+		}
+		add_stewardship_lifestyle_xp = minor_lifestyle_xp
+		add_character_modifier = {
+			modifier = tgp_silk_road_advancement_modifier
+			years = 15
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				OR = {
+					has_trait = greedy
+					has_lifestyle = stewardship_lifestyle
+				}
+				factor = 2
+			}
+		}
+	}
+
+	option = { # Invest!
+		name = tgp_dynastic_cycle_events.0040.b
+		pay_treasury_or_gold = {
+			target = scope:steward
+			value = medium_treasury_or_gold_value
+		}
+		culture = { add_fascination_progress = 2.5 }
+		stress_impact = {
+			avaricious = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				has_trait = greedy
+				treasury_or_gold <= major_treasury_or_gold_value
+				factor = 0
+			}
+		}
+	}
+
+	option = { # I am good thanks
+		name = tgp_dynastic_cycle_events.0040.c
+
+		stress_impact = {
+			avaricious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200
+			modifier = {
+				has_trait = greedy
+				factor = 2
+			}
+			modifier = {
+				has_trait = avaricious
+				factor = 0.5
+			}
+		}
+	}
+}
+
+# Debate the Favoured Movement and get ahead of them
+tgp_dynastic_cycle_events.0050 = {
+	type = character_event
+	title = tgp_dynastic_cycle_events.0050.t
+	desc = tgp_dynastic_cycle_events.0050.desc
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	theme = dynastic_cycle
+	override_background = { reference = study }
+	cooldown = { years = 10 }
+
+	trigger = {
+		is_available_adult = yes
+		has_tgp_dlc_trigger = yes
+		government_has_flag = government_is_celestial
+		is_any_movement_member_not_undecided = yes # You are part of a Movement
+		situation:dynastic_cycle ?= { # You are not the Favoured Movement
+			any_participant_group = {
+				exists = var:movement_favored
+				NOT = { participant_group_has_character = root }
+			}
+		}
+		NOT = { has_variable = tgp_debate_discount_var }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			is_any_movement_leader = yes
+			add = 1
+		}
+	}
+
+	immediate = {
+		situation:dynastic_cycle = {
+			save_scope_as = my_situation
+			random_participant_group = {
+				limit = {
+					has_variable = movement_favored
+				}
+				save_scope_as = favored_movement
+			}
+		}
+		top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+		top_liege = { save_scope_as = top_liege }
+	}
+
+	option = { # Get discount to Debate
+		name = tgp_dynastic_cycle_events.0050.a
+		custom_tooltip = {
+			text = tgp_debate_discount_var_tt
+			set_variable = {
+				name = tgp_debate_discount_var
+				years = 5
+			}
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				is_any_movement_leader = yes
+				add = 50
+			}
+		}
+	}
+
+	option = { # Just get some Movement Power
+		name = tgp_dynastic_cycle_events.0050.b
+		custom_tooltip = event_increase_movement_power_medium_effect_tooltip
+		scope:my_movement = {
+			event_change_movement_power_effect = {
+				VALUE = event_increase_movement_power_medium_value
+			}
+		}
+		stress_impact = {
+			arrogant = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = arrogant
+				factor = 0
+			}
+		}
+	}
+
+	option = { # Focus on yourself
+		name = tgp_dynastic_cycle_events.0050.c
+		change_influence = medium_influence_gain
+		stress_impact = {
+			humble = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				has_trait = humble
+				factor = 0
+			}
+		}
+	}
+}

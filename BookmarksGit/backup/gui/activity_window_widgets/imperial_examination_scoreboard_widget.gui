@@ -1,0 +1,171 @@
+widget = {
+	name = "imperial_examination_scoreboard_widget"
+	datacontext = "[Activity.GetCurrentPhase]"
+	datacontext = "[Activity.GetCurrentPhase.GetPhase]"
+	visible = "[And( Not( VariableSystem.Exists('activity_scoreboard_view') ), And( GreaterThanOrEqualTo_int32( GetDataModelSize( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ) ), '(int32)3' ), GreaterThanOrEqualTo_int32( GetDataModelSize( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ) ), '(int32)3' ) ) )]"
+	visible_at_creation = no # required to make sure we trigger the '_show' state
+	size = { 250 700 }
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+	}
+
+	vbox = {
+		layoutpolicy_horizontal = expanding
+		layoutpolicy_vertical = expanding
+		spacing = 5
+		
+		background = {
+			texture = "gfx/interface/component_tiles/tile_window_background_subwindow.dds"
+			spriteType = Corneredtiled
+			spriteborder = { 18 18 }
+			margin = { 16 16 }
+			texture_density = 2
+
+			modify_texture = {
+				name = "overlay"
+				texture = "gfx/interface/component_overlay/overlay_effect.dds"
+				spriteType = Corneredstretched
+				spriteborder = { 0 0 }
+				blend_mode = overlay
+			}
+		}
+
+		#Name of the window
+		text_label_center = {
+			layoutpolicy_horizontal = expanding
+
+			text = "ENTRANTS_WINDOW_LABEL"
+			default_format = "#high;glow_color:{0.1,0.1,0.1,1.0}"
+			fontsize = 22
+			fontsize_min = 16
+			using = Font_Type_Flavor
+		}
+
+		#Sorting method: Predicted Excellence
+		text_single = {
+			visible = "[And( EqualTo_string( ActivityPhase.GetKey, 'imperial_examination_phase_assembly' ), DataModelHasItems( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ) ) )]"
+			text = "ENTRANTS_SORT_METHOD_PREDICTION"
+			default_format = "#weak"
+			using = Font_Size_Small
+			align = nobaseline
+		}
+
+		#Sorting method: Score
+		text_single = {
+			visible = "[And( Not( EqualTo_string( ActivityPhase.GetKey, 'imperial_examination_phase_assembly' ) ), DataModelHasItems( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ) ) )]"
+			text = "ENTRANTS_SORT_METHOD_SCORE"
+			default_format = "#weak"
+			using = Font_Size_Small
+			align = nobaseline
+		}
+
+		#The predicted score based on the entrant's skill going into the exams
+		vbox_examination_scoreboard = {
+			name = "imperial_examination_excelling_entrants"
+			visible = "[And( Or( EqualTo_string( ActivityPhase.GetKey, 'imperial_examination_phase_assembly' ), EqualTo_string( ActivityPhase.GetKey, 'imperial_examination_phase_palace_examination' ) ), DataModelHasItems( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ) ) )]"
+			layoutpolicy_horizontal = expanding
+
+			state = {
+				name = _show
+				trigger_when = "[And( Not( GetVariableSystem.Exists( 'activity_scoreboard_view' ) ), DataModelHasItems( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ) ) )]"
+				on_start = "[ActivityWindow.SetAllPhasesGuestSubsetSortingDescending( 'scoreboard', 'imperial_examination_score_value' )]"
+			}
+
+			blockoverride "first_place_datacontext"
+			{
+				# Uses a bit of a hack to ensure the datacontext is updated
+				# when the underlying datamodel is sorted.
+				datamodel = "[DataModelFirst( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ), '(int32)1' )]"
+			}
+			blockoverride "second_place_datacontext"
+			{
+				# Uses a bit of a hack to ensure the datacontext is updated
+				# when the underlying datamodel is sorted.
+				datamodel = "[DataModelFirst( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ), '(int32)2' )]"
+			}
+			blockoverride "third_place_datacontext"
+			{
+				# Uses a bit of a hack to ensure the datacontext is updated
+				# when the underlying datamodel is sorted.
+				datamodel = "[DataModelFirst( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ), '(int32)3' )]"
+			}
+
+			blockoverride "contestants_attributes"
+			{
+				datamodel = "[DataModelSubSpan( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ), '(int32)3', Min_int32( Subtract_int32( GetDataModelSize( ActivityWindow.GetCurrentPhaseGuestSubset( 'scoreboard' ) ), '(int32)3' ), '(int32)7' ) )]"
+			}
+
+			blockoverride "contestant_not_in_list"
+			{
+				datacontext = "[GetPlayer]"
+				visible = "[And( ActivityWindow.IsCharacterInCurrentPhaseGuestSubset( 'entrants', GetPlayer.Self), Not( ActivityWindow.IsCharacterInCurrentPhaseGuestSubset( 'scoreboard', GetPlayer.Self) ) )]"
+			}
+
+			blockoverride "contestant_button"
+			{
+				size = "[Select_CVector2f( And( ActivityWindow.IsCharacterInCurrentPhaseGuestSubset( 'entrants', GetPlayer.Self), Not( ActivityWindow.IsCharacterInCurrentPhaseGuestSubset( 'scoreboard', GetPlayer.Self) ) ), '(CVector2f)200,26', '(CVector2f)200,33' )]"
+			}
+		}
+
+		# The actual score once we've passed a round of exams
+		vbox_examination_scoreboard = {
+			name = "imperial_examination_current_score"
+			visible = "[And( Not( Or( EqualTo_string( ActivityPhase.GetKey, 'imperial_examination_phase_assembly' ), EqualTo_string( ActivityPhase.GetKey, 'imperial_examination_phase_palace_examination' ) ) ), DataModelHasItems( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ) ) )]"
+			layoutpolicy_horizontal = expanding
+
+			state = {
+				name = _show
+				trigger_when = "[And( Not( GetVariableSystem.Exists( 'activity_scoreboard_view' ) ), DataModelHasItems( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ) ) )]"
+				on_start = "[ActivityWindow.SetAllPhasesGuestSubsetSortingDescending('entrants', 'imperial_examination_score_value')]"
+			}
+
+			blockoverride "first_place_datacontext"
+			{
+				# Uses a bit of a hack to ensure the datacontext is updated
+				# when the underlying datamodel is sorted.
+				datamodel = "[DataModelFirst( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ), '(int32)1' )]"
+			}
+			blockoverride "second_place_datacontext"
+			{
+				# Uses a bit of a hack to ensure the datacontext is updated
+				# when the underlying datamodel is sorted.
+				datamodel = "[DataModelFirst( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ), '(int32)2' )]"
+			}
+			blockoverride "third_place_datacontext"
+			{
+				# Uses a bit of a hack to ensure the datacontext is updated
+				# when the underlying datamodel is sorted.
+				datamodel = "[DataModelFirst( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ), '(int32)3' )]"
+			}
+
+			blockoverride "contestants_attributes"
+			{
+ 				visible = "[GreaterThanOrEqualTo_int32( GetDataModelSize( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ) ), '(int32)3' )]"
+				datamodel = "[DataModelSubSpan( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ), '(int32)3', Min_int32( Subtract_int32( GetDataModelSize( ActivityWindow.GetCurrentPhaseGuestSubset( 'entrants' ) ), '(int32)3' ), '(int32)7' ) )]"
+			}
+
+			blockoverride "dead_contestants"
+			{
+				datamodel = "[ActivityWindow.GetActivity.MakeScope.GetList( 'dead_charioteers' )]"
+			}
+
+			blockoverride "contestant_not_in_list"
+			{
+				datacontext = "[GetPlayer]"
+				visible = "[And( ActivityWindow.IsCharacterInCurrentPhaseGuestSubset( 'entrants', GetPlayer.Self), GreaterThan_int32( ActivityWindow.GetCharacterIndexInCurrentPhaseGuestSubset( 'entrants', GetPlayer.Self ), '(int32)9' ) )]"
+			}
+
+			blockoverride "contestant_button"
+			{
+				size = "[Select_CVector2f( And( ActivityWindow.IsCharacterInCurrentPhaseGuestSubset( 'entrants', GetPlayer.Self), GreaterThan_int32( ActivityWindow.GetCharacterIndexInCurrentPhaseGuestSubset( 'entrants', GetPlayer.Self ), '(int32)9' ) ), '(CVector2f)200,26', '(CVector2f)200,33' )]"
+			}
+		}
+	}
+}

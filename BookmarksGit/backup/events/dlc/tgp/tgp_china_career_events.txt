@@ -1,0 +1,327 @@
+﻿###################################
+# CHINA CAREER EVENTS
+###################################
+namespace = tgp_china_career
+
+### EVENT LIST ####################################################################
+## 0001 - Celestial Intro Event
+## 0010 - A Meritorious Path
+## 0020 - Hidden event for merit gain on succession
+###################################################################################
+
+# Intro Event - Who are you playing as and what is your situation
+# Also acts as an introduction if you become a noble family in China
+tgp_china_career.0001 = {
+	type = character_event
+	title = tgp_china_career.0001.t
+	desc = {
+		desc = tgp_china_career.0001.desc
+		first_valid =  {
+			triggered_desc = {
+				trigger = { tgp_is_any_minister = yes }
+				desc = tgp_china_career.0001.minister_desc
+			}
+			triggered_desc = {
+				trigger = { is_landed = yes }
+				desc = tgp_china_career.0001.landed_desc
+			}
+			desc = tgp_china_career.0001.unlanded_desc
+		}
+	}
+	theme = merit
+	override_background = {
+		trigger = {
+			OR = {
+				vassal_contract_has_flag = celestial_province_military
+				vassal_contract_has_flag = celestial_province_protectorate
+			}
+		}
+		reference = courtyard
+	}
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				OR = {
+					vassal_contract_has_flag = celestial_province_military
+					vassal_contract_has_flag = celestial_province_protectorate
+				}
+			}
+			animation = relaxed_spear
+		}
+		animation = reading
+	}
+
+	cooldown = { days = 1 }
+	
+	trigger = {
+		exists = top_liege
+		this != top_liege
+		top_liege = {
+			government_has_flag = government_is_celestial
+		}
+	}
+
+	immediate = {
+		# Scopes
+		save_scope_as = new_ruler
+		house ?= { save_scope_as = ruler_family }
+		top_liege = { save_scope_as = emperor }
+		if = {
+			limit = { tgp_is_any_minister = yes }
+			primary_title = { save_scope_as = minister_title }
+		}
+	}
+
+	option = {
+		name = tgp_china_career.0001.a
+		add_character_modifier = {
+			modifier = tgp_merit_boost_modifier
+		}
+	}
+
+	option = {
+		name = tgp_china_career.0001.b
+		add_character_modifier = {
+			modifier = tgp_influence_boost_modifier
+		}
+	}
+}
+
+# A Meritorious Path - You advanced/gained a merit rank
+tgp_china_career.0010 = {
+	type = character_event
+	title = tgp_china_career.0010.t
+	desc = {
+		# Intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { merit_level = 1 }
+				desc = tgp_china_career.0010.first_rank_desc
+			}
+			desc = tgp_china_career.0010.higher_rank_desc
+		}
+		# Additional descs for ranks granting access to new tiers
+		first_valid = {
+			triggered_desc = {
+				trigger = { merit_level = 2 }
+				desc = tgp_china_career.0010.duchy_desc
+			}
+			triggered_desc = {
+				trigger = {
+					merit_level = 5 # This is the highest rank for Meritocratic
+					government_has_flag = government_is_celestial
+				}
+				desc = tgp_china_career.0010.kingdom_desc
+			}
+			triggered_desc = {
+				trigger = { merit_level = 7 }
+				desc = tgp_china_career.0010.empire_desc
+			}
+			triggered_desc = {
+				trigger = { has_highest_merit_rank = yes }
+				desc = tgp_china_career.0010.highest_rank
+			}
+			triggered_desc = {
+				trigger = {
+					OR = {
+						merit_level = 3
+						merit_level = 4
+						merit_level = 6
+						merit_level = 8
+					}
+				}
+				desc = tgp_china_career.0010.higher_rank_unspecific
+			}
+		}
+	}
+	theme = merit
+	left_portrait = {
+		character = root
+		animation = reading
+	}
+	
+	# To prevent you from getting multiple events in case you gain several ranks
+	cooldown = { days = 30 }
+	
+	trigger = {
+	}
+
+	immediate = {
+		# Scopes
+		save_scope_as = merit_char
+	}
+	
+	option = {
+		trigger = { NOT = { merit_level = 1 } }
+		name = tgp_china_career.0010.aa
+		add_character_modifier = {
+			modifier = tgp_higher_ambitions_modifier
+			years = 10
+		}
+	}
+
+	option = {
+		trigger = { NOT = { merit_level = 1 } }
+		name = tgp_china_career.0010.a
+		add_stress = miniscule_stress_loss
+		if = {
+			limit = {
+				has_character_modifier = tgp_higher_ambitions_modifier
+			}
+			remove_character_modifier = tgp_higher_ambitions_modifier
+		}
+	}
+
+	option = { # Option for a civil career if you reach your first Merit Rank
+		trigger = { merit_level = 1 }
+		name = {
+			trigger = {
+				trigger_if = {
+					limit = {
+						has_variable = appointment_trait_override
+					}
+					var:appointment_trait_override != trait:education_stewardship_1
+				}
+				trigger_else = {
+					NOT = { has_trait_with_flag = civilian_province }
+				}
+			}
+			text = tgp_china_career.0010.b1
+		}
+		name = {
+			trigger = {
+				trigger_if = {
+					limit = {
+						has_variable = appointment_trait_override
+					}
+					var:appointment_trait_override = trait:education_stewardship_1
+				}
+				trigger_else = {
+					has_trait_with_flag = civilian_province
+				}
+			}
+			text = tgp_china_career.0010.b2
+		}
+		
+		if = {
+			limit = {
+				trigger_if = {
+					limit = {
+						has_variable = appointment_trait_override
+					}
+					var:appointment_trait_override != trait:education_stewardship_1
+				}
+				trigger_else = {
+					NOT = { has_trait_with_flag = civilian_province }
+				}
+			}
+			custom_tooltip = {
+				text = change_to_civilian_career_desc
+				set_variable = {
+					name = appointment_trait_override
+					value = trait:education_stewardship_1
+				}
+			}
+		}
+		else = {
+			custom_tooltip = keep_civilian_career_desc
+		}
+		add_stress = miniscule_stress_loss
+	}
+
+	option = { # Option for a military career if you reach your first Merit Rank
+		trigger = { merit_level = 1 }
+		name = {
+			trigger = {
+				trigger_if = {
+					limit = {
+						has_variable = appointment_trait_override
+					}
+					var:appointment_trait_override != trait:education_martial_1
+				}
+				trigger_else = {
+					NOT = { has_trait_with_flag = military_province }
+				}
+			}
+			text = tgp_china_career.0010.c1
+		}
+		name = {
+			trigger = {
+				trigger_if = {
+					limit = {
+						has_variable = appointment_trait_override
+					}
+					var:appointment_trait_override = trait:education_martial_1
+				}
+				trigger_else = {
+					has_trait_with_flag = military_province
+				}
+			}
+			text = tgp_china_career.0010.c2
+		}
+		
+		if = {
+			limit = {
+				trigger_if = {
+					limit = {
+						has_variable = appointment_trait_override
+					}
+					var:appointment_trait_override != trait:education_martial_1
+				}
+				trigger_else = {
+					NOT = { has_trait_with_flag = military_province }
+				}
+			}
+			custom_tooltip = {
+				text = change_to_military_career_desc
+				set_variable = {
+					name = appointment_trait_override
+					value = trait:education_martial_1
+				}
+			}
+		}
+		else = {
+			custom_tooltip = keep_military_career_desc
+		}
+		add_stress = miniscule_stress_loss
+	}
+}
+
+# Hidden event for merit gain on succession
+tgp_china_career.0020 = {
+	hidden = yes
+	
+	immediate = {
+		send_interface_toast = {
+			type = event_toast_effect_good
+			title = merit_gained_on_succession
+			left_icon = scope:meritorious_parent
+			
+			change_merit = {
+				value = scope:meritorious_parent_merit
+				multiply = {
+					value = 0
+					house ?= {
+						if = {
+							limit = { has_house_power_parameter = inherit_merit_bonus_4 }
+							add = merit_gain_on_succession_4_value
+						}
+						else_if = {
+							limit = { has_house_power_parameter = inherit_merit_bonus_3 }
+							add = merit_gain_on_succession_3_value
+						}
+						else_if = {
+							limit = { has_house_power_parameter = inherit_merit_bonus_2 }
+							add = merit_gain_on_succession_2_value
+						}
+						else_if = {
+							limit = { has_house_power_parameter = inherit_merit_bonus_1 }
+							add = merit_gain_on_succession_1_value
+						}
+					}
+				}
+			}
+		}
+	}
+}

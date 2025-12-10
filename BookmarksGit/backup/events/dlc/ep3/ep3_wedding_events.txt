@@ -1,0 +1,2616 @@
+﻿namespace = ep3_wedding
+
+##################################################
+# #Banquet Phase
+# 0001 - 003 Almost the Bride
+
+##################################################
+# Almost the Bride
+# by Jason Cantalini
+# 0001
+##################################################
+
+scripted_trigger ep3_wedding_0001_flirter_trigger = {
+	save_temporary_scope_as = flirter_temp
+	#Shouldn't get the event multiple times with the same character
+	trigger_if = {
+		limit = {
+			root = {
+				has_variable = had_ep3_wedding_0001_var
+			}
+		}
+		root = {
+			var:had_ep3_wedding_0001_var = {
+				this = scope:flirter_temp
+			}
+		}
+	}
+	trigger_if = {
+		limit = {
+			has_variable = had_ep3_wedding_0001_var
+		}
+		var:had_ep3_wedding_0001_var = {
+			this = root
+		}
+	}
+	is_physically_able_ai_adult = yes
+	#Needs to be a member of the other family
+	OR = {
+		AND = {
+			root = scope:activity.special_guest:spouse_1
+			is_close_family_of = scope:activity.special_guest:spouse_2
+		}
+		AND = {
+			root = {
+				is_close_family_of = scope:activity.special_guest:spouse_1
+			}
+			is_close_family_of = scope:activity.special_guest:spouse_2
+		}
+		AND = {
+			root = scope:activity.special_guest:spouse_2
+			is_close_family_of = scope:activity.special_guest:spouse_1
+		}
+		AND = {
+			root = {
+				is_close_family_of = scope:activity.special_guest:spouse_2
+			}
+			is_close_family_of = scope:activity.special_guest:spouse_1
+		}
+	}
+	#Either willing to do adultery or not in relationship
+	might_cheat_on_every_partner_trigger = yes
+	is_attracted_to_gender_of = root
+	NOR = {
+		has_trait = chaste
+		has_trait = celibate
+		this = scope:activity.special_guest:spouse_1
+		this = scope:activity.special_guest:spouse_2
+	}
+}
+
+scripted_trigger ep3_wedding_0001_pervert_trigger = {
+	OR = {
+		has_trait = lustful
+		has_trait = seducer
+		has_trait = rakish
+		is_deviant_trigger = yes
+		has_focus = intrigue_temptation_focus
+		has_trait = drunkard
+		has_activity_intent = woo_attendee_intent
+	}
+}
+
+scripted_trigger ep3_wedding_0001_relative_ages_trigger = {
+	OR = {
+		#Both people aren't old
+		AND = {
+			age <= 55
+			root = {
+				age <= 55
+			}
+		}
+		#Both people are old
+		AND = {
+			age > 55
+			root = {
+				age > 55
+			}
+		}
+		#Root is old
+		AND = {
+			root = {
+				age > 55
+			}
+			OR = {
+				age > 40
+				is_deviant_trigger = yes
+			}
+		}
+		#Target is old
+		AND = {
+			root = {
+				OR = {
+					age > 40
+					is_deviant_trigger = yes
+				}
+			}
+			age > 55
+		}
+	}
+}
+
+#A family member of someone getting married is flirting with you
+ep3_wedding.0001 = {
+	type = activity_event
+	title = ep3_wedding.0001.t
+	desc = {
+		desc = ep3_wedding.0001.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						this = scope:activity.special_guest:spouse_2
+						this = scope:activity.special_guest:spouse_1
+					}
+				}
+				desc = ep3_wedding.0001.desc_own_wedding
+			}
+			desc = ep3_wedding.0001.desc_guest
+		}
+	}
+	theme = wedding_banquet_activity
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				drinks_alcohol_trigger = yes
+			}
+			animation = wedding_drunk
+		}
+		triggered_animation = {
+			trigger = {
+				drinks_alcohol_trigger = no
+			}
+			animation = admiration
+		}
+	}
+	right_portrait = {
+		character = scope:flirting_in_law
+		animation = dancing
+	}
+	lower_right_portrait = {
+		character = scope:other_family_spouse
+	}
+	lower_left_portrait = {
+		character = scope:same_family_spouse
+	}
+
+	trigger = {
+		is_adult = yes
+		is_healthy = yes
+		#Prevent event happening back to back
+		NOT = {
+			has_character_flag = had_ep3_wedding_0001_flag
+		}
+		#Either has to be a player or is open to this shizz
+		might_cheat_on_every_partner_trigger = yes
+		OR = {
+			NOR = {
+				has_trait = chaste
+				has_trait = celibate
+			}
+			is_ai = no
+		}
+		OR = {
+			#Random flirting
+			scope:activity = {
+				any_attending_character = {
+					NOT = {
+						has_character_flag = had_ep3_wedding_0001
+					}
+					ep3_wedding_0001_flirter_trigger = yes
+					#At least one person has to be horny
+					OR = {
+						ep3_wedding_0001_pervert_trigger = yes
+						attraction > medium_positive_attraction
+						root = { attraction > medium_positive_attraction }
+						root = { ep3_wedding_0001_pervert_trigger = yes }
+					}
+					###incest check
+					OR = {
+						NOT = { is_close_family_of = root }
+						AND = {
+							ep3_wedding_0001_pervert_trigger = yes
+							root = { ep3_wedding_0001_pervert_trigger = yes }
+						}
+					}
+					root = { is_attracted_to_gender_of = prev }
+					NOT = {
+						attraction < 0
+					}
+					ep3_wedding_0001_relative_ages_trigger = yes
+				}
+			}
+			#Being targeted by wooing
+			scope:activity = {
+				any_attending_character = {
+					has_activity_intent = woo_attendee_intent
+					scope:host.intent_target = root
+					is_ai = yes
+					OR = {
+						AND = {
+							root = scope:activity.special_guest:spouse_1
+							is_close_family_of = scope:activity.special_guest:spouse_2
+						}
+						AND = {
+							root = {
+								is_close_family_of = scope:activity.special_guest:spouse_1
+							}
+							is_close_family_of = scope:activity.special_guest:spouse_2
+						}
+						AND = {
+							root = scope:activity.special_guest:spouse_2
+							is_close_family_of = scope:activity.special_guest:spouse_1
+						}
+						AND = {
+							root = {
+								is_close_family_of = scope:activity.special_guest:spouse_2
+							}
+							is_close_family_of = scope:activity.special_guest:spouse_1
+						}
+					}
+				}
+			}
+			#Targeting with wooing
+			AND = {
+				has_activity_intent = woo_attendee_intent
+				exists = scope:host.intent_target
+				scope:host.intent_target = {
+					ep3_wedding_0001_flirter_trigger = yes
+					###incest check
+					OR = {
+						NOT = { is_close_family_of = root }
+						ep3_wedding_0001_pervert_trigger = yes
+					}
+					NOR = {
+						#Root is old
+						AND = {
+							root = {
+								age > 55
+							}
+							OR = {
+								age < 40
+								NOT = { is_deviant_trigger = yes }
+							}
+							
+						}
+						#Target is old
+						AND = {
+							root = {
+								OR = {
+									age < 40
+									NOT = { is_deviant_trigger = yes }
+								}
+							}
+							age > 55
+						}
+					}
+				}
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		
+		# Weight up for pervs
+		modifier = {
+			add = 9
+			ep3_wedding_0001_pervert_trigger = yes
+			NOR = {
+				has_trait = chaste
+				has_trait = celibate
+			}
+		}
+		modifier = {
+			add = 4
+			OR = {
+				is_married = no
+				AND = {
+					is_male = yes
+					faith = { has_doctrine = doctrine_adultery_men_accepted }
+				}
+				AND = {
+					is_female = yes
+					faith = { has_doctrine = doctrine_adultery_women_accepted }
+				}
+			}
+		}
+		modifier = {
+			add = 2
+			attraction > 0
+		}
+		modifier = {
+			add = 2
+			attraction >= 10
+		}
+		modifier = {
+			add = 2
+			attraction >= 25
+		}
+		modifier = {
+			add = 2
+			any_relation = { type = lover }
+		}
+		modifier = {
+			factor = 0.5
+			OR = {
+				attraction < 0
+				has_trait = chaste
+				has_trait = celibate
+				has_trait = devoted
+				AND = {
+					is_married = yes
+					ai_honor > medium_positive_ai_value
+				}
+				AND = {
+					is_married = yes
+					any_spouse = {
+						has_relation_soulmate = root
+					}
+				}
+			}
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_activity_intent = woo_attendee_intent
+				exists = scope:host.intent_target
+				scope:host.intent_target = {
+					ep3_wedding_0001_flirter_trigger = yes
+					###incest check
+					OR = {
+						NOT = { is_close_family_of = root }
+						ep3_wedding_0001_pervert_trigger = yes
+					}
+					NOR = {
+						#Root is old
+						AND = {
+							root = {
+								age > 55
+							}
+							OR = {
+								age < 40
+								NOT = { is_deviant_trigger = yes }
+							}
+							
+						}
+						#Target is old
+						AND = {
+							root = {
+								OR = {
+									age < 40
+									NOT = { is_deviant_trigger = yes }
+								}
+							}
+							age > 55
+						}
+					}
+				}
+			}
+			scope:host.intent_target = {
+				save_scope_as = flirting_in_law
+			}
+		}
+		else_if = {
+			limit = {
+				scope:activity = {
+					any_attending_character = {
+						has_activity_intent = woo_attendee_intent
+						scope:host.intent_target = root
+						is_ai = yes
+						OR = {
+							AND = {
+								root = scope:activity.special_guest:spouse_1
+								is_close_family_of = scope:activity.special_guest:spouse_2
+							}
+							AND = {
+								root = {
+									is_close_family_of = scope:activity.special_guest:spouse_1
+								}
+								is_close_family_of = scope:activity.special_guest:spouse_2
+							}
+							AND = {
+								root = scope:activity.special_guest:spouse_2
+								is_close_family_of = scope:activity.special_guest:spouse_1
+							}
+							AND = {
+								root = {
+									is_close_family_of = scope:activity.special_guest:spouse_2
+								}
+								is_close_family_of = scope:activity.special_guest:spouse_1
+							}
+						}
+					}
+				}
+			}
+			scope:activity = {
+				random_attending_character = {
+					limit = {
+						has_activity_intent = woo_attendee_intent
+						scope:host.intent_target = root
+						is_ai = yes
+						OR = {
+							AND = {
+								root = scope:activity.special_guest:spouse_1
+								is_close_family_of = scope:activity.special_guest:spouse_2
+							}
+							AND = {
+								root = {
+									is_close_family_of = scope:activity.special_guest:spouse_1
+								}
+								is_close_family_of = scope:activity.special_guest:spouse_2
+							}
+							AND = {
+								root = scope:activity.special_guest:spouse_2
+								is_close_family_of = scope:activity.special_guest:spouse_1
+							}
+							AND = {
+								root = {
+									is_close_family_of = scope:activity.special_guest:spouse_2
+								}
+								is_close_family_of = scope:activity.special_guest:spouse_1
+							}
+						}
+					}
+					save_scope_as = flirting_in_law
+				}
+			}
+		}
+		else = {
+			scope:activity = {
+				random_attending_character = {
+					limit = {
+						ep3_wedding_0001_flirter_trigger = yes
+						NOT = {
+							has_character_flag = had_ep3_wedding_0001
+						}
+						#At least one person has to be horny
+						OR = {
+							ep3_wedding_0001_pervert_trigger = yes
+							attraction > medium_positive_attraction
+							root = { attraction > medium_positive_attraction }
+							root = { ep3_wedding_0001_pervert_trigger = yes }
+						}
+						###incest check
+						OR = {
+							NOT = { is_close_family_of = root }
+							AND = {
+								ep3_wedding_0001_pervert_trigger = yes
+								root = { ep3_wedding_0001_pervert_trigger = yes }
+							}
+						}
+						root = { is_attracted_to_gender_of = prev }
+						NOT = {
+							attraction < 0
+						}
+						ep3_wedding_0001_relative_ages_trigger = yes
+					}
+					save_scope_as = flirting_in_law
+				}
+			}
+		}
+		scope:flirting_in_law = {
+			add_character_flag = {
+				flag = had_ep3_wedding_0001
+				months = 3
+			}
+		}
+		#Save the marrying person you ain't related to
+		if = {
+			limit = {
+				OR = {
+					root = scope:activity.special_guest:spouse_1
+					AND = {
+						is_close_family_of = scope:activity.special_guest:spouse_1
+						root != scope:activity.special_guest:spouse_2
+					}
+					
+				}
+			}
+			scope:activity.special_guest:spouse_2 = {
+				save_scope_as = other_family_spouse
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					root = scope:activity.special_guest:spouse_2
+					AND = {
+						is_close_family_of = scope:activity.special_guest:spouse_2
+						root != scope:activity.special_guest:spouse_1
+					}
+				}
+			}
+			scope:activity.special_guest:spouse_1 = {
+				save_scope_as = other_family_spouse
+			}
+		}
+		#If you're not getting married, save the marrying person you're related to
+		if = {
+			limit = {
+				is_close_family_of = scope:activity.special_guest:spouse_1
+				NOR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			scope:activity.special_guest:spouse_1 = {
+				save_scope_as = same_family_spouse
+			}
+		}
+		if = {
+			limit = {
+				is_close_family_of = scope:activity.special_guest:spouse_2
+				NOR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			scope:activity.special_guest:spouse_2 = {
+				save_scope_as = same_family_spouse
+			}
+		}
+		set_variable = {
+			name = had_ep3_wedding_0001_var
+			value = scope:flirting_in_law
+			months = 6
+		}
+		add_character_flag = {
+			flag = had_ep3_wedding_0001_flag
+			days = 20
+		}
+	}
+
+	# I should really warn my beloved spouse/family member
+	option = {
+		name = {
+			trigger = {
+				NOR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			text = ep3_wedding.0001.a_non_spouse
+		}
+		name = {
+			trigger = {
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			text = ep3_wedding.0001.a_spouse
+		}
+		flavor = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						NOR = {
+							this = scope:activity.special_guest:spouse_2
+							this = scope:activity.special_guest:spouse_1
+						}
+					}
+					desc = ep3_wedding.0001.a.flavor_non_spouse
+				}
+				desc = ep3_wedding.0001.a.flavor_spouse
+			}
+		}
+		trigger = {
+			OR = {
+				has_relation_friend = scope:other_family_spouse
+				has_relation_best_friend = scope:other_family_spouse
+				has_relation_lover = scope:other_family_spouse
+				has_relation_soulmate = scope:other_family_spouse
+				has_trait = loyal
+				has_trait = just
+				has_trait = honest
+			}
+		}
+		if = {
+			limit = {
+				NOT = { has_trait = loyal }
+			}
+			random = {
+				chance = 50
+				modifier = {
+					OR = {
+						has_trait = honest
+						has_trait = just
+						has_trait = chaste
+						has_trait = compassionate
+					}
+					add = 40
+				}
+				modifier = {
+					OR = {
+						has_trait = trusting
+						has_trait = humble
+						has_trait = content
+					}
+					NOR = {
+						has_trait = honest
+						has_trait = just
+						has_trait = chaste
+						has_trait = compassionate
+					}
+					add = 25
+				}
+				modifier = {
+					OR = {
+						has_trait = arbitrary
+						has_trait = deceitful
+						has_trait = callous
+						has_trait = fickle
+						has_trait = lustful
+						has_trait = arrogant
+					}
+					add = -25
+				}
+				add_trait = loyal
+			}
+		}
+		else = {
+			add_piety = medium_piety_gain
+		}
+		if = {
+			limit = {
+				NOR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			reverse_add_opinion = {
+				modifier = loyalty_opinion
+				target = scope:same_family_spouse
+				opinion = 20
+			}
+		}
+		else = {
+			reverse_add_opinion = {
+				modifier = love_opinion
+				target = scope:other_family_spouse
+				opinion = 20
+			}
+		}
+		
+		stress_impact = {
+			loyal = miniscule_stress_impact_loss
+			just = miniscule_stress_impact_loss
+			compassionate = miniscule_stress_impact_loss
+			lustful = major_stress_impact_gain
+			arbitrary = medium_stress_impact_gain
+			fickle = medium_stress_impact_gain
+			deceitful = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_compassion = 1
+				ai_honor = 1
+			}
+			modifier = {
+				add = 50
+				has_relation_soulmate = scope:other_family_spouse
+			}
+			modifier = {
+				add = 50
+				any_relation = { type = soulmate }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = lustful
+					has_trait = arbitrary
+					has_trait = fickle
+					has_trait = deceitful
+				}
+			}
+		}
+	}
+
+	# HORNINESS ACTIVATED
+	option = {
+		name = ep3_wedding.0001.b
+		flavor = ep3_wedding.0001.b.flavor
+
+		if = {
+			limit = {
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			custom_tooltip = own_wedding_difficulty_tooltip
+		}
+		duel = {
+			skill = intrigue
+			value = {
+				value = mediocre_skill_rating
+				if = {
+					limit = {
+						OR = {
+							this = scope:activity.special_guest:spouse_2
+							this = scope:activity.special_guest:spouse_1
+						}
+					}
+					add = 7
+				}
+			}
+			50 = { #Success.
+				desc = ep3_wedding.0001.b.success.desc.tt
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 1
+				#Fire sexy follow up
+				trigger_event = ep3_wedding.0002
+				show_as_tooltip = {
+					if = {
+						limit = {
+							OR = {
+								this = scope:activity.special_guest:spouse_2
+								this = scope:activity.special_guest:spouse_1
+							}
+						}
+						add_intrigue_skill = 1
+						add_intrigue_lifestyle_xp = medium_lifestyle_xp
+						
+					}
+					had_sex_with_effect = {
+						CHARACTER = scope:flirting_in_law
+						PREGNANCY_CHANCE = pregnancy_chance
+					}
+				}
+			}
+			10 = { #Succeed, but get caught
+				desc = ep3_wedding.0001.b.caught.desc.tt
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -9
+				}
+				trigger = {
+					scope:other_family_spouse = { is_ai = yes }
+				}
+				min = 2
+				modifier = {
+					add = 10
+					OR = {
+						this = scope:activity.special_guest:spouse_2
+						this = scope:activity.special_guest:spouse_1
+					}
+				}
+				modifier = {
+					add = 15
+					intrigue <= medium_skill_rating
+				}
+				modifier = {
+					add = 15
+					intrigue < average_skill_rating
+				}
+				modifier = {
+					add = 30
+					intrigue < low_skill_rating
+				}
+				custom_tooltip = ep3_wedding.001.b.got_caught
+				show_as_tooltip = {
+					had_sex_with_effect = {
+						CHARACTER = scope:flirting_in_law
+						PREGNANCY_CHANCE = pregnancy_chance
+					}
+				}
+				
+				#Fire tragically sexy followup
+				trigger_event = ep3_wedding.0003
+			}
+			40 = { #Fail.
+				desc = ep3_wedding.0001.b.fail.desc.tt
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -39
+				}
+				min = 1
+				modifier = {
+					add = -25
+					scope:flirting_in_law = {
+						opinion = {
+							target = root
+							value >= 80
+						}
+					}
+				}
+				modifier = {
+					add = -25
+					scope:flirting_in_law = {
+						opinion = {
+							target = root
+							value >= 40
+						}
+					}
+				}
+				modifier = {
+					add = 25
+					scope:flirting_in_law = {
+						opinion = {
+							target = root
+							value <= 0
+						}
+					}
+				}
+				modifier = {
+					add = 25
+					scope:flirting_in_law = {
+						opinion = {
+							target = root
+							value <= -40
+						}
+					}
+				}
+				modifier = {
+					add = 25
+					scope:flirting_in_law = {
+						opinion = {
+							target = root
+							value <= -80
+						}
+					}
+				}
+				modifier = {
+					add = 10
+					OR = {
+						this = scope:activity.special_guest:spouse_2
+						this = scope:activity.special_guest:spouse_1
+					}
+					scope:other_family_spouse = {
+						is_ai = no
+					}
+				}
+				modifier = {
+					add = 25
+					scope:other_family_spouse = {
+						is_ai = no
+					}
+				}
+				modifier = {
+					add = 15
+					intrigue <= medium_skill_rating
+					scope:other_family_spouse = {
+						is_ai = no
+					}
+				}
+				modifier = {
+					add = 15
+					intrigue < average_skill_rating
+					scope:other_family_spouse = {
+						is_ai = no
+					}
+				}
+				modifier = {
+					add = 30
+					intrigue < low_skill_rating
+					scope:other_family_spouse = {
+						is_ai = no
+					}
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title =  ep3_wedding.0001.b.fail.desc.tt
+					left_icon = scope:flirting_in_law
+
+					add_stress = minor_stress_gain
+					reverse_add_opinion = {
+						modifier = disrespect_opinion
+						target = scope:flirting_in_law
+						opinion = -10
+					}
+					if = {
+						limit = {
+							OR = {
+								this = scope:activity.special_guest:spouse_2
+								this = scope:activity.special_guest:spouse_1
+							}
+						}
+						reverse_add_opinion = {
+							modifier = disrespect_opinion
+							target = scope:other_family_spouse
+							opinion = -30
+						}
+					}
+				}
+			}
+		}
+		
+		if = {
+			limit = {
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			stress_impact = {
+				fickle = minor_stress_impact_loss
+				arrogant = minor_stress_impact_loss
+				impatient = minor_stress_impact_loss
+				chaste = massive_stress_impact_gain
+				just = massive_stress_impact_gain
+				patient = major_stress_impact_gain
+				honest = massive_stress_impact_gain
+				compassionate = major_stress_impact_gain
+				shy = minor_stress_impact_gain
+			}
+		}
+		else = {
+			stress_impact = {
+				fickle = minor_stress_impact_loss
+				arrogant = miniscule_stress_impact_loss
+				impatient = minor_stress_impact_loss
+				chaste = major_stress_impact_gain
+				just = medium_stress_impact_gain
+				honest = medium_stress_impact_gain
+				shy = minor_stress_impact_gain
+			}
+		}
+		
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = 1
+				ai_honor = -1
+			}
+			modifier = {
+				add = 100
+				ep3_wedding_0001_pervert_trigger = yes
+			}
+			modifier = {
+				add = -100
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			modifier = {
+				add = -50
+				OR = {
+					has_trait = shy
+					intrigue <= medium_skill_rating
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = chaste
+					has_trait = just
+					has_trait = honest
+					intrigue <= low_skill_rating
+					AND = {
+						OR = {
+							this = scope:activity.special_guest:spouse_2
+							this = scope:activity.special_guest:spouse_1
+						}
+						OR = {
+							has_trait = patient
+							has_trait = compassionate
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	# Just a harmless little dance
+	option = {
+		name = ep3_wedding.0001.c
+		flavor = ep3_wedding.0001.c.flavor
+
+		reverse_add_opinion = {
+			modifier = friendliness_opinion
+			target = scope:flirting_in_law
+			opinion = 30
+		}
+
+		stress_impact = {
+			base = medium_stress_impact_loss
+			shy = minor_stress_impact_gain
+			lazy = minor_stress_impact_gain
+			chaste = minor_stress_impact_gain
+		}
+		
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_sociability = 1
+				ai_honor = 0.5
+			}
+			modifier = {
+				add = -50
+				OR = {
+					has_trait = shy
+					has_trait = lazy
+					has_trait = chaste
+				}
+			}
+		}
+	}
+}
+
+#You and the member of the marital family have some sex
+ep3_wedding.0002 = {
+	type = activity_event
+	title = ep3_wedding.0002.t
+	desc = {
+		desc = ep3_wedding.0002.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						this = scope:activity.special_guest:spouse_2
+						this = scope:activity.special_guest:spouse_1
+					}
+				}
+				desc = ep3_wedding.0002.own_wedding
+			}
+			desc = ep3_wedding.0002.others_wedding
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:other_family_spouse = {
+						is_lowborn = yes
+					}
+				}
+				desc = ep3_wedding.0002.lowborn
+			}
+			desc = ep3_wedding.0002.highborn
+		}
+	}
+	theme = wedding_banquet_activity
+	override_background = {
+		reference = corridor_night
+	}
+	center_portrait = {
+		character = root
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:flirting_in_law
+		animation = dancing
+		camera = camera_event_very_right
+	}
+	lower_right_portrait = {
+		character = scope:other_family_spouse
+	}
+	lower_left_portrait = {
+		character = scope:same_family_spouse
+	}
+	immediate = {
+		add_character_flag = {
+			flag = is_naked
+			days = 30
+		}
+		scope:flirting_in_law = {
+			add_character_flag = {
+				flag = is_naked
+				days = 30
+			}
+		}
+		if = {
+			limit = {
+				has_activity_intent = woo_attendee_intent
+				scope:host.intent_target ?= scope:flirting_in_law
+			}
+			complete_activity_intent = yes
+		}
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					has_activity_intent = woo_attendee_intent
+					scope:host.intent_target ?= root
+				}
+			}
+			scope:flirting_in_law = { complete_activity_intent = yes }
+		}
+		if = {
+			limit = {
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			add_intrigue_skill = 1
+			add_intrigue_lifestyle_xp = medium_lifestyle_xp
+			
+		}
+		had_sex_with_effect = {
+			CHARACTER = scope:flirting_in_law
+			PREGNANCY_CHANCE = pregnancy_chance
+		}
+	}
+	#Holy shit, you're the one I'm really meant to be with
+	option = {
+		name = ep3_wedding.0002.a
+		flavor = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						OR = {
+							this = scope:activity.special_guest:spouse_2
+							this = scope:activity.special_guest:spouse_1
+						}
+					}
+					desc = ep3_wedding.0002.a.flavor
+				}
+				desc = ep3_wedding.0002.a.flavor_non_spouse
+			}
+			
+		}
+		trigger = {
+			can_set_relation_soulmate_trigger = { CHARACTER = scope:flirting_in_law }
+		}
+		duel = {
+			skill = diplomacy
+			value = medium_skill_rating
+			50 = { #Success
+				desc = ep3_wedding.0002.a.success.desc.tt
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				modifier = {
+					add = -10
+					OR = {
+						this = scope:activity.special_guest:spouse_2
+						this = scope:activity.special_guest:spouse_1
+					}
+				}
+				modifier = {
+					add = 10
+					scope:flirting_in_law = {
+						OR = {
+							has_trait = trusting
+							has_trait = eccentric
+							has_trait = stubborn
+						}
+					}
+				}
+				modifier = {
+					add = 25
+					reverse_opinion = {
+						target = scope:flirting_in_law
+						value >= 80
+					}
+				}
+				modifier = {
+					add = 25
+					reverse_opinion = {
+						target = scope:flirting_in_law
+						value >= 50
+					}
+				}
+				modifier = {
+					add = 25
+					reverse_opinion = {
+						target = scope:flirting_in_law
+						value > 20
+					}
+				}
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = ep3_wedding.0002.a.success.desc.tt
+					left_icon = scope:flirting_in_law
+
+					set_relation_soulmate = {
+						target = scope:flirting_in_law
+						reason = soulmate_absconded_during_wedding
+					}
+				}
+			}
+			50 = { #They're not into it
+				desc = ep3_wedding.0002.a.fail.desc.tt
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				modifier = {
+					add = 20
+					scope:flirting_in_law = {
+						OR = {
+							has_trait = lustful
+							has_trait = callous
+							has_trait = fickle
+							has_trait = sadistic
+							has_trait = deceitful
+							has_trait = arbitrary
+							has_trait = content
+						}
+					}
+				}
+				modifier = {
+					add = 25
+					reverse_opinion = {
+						target = scope:flirting_in_law
+						value <= -60
+					}
+				}
+				modifier = {
+					add = 25
+					reverse_opinion = {
+						target = scope:flirting_in_law
+						value <= -30
+					}
+				}
+				modifier = {
+					add = 25
+					reverse_opinion = {
+						target = scope:flirting_in_law
+						value <= 0
+					}
+				}
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = ep3_wedding.0002.a.fail.desc.tt
+					left_icon = scope:flirting_in_law
+
+					reverse_add_opinion = {
+						modifier = flattered_opinion
+						target = scope:flirting_in_law
+						opinion = 20
+					}
+					
+				}
+			}
+		}
+		stress_impact = {
+			lustful = minor_stress_impact_gain
+			fickle = medium_stress_impact_gain
+			callous = medium_stress_impact_gain
+			deceitful = minor_stress_impact_gain
+			arbitrary = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_compassion = 1
+				ai_boldness = 1
+			}
+			modifier = {
+				add = -50
+				OR = {
+					has_trait = deceitful
+					has_trait = arbitrary
+				}
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:flirting_in_law
+					value >= 50
+				}
+			}
+			modifier = {
+				add = -50
+				opinion = {
+					target = scope:flirting_in_law
+					value < 0
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = lustful
+					has_trait = fickle
+					has_trait = callous
+				}
+			}
+		}
+	}
+	#Let's be lovers
+	option = {
+		name = ep3_wedding.0002.b
+		trigger = {
+			can_set_relation_lover_trigger = { CHARACTER = scope:flirting_in_law }
+		}
+		set_relation_lover = {
+			target = scope:flirting_in_law
+			reason = lover_absconded_during_wedding
+		}
+		stress_impact = {
+			lustful = miniscule_stress_impact_loss
+			fickle = minor_stress_impact_gain
+			chaste = major_stress_impact_gain
+			honest = medium_stress_impact_gain
+			just = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 75
+			ai_value_modifier = {
+				ai_greed = 1
+				ai_energy = 1
+			}
+			modifier = {
+				add = -50
+				has_trait = fickle
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = just
+					has_trait = honest
+					has_trait = chaste
+				}
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:flirting_in_law
+					value >= 50
+				}
+			}
+			modifier = {
+				add = -50
+				opinion = {
+					target = scope:flirting_in_law
+					value < 0
+				}
+			}
+		}
+	}
+	#Well that was nice sex... gotta go back now
+	option = {
+		name = ep3_wedding.0002.c
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					NOR = {
+						has_trait = lustful
+						has_trait = callous
+						has_trait = fickle
+						has_trait = sadistic
+						has_trait = deceitful
+						has_trait = arbitrary
+						has_trait = content
+					}
+				}
+			}
+			reverse_add_opinion = {
+				modifier = angry_opinion
+				target = scope:flirting_in_law
+				opinion = -30
+			}
+		}
+		if = {
+			limit = {
+				has_activity_intent = reduce_stress_intent
+			}
+			if = {
+ 				limit = {
+ 					has_trait = lifestyle_reveler
+ 				}
+ 				add_trait_xp = {
+ 					trait = lifestyle_reveler
+ 					value = 20
+ 				}
+ 			}
+ 			else = {
+ 				add_trait = lifestyle_reveler
+ 			}
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_energy = -1
+				ai_boldness = -1
+			}
+			modifier = {
+				add = -50
+				OR = {
+					has_trait = lustful
+					has_trait = loyal
+					has_trait = stubborn
+				}
+			}
+			modifier = {
+				add = -50
+				opinion = {
+					target = scope:flirting_in_law
+					value >= 50
+				}
+			}
+			modifier = {
+				add = 50
+				opinion = {
+					target = scope:flirting_in_law
+					value < 0
+				}
+			}
+		}
+	}
+	after = {
+		remove_character_flag = is_naked
+		scope:flirting_in_law = {
+			remove_character_flag = is_naked
+		}
+	}
+}
+
+#You are caught having sex with the relative
+ep3_wedding.0003 = {
+	type = activity_event
+	title = ep3_wedding.0003.t
+	desc = {
+		desc = ep3_wedding.0003.desc_intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						this = scope:activity.special_guest:spouse_2
+						this = scope:activity.special_guest:spouse_1
+					}
+				}
+				desc = ep3_wedding.0003.desc_own_wedding
+			}
+			desc = ep3_wedding.0003.desc_guest
+		}
+	}
+	theme = wedding_banquet_activity
+	override_background = {
+		reference = corridor_night
+	}
+	left_portrait = {
+		character = root
+		animation = stayback
+		camera = camera_event_very_left
+	}
+	center_portrait = {
+		character = scope:flirting_in_law
+		triggered_animation = {
+			trigger = {
+				OR = {
+					AND = {
+						faith_dominant_gender_male_or_equal = yes
+						is_female = yes
+					}
+					AND = {
+						faith_dominant_gender_male_or_equal = no
+						is_male = yes
+					}
+				}
+			}
+			animation = crying
+		}
+		triggered_animation = {
+			trigger = {
+				OR = {
+					AND = {
+						faith_dominant_gender_male_or_equal = yes
+						is_male = yes
+					}
+					AND = {
+						faith_dominant_gender_male_or_equal = no
+						is_female = yes
+					}
+				}
+			}
+			animation = shame
+		}
+	}
+	right_portrait = {
+		character = scope:other_family_spouse
+		animation = shock
+		camera = camera_event_very_right
+	}
+	lower_right_portrait = scope:same_family_spouse
+	immediate = {
+		add_character_flag = {
+			flag = is_naked
+			days = 30
+		}
+		scope:flirting_in_law = {
+			add_character_flag = {
+				flag = is_naked
+				days = 30
+			}
+		}
+		if = {
+			limit = {
+				has_activity_intent = woo_attendee_intent
+				scope:host.intent_target ?= scope:flirting_in_law
+			}
+			complete_activity_intent = yes
+		}
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					has_activity_intent = woo_attendee_intent
+					scope:host.intent_target ?= root
+				}
+			}
+			scope:flirting_in_law = { complete_activity_intent = yes }
+		}
+		had_sex_with_effect = {
+			CHARACTER = scope:flirting_in_law
+			PREGNANCY_CHANCE = pregnancy_chance
+		}
+		if = {
+			limit = {
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+			}
+			create_character_memory = {
+				type = wedding_infidelity_spouse
+				participants = {
+					in_law = scope:flirting_in_law
+					other_spouse = scope:other_family_spouse
+				}
+			}
+			scope:flirting_in_law = {
+				create_character_memory = {
+					type = wedding_infidelity_kin
+					participants = {
+						sex_spouse = root
+						kin_spouse = scope:other_family_spouse
+					}
+				}
+			}
+			scope:other_family_spouse = {
+				create_character_memory = {
+					type = wedding_infidelity_victim
+					participants = {
+						other_spouse = root
+						in_law = scope:flirting_in_law
+					}
+				}
+			}
+		}
+	}
+	#Join us, it definitely isn't weird
+	option = {
+		name = ep3_wedding.0003.a
+		flavor = ep3_wedding.0003.a.flavor
+		trigger = {
+			#other family spouse is either attracted to root or their own family member
+			scope:other_family_spouse = {
+				NOR = {
+					has_trait = chaste
+					has_trait = celibate
+				}
+			}
+			OR = {
+				AND = {
+					#attracted to root
+					OR = {
+						has_trait = seducer
+						attraction > 0
+						scope:other_family_spouse = {
+							has_activity_intent = woo_attendee_intent
+							scope:host.intent_target = root
+						}
+						has_relation_lover = scope:other_family_spouse
+						scope:other_family_spouse = {
+							opinion = {
+								target = root
+								value >= 80
+							}
+						}
+					}
+					scope:other_family_spouse = {
+						is_attracted_to_gender_of = root
+						ep3_wedding_0001_relative_ages_trigger = yes
+					}
+				}
+				AND = {
+					#attracted to own family member
+					scope:flirting_in_law = {
+						OR = {
+							has_trait = seducer
+							attraction > 0
+							scope:other_family_spouse = {
+								has_activity_intent = woo_attendee_intent
+								scope:host.intent_target = scope:flirting_in_law
+							}
+							has_relation_lover = scope:other_family_spouse
+							scope:other_family_spouse = {
+								opinion = {
+									target = scope:flirting_in_law
+									value >= 80
+								}
+							}
+						}
+						scope:other_family_spouse = {
+							is_attracted_to_gender_of = scope:flirting_in_law
+							OR = {
+								#Both people aren't old
+								AND = {
+									age <= 55
+									scope:flirting_in_law = {
+										age <= 55
+									}
+								}
+								#Both people are old
+								AND = {
+									age > 55
+									scope:flirting_in_law = {
+										age > 55
+									}
+								}
+								#Root is old
+								AND = {
+									scope:flirting_in_law = {
+										age > 55
+									}
+									OR = {
+										age > 40
+										is_deviant_trigger = yes
+									}
+								}
+								#Target is old
+								AND = {
+									scope:flirting_in_law = {
+										OR = {
+											age > 40
+											is_deviant_trigger = yes
+										}
+									}
+									age > 55
+								}
+							}
+						}
+					}
+				}
+			}
+			#Down to rashly do incest
+			scope:other_family_spouse = {
+				OR = {
+					is_incestuous_trigger = yes
+					is_deviant_trigger = yes
+					NOT = {
+						trait_is_shunned_or_criminal_in_faith_trigger = { TRAIT = incestuous FAITH = scope:other_family_spouse.faith GENDER_CHARACTER = scope:other_family_spouse }
+					}
+					has_trait = lustful
+					has_trait = drunkard
+					#Will overlook scruples if root is really hot or persuasive
+					root = {
+						OR = {
+							has_trait = seducer
+							has_relation_lover = scope:other_family_spouse
+							has_trait = beauty_good_3
+							attraction >= 30
+							reverse_opinion = {
+								target = scope:other_family_spouse
+								value >= 100
+							}
+						}
+					}
+				}
+			}
+			
+			#in law is down to rashly do incest
+			scope:flirting_in_law = {
+				OR = {
+					is_incestuous_trigger = yes
+					is_deviant_trigger = yes
+					NOT = {
+						trait_is_shunned_or_criminal_in_faith_trigger = { TRAIT = incestuous FAITH = scope:flirting_in_law.faith GENDER_CHARACTER = scope:flirting_in_law }
+					}
+					has_trait = lustful
+					has_trait = drunkard
+					#Will overlook scruples if root is really hot or persuasive
+					root = {
+						OR = {
+							has_trait = seducer
+							has_relation_lover = scope:flirting_in_law
+							has_trait = beauty_good_3
+							attraction >= 30
+							reverse_opinion = {
+								target = scope:flirting_in_law
+								value >= 100
+							}
+						}
+					}
+				}
+			}
+		}
+		add_internal_flag = special
+		if = {
+			limit = {
+				scope:other_family_spouse = {
+					is_attracted_to_gender_of = root
+				}
+				is_attracted_to_gender_of = scope:other_family_spouse
+			}
+			had_sex_with_effect = {
+				CHARACTER = scope:other_family_spouse
+				PREGNANCY_CHANCE = pregnancy_chance
+			}
+		}
+		had_sex_with_effect = {
+			CHARACTER = scope:flirting_in_law
+			PREGNANCY_CHANCE = pregnancy_chance
+		}
+
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					is_attracted_to_gender_of = scope:other_family_spouse
+				}
+				scope:other_family_spouse = {
+					is_attracted_to_gender_of = scope:flirting_in_law
+				}
+			}
+			scope:other_family_spouse = {
+				had_sex_with_effect = {
+					CHARACTER = scope:flirting_in_law
+					PREGNANCY_CHANCE = pregnancy_chance
+				}
+			}
+		}
+		if = {
+			limit = {
+				can_set_relation_lover_trigger = { CHARACTER = scope:flirting_in_law }
+				scope:flirting_in_law = {
+					is_attracted_to_gender_of = root
+				}
+				is_attracted_to_gender_of = scope:flirting_in_law
+			}
+			set_relation_lover = {
+				target = scope:flirting_in_law
+				reason = lover_absconded_during_wedding
+			}
+		}
+		if = {
+			limit = {
+				can_set_relation_lover_trigger = { CHARACTER = scope:other_family_spouse }
+				scope:other_family_spouse = {
+					is_attracted_to_gender_of = root
+				}
+				is_attracted_to_gender_of = scope:other_family_spouse
+			}
+			set_relation_lover = {
+				target = scope:other_family_spouse
+				reason = lover_incestuous_wedding_threesome
+			}
+		}
+		
+		if = {
+			limit = {
+				NOT = {
+					has_trait = lifestyle_reveler
+				}
+			}
+			add_trait = lifestyle_reveler
+		}
+		else = {
+			add_trait_xp = {
+				trait = lifestyle_reveler
+				value = 50
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_trait = seducer
+				}
+			}
+			add_trait = seducer
+		}
+		else = {
+			add_diplomacy_skill = 1
+		}
+		stress_impact = {
+			chaste = major_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 300
+			ai_value_modifier = {
+				ai_energy = 0.5
+				ai_sociability = 0.5
+			}
+			modifier = {
+				add = -250
+				NOR = {
+					is_deviant_trigger = yes
+					is_incestuous_trigger = yes
+					has_trait = lustful
+					has_trait = drunkard
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = chaste
+					#attracted to root
+					NOT = { is_attracted_to_gender_of = scope:other_family_spouse }
+					NOR = {
+						#Both people aren't old
+						AND = {
+							age <= 55
+							scope:other_family_spouse = {
+								age <= 55
+							}
+						}
+						#Both people are old
+						AND = {
+							age > 55
+							scope:other_family_spouse = {
+								age > 55
+							}
+						}
+						#Root is old
+						AND = {
+							scope:other_family_spouse = {
+								age > 55
+							}
+							OR = {
+								age > 40
+								is_deviant_trigger = yes
+							}
+						}
+						#Target is old
+						AND = {
+							scope:other_family_spouse = {
+								OR = {
+									age > 40
+									is_deviant_trigger = yes
+								}
+							}
+							age > 55
+						}
+					}
+				}
+			}
+		}
+	}
+
+	#We will never speak of this again... or else
+	option = {
+		name = ep3_wedding.0003.b
+		trigger = {
+			OR = {
+				dread >= 80
+				has_trait = torturer
+				scope:other_family_spouse = {
+					has_dread_level_towards = {
+						target = root
+						level >= 1
+					}
+				}
+			}
+		}
+		scope:other_family_spouse = {
+			add_stress = major_stress_impact_gain
+		}
+		if = {
+			limit = {
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+				NOR = {
+					AND = {
+						scope:other_family_spouse.faith = {
+							has_doctrine = doctrine_adultery_men_accepted
+						}
+						is_male = yes
+					}
+					AND = {
+						scope:other_family_spouse.faith = {
+							has_doctrine = doctrine_adultery_women_accepted
+						}
+						is_female = yes
+					}
+				}
+			}
+			scope:other_family_spouse = {
+				add_opinion = {
+					modifier = cheater_opinion
+					target = root
+					opinion = -100
+				}
+			}
+		}
+		else = {
+			scope:other_family_spouse = {
+				add_opinion = {
+					modifier = threatened_opinion
+					target = root
+					opinion = -25
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_relation_soulmate = scope:other_family_spouse
+			}
+			remove_relation_soulmate = scope:other_family_spouse
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			forgiving = medium_stress_impact_gain
+			trusting = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_compassion = -1
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = compassionate
+					has_trait = forgiving
+					has_trait = trusting
+				}
+			}
+		}
+	}
+
+	#AN EVIL SPIRIT CAME OVER ME OR SOMETHING
+	option = {
+		name = ep3_wedding.0003.c
+		flavor = ep3_wedding.0003.c.flavor
+		trigger = {
+			OR = {
+				has_trait = possessed
+				has_trait = lunatic
+				has_trait = witch
+				has_trait = lifestyle_mystic
+				has_trait = deceitful
+				has_trait = schemer
+				has_trait = arbitrary
+				has_trait = zealous
+				has_trait = eccentric
+			}
+		}
+		duel = {
+			skills = { diplomacy intrigue }
+			target = scope:other_family_spouse
+			50 = { #They agree not to speak of this horrible affliction
+				desc = ep3_wedding.0003.c.success.desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				modifier = {
+					add = 20
+					has_trait = possessed
+				}
+				modifier = {
+					add = 20
+					has_trait = lunatic
+				}
+				modifier = {
+					add = 20
+					has_trait = witch
+				}
+				modifier = {
+					add = 20
+					has_trait = lifestyle_mystic
+				}
+				modifier = {
+					add = 10
+					reverse_opinion = {
+						target = scope:other_family_spouse
+						value >= 80
+					}
+				}
+				modifier = {
+					add = 10
+					reverse_opinion = {
+						target = scope:other_family_spouse
+						value >= 50
+					}
+				}
+				modifier = {
+					add = 10
+					reverse_opinion = {
+						target = scope:other_family_spouse
+						value > 25
+					}
+				}
+				modifier = {
+					add = 50
+					scope:other_family_spouse = {
+						OR = {
+							has_trait = zealous
+							has_trait = trusting
+							has_trait = eccentric
+						}
+					}
+				}
+				modifier = {
+					add = 25
+					scope:other_family_spouse = {
+						OR = {
+							has_trait = forgiving
+							has_trait = lifestyle_mystic
+							has_trait = witch
+							has_trait = possessed
+							has_trait = lunatic
+						}
+					}
+				}
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = ep3_wedding.0003.c.success.desc
+					left_icon = scope:other_family_spouse
+
+					if = {
+						limit = {
+							has_trait = lifestyle_mystic
+						}
+						add_trait_xp = {
+							trait = lifestyle_mystic
+							value = 25
+						}
+					}
+					add_character_modifier = {
+						modifier = possessed_by_lust_demon_modifier
+						years = 10
+						desc = lust_demon_success_chance
+					}
+					custom_tooltip = lust_demon_success_chance_tt
+					hidden_effect = {
+						if = {
+							limit = {
+								scope:flirting_in_law = {
+									is_female = yes
+									age <= 45
+									is_pregnant = no
+								}
+								is_male = yes
+							}
+							scope:flirting_in_law = {
+								make_pregnant = {
+									father = root
+									number_of_children = 1
+								}
+							}
+						}
+						else_if = {
+							limit = {
+								is_female = yes
+								age <= 45
+								is_pregnant = no
+								scope:flirting_in_law = {
+									is_male = yes
+								}
+							}
+							make_pregnant = {
+								father = scope:flirting_in_law
+								number_of_children = 3
+							}
+						}
+					}
+				}
+			}
+			50 = { #They don't buy this bullshit
+				desc = ep3_wedding.0003.c.fail.desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				modifier = {
+					add = 20
+					scope:other_family_spouse = {
+						OR = {
+							has_trait = lustful
+							has_trait = paranoid
+							has_trait = sadistic
+							has_trait = deceitful
+							has_trait = schemer
+						}
+					}
+				}
+				modifier = {
+					add = 20
+					reverse_opinion = {
+						target = scope:other_family_spouse
+						value <= -60
+					}
+				}
+				modifier = {
+					add = 20
+					reverse_opinion = {
+						target = scope:other_family_spouse
+						value <= -30
+					}
+				}
+				modifier = {
+					add = 10
+					reverse_opinion = {
+						target = scope:other_family_spouse
+						value <= 0
+					}
+				}
+				modifier = {
+					add = 50
+					scope:other_family_spouse = {
+						OR = {
+							has_trait = cynical
+							has_trait = vengeful
+						}
+					}
+				}
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = ep3_wedding.0003.c.fail.desc
+					left_icon = scope:other_family_spouse
+
+					if = {
+						limit = {
+							scope:other_family_spouse = {
+								can_add_hook = {
+									target = root
+									type = manipulation_hook
+								}
+							}
+						}
+						scope:other_family_spouse = {
+							add_hook = {
+								type = manipulation_hook
+								target = root
+							}
+						}
+					}
+					if = {
+						limit = {
+							scope:other_family_spouse = {
+								can_add_hook = {
+									target = scope:flirting_in_law
+									type = manipulation_hook
+								}
+							}
+						}
+						scope:other_family_spouse = {
+							add_hook = {
+								type = manipulation_hook
+								target = scope:flirting_in_law
+							}
+						}
+					}
+					if = {
+						limit = {
+							OR = {
+								this = scope:activity.special_guest:spouse_2
+								this = scope:activity.special_guest:spouse_1
+							}
+							NOR = {
+								AND = {
+									scope:other_family_spouse.faith = {
+										has_doctrine = doctrine_adultery_men_accepted
+									}
+									is_male = yes
+								}
+								AND = {
+									scope:other_family_spouse.faith = {
+										has_doctrine = doctrine_adultery_women_accepted
+									}
+									is_female = yes
+								}
+							}
+						}
+						scope:other_family_spouse = {
+							add_opinion = {
+								modifier = cheater_opinion
+								target = root
+								opinion = -100
+							}
+						}
+					}
+					else = {
+						scope:other_family_spouse = {
+							add_opinion = {
+								modifier = angry_opinion
+								target = root
+								opinion = -25
+							}
+						}
+					}
+					add_piety = major_piety_loss
+				}
+
+			}
+		}
+		if = {
+			limit = {
+				has_relation_soulmate = scope:other_family_spouse
+			}
+			remove_relation_soulmate = scope:other_family_spouse
+		}
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+			just = medium_stress_impact_gain
+			honest = major_stress_impact_gain
+
+		}
+		ai_chance = {
+			base = 200
+			ai_value_modifier = {
+				ai_honor = -1
+				ai_zeal = -0.5
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = just
+					has_trait = honest
+					diplomacy < low_skill_rating
+					intrigue < low_skill_rating
+					AND = {
+						diplomacy < mediocre_skill_rating
+						intrigue < mediocre_skill_rating
+					}
+				}
+			}
+			modifier = {
+				add = -100
+				OR = {
+					diplomacy < mediocre_skill_rating
+					intrigue < mediocre_skill_rating
+					AND = {
+						diplomacy < medium_skill_rating
+						intrigue < medium_skill_rating
+					}
+				}
+			}
+			modifier = {
+				add = 100
+				OR = {
+					has_trait = lunatic
+					has_trait = possessed
+					has_trait = lifestyle_mystic
+				}
+			}
+		}
+	}
+	#I don't even care, this just makes me look cool
+	option = {
+		name = ep3_wedding.0003.d
+		flavor = ep3_wedding.0003.d.flavor
+		if = {
+			limit = {
+				NOT = {
+					has_trait = lifestyle_reveler
+				}
+			}
+			add_trait = lifestyle_reveler
+		}
+		else = {
+			add_trait_xp = {
+				trait = lifestyle_reveler
+				value = 25
+			}
+		}
+		add_character_modifier = {
+			modifier = unflappable_boudoir_confidence_modifier
+			years = 10
+		}
+		if = {
+			limit = {
+				is_male = yes
+				scope:flirting_in_law = {
+					is_male = yes
+				}
+				trait_is_shunned_or_criminal_in_faith_trigger = {
+					TRAIT = sodomite
+					GENDER_CHARACTER = root
+					FAITH = root.faith
+				}
+				NOT = { has_trait = sodomite }
+			}
+			add_trait = sodomite
+		}
+		if = {
+			limit = {
+				relation_with_character_is_incestuous_in_my_or_lieges_faith_trigger = { CHARACTER = scope:flirting_in_law }
+				NOT = { has_trait = incestuous }
+			}
+			add_trait = incestuous
+		}
+		if = {
+			limit = {
+				is_married = yes
+				trait_is_shunned_or_criminal_in_faith_trigger = {
+					TRAIT = adulterer
+					GENDER_CHARACTER = root
+					FAITH = root.faith
+				}
+				NOT = { has_trait = adulterer }
+			}
+			add_trait = adulterer
+		}
+		if = {
+			limit = {
+				is_married = no
+				trait_is_shunned_or_criminal_in_faith_trigger = {
+					TRAIT = fornicator
+					GENDER_CHARACTER = root
+					FAITH = root.faith
+				}
+				NOT = { has_trait = fornicator }
+			}
+			add_trait = fornicator
+		}
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					is_married = yes
+				}
+				trait_is_shunned_or_criminal_in_faith_trigger = {
+					TRAIT = adulterer
+					GENDER_CHARACTER = scope:flirting_in_law
+					FAITH = scope:flirting_in_law.faith
+				}
+				scope:flirting_in_law = {
+					NOT = { has_trait = adulterer }
+				}
+			}
+			scope:flirting_in_law = { add_trait = adulterer }
+		}
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					is_married = no
+				}
+				trait_is_shunned_or_criminal_in_faith_trigger = {
+					TRAIT = fornicator
+					GENDER_CHARACTER = scope:flirting_in_law
+					FAITH = scope:flirting_in_law.faith
+				}
+				scope:flirting_in_law = { 
+					NOT = { has_trait = fornicator }
+				}
+			}
+			scope:flirting_in_law = { add_trait = fornicator }
+		}
+		if = {
+			limit = {
+				is_male = yes
+				scope:flirting_in_law = {
+					is_male = yes
+				}
+				trait_is_shunned_or_criminal_in_faith_trigger = {
+					TRAIT = sodomite
+					GENDER_CHARACTER = scope:flirting_in_law
+					FAITH = scope:flirting_in_law.faith
+				}
+				scope:flirting_in_law = {
+					NOT = { has_trait = sodomite }
+				}
+			}
+			scope:flirting_in_law = { add_trait = sodomite }
+		}
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					relation_with_character_is_incestuous_in_my_or_lieges_faith_trigger = { CHARACTER = root }
+					NOT = { has_trait = incestuous }
+				}
+			}
+			scope:flirting_in_law = { add_trait = incestuous }
+		}
+		if = {
+			limit = {
+				OR = {
+					this = scope:activity.special_guest:spouse_2
+					this = scope:activity.special_guest:spouse_1
+				}
+				NOR = {
+					AND = {
+						scope:other_family_spouse.faith = {
+							has_doctrine = doctrine_adultery_men_accepted
+						}
+						is_male = yes
+					}
+					AND = {
+						scope:other_family_spouse.faith = {
+							has_doctrine = doctrine_adultery_women_accepted
+						}
+						is_female = yes
+					}
+				}
+			}
+			if = {
+				limit = {
+					can_set_relation_rival_trigger = { CHARACTER = scope:other_family_spouse }
+				}
+				scope:other_family_spouse = {
+					set_relation_rival = {
+						target = root
+						reason = rival_wedding_infidelity
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					can_set_relation_nemesis_trigger = { CHARACTER = scope:other_family_spouse }
+				}
+				scope:other_family_spouse = {
+					set_relation_nemesis = {
+						target = root
+						reason = rival_wedding_infidelity
+					}
+				}
+			}
+		}
+		else = {
+			scope:other_family_spouse = {
+				add_opinion = {
+					modifier = angry_opinion
+					target = root
+					opinion = -25
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:flirting_in_law = {
+					OR = {
+						is_married = yes
+						is_concubine = yes
+					}
+				}
+			}
+			scope:flirting_in_law = {
+				every_consort = {
+					limit = {
+						this != root
+						NOR = {
+							AND = {
+								faith = {
+									has_doctrine = doctrine_adultery_men_accepted
+								}
+								scope:flirting_in_law = {
+									is_male = yes
+								}
+							}
+							AND = {
+								faith = {
+									has_doctrine = doctrine_adultery_women_accepted
+								}
+								scope:flirting_in_law = {
+									is_female = yes
+								}
+							}
+						}
+					}
+					add_opinion = {
+						modifier = cheater_opinion
+						target = scope:flirting_in_law
+						opinion = -100
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_relation_soulmate = scope:other_family_spouse
+			}
+			remove_relation_soulmate = scope:other_family_spouse
+		}
+		stress_impact = {
+			paranoid = minor_stress_impact_gain
+			just = medium_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			humble = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = -1
+				ai_boldness = 1
+			}
+			modifier = {
+				add = -75
+				OR = {
+					AND = {
+						faith = {
+							has_doctrine = doctrine_adultery_men_shunned
+						}
+						is_male = yes
+					}
+					AND = {
+						faith = {
+							has_doctrine = doctrine_adultery_women_shunned
+						}
+						is_female = yes
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = just
+					AND = {
+						faith = {
+							has_doctrine = doctrine_adultery_men_crime
+						}
+						is_male = yes
+					}
+					AND = {
+						faith = {
+							has_doctrine = doctrine_adultery_women_crime
+						}
+						is_female = yes
+					}
+				}
+			}
+		}
+	}
+	#I'm sorry!!! Please don't tell anyone!!!
+	option = {
+		name = ep3_wedding.0003.e
+		flavor = ep3_wedding.0003.e.flavor
+		if = {
+			limit = {
+				scope:other_family_spouse = {
+					can_add_hook = {
+						target = root
+						type = manipulation_hook
+					}
+				}
+			}
+			scope:other_family_spouse = {
+				add_hook = {
+					type = manipulation_hook
+					target = root
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:other_family_spouse = {
+					can_add_hook = {
+						target = scope:flirting_in_law
+						type = manipulation_hook
+					}
+				}
+			}
+			scope:other_family_spouse = {
+				add_hook = {
+					type = manipulation_hook
+					target = scope:flirting_in_law
+				}
+			}
+		}
+		scope:other_family_spouse = {
+			add_opinion = {
+				modifier = angry_opinion
+				target = root
+				opinion = -75
+			}
+		}
+		if = {
+			limit = {
+				has_relation_soulmate = scope:other_family_spouse
+			}
+			remove_relation_soulmate = scope:other_family_spouse
+		}
+		stress_impact = {
+			arrogant = medium_stress_impact_gain
+			callous = minor_stress_impact_gain
+			sadistic = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_compassion = 0.5
+				ai_boldness = -0.5
+				ai_honor = 0.5
+			}
+			modifier = {
+				factor = 0
+				has_trait = arrogant
+			}
+		}
+	}
+	after = {
+		remove_character_flag = is_naked
+		scope:flirting_in_law = {
+			remove_character_flag = is_naked
+		}
+	}
+}

@@ -1,0 +1,637 @@
+﻿japanese_new_house_name_modifiers = {
+	modifier = {
+		capital_county ?= $TITLE$
+		add = 250
+	}
+}
+
+japan_demand_admin_acceptance_modifier = {
+	ai_military_threat_modifier = { SENDER = scope:actor RECEIVER = scope:recipient MULTIPLIER = -1 }
+}
+
+house_relation_ai_accept_modifiers = {
+	modifier = { 
+		exists = $HOUSE_1_MEMBER$.house
+		exists = $HOUSE_2_MEMBER$.house
+		$HOUSE_1_MEMBER$.house != $HOUSE_2_MEMBER$.house
+		$HOUSE_1_MEMBER$.house = {
+			any_house_relation = {
+				any_relation_house = { this = $HOUSE_2_MEMBER$.house }
+			}
+		}
+		add = {
+			value = 0
+			if = {
+				limit = {
+					tgp_has_house_relation_level_trigger = {
+						HOUSE_1_MEMBER = $HOUSE_1_MEMBER$
+						HOUSE_2_MEMBER = $HOUSE_2_MEMBER$
+						LEVEL = feud
+					}
+				}
+				add = -50
+			}
+			else_if = {
+				limit = {
+					tgp_has_house_relation_level_trigger = {
+						HOUSE_1_MEMBER = $HOUSE_1_MEMBER$
+						HOUSE_2_MEMBER = $HOUSE_2_MEMBER$
+						LEVEL = rivalry
+					}
+				}
+				add = -25
+			}
+			else_if = {
+				limit = {
+					tgp_has_house_relation_level_trigger = {
+						HOUSE_1_MEMBER = $HOUSE_1_MEMBER$
+						HOUSE_2_MEMBER = $HOUSE_2_MEMBER$
+						LEVEL = quarrel
+					}
+				}
+				add = -10
+			}
+			else_if = {
+				limit = {
+					tgp_has_house_relation_level_trigger = {
+						HOUSE_1_MEMBER = $HOUSE_1_MEMBER$
+						HOUSE_2_MEMBER = $HOUSE_2_MEMBER$
+						LEVEL = cordial
+					}
+				}
+				add = 10
+			}
+			else_if = {
+				limit = {
+					tgp_has_house_relation_level_trigger = {
+						HOUSE_1_MEMBER = $HOUSE_1_MEMBER$
+						HOUSE_2_MEMBER = $HOUSE_2_MEMBER$
+						LEVEL = friendly
+					}
+				}
+				add = 25
+			}
+			else_if = {
+				limit = {
+					tgp_has_house_relation_level_trigger = {
+						HOUSE_1_MEMBER = $HOUSE_1_MEMBER$
+						HOUSE_2_MEMBER = $HOUSE_2_MEMBER$
+						LEVEL = amity
+					}
+				}
+				add = 50
+			}
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_HOUSE_RELATION_REASON
+	}
+}
+
+house_relation_ai_accept_confederation_member_modifiers = {
+	modifier = {
+		add = {
+			value = 0
+			house ?= {
+				every_house_relation = {
+					limit = {
+						any_relation_house = { house_head.confederation = scope:recipient.confederation }
+					}
+					if = {
+						limit = { has_house_relation_level = feud }
+						add = -50
+					}
+					else_if = {
+						limit = { has_house_relation_level = rivalry }
+						add = -25
+					}
+					else_if = {
+						limit = { has_house_relation_level = quarrel }
+						add = -10
+					}
+					else_if = {
+						limit = { has_house_relation_level = cordial }
+						add = 10
+					}
+					else_if = {
+						limit = { has_house_relation_level = friendly }
+						add = 25
+					}
+					else_if = {
+						limit = { has_house_relation_level = amity }
+						add = 50
+					}
+				}
+			}
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_HOUSE_RELATION_ALL_MEMBERS_REASON
+	}
+}
+
+house_bloc_desire_to_join_modifiers = {
+	#Opinions
+	opinion_modifier = { # Opinion of Inviter
+		trigger = {
+			$INVITER$ = { save_temporary_scope_as = inviter_temp }
+			$JOINER$ = { save_temporary_scope_as = joiner_temp }
+		}
+		who = scope:joiner_temp
+		opinion_target = scope:inviter_temp
+		multiplier = {
+			value = 0.5
+			multiply = $MULTIPLIER$
+		}
+		step = 5
+		max = 25
+	}
+	opinion_modifier = { # Opinion of Leader of Inviter's Bloc
+		trigger = {
+			$INVITER$ = { save_temporary_scope_as = inviter_temp }
+			$JOINER$ = { save_temporary_scope_as = joiner_temp }
+			exists = scope:inviter_temp.confederation.leading_house.house_head
+			scope:inviter_temp.confederation.leading_house.house_head != scope:inviter_temp
+		}
+		who = scope:joiner_temp
+		opinion_target = scope:inviter_temp.confederation.leading_house.house_head
+		multiplier = {
+			value = 0.5
+			multiply = $MULTIPLIER$
+		}
+		step = 5
+		max = -100
+	}
+	opinion_modifier = { # Opinion of Head of Joiner's current Bloc
+		trigger = {
+			$INVITER$ = { save_temporary_scope_as = inviter_temp }
+			$JOINER$ = { save_temporary_scope_as = joiner_temp }
+			exists = scope:joiner_temp.confederation.leading_house.house_head
+			NOT = { scope:joiner_temp.confederation.leading_house = scope:joiner_temp.house }
+		}
+		who = scope:joiner_temp
+		opinion_target = scope:joiner_temp.confederation.leading_house.house_head
+		multiplier = {
+			value = -0.5
+			multiply = $MULTIPLIER$
+		}
+		step = 5
+		max = -25
+	}
+	# Relative Character
+	modifier = { # Prestige level
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		scope:joiner_temp.prestige_level != scope:inviter_temp.prestige_level
+		add = {
+			value = scope:inviter_temp.prestige_level
+			add = {
+				value = scope:joiner_temp.prestige_level
+				multiply = -1
+			}
+			multiply = 10
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_RELATIVE_PRESTIGE_LEVEL_REASON
+	}
+	modifier = { # Influence level
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		scope:joiner_temp = { government_has_flag = government_has_influence }
+		scope:inviter_temp = { government_has_flag = government_has_influence }
+		scope:joiner_temp.influence_level != scope:inviter_temp.influence_level
+		add = {
+			value = scope:inviter_temp.influence_level
+			add = {
+				value = scope:joiner_temp.influence_level
+				multiply = -1
+			}
+			multiply = 10
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_RELATIVE_INFLUENCE_LEVEL_REASON
+	}
+	modifier = { # Military power
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		scope:joiner_temp = { government_has_flag = government_is_japan_feudal }
+		scope:inviter_temp = { government_has_flag = government_is_japan_feudal }
+		NAND = {
+			exists = scope:joiner_temp.confederation
+			exists = scope:inviter_temp.confederation
+		}
+		add = {
+			value = 0
+			scope:inviter_temp.house = {
+				every_house_member = {
+					limit = {
+						top_liege = scope:inviter_temp.top_liege
+						tgp_house_bloc_interaction_valid_trigger = yes
+					}
+					add = military_power
+				}
+			}
+			scope:joiner_temp.house = {
+				every_house_member = {
+					limit = {
+						top_liege = scope:joiner_temp.top_liege
+						tgp_house_bloc_interaction_valid_trigger = yes
+					}
+					add = {
+						value = military_power
+						multiply = -1
+					}
+				}
+			}
+			divide = 2000
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_RELATIVE_MILITARY_POWER
+	}
+	modifier = { # Loyal
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:joiner_temp.confederation
+		scope:joiner_temp = { has_trait = loyal }
+		add = {
+			value = -25
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_LOYAL_TRAIT_REASON
+	}
+	# Government
+	modifier = { # Different government type
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		scope:joiner_temp = {
+			NOT = { has_same_government = scope:inviter_temp }
+		}
+		add = -200 # always bad
+		desc = AI_DIFFERENT_GOVERNMENT_REASON
+	}
+	modifier = { # Not same as top liege
+		scope:joiner_temp = {
+			NOR = {
+				exists = house.house_confederation
+				has_same_government = top_liege
+			}
+		}
+		add = -50
+		desc = AI_VULNERABLE_GOVERNMENT_REASON
+	}
+	# Family
+	modifier = { # Close dynasty house
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:inviter_temp.dynasty
+		scope:joiner_temp.dynasty ?= scope:inviter_temp.dynasty
+		OR = {
+			scope:joiner_temp = {
+				any_ancestor = {
+					OR = {
+						is_parent_of = scope:joiner_temp
+						is_grandparent_of = scope:joiner_temp
+					}
+					OR = {
+						is_parent_of = scope:inviter_temp
+						is_grandparent_of = scope:inviter_temp
+					}
+				}
+			}
+		}
+		add = {
+			value = 25
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_CLOSE_HOUSE_REASON
+	}
+	modifier = { # Distant dynasty house
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:inviter_temp.dynasty
+		scope:joiner_temp.dynasty ?= scope:inviter_temp.dynasty
+		scope:joiner_temp.house != scope:inviter_temp.house
+		add = {
+			value = 10
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_SAME_DYNASTY_REASON
+	}
+	modifier = { # Same house
+		exists = scope:inviter_temp.house
+		scope:joiner_temp.house ?= scope:inviter_temp.house
+		add = 1000
+		desc = AI_SAME_HOUSE_REASON
+	}
+	modifier = { # Same dynasty
+		exists = scope:inviter_temp.dynasty
+		scope:joiner_temp.dynasty ?= scope:inviter_temp.dynasty
+		scope:joiner_temp.house != scope:inviter_temp.house
+		add = 25
+		desc = AI_SAME_DYNASTY_REASON
+	}
+	# Relative House
+	modifier = { # Splendor level
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		add = {
+			value = scope:inviter_temp.dynasty.dynasty_prestige_level
+			subtract = scope:joiner_temp.dynasty.dynasty_prestige_level
+			multiply = 10
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_RELATIVE_DYNASTY_PRESTIGE_REASON
+	}
+	modifier = {
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:inviter_temp.house
+		exists = scope:joiner_temp.house
+		scope:inviter_temp.house = {
+			is_powerful_family = yes
+		}
+		scope:joiner_temp.house = {
+			is_powerful_family = no
+		}
+		add = {
+			value = 50
+		}
+		desc = AI_RELATIVE_FAMILY_RATING_REASON
+	}
+	modifier = {
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:inviter_temp.house
+		exists = scope:joiner_temp.house
+		scope:inviter_temp.house = {
+			is_powerful_family = no
+		}
+		scope:joiner_temp.house = {
+			is_powerful_family = yes
+		}
+		add = {
+			value = -25
+		}
+		desc = AI_RELATIVE_FAMILY_RATING_REASON
+	}
+	modifier = {
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:joiner_temp.house
+		scope:joiner_temp = { tgp_is_in_ceremonial_house_trigger = yes }
+		NOT = {
+			scope:inviter_temp = { government_allows = administrative }
+		}
+		scope:joiner_temp = { government_allows = administrative }
+		add = {
+			value = -100
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_TENNO_FEUDAL_AVERSION_REASON
+	}
+	# Aspiration
+	modifier = { # Same Aspiration
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:inviter_temp.confederation.leading_house
+		scope:joiner_temp.house ?= { has_same_house_power_as = scope:inviter_temp.confederation.leading_house }
+		add = 25
+		desc = AI_SAME_LEADING_ASPIRATION_REASON
+	}
+	modifier = { # Same Better Aspiration
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:inviter_temp.confederation.leading_house
+		scope:joiner_temp.house ?= {
+			has_same_house_power_as = scope:inviter_temp.house.house_confederation.leading_house
+			trigger_if = {
+				limit = { has_house_power_parameter = aspiration_level_1 }
+				scope:inviter_temp.house.house_confederation.leading_house = {
+					OR = {
+						has_house_power_parameter = aspiration_level_2
+						has_house_power_parameter = aspiration_level_3
+					}
+				}
+			}
+			trigger_else_if = {
+				limit = { has_house_power_parameter = aspiration_level_2 }
+				scope:inviter_temp.house.house_confederation.leading_house = { has_house_power_parameter = aspiration_level_3 }
+			}
+			trigger_else = { always = no }
+		}
+		add = {
+			value = 25
+			if = {
+				limit = {
+					exists = scope:joiner_temp.house.house_confederation.leading_house
+					scope:joiner_temp.house.house_confederation.leading_house = { has_house_power_parameter = aspiration_level_1 }
+					scope:inviter_temp.house.house_confederation.leading_house = { has_house_power_parameter = aspiration_level_3 }
+				}
+				add = 25
+			}
+		}
+		desc = AI_BETTER_LEADING_ASPIRATION_REASON
+	}
+	modifier = { # Different Aspiration
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:joiner_temp.house
+		exists = scope:inviter_temp.confederation.leading_house
+		NOT = {
+			scope:joiner_temp.house = { has_same_house_power_as = scope:inviter_temp.confederation.leading_house }
+		}
+		add = -40
+		desc = AI_DIFFERENT_LEADING_ASPIRATION_REASON
+	}
+	# Bloc
+	modifier = { # More attractive if it's a small bloc
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		scope:inviter_temp.house.house_confederation.member_count < 5
+		add = {
+			value = 0
+			add = scope:inviter_temp.house.house_confederation.member_count
+			multiply = 10
+			add = 35
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_BLOC_SIZE_AVERSION_REASON
+	}
+	modifier = { # Less attractive as bloc grows
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		scope:inviter_temp.house.house_confederation.member_count >= 10
+		add = {
+			value = 0
+			add = scope:inviter_temp.house.house_confederation.member_count
+			multiply = -10
+			add = -25
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_BLOC_SIZE_AVERSION_REASON
+	}
+	# Relative Bloc
+	modifier = { # Military power
+		scope:inviter_temp = {
+			government_has_flag = government_is_japan_feudal
+			exists = confederation
+		}
+		scope:joiner_temp = {
+			government_has_flag = government_is_japan_feudal
+			exists = confederation
+		}
+		add = {
+			value = scope:inviter_temp.confederation.combined_military_strength
+			subtract = scope:joiner_temp.confederation.combined_military_strength
+		}
+		desc = AI_RELATIVE_BLOC_MILITARY_POWER
+	}
+	modifier = { # Cohesion
+		scope:joiner_temp.house.house_confederation ?= { cohesion <= 50 }
+		add = {
+			value = -50
+			subtract = scope:joiner_temp.house.house_confederation.cohesion
+			if = {
+				limit = { scope:joiner_temp.house.house_confederation.cohesion < 25 }
+				multiply = 4
+			}
+		}
+		desc = AI_LOW_COHESION_REASON
+	}
+	modifier = { # Distance
+		exists = scope:joiner_temp.domicile
+		exists = scope:inviter_temp.domicile
+		scope:inviter_temp.domicile.domicile_location = {
+			NOR = {
+				kingdom = scope:joiner_temp.domicile.domicile_location.kingdom
+				county = {
+					any_neighboring_county = { this = scope:joiner_temp.domicile.domicile_location.county }
+				}
+			}
+		}
+		add = -20
+		desc = AI_DISTANT_DOMICILE_REASON
+	}
+	modifier = { # Cohesion
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		NOT = { exists = scope:joiner_temp.house.house_confederation }
+		exists = scope:inviter_temp.house.house_confederation
+		scope:inviter_temp.house.house_confederation.cohesion != 50
+		add = {
+			value = scope:inviter_temp.house.house_confederation.cohesion
+			if = {
+				limit = { scope:inviter_temp.house.house_confederation.cohesion < 50 }
+				add = 50
+				subtract = scope:inviter_temp.confederation.cohesion
+				multiply = -1
+				min = -50
+				max = -1
+			}
+			else = {
+				add = scope:inviter_temp.confederation.cohesion
+				subtract = 50
+				min = 1
+				max = 50
+			}
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_BLOC_COHESION_REASON
+	}
+	modifier = { # Relative Cohesion
+		tgp_house_bloc_inviter_or_leader_trigger = { INVITER = $INVITER$ JOINER = $JOINER$ }
+		exists = scope:joiner_temp.confederation
+		exists = scope:inviter_temp.confederation
+		scope:joiner_temp.house.house_confederation.cohesion != 50
+		add = {
+			value = scope:inviter_temp.house.house_confederation.cohesion
+			subtract = scope:joiner_temp.house.house_confederation.cohesion
+			multiply = $MULTIPLIER$
+		}
+		desc = AI_BLOC_RELATIVE_COHESION_REASON
+	}
+	modifier = {
+		exists = scope:joiner_temp.house.house_confederation
+		add = -25
+		DESC = AI_ALREADY_IN_BLOC_REASON
+	}
+	modifier = { # Soryo bloc is not near any other bloc members
+		exists = scope:inviter_temp.house.house_confederation
+		scope:joiner_temp ?= {
+			is_landed = yes
+			NOT = { government_allows = administrative }
+			NOT = {
+				any_held_county = {
+					is_landless_type_title = no
+					OR = {
+						any_neighboring_county = { holder.house.house_confederation ?= scope:inviter_temp.house.house_confederation }
+						duchy = {
+							any_de_jure_county = { holder.house.house_confederation ?= scope:inviter_temp.house.house_confederation }
+						}
+					}
+				}
+			}
+		}
+		add = -75
+		DESC = AI_DISTANT_SORYO_BLOC_REASON
+	}
+	# Threat
+	modifier = {
+		NOT = { exists = scope:joiner_temp.house.house_confederation }
+		scope:inviter_temp = { government_allows = administrative }
+		scope:joiner_temp = {
+			government_allows = administrative
+			capital_county = {
+				any_title_to_title_neighboring_county = {
+					NOT = {
+						holder = { government_allows = administrative }
+					}
+				}
+			}
+		}
+		add = {
+			value = 1
+			scope:recipient.capital_county = {
+				every_title_to_title_neighboring_county = {
+					limit = {
+	 					NOT = {
+							holder = { government_allows = administrative }
+						}
+	 				}
+	 				add = {
+	 					value = holder.military_power
+	 					divide = 1000
+	 				}
+				}
+			}
+		}
+		desc = AI_THREATENED_RITSURYO_REASON
+	}
+	#Dynasty Legacy and Same Dynasty
+	modifier = {
+		scope:inviter_temp.dynasty = { has_dynasty_perk = tgp_japan_legacy_1 }
+		scope:inviter_temp.dynasty = scope:joiner_temp.dynasty
+		add = tgp_legacy_japan_dynasty_bloc_bonus_value
+		desc = AI_BLOCK_JOIN_SAME_DYNASTY_LEGACY_BONUS
+	}
+	#Diplomacy Perk
+	modifier = {
+		scope:inviter_temp = { has_perk = forced_vassalage_perk }
+		add = tgp_join_bloc_interaction_lifestyle_perk_value
+		desc = AI_BLOCK_JOIN_LIFESTYLE_PERK
+	}
+}
+
+house_bloc_tyranny_war_modifiers = {
+	# TGP Be more careful with blocs generally
+	modifier = {
+		add = -750
+		scope:actor = {
+			NOT = { has_revoke_title_reason = scope:recipient }
+		}
+		scope:recipient = { tgp_uses_house_blocs_trigger = yes }
+		NOT = { scope:recipient.house.house_confederation.leading_house.house_head ?= this }
+	}
+	modifier = {
+		scope:recipient = { is_imprisoned = no }
+		exists = scope:recipient.house.house_confederation
+		NOT = { scope:recipient.house.house_confederation.leading_house.house_head ?= this }
+		add = {
+			value = 0
+			scope:actor = {
+				every_sub_realm_county = {
+					limit = { holder.house.house_confederation ?= scope:recipient.house.house_confederation }
+					add = -150
+				}
+			}
+		}
+	}
+	# TGP Don't revoke when bloc is a threat
+	modifier = {
+		factor = 0
+		always = no # TODO_CD_TGP_JP AWAITING CODE SUPPORT
+		#exists = scope:recipient.house.house_confederation
+		#scope:recipient.tgp_confederation_military_power_three_quarters >= scope:actor.current_power_with_allies_value
+	}
+}

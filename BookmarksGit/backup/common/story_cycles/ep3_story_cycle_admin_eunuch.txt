@@ -1,0 +1,242 @@
+﻿story_cycle_admin_eunuch = {
+	# by Joe Parkin
+	
+	on_setup = {
+		set_variable = { name = admin_title value = story_owner.primary_title }
+		set_variable = { name = start_date value = current_date }
+		set_variable = { name = eunuch_score value = 0 }
+		set_variable = { name = eunuch_refusals value = 0 }
+		set_variable = { name = eunuch_total value = 0 }
+	}
+
+	on_end = {
+		debug_log = "Admin Eunuch story cycle ended on:"
+		debug_log_date = yes
+		story_owner = {
+			ep3_story_cycle_admin_eunuch_clear_modifier_effect = { TYPE = liege }
+		}
+		var:eunuch = {
+			ep3_story_cycle_admin_eunuch_clear_modifier_effect = { TYPE = eunuch }
+		}
+	}
+
+	on_owner_death = {
+		save_scope_as = story
+		story_owner = { save_scope_as = previous_story_owner }
+		var:admin_title = {
+			trigger_event = {
+				id = ep3_story_cycle_admin_eunuch.9980
+				delayed = yes
+			}
+		}
+	}
+
+	# Something happens - random events
+	effect_group = {
+		days = { 100 240 }
+
+		trigger = {
+			var:eunuch ?= {
+				is_alive = yes
+				is_imprisoned = no
+				OR = {
+					liege = root.story_owner
+					employer = root.story_owner
+				}
+			}
+			story_owner = {
+				OR = {
+					has_character_modifier = admin_eunuch_liege_1_modifier
+					has_character_modifier = admin_eunuch_liege_2_modifier
+					has_character_modifier = admin_eunuch_liege_3_modifier
+					has_character_modifier = admin_eunuch_liege_4_modifier
+					has_character_modifier = admin_eunuch_liege_5_modifier
+					has_character_modifier = admin_eunuch_liege_6_modifier
+					has_character_modifier = admin_eunuch_liege_7_modifier
+					has_character_modifier = admin_eunuch_liege_8_modifier
+				}
+			}
+		}
+
+		first_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = {
+					story_owner = {
+						trigger_event = { on_action = ongoing_admin_eunuch_reaction_events }
+					}
+				}
+			}
+		}
+	}
+
+	# Something happens - random events
+	effect_group = {
+		days = { 90 180 }
+
+		trigger = {
+			var:eunuch ?= {
+				is_alive = yes
+				is_imprisoned = no
+				OR = {
+					liege = root.story_owner
+					employer = root.story_owner
+				}
+			}
+			story_owner = {
+				OR = {
+					has_character_modifier = admin_eunuch_liege_1_modifier
+					has_character_modifier = admin_eunuch_liege_2_modifier
+					has_character_modifier = admin_eunuch_liege_3_modifier
+					has_character_modifier = admin_eunuch_liege_4_modifier
+					has_character_modifier = admin_eunuch_liege_5_modifier
+					has_character_modifier = admin_eunuch_liege_6_modifier
+					has_character_modifier = admin_eunuch_liege_7_modifier
+					has_character_modifier = admin_eunuch_liege_8_modifier
+				}
+			}
+		}
+
+		random_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = {
+					story_owner = {
+						trigger_event = { on_action = ongoing_admin_eunuch_effect_events }
+					}
+				}
+			}
+			triggered_effect = {
+				trigger = { var:eunuch_total >= 3 }
+				effect = {
+					story_owner = {
+						trigger_event = { on_action = ongoing_admin_eunuch_reaction_events }
+					}
+				}
+			}
+		}
+	}
+
+	effect_group = {
+		days = 5
+
+		trigger = {
+			OR = {
+				# Invalid variable
+				NOT = { exists = var:eunuch }
+				# Eunuch has left court
+				NOT = { exists = var:eunuch.employer }
+				# Eunuch is dead
+				var:eunuch = { is_alive = no }
+				# Eunuch is imprisoned
+				var:eunuch = { is_imprisoned = yes }
+				# Eunuch is a ruler
+				var:eunuch = { is_playable_character = yes }
+				# Eunuch has gone to another court
+				var:eunuch.employer != root.story_owner
+			}
+		}
+
+		first_valid = {
+			triggered_effect = { # Eunuch is dead
+				trigger = {
+					exists = var:eunuch
+					var:eunuch = { is_alive = no }
+				}
+				effect = {
+					var:eunuch = { save_scope_as = eunuch }
+					story_owner ?= { trigger_event = ep3_story_cycle_admin_eunuch.8010 }
+				}
+			}
+			triggered_effect = { # Eunuch is imprisoned
+				trigger = {
+					exists = var:eunuch
+					var:eunuch = { is_imprisoned = yes }
+				}
+				effect = {
+					var:eunuch = { save_scope_as = eunuch }
+					story_owner ?= { trigger_event = ep3_story_cycle_admin_eunuch.8020 }
+				}
+			}
+			triggered_effect = { # Eunuch is a ruler
+				trigger = {
+					exists = var:eunuch
+					var:eunuch = { is_playable_character = yes }
+				}
+				effect = {
+					var:eunuch = { save_scope_as = eunuch }
+					story_owner ?= { trigger_event = ep3_story_cycle_admin_eunuch.8040 }
+				}
+			}
+			triggered_effect = { # Eunuch has gone to another court
+				trigger = {
+					exists = var:eunuch
+					var:eunuch.employer != root.story_owner
+				}
+				effect = {
+					var:eunuch = { save_scope_as = eunuch }
+					story_owner ?= { trigger_event = ep3_story_cycle_admin_eunuch.8030 }
+				}
+			}
+			triggered_effect = { # Eunuch variable doesn't exist, or Eunuch has left court
+				trigger = {
+					OR = {
+						NOT = { exists = var:eunuch }
+						NOT = { exists = var:eunuch.employer }
+					}
+				}
+				effect = { end_story = yes }
+			}
+		}
+	}
+
+	effect_group = {
+		days = 5
+
+		trigger = {
+			OR = {
+				# Invalid variable
+				NOT = { exists = var:admin_title }
+				# Lost title without dying
+				var:admin_title.holder != story_owner
+				# Culture without Eunuchs
+				var:admin_title.holder.culture = {
+					NOT = { has_cultural_parameter = can_appoint_chief_eunuch }
+				}
+			}
+		}
+
+		first_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = { end_story = yes }
+			}
+		}
+	}
+
+	effect_group = {
+		months = 1
+
+		trigger = {
+			story_owner = {
+				NOR = {
+					has_character_modifier = admin_eunuch_liege_1_modifier
+					has_character_modifier = admin_eunuch_liege_2_modifier
+					has_character_modifier = admin_eunuch_liege_3_modifier
+					has_character_modifier = admin_eunuch_liege_4_modifier
+					has_character_modifier = admin_eunuch_liege_5_modifier
+					has_character_modifier = admin_eunuch_liege_6_modifier
+					has_character_modifier = admin_eunuch_liege_7_modifier
+					has_character_modifier = admin_eunuch_liege_8_modifier
+				}
+			}
+		}
+
+		first_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = { end_story = yes }
+			}
+		}
+	}
+}

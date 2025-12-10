@@ -1,0 +1,2748 @@
+﻿story_mandala = {
+	
+	on_setup = {
+		if = {
+			limit = {
+				NOT = { exists = global_var:active_mandalas }
+			}
+			set_global_variable = {
+				name = active_mandalas
+				value = 1
+			}
+		}
+		else = {
+			change_global_variable = {
+				name = active_mandalas
+				add = 1
+			}
+		}
+
+		#Should we add some bonuses here? Modifiers? Levy size?
+
+		story_owner = {
+			set_variable = mandala_godking
+		}
+
+	}
+	
+	on_end = {
+		if = {
+			limit = {
+				exists = global_var:active_mandalas
+			}
+			change_global_variable = {
+				name = active_mandalas
+				add = -1
+			}
+		}
+		story_owner = {
+			if = {
+				limit = { is_alive = yes }
+				remove_variable = mandala_godking
+			}
+		}
+	}
+	
+	on_owner_death = {
+		story_owner = {
+			random_heir = {
+				limit = {
+					is_physically_able_adult = yes
+					is_ai = yes
+				}
+				create_story = story_mandala
+			}
+		}
+		end_story = yes
+	}
+
+	#Validity checks
+	effect_group = {
+		days = 30
+		triggered_effect = {
+			trigger = {
+				story_owner = {
+					OR = {
+						NOT = { government_has_flag = government_is_mandala }
+						is_tributary = yes
+						is_independent_ruler = no
+					}
+				}
+			}
+			effect = {
+				story_owner = { remove_variable = mandala_godking }
+				end_story = yes
+			}
+		}
+	}
+	effect_group = {
+		days = 365
+		triggered_effect = {
+			trigger = {
+				story_owner = { 
+					government_has_flag = government_is_mandala
+					#Did someone break it?
+					has_unruined_mandala_capital_trigger = no
+					#There's no room for us to rebuild?
+					less_than_max_amount_of_mandala_capitals_trigger = no
+				}
+			}
+			#End it
+			effect = {
+				story_owner = { remove_variable = mandala_godking }
+				end_story = yes
+			}
+		}
+	}
+
+	#Monthly checks, handles the AI behavior
+	effect_group = {
+		days = { 30 60 }
+
+		triggered_effect = {
+			trigger = {
+				story_owner = { 
+					is_ai = yes
+					government_has_flag = government_is_mandala
+					top_overlord = this
+				}
+			}
+			effect = {
+				story_owner = {
+					save_scope_as = root_scope
+					### CORONATION (or you _will_ die of Legitimacy-deficiency)
+					if = {
+						limit = {
+							highest_held_title_tier >= tier_kingdom
+							has_realm_law = uncrowned
+							can_host_activity = activity_coronation
+						}
+						ai_attempt_to_host_activity = activity_coronation
+					}
+					### CAPITAL
+					#Do we still have our de jure capital with a fancy Temple that we're not using?
+					if = {
+						limit = { 
+							has_mandala_capital_trigger = no
+							can_execute_decision = seize_mandala_capital_decision
+						}
+						execute_decision = seize_mandala_capital_decision
+					}
+					#Do you need space to build/upgrade your own Capital?
+					if = {
+						limit = { 
+							less_than_max_amount_of_mandala_capitals_trigger = no
+							any_subject = {
+								save_temporary_scope_as = subject_trigger_check
+								scope:root_scope = {
+									capital_county.kingdom = {
+										any_in_de_jure_hierarchy = {
+											tier = tier_barony
+											holder = scope:subject_trigger_check
+											title_province = {
+												has_building_with_flag = mandala_capital_building
+												has_ruined_great_building = no
+											}
+										}
+									}
+								}
+							}
+						}
+						every_subject = {
+							limit = {
+								is_ai = yes
+								save_temporary_scope_as = subject_check
+								scope:root_scope = {
+									capital_county.kingdom = {
+										any_in_de_jure_hierarchy = {
+											tier = tier_barony
+											holder = scope:subject_check
+											title_province = {
+												has_building_with_flag = mandala_capital_building
+												has_ruined_great_building = no
+											}
+										}
+									}
+								}
+							}
+							add_to_list = has_mandala_capital_in_dejure
+						}
+						if = {
+							limit = { list_size:has_mandala_capital_in_dejure > 0 }
+							#Get the weakest subject
+							ordered_in_list = {
+								list = has_mandala_capital_in_dejure
+								order_by = {
+									value = current_military_strength
+									multiply = -1
+								}
+								save_scope_as = decommission_target
+							}
+							run_interaction = {
+								interaction = decommission_mandala_temple_interaction
+								actor = scope:root_scope
+								recipient = scope:decommission_target
+								send_threshold = maybe
+							}
+						}
+					}
+					### BASE PIETY
+					#Small rulers should try to get the minimum that is good to have
+					if = {
+						limit = {
+							primary_title.tier <= tier_duchy
+							piety < 500
+						}
+						#You don't? Try to go on a Pilgrimage
+						mandala_story_go_on_pilgrimage_effect = yes
+					}
+					### ASPECTS
+					#Try to upgrade, if you can
+					if = {
+						limit = { is_house_head = yes }
+						#No Aspect - yet
+						if = {
+							limit = {
+								house = { has_house_power_parameter = no_aspect }
+							}
+							random_list = {
+								1 = {
+									trigger = {
+										NOT = { lowest_skill = stewardship }
+									}
+									modifier = {
+										highest_skill = stewardship
+										add = 1000
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_creation
+											level = 1
+										}
+									}
+								}
+								1 = {
+									trigger = {
+										NOT = { lowest_skill = diplomacy }
+									}
+									modifier = {
+										highest_skill = diplomacy
+										add = 1000
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_serenity
+											level = 1
+										}
+									}
+								}
+								1 = {
+									trigger = {
+										NOT = { lowest_skill = martial }
+									}
+									modifier = {
+										highest_skill = martial
+										add = 1000
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_destruction
+											level = 1
+										}
+									}
+								}	
+								1 = {
+									trigger = {
+										NOT = { lowest_skill = intrigue }
+									}
+									modifier = {
+										highest_skill = intrigue
+										add = 1000
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_trickery
+											level = 1
+										}
+									}
+								}
+							}
+						}
+						#Aspect of Creation
+						if = {
+							limit = {
+								house = { 
+									has_house_power_parameter = aspect_of_creation
+									NOT = { has_house_power_parameter = aspect_of_creation_05 }
+								}
+							}
+							#Second tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_creation_01 }	
+								}
+								if = {
+									limit = { creation_first_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_creation
+											level = 2
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_first_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough kids?
+									else_if = {
+										limit = { creation_children_trigger = no }
+										mandala_story_creation_aspect_get_kids_effect = yes
+									}
+								}
+							}
+							#Third tier, try to upgrade first
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_creation_02 }	
+								}
+								if = {
+									limit = { creation_second_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_creation
+											level = 3
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_second_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough kids?
+									else_if = {
+										limit = { creation_children_trigger = no }
+										mandala_story_creation_aspect_get_kids_effect = yes
+									}
+									#Need more buildings?
+									else_if = {
+										limit = {
+											NOT = {
+												house = {
+													has_variable = num_buildings_built
+													var:num_buildings_built < num_creation_mandala_buildings_built_t2
+												}
+											}
+										}
+										if = {
+											limit = {
+												any_realm_province = { has_free_building_slot = yes }
+											}
+											ai_attempt_to_build_building_effect = yes
+										}
+										if = {
+											limit = {
+												any_realm_province = { 
+													has_holding = no
+													has_ongoing_construction = no
+												}
+											}
+											random = {
+												chance = 10
+												random_realm_province = {
+													limit = { 
+														has_holding = no
+														has_ongoing_construction = no
+													}
+													begin_create_holding = temple_citadel_holding
+												}
+											}
+										}
+										
+									}
+								}
+							}
+							#Fourth tier, try to upgrade first
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_creation_03 }	
+								}
+								if = {
+									limit = { creation_third_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_creation
+											level = 4
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_third_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough kids?
+									else_if = {
+										limit = { creation_children_trigger = no }
+										mandala_story_creation_aspect_get_kids_effect = yes
+									}
+									#Need more buildings?
+									else_if = {
+										limit = {
+											NOT = {
+												house = {
+													has_variable = num_buildings_built
+													var:num_buildings_built < num_creation_mandala_buildings_built_t3
+												}
+											}
+										}
+										if = {
+											limit = {
+												any_realm_province = { has_free_building_slot = yes }
+											}
+											ai_attempt_to_build_building_effect = yes
+										}
+										if = {
+											limit = {
+												any_realm_province = { 
+													has_holding = no
+													has_ongoing_construction = no
+												}
+											}
+											random = {
+												chance = 10
+												random_realm_province = {
+													limit = { 
+														has_holding = no
+														has_ongoing_construction = no
+													}
+													begin_create_holding = temple_citadel_holding
+												}
+											}
+										}
+									}
+									#How about artifacts?
+									if = {
+										limit = {
+											NOT = {
+												house = {
+													has_variable = num_commissioned_artifacts
+													var:num_commissioned_artifacts >= num_creation_mandala_commissioned_artifacts_t3
+												}
+											}
+											can_execute_decision = commission_artifact_decision
+										}
+										execute_decision = commission_artifact_decision
+									}
+								}
+							}
+							#Fifth tier, try to upgrade first
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_creation_04 }	
+								}
+								if = {
+									limit = { creation_fourth_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_creation
+											level = 5
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_last_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough kids?
+									else_if = {
+										limit = { creation_children_trigger = no }
+										mandala_story_creation_aspect_get_kids_effect = yes
+									}
+									#Need more buildings?
+									else_if = {
+										limit = {
+											NOT = {
+												house = {
+													has_variable = num_buildings_built
+													var:num_buildings_built < num_creation_mandala_buildings_built_t4
+												}
+											}
+										}
+										if = {
+											limit = {
+												any_realm_province = { has_free_building_slot = yes }
+											}
+											ai_attempt_to_build_building_effect = yes
+										}
+										if = {
+											limit = {
+												any_realm_province = { 
+													has_holding = no
+													has_ongoing_construction = no
+												}
+											}
+											random = {
+												chance = 10
+												random_realm_province = {
+													limit = { 
+														has_holding = no
+														has_ongoing_construction = no
+													}
+													begin_create_holding = temple_citadel_holding
+												}
+											}
+										}
+									}
+									#How about artifacts?
+									if = {
+										limit = {
+											NOT = {
+												house = {
+													has_variable = num_commissioned_artifacts
+													var:num_commissioned_artifacts >= num_creation_mandala_commissioned_artifacts_t4
+												}
+											}
+											can_execute_decision = commission_artifact_decision
+										}
+										execute_decision = commission_artifact_decision
+									}
+								}
+							}
+						}
+						#Aspect of Serenity
+						if = {
+							limit = {
+								house = { 
+									has_house_power_parameter = aspect_of_serenity
+									NOT = { has_house_power_parameter = aspect_of_serenity_05 }
+								}
+							}
+							#Second tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_serenity_01 }	
+								}
+								if = {
+									limit = { 
+										serenity_first_tier_trigger = { MANDALA = scope:root_scope }
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_serenity
+											level = 2
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_first_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough friends?
+									else_if = {
+										limit = { num_of_relation_friend < num_serenity_mandala_friends_t1 }
+										mandala_story_serenity_aspect_befriend_effect = yes
+									}
+								}
+							}
+							#Third tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_serenity_02 }	
+								}
+								if = {
+									limit = { 
+										serenity_second_tier_trigger = { MANDALA = scope:root_scope }
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_serenity
+											level = 3
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_second_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough friends?
+									else_if = {
+										limit = { num_of_relation_friend < num_serenity_mandala_friends_t2 }
+										mandala_story_serenity_aspect_befriend_effect = yes
+									}
+								}
+							}
+							#Fourth tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_serenity_03 }	
+								}
+								if = {
+									limit = { 
+										serenity_third_tier_trigger = { MANDALA = scope:root_scope }
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_serenity
+											level = 4
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_third_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough friends?
+									else_if = {
+										limit = { num_of_relation_friend < num_serenity_mandala_friends_t3 }
+										mandala_story_serenity_aspect_befriend_effect = yes
+									}
+									#Need better capital holding?
+									else_if = {
+										limit = {
+											capital_province = {
+												has_ongoing_construction = no
+												OR = {
+													has_building = castle_01
+													has_building = temple_01
+													has_building = city_01
+													has_building = temple_citadel_01
+												}
+											}	 
+										}
+										capital_province = {
+											random = {
+												chance = 30
+												if = {
+													limit = { has_building = castle_01 }
+													add_building = castle_02
+												}
+												if = {
+													limit = { has_building = temple_citadel_01 }
+													add_building = temple_citadel_02
+												}
+												if = {
+													limit = { has_building = city_01 }
+													add_building = city_02
+												}
+												if = {
+													limit = { has_building = temple_01 }
+													add_building = temple_02
+												}
+											}
+										}
+									}
+								}
+							}
+							#Fifth tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_serenity_04 }	
+								}
+								if = {
+									limit = { 
+										serenity_fourth_tier_trigger = { MANDALA = scope:root_scope }
+									}
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_serenity
+											level = 5
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_last_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Not enough friends?
+									else_if = {
+										limit = { num_of_relation_friend < num_serenity_mandala_friends_t4 }
+										mandala_story_serenity_aspect_befriend_effect = yes
+									}
+									#Need better capital holding?
+									else_if = {
+										limit = {
+											capital_province = {
+												has_ongoing_construction = no
+												OR = {
+													has_building = castle_02
+													has_building = temple_02
+													has_building = city_02
+													has_building = temple_citadel_02
+												}
+											}	 
+										}
+										capital_province = {
+											random = {
+												chance = 30
+												if = {
+													limit = { has_building = castle_02 }
+													add_building = castle_03
+												}
+												if = {
+													limit = { has_building = temple_citadel_02 }
+													add_building = temple_citadel_03
+												}
+												if = {
+													limit = { has_building = city_02 }
+													add_building = city_03
+												}
+												if = {
+													limit = { has_building = temple_02 }
+													add_building = temple_03
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+						#Aspect of Destruction
+						if = {
+							limit = {
+								house = { 
+									has_house_power_parameter = aspect_of_destruction
+									NOT = { has_house_power_parameter = aspect_of_destruction_05 }
+								}
+							}
+							#Second tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_destruction_01 }	
+								}
+								if = {
+									limit = { destruction_first_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_destruction
+											level = 2
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_first_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+									#Is it time to declare a war?
+									else_if = {
+										limit = {
+											any_memory = {
+												memory_type = war_won
+												count < num_destruction_mandala_wars_won_t1
+											}
+										}
+										mandala_story_destruction_aspect_declare_war_effect = yes	
+									}
+									#Or do we just need to get buff
+									else_if = {
+										limit = { martial < num_destruction_martial_skill_t2 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = martial }
+									}
+									else_if = {
+										limit = { prowess < num_destruction_prowess_skill_t2 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = prowess }
+									}
+								}
+							}
+							#Third tier, try to upgrade first
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_destruction_02 }
+								}
+								if = {
+									limit = { destruction_second_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_destruction
+											level = 3
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_second_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes		
+									}
+									#Is it time to declare a war?
+									else_if = {
+										limit = {
+											any_memory = {
+												memory_type = war_won
+												count < num_destruction_mandala_wars_won_t2
+											}
+										}
+										mandala_story_destruction_aspect_declare_war_effect = yes	
+									}
+									#Or do we just need to get buff
+									else_if = {
+										limit = { martial < num_destruction_martial_skill_t2 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = martial }
+									}
+									else_if = {
+										limit = { prowess < num_destruction_prowess_skill_t2 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = prowess }
+									}
+								}
+							}
+							#Fourth tier, try to upgrade first
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_destruction_03 }
+								}
+								if = {
+									limit = { destruction_third_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_destruction
+											level = 4
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_third_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes		
+									}
+									#Is it time to declare a war?
+									else_if = {
+										limit = {
+											any_memory = {
+												memory_type = war_won
+												count < num_destruction_mandala_wars_won_t3
+											}
+										}
+										mandala_story_destruction_aspect_declare_war_effect = yes	
+									}
+									#Or do we just need to get buff
+									else_if = {
+										limit = { martial < num_destruction_martial_skill_t3 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = martial }
+									}
+									else_if = {
+										limit = { prowess < num_destruction_prowess_skill_t3 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = prowess }
+									}
+								}
+							}
+							#Fifth tier, try to upgrade first
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_destruction_04 }
+								}
+								if = {
+									limit = { destruction_fourth_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_destruction
+											level = 5
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_last_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes		
+									}
+									#Is it time to declare a war?
+									else_if = {
+										limit = {
+											any_memory = {
+												memory_type = war_won
+												count < num_destruction_mandala_wars_won_t4
+											}
+										}
+										mandala_story_destruction_aspect_declare_war_effect = yes	
+									}
+									#Or do we just need to get buff
+									else_if = {
+										limit = { martial < num_destruction_martial_skill_t4 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = martial }
+									}
+									else_if = {
+										limit = { prowess < num_destruction_prowess_skill_t4 }
+										mandala_story_destruction_aspect_buff_skill_effect = { SKILL = prowess }
+									}
+								}
+							}
+						}
+						#Aspect of Trickery
+						if = {
+							limit = {
+								house = { 
+									has_house_power_parameter = aspect_of_trickery
+									NOT = { has_house_power_parameter = aspect_of_trickery_05 }
+								}
+							}
+							#Second tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_trickery_01 }	
+								}
+								if = {
+									limit = { trickery_first_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_trickery
+											level = 2
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_first_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+								}
+							}
+							#Third tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_trickery_02 }	
+								}
+								if = {
+									limit = { trickery_second_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_trickery
+											level = 3
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_second_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+								}
+							}
+							#Fourth tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_trickery_03 }	
+								}
+								if = {
+									limit = { trickery_third_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_trickery
+											level = 4
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_third_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+								}
+							}
+							#Fifth tier
+							if = {
+								limit = {
+									house = { has_house_power_parameter = aspect_of_trickery_04 }	
+								}
+								if = {
+									limit = { trickery_fourth_tier_trigger = yes }
+									house = {
+										set_house_aspiration = {
+											type = aspect_of_trickery
+											level = 5
+										}
+									}
+								}
+								else = {
+									#Pilgrimage?
+									if = {
+										limit = {
+											NOT = {
+												has_trait_xp = {
+													trait = pilgrim
+													value >= mandala_pilgrim_xp_last_tier_value
+												}
+											}
+										}
+										#Pilgrimage.
+										mandala_story_go_on_pilgrimage_effect = yes
+									}
+								}
+							}
+						}
+					}	
+					
+					### GREAT PROJECTS / BUDGETING
+					if = {
+						limit = { is_at_war = no }
+						#Do we have a ruined capital project we need to rebuild?
+						if = {
+							limit = {
+								has_ruined_mandala_capital_trigger = yes
+								less_than_max_amount_of_mandala_capitals_trigger = yes
+							}
+							if = {
+								limit = {
+									short_term_gold >= ai_rebuild_value
+									piety >= ai_rebuild_value
+								}
+								remove_short_term_gold = ai_rebuild_value
+								add_piety = ai_rebuild_value
+								capital_province = { rebuild_great_building = yes }
+							}
+							else = {
+								move_budget_gold = { gold = short_term_gold from = budget_war_chest to = budget_short_term }
+								move_budget_gold = { gold = long_term_gold from = budget_long_term to = budget_short_term }
+								#Try again
+								if = {
+									limit = {
+										short_term_gold >= ai_rebuild_value
+										piety >= ai_rebuild_value
+									}
+									remove_short_term_gold = ai_rebuild_value
+									add_piety = ai_rebuild_value
+									capital_province = { rebuild_great_building = yes }
+								}
+							}	
+						}
+						else = {
+							#Are we already planning a capital project?
+							if = {
+								limit = {
+									OR = {
+										is_planning_great_project = mandala_capital_01
+										is_planning_great_project = mandala_capital_02
+										is_planning_great_project = mandala_capital_03
+										is_planning_great_project = mandala_capital_04
+										is_planning_great_project = mandala_capital_05
+									}
+								}
+								#Save the scope
+								random_great_project = {
+									limit = {
+										great_project_owner = scope:root_scope
+										great_project_construction_phase_is = planned
+										OR = {
+											great_project_type = mandala_capital_01
+											great_project_type = mandala_capital_02
+											great_project_type = mandala_capital_03
+											great_project_type = mandala_capital_04
+											great_project_type = mandala_capital_05
+										}
+									}
+									save_scope_as = current_mandala_great_project
+								}
+								#Try to fund a mandatory contribution
+								scope:current_mandala_great_project ?= {
+									random_contribution = {
+										limit = {
+											is_unfunded_required_contribution_trigger = yes
+											save_temporary_scope_as = compare_contribution
+											scope:root_scope = { can_fund_project_contribution = scope:compare_contribution }
+										}
+										save_scope_as = target_project_contribution
+									}			
+								}	
+								if = {
+									limit = { exists = scope:target_project_contribution }
+									fund_great_project_contribution = { contribution = scope:target_project_contribution }
+								}
+								#Do we still have more contributions that need funding?
+								if = {
+									limit = {
+										scope:current_mandala_great_project ?= { 
+											great_project_owner = { has_unfunded_contribution_in_planned_mandala_capital_trigger = yes }
+										}
+									}
+									#First, ask nicely
+									if = {
+										limit = {
+											scope:current_mandala_great_project = {
+												any_contribution = { 
+													is_unfunded_required_contribution_trigger = yes
+													is_owner_only_contribution_trigger = no
+													save_temporary_scope_as = contribution_check
+													scope:root_scope = {
+														OR = {
+															any_vassal = { 
+																can_fund_project_contribution = scope:contribution_check
+																would_contribute_to_mandala_capital_trigger = yes
+															}
+															any_tributary = { 
+																can_fund_project_contribution = scope:contribution_check
+																would_contribute_to_mandala_capital_trigger = yes
+															}
+														}
+													}
+												}
+											}
+										}
+										every_vassal = {
+											limit = {
+												would_contribute_to_mandala_capital_trigger = yes
+												save_temporary_scope_as = vassal_check
+												scope:current_mandala_great_project = {
+													any_contribution = { 
+														is_unfunded_required_contribution_trigger = yes
+														is_owner_only_contribution_trigger = no
+														save_temporary_scope_as = contribution_check
+														scope:vassal_check = { can_fund_project_contribution = scope:contribution_check }
+													}
+												}
+											}
+											add_to_list = potential_funders
+										}
+										every_tributary = {
+											limit = {
+												would_contribute_to_mandala_capital_trigger = yes
+												save_temporary_scope_as = tributary_check
+												scope:current_mandala_great_project = {
+													any_contribution = { 
+														is_unfunded_required_contribution_trigger = yes
+														is_owner_only_contribution_trigger = no
+														save_temporary_scope_as = contribution_check
+														scope:tributary_check = { can_fund_project_contribution = scope:contribution_check }
+													}
+												}
+											}
+											add_to_list = potential_funders
+										}
+										#Find the target
+										random_in_list = {
+											list = potential_funders
+											weight = {
+												base = 10
+												modifier = {
+													add = "opinion(scope:root_scope)"
+												}	
+												modifier = {
+													has_relation_lover = scope:root_scope
+													factor = 2
+												}
+												modifier = {
+													has_relation_friend = scope:root_scope
+													factor = 4
+												}
+											}
+											save_scope_as = funder_target
+										}
+										#Find the contribution
+										scope:current_mandala_great_project = {
+											random_contribution = {
+												limit = {
+													is_unfunded_required_contribution_trigger = yes
+													is_owner_only_contribution_trigger = no
+													save_temporary_scope_as = contribution_check
+													scope:funder_target = { can_fund_project_contribution = scope:contribution_check }
+												}
+												save_scope_as = funder_project_contribution
+											}						
+										}
+										#The request_great_project_contribution_interaction character interaction won't work, so doing this instead
+										scope:funder_target = {
+											random = {
+												chance = {
+													value = 50
+													add = "opinion(scope:root_scope)"
+													#Your Radiance
+													if = {
+														limit = {
+															scope:root_scope = { has_mandala_capital_trigger = yes }
+														}
+														add = scope:root_scope.mandala_radiance_value
+													}
+													if = {
+														limit = {
+															scope:root_scope = { has_realm_law_flag = tributaries_more_likely_to_contribute_to_GPs }
+														}
+														add = 25
+													}
+													#Personality
+													if = {
+														limit = { has_trait = greedy }
+														add = -15
+													}
+													if = {
+														limit = { ai_greed > 0 }
+														add = {
+															value = ai_greed
+															multiply = -1
+															divide = 3
+														}
+													}
+													#Differing Aspects
+													if = {
+														limit = {
+															scope:funder_target = { exists = house }
+															NOT = { 
+																same_mandala_aspect_trigger = { FIRST_CHAR = scope:root_scope SECOND_CHAR = scope:funder_target }
+															}
+														}
+														add = -15
+													}
+													#Are they Disbelieved?
+													if = {
+														limit = {
+															scope:root_scope = { has_character_modifier = disbelieved_mandala_modifier }
+														}
+														add = -25
+													}
+												}
+												fund_great_project_contribution = { contribution = scope:funder_project_contribution }
+											}
+										}
+									}
+									#Then, go plundering
+									if = {
+										limit = {
+											house = { has_house_power_parameter = aspect_of_destruction }
+											war_chest_gold >= war_chest_gold_maximum
+										}
+										add_stress = major_stress_loss
+										ai_start_best_war = {
+											cb = { mandala_plunder_cb }
+											is_valid = {
+												scope:target_character = {
+													current_military_strength < scope:root_scope.current_military_strength
+													OR = {
+														gold < scope:root_scope.gold
+														current_military_strength <= scope:root_scope.fifty_percent_of_current_military_strength
+													}
+												}
+											}
+										}
+									}
+									#Or coercing contribution
+									if = { 
+										limit = {
+											has_unfunded_contribution_in_planned_mandala_capital_trigger = yes
+											house = { has_house_power_parameter = aspect_of_creation }
+											is_house_head = yes
+											any_scheme = {
+												NOR = {
+													scheme_type = coerce_contribution
+													scheme_type = leverage_contribution
+													scheme_type = coerce_tributary
+												}
+											}
+										}
+										#Find the target province
+										every_realm_province = {
+											limit = {
+												save_temporary_scope_as = province_check
+												scope:root_scope = {
+													can_start_scheme = {
+														type = coerce_contribution
+														target_title = scope:province_check.barony
+													}
+												}	
+											}
+											add_to_list = potential_provinces
+										}
+										every_vassal = {
+											every_realm_province = {
+												limit = {
+													save_temporary_scope_as = province_check
+													scope:root_scope = {
+														can_start_scheme = {
+															type = coerce_contribution
+															target_title = scope:province_check.barony
+														}
+													}	
+												}
+												add_to_list = potential_provinces
+											}
+										}
+										every_tributary = {
+											every_realm_province = {
+												limit = {	
+													save_temporary_scope_as = province_check
+													scope:root_scope = {
+														can_start_scheme = {
+															type = coerce_contribution
+															target_title = scope:province_check.barony
+														}
+													}	
+												}
+												add_to_list = potential_provinces
+											}
+										}
+										random_in_list = {
+											list = potential_provinces
+											save_scope_as = coerce_contribution_target
+										}
+										if = {
+											limit = { exists = scope:coerce_contribution_target }
+											start_scheme = {
+												type = coerce_contribution
+												target_title = scope:coerce_contribution_target.barony
+											}
+										}
+									}
+									#Or maybe leverage a contribution
+									if = { 
+										limit = {
+											has_unfunded_contribution_in_planned_mandala_capital_trigger = yes
+											house = { has_house_head_parameter = unlock_leverage_contribution_scheme }
+											is_house_head = yes
+											any_scheme = {
+												NOR = {
+													scheme_type = coerce_contribution
+													scheme_type = leverage_contribution
+													scheme_type = coerce_tributary
+												}
+											}
+										}
+										#Find the target
+										every_neighboring_and_across_water_top_liege_realm_owner = {
+											limit = {
+												save_temporary_scope_as = target_scope
+												in_diplomatic_range = scope:root_scope
+												scope:root_scope = {
+													can_start_scheme = {
+														type = leverage_contribution
+														target_character = scope:target_scope
+													}
+												}		
+											}
+											add_to_list = targets
+										}
+										every_vassal = {
+											limit = {
+												save_temporary_scope_as = target_scope
+												in_diplomatic_range = scope:root_scope
+												scope:root_scope = {
+													can_start_scheme = {
+														type = leverage_contribution
+														target_character = scope:target_scope
+													}
+												}
+											}
+											add_to_list = targets
+										}
+										every_tributary = {
+											limit = {
+												save_temporary_scope_as = target_scope
+												in_diplomatic_range = scope:root_scope
+												scope:root_scope = {
+													can_start_scheme = {
+														type = leverage_contribution
+														target_character = scope:target_scope
+													}
+												}
+											}
+											add_to_list = targets
+										}
+										random_in_list = {
+											list = targets
+											limit = {
+												save_temporary_scope_as = potential_leverage_contr_target
+												NOT = {
+													scope:root_scope = {
+														any_scheme = { scheme_target_character = scope:potential_leverage_contr_target } #Don't Sway _and_ Murder your target
+													}
+												}
+											}
+											weight = {
+												base = 10
+												modifier = {
+													add = "opinion(scope:root_scope)"
+												}
+												modifier = {
+													has_relation_lover = scope:root_scope
+													factor = 2
+												}
+												modifier = {
+													has_relation_friend = scope:root_scope
+													factor = 2
+												}
+												modifier = {
+													has_relation_rival = scope:root_scope
+													factor = 0.5
+												}
+											}
+											save_scope_as = leverage_contribution_target
+										}
+										if = {
+											limit = { exists = scope:leverage_contribution_target }
+											start_scheme = {
+												type = leverage_contribution
+												target_character = scope:leverage_contribution_target
+											}
+										}
+									}
+								}
+							}
+							#We're not already *done*
+							else_if = {
+								limit = {
+									NOT = {
+										capital_province = { has_building_with_flag = final_tier_mandala_capital_building }
+									}
+								}
+								if = {
+									limit = { can_plan_great_project = great_project_type:mandala_capital_01 }
+									capital_province = {
+										plan_great_project = {
+											founder = scope:root_scope
+											great_project_type = mandala_capital_01
+										}
+									}
+								}
+								if = {
+									limit = { can_plan_great_project = great_project_type:mandala_capital_02 }
+									capital_province = {
+										plan_great_project = {
+											founder = scope:root_scope
+											great_project_type = mandala_capital_02
+										}
+									}
+								}
+								if = {
+									limit = { can_plan_great_project = great_project_type:mandala_capital_03 }
+									capital_province = {
+										plan_great_project = {
+											founder = scope:root_scope
+											great_project_type = mandala_capital_03
+										}
+									}
+								}
+								if = {
+									limit = { can_plan_great_project = great_project_type:mandala_capital_04 }
+									capital_province = {
+										plan_great_project = {
+											founder = scope:root_scope
+											great_project_type = mandala_capital_04
+										}
+									}
+								}
+								if = {
+									limit = { can_plan_great_project = great_project_type:mandala_capital_05 }
+									capital_province = {
+										plan_great_project = {
+											founder = scope:root_scope
+											great_project_type = mandala_capital_05
+										}
+									}
+								}
+								#Move to long term so that we can start planning projects!
+								move_budget_gold = { gold = long_term_gold from = budget_war_chest to = budget_long_term }
+								move_budget_gold = { gold = short_term_gold from = budget_short_term to = budget_long_term }
+							}
+							else = {
+								#WAR!
+								if = {
+									limit = {
+										house = { has_house_power_parameter = aspect_of_destruction }
+									}
+									move_budget_gold = { gold = long_term_gold from = budget_long_term to = budget_war_chest }
+									move_budget_gold = { gold = short_term_gold from = budget_short_term to = budget_war_chest }
+									move_budget_gold = { gold = long_term_gold from = budget_long_term to = budget_short_term }
+								}
+								#Pls no war
+								if = {
+									limit = {
+										house = { has_house_power_parameter = aspect_of_serenity }
+									}
+									move_budget_gold = { gold = long_term_gold from = budget_long_term to = budget_short_term }
+									move_budget_gold = { gold = war_chest_gold from = budget_war_chest to = budget_short_term }
+								}
+							}
+						}	
+					}
+
+					###### INTERACTIONS
+					## Embrace Tributary
+					every_neighboring_and_across_water_top_liege_realm_owner = {
+						limit = {
+							scope:root_scope = {
+								is_character_interaction_potentially_accepted = {
+									recipient = prev
+									interaction = offer_tributary_status_interaction
+									ai_accept = 50
+								}
+							}
+						}
+						add_to_list = potential_embrace_targets
+						every_tributary = {
+							limit = {
+								scope:root_scope = {
+									is_character_interaction_potentially_accepted = {
+										recipient = prev
+										interaction = offer_tributary_status_interaction
+										ai_accept = 50
+									}
+								}
+							}
+							add_to_list = potential_embrace_targets
+						}
+					}
+					if = {
+						limit = { list_size:potential_embrace_targets > 0 }
+						random_in_list = {
+							list = potential_embrace_targets
+							save_scope_as = embrace_target
+						}
+						run_interaction = {
+							interaction = offer_tributary_status_interaction
+							actor = scope:root_scope
+							recipient = scope:embrace_target
+							send_threshold = maybe
+						}
+					}
+
+					## Exact Tribute
+					every_tributary = {
+						limit = {
+							is_ai = yes
+							scope:root_scope = {
+								is_character_interaction_potentially_accepted = {
+									recipient = prev
+									interaction = exact_tribute_interaction
+									ai_accept = 25
+								}
+							}
+						}
+						add_to_list = potential_exact_targets
+					}
+					if = {
+						limit = { list_size:potential_exact_targets > 0 }
+						random_in_list = {
+							list = potential_exact_targets
+							save_scope_as = exact_target
+						}
+						run_interaction = {
+							interaction = exact_tribute_interaction
+							actor = scope:root_scope
+							recipient = scope:exact_target
+							send_threshold = maybe
+						}
+					}
+
+					## Reassert Tributary
+					every_tributary = {
+						limit = {
+							is_ai = yes
+							scope:root_scope = {
+								is_character_interaction_potentially_accepted = {
+									recipient = prev
+									interaction = reassert_tributary_interaction
+									ai_accept = 25
+								}
+							}
+						}
+						add_to_list = potential_reassert_targets
+					}
+					if = {
+						limit = { list_size:potential_reassert_targets > 0 }
+						random_in_list = {
+							list = potential_reassert_targets
+							save_scope_as = reassert_target
+						}
+						run_interaction = {
+							interaction = reassert_tributary_interaction
+							actor = scope:root_scope
+							recipient = scope:reassert_target
+							send_threshold = maybe
+						}
+					}				
+					
+					###### LIFESTYLES
+					# Mandala should primarily choose lifestyle based on their Aspect
+					if = {
+						limit = {
+							NOT = { has_character_flag = ai_focus_cd } # No cheating!
+							is_at_war = no
+						}
+						#Stewardship
+						if = {
+							limit = {
+								house = { has_house_power_parameter = aspect_of_creation }
+								NOR = {
+									has_focus_or_focus_trait_trigger = { FOCUS = stewardship_wealth_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = stewardship_domain_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = stewardship_duty_focus }
+								}
+							}
+							random_list = {
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = stewardship_wealth_focus }
+										}
+									}
+									set_focus = stewardship_wealth_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = stewardship_domain_focus }
+										}
+									}
+									set_focus = stewardship_domain_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = stewardship_duty_focus }
+										}
+									}
+									set_focus = stewardship_duty_focus
+								}
+							}
+							add_character_flag = {
+								flag = ai_focus_cd
+								years = 5
+							}
+						}
+						#Diplomacy
+						if = {
+							limit = {
+								house = { has_house_power_parameter = aspect_of_serenity }
+								NOR = {
+									has_focus_or_focus_trait_trigger = { FOCUS = diplomacy_foreign_affairs_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = diplomacy_majesty_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = diplomacy_family_focus }
+								}
+							}
+							random_list = {
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = diplomacy_foreign_affairs_focus }
+										}
+									}
+									set_focus = diplomacy_foreign_affairs_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = diplomacy_majesty_focus }
+										}
+									}
+									set_focus = diplomacy_majesty_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = diplomacy_family_focus }
+										}
+									}
+									set_focus = diplomacy_family_focus
+								}
+							}
+							add_character_flag = {
+								flag = ai_focus_cd
+								years = 5
+							}
+						}
+						#Martial
+						if = {
+							limit = {
+								house = { has_house_power_parameter = aspect_of_destruction }
+								NOR = {
+									has_focus_or_focus_trait_trigger = { FOCUS = martial_strategy_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = martial_authority_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = martial_chivalry_focus }
+								}
+							}
+							random_list = {
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = martial_strategy_focus }
+										}
+									}
+									set_focus = martial_strategy_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = martial_authority_focus }
+										}
+									}
+									set_focus = martial_authority_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = martial_chivalry_focus }
+										}
+									}
+									set_focus = martial_chivalry_focus
+								}
+							}
+							add_character_flag = {
+								flag = ai_focus_cd
+								years = 5
+							}
+						}
+						#Intrigue
+						if = {
+							limit = {
+								house = { has_house_power_parameter = aspect_of_trickery }
+								NOR = {
+									has_focus_or_focus_trait_trigger = { FOCUS = intrigue_skulduggery_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = intrigue_temptation_focus }
+									has_focus_or_focus_trait_trigger = { FOCUS = intrigue_intimidation_focus }
+								}
+							}
+							random_list = {
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = intrigue_skulduggery_focus }
+										}
+									}
+									set_focus = intrigue_skulduggery_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = intrigue_temptation_focus }
+										}
+									}
+									set_focus = intrigue_temptation_focus
+								}
+								1 = {
+									trigger = {
+										NOT = {
+											has_focus_or_focus_trait_trigger = { FOCUS = intrigue_intimidation_focus }
+										}
+									}
+									set_focus = intrigue_intimidation_focus
+								}
+							}
+							add_character_flag = {
+								flag = ai_focus_cd
+								years = 5
+							}
+						}	
+					}
+					
+					##### SCHEMES
+					## Coerce Tributary
+					if = { 
+						limit = {
+							house = { has_house_head_parameter = unlock_coerce_tributary_scheme }
+							is_house_head = yes
+							any_scheme = {
+								NOR = {
+									scheme_type = coerce_contribution
+									scheme_type = leverage_contribution
+									scheme_type = coerce_tributary
+								}
+							}
+						}
+						every_neighboring_and_across_water_top_liege_realm_owner = { 
+							limit = {
+								save_temporary_scope_as = target_scope
+								scope:root_scope = {
+									can_start_scheme = {
+										type = coerce_tributary
+										target_character = scope:target_scope
+									}
+								}
+							}
+							add_to_list = targets
+							every_tributary = {
+								limit = {
+									save_temporary_scope_as = target_scope
+									primary_title = { is_neighbor_to_realm = scope:root_scope }
+									scope:root_scope = {
+										can_start_scheme = {
+											type = coerce_tributary
+											target_character = scope:target_scope
+										}
+									}
+								}
+								add_to_list = targets
+							}
+						}
+						random_in_list = {
+							list = targets
+							limit = {
+								save_temporary_scope_as = potential_coerce_trib_target
+								NOT = {
+									scope:root_scope = {
+										any_scheme = { scheme_target_character = scope:potential_coerce_trib_target } #Don't Sway _and_ Murder your target
+									}
+								}
+							}
+							weight = {
+								base = 10
+								modifier = {
+									add = "opinion(scope:root_scope)"
+								}
+								modifier = {
+									has_relation_lover = scope:root_scope
+									factor = 2
+								}
+								modifier = {
+									has_relation_friend = scope:root_scope
+									factor = 2
+								}
+								modifier = {
+									has_relation_rival = scope:root_scope
+									factor = 0.5
+								}
+							}
+							save_scope_as = coerce_tributary_target
+						}
+						if = {
+							limit = { exists = scope:coerce_tributary_target }
+							start_scheme = {
+								type = coerce_tributary
+								target_character = scope:coerce_tributary_target
+							}
+						}
+					}
+
+					## Leverage Contribution (under GREAT PROJECTS/BUDGETING)
+					
+					## Coerce Contribution (under GREAT PROJECTS/BUDGETING)
+					
+					## Disbelieve Mandala
+					# End disbelieve schemes that are useless
+					if = { 
+						limit = {
+							any_scheme = {
+								type = disbelieve_mandala
+								is_scheme_exposed = yes
+							}
+						}
+						every_scheme = {
+							type = disbelieve_mandala
+							limit = { is_scheme_exposed = yes }
+							end_scheme = yes
+						}
+					}
+					#Disbelieve!
+					if = { 
+						limit = {
+							house = { has_house_head_parameter = unlock_disbelieve_mandala_scheme }
+							is_house_head = yes
+							OR = {
+								any_scheme = {
+									NOR = {
+										scheme_type = disbelieve_mandala
+										scheme_type = murder
+										scheme_type = abduct
+										scheme_type = claim_throne
+										scheme_type = fabricate_hook
+									}
+								}
+								AND = {
+									has_perk = twice_schemed_perk
+									any_scheme = {
+										count < 2
+										OR = {
+											scheme_type = disbelieve_mandala
+											scheme_type = murder
+											scheme_type = abduct
+											scheme_type = claim_throne
+											scheme_type = fabricate_hook
+										}
+									}
+								}
+							}
+						}
+						# Weaken strong neighbours
+						every_neighboring_and_across_water_top_liege_realm_owner = { 
+							limit = {
+								save_temporary_scope_as = target_scope
+								mandala_radiance_value >= scope:target_scope.mandala_radiance_value
+								NOR = {
+									is_allied_to = scope:root_scope
+									has_relation_friend = scope:root_scope
+									has_relation_lover = scope:root_scope
+								}
+								scope:root_scope = {
+									can_start_scheme = {
+										type = disbelieve_mandala
+										target_character = scope:target_scope
+									}
+								}
+							}
+							add_to_list = targets
+						}
+						every_relation = {
+							type = rival
+							add_to_list = targets
+						}
+						random_in_list = {
+							list = targets
+							limit = {
+								save_temporary_scope_as = potential_disbelieve_target
+								NOT = {
+									scope:root_scope = {
+										any_scheme = { scheme_target_character = scope:potential_disbelieve_target } #Don't Sway _and_ Murder your target
+									}
+								}
+							}
+							save_scope_as = disbelieve_target
+						}
+						if = {
+							limit = { exists = scope:disbelieve_target }
+							start_scheme = {
+								type = disbelieve_mandala
+								target_character = scope:disbelieve_target
+							}
+						}
+					}
+					## Murder
+					# End murder schemes that are useless
+					if = { 
+						limit = {
+							any_scheme = {
+								type = murder
+								is_scheme_exposed = yes
+							}
+						}
+						every_scheme = {
+							type = murder
+							limit = { is_scheme_exposed = yes }
+							end_scheme = yes
+						}
+					}
+					# Murders
+					if = { 
+						limit = {
+							#Trickery doesn't really care about honor
+							house ?= { has_house_power_parameter = aspect_of_trickery }
+							OR = {
+								NOT = {
+									any_scheme = {
+										OR = {
+											scheme_type = disbelieve_mandala
+											scheme_type = murder
+											scheme_type = abduct
+											scheme_type = claim_throne
+											scheme_type = fabricate_hook
+										}
+									}
+								}
+								AND = {
+									has_perk = twice_schemed_perk
+									any_scheme = {
+										count < 2
+										OR = {
+											scheme_type = disbelieve_mandala
+											scheme_type = murder
+											scheme_type = abduct
+											scheme_type = claim_throne
+											scheme_type = fabricate_hook
+										}
+									}
+								}
+							}
+						}
+						every_neighboring_and_across_water_top_liege_realm_owner = { # Weaken strong neighbours
+							limit = {
+								save_temporary_scope_as = target_scope
+								scope:root_scope = {
+									current_military_strength >= scope:target_scope.current_military_strength
+									has_any_cb_on = scope:target_scope
+								}
+								NOR = {
+									is_allied_to = scope:root_scope
+									has_relation_friend = scope:root_scope
+									has_relation_lover = scope:root_scope
+								}
+								AND = { # Children are usually weaker rulers
+									is_adult = yes
+									primary_heir ?= { is_adult = no }
+								}
+								scope:root_scope = {
+									can_start_scheme = {
+										type = murder
+										target_character = scope:target_scope
+									}
+								}
+							}
+							add_to_list = targets
+						}
+						every_targeting_faction = {
+							faction_type = claimant_faction
+							limit = {
+								exists = special_character
+								save_temporary_scope_as = faction_in_question
+								scope:root_scope = {
+									can_start_scheme = {
+										type = murder
+										target_character = scope:faction_in_question.special_character 
+									}
+								}
+							}
+							special_character = { add_to_list = targets }
+						}
+						every_relation = {
+							type = rival
+							add_to_list = targets
+						}
+						random_in_list = {
+							list = targets
+							limit = {
+								save_temporary_scope_as = potential_murder_target
+								NOT = {
+									scope:root_scope = {
+										any_scheme = { scheme_target_character = scope:potential_murder_target } #Don't Sway _and_ Murder your target
+									}
+								}
+							}
+							save_scope_as = murder_target
+						}
+						if = {
+							limit = { exists = scope:murder_target }
+							start_scheme = {
+								type = murder
+								target_character = scope:murder_target
+							}
+						}
+					}
+					## Fabricate Hook
+					# End hook schemes that are useless
+					if = {
+						limit = {
+							any_scheme = {
+								type = fabricate_hook
+								is_scheme_exposed = yes
+							}
+						}
+						every_scheme = {
+							type = fabricate_hook
+							limit = { is_scheme_exposed = yes }
+							end_scheme = yes
+						}
+					}
+					# Fabricate Hook
+					if = { 
+						limit = {
+							has_perk = truth_is_relative_perk
+							OR = {
+								NOT = {
+									any_scheme = {
+										OR = {
+											scheme_type = disbelieve_mandala
+											scheme_type = murder
+											scheme_type = abduct
+											scheme_type = claim_throne
+											scheme_type = fabricate_hook
+										}
+									}
+								}
+								AND = {
+									has_perk = twice_schemed_perk
+									any_scheme = {
+										count < 2
+										OR = {
+											scheme_type = disbelieve_mandala
+											scheme_type = murder
+											scheme_type = abduct
+											scheme_type = claim_throne
+											scheme_type = fabricate_hook
+										}
+									}
+								}
+							}
+						}
+						every_courtier = {
+							limit = {
+								scope:root_scope = {
+									can_start_scheme = {
+										type = fabricate_hook
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = hook_targets
+						}
+						every_tributary = {
+							limit = {
+								scope:root_scope = {
+									can_start_scheme = {
+										type = fabricate_hook
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = hook_targets
+						}
+						every_vassal = {
+							limit = {
+								scope:root_scope = {
+									can_start_scheme = {
+										type = fabricate_hook
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = hook_targets
+						}
+						if = {
+							limit = { has_perk = golden_obligations_perk }
+							every_vassal = {
+								limit = {
+									gold >= 200
+									scope:root_scope = {
+										can_start_scheme = {
+											type = fabricate_hook
+											target_character = prev
+										}
+									}
+								}
+								add_to_list = hook_targets
+							}
+							every_neighboring_and_across_water_top_liege_realm_owner = {
+								limit = {
+									gold >= 100
+									scope:root_scope = {
+										can_start_scheme = {
+											type = fabricate_hook
+											target_character = prev
+										}
+									}
+								}
+								add_to_list = hook_targets
+							}
+						}
+						random_in_list = {
+							list = hook_targets
+							limit = {
+								save_temporary_scope_as = potential_hook_target
+								NOT = {
+									scope:root_scope = {
+										any_scheme = { scheme_target_character = scope:potential_hook_target } #Don't Sway _and_ Murder your target
+									}
+								}
+							}
+							weight = {
+								base = 1
+								modifier = { add = primary_title.tier }
+							}
+							save_scope_as = hook_target
+						}
+						if = {
+							limit = { exists = scope:hook_target }
+							start_scheme = {
+								type = fabricate_hook
+								target_character = scope:hook_target
+							}
+						}
+					}
+					## Befriend
+					mandala_story_befriend_scheme_effect = yes
+					## Sway
+					if = {
+						limit = {
+							OR = {
+								NOT = {
+									any_scheme = {
+										OR = {
+											scheme_type = befriend
+											scheme_type = sway
+											scheme_type = seduce
+											scheme_type = courting
+											scheme_type = elope
+											scheme_type = learn_language
+										}
+									}
+								}
+								AND = {
+									OR = {
+										dynasty ?= { has_dynasty_perk = glory_legacy_5 }
+										AND = {
+											has_royal_court = yes
+											has_dlc_feature = royal_court
+											has_court_type = court_diplomatic
+											court_grandeur_current_level >= 10
+										}
+									}
+									any_scheme = {
+										count < 2
+										OR = {
+											scheme_type = befriend
+											scheme_type = sway
+											scheme_type = seduce
+											scheme_type = courting
+											scheme_type = elope
+											scheme_type = learn_language
+										}
+									}
+								}
+								AND = {
+									dynasty ?= { has_dynasty_perk = glory_legacy_5 }
+									has_royal_court = yes
+									has_dlc_feature = royal_court
+									has_court_type = court_diplomatic
+									court_grandeur_current_level >= 10
+									any_scheme = {
+										count < 3
+										OR = {
+											scheme_type = befriend
+											scheme_type = sway
+											scheme_type = seduce
+											scheme_type = courting
+											scheme_type = elope
+											scheme_type = learn_language
+										}
+									}
+								}
+							}
+						}
+						every_courtier = {
+							limit = {
+								has_council_position = councillor_spymaster
+								opinion = {
+									target = scope:root_scope
+									value < 100
+								}
+								scope:root_scope = {
+									can_start_scheme = {
+										type = sway
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = sway_targets
+						}
+						every_tributary = {
+							limit = {
+								opinion = {
+									target = scope:root_scope
+									value < 100
+								}
+								scope:root_scope = {
+									can_start_scheme = {
+										type = sway
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = sway_targets
+						}
+						every_vassal = {
+							limit = {
+								highest_held_title_tier >= tier_county
+								opinion = {
+									target = scope:root_scope
+									value < 100
+								}
+								scope:root_scope = {
+									can_start_scheme = {
+										type = sway
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = sway_targets
+						}
+						every_neighboring_and_across_water_top_liege_realm_owner = {
+							limit = {
+								highest_held_title_tier >= tier_county
+								opinion = {
+									target = scope:root_scope
+									value < 100
+								}
+								scope:root_scope = {
+									can_start_scheme = {
+										type = sway
+										target_character = prev
+									}
+								}
+							}
+							every_tributary = {
+								limit = {
+									highest_held_title_tier >= tier_county
+									opinion = {
+										target = scope:root_scope
+										value < 100
+									}
+									scope:root_scope = {
+										can_start_scheme = {
+											type = sway
+											target_character = prev
+										}
+									}
+								}
+								add_to_list = sway_targets
+							}
+							add_to_list = sway_targets
+						}
+						random_in_list = {
+							list = sway_targets
+							limit = {
+								save_temporary_scope_as = potential_sway_target
+								NOT = {
+									scope:root_scope = {
+										any_scheme = { scheme_target_character ?= scope:potential_sway_target } #Don't Sway _and_ Murder your target
+									}
+								}
+							}
+							weight = {
+								base = 1
+								modifier = {
+									add = 10
+									opinion = {
+										target = scope:root_scope
+										value < 100
+									}
+								}
+								modifier = {
+									is_tributary = no
+									add = 150
+								}
+								modifier = {
+									OR = {
+										realm_size <= scope:root_scope.realm_size
+										primary_title.tier <= scope:root_scope.primary_title.tier
+									}
+									add = 250
+								}
+								modifier = {
+									primary_title ?= { is_neighbor_to_realm = scope:root_scope }
+									add = 250
+								}
+								modifier = {
+									scope:root_scope = {
+										is_character_interaction_potentially_accepted = {
+											recipient = prev
+											interaction = offer_tributary_status_interaction
+											ai_accept = -30
+										}
+									}
+									add = 1000
+								}
+							}
+							save_scope_as = sway_target
+						}
+						if = {
+							limit = { exists = scope:sway_target }
+							start_scheme = {
+								type = sway
+								target_character = scope:sway_target
+							}
+						}
+					}
+					## Seduce
+					if = {
+						limit = {
+							house = { has_house_power_parameter = aspect_of_creation }
+							might_cheat_on_every_partner_trigger = yes
+							OR = {
+								NOT = {
+									any_scheme = {
+										OR = {
+											scheme_type = befriend
+											scheme_type = sway
+											scheme_type = seduce
+											scheme_type = courting
+											scheme_type = elope
+											scheme_type = learn_language
+										}
+									}
+								}
+								AND = {
+									OR = {
+										dynasty ?= { has_dynasty_perk = glory_legacy_5 }
+										AND = {
+											has_royal_court = yes
+											has_dlc_feature = royal_court
+											has_court_type = court_diplomatic
+											court_grandeur_current_level >= 10
+										}
+									}
+									any_scheme = {
+										count < 2
+										OR = {
+											scheme_type = befriend
+											scheme_type = sway
+											scheme_type = seduce
+											scheme_type = courting
+											scheme_type = elope
+											scheme_type = learn_language
+										}
+									}
+								}
+								AND = {
+									dynasty ?= { has_dynasty_perk = glory_legacy_5 }
+									has_royal_court = yes
+									has_dlc_feature = royal_court
+									has_court_type = court_diplomatic
+									court_grandeur_current_level >= 10
+									any_scheme = {
+										count < 3
+										OR = {
+											scheme_type = befriend
+											scheme_type = sway
+											scheme_type = seduce
+											scheme_type = courting
+											scheme_type = elope
+											scheme_type = learn_language
+										}
+									}
+								}
+							}
+						}
+						every_courtier = {
+							limit = {
+								is_available_ai_adult = yes
+								possibly_interested_in_character_trigger = { CHARACTER = scope:root_scope } # victim
+								might_cheat_on_every_partner_trigger = yes
+								NOT = { has_relation_lover = scope:root_scope }
+								scope:root_scope = {
+									can_start_scheme = {
+										type = seduce
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = seduce_targets
+						}
+						every_tributary = {
+							limit = {
+								is_available_ai_adult = yes
+								possibly_interested_in_character_trigger = { CHARACTER = scope:root_scope }
+								might_cheat_on_every_partner_trigger = yes
+								NOT = { has_relation_lover = scope:root_scope }
+								scope:root_scope = {
+									can_start_scheme = {
+										type = seduce
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = seduce_targets
+						}
+						every_vassal = {
+							limit = {
+								is_available_ai_adult = yes
+								possibly_interested_in_character_trigger = { CHARACTER = scope:root_scope }
+								might_cheat_on_every_partner_trigger = yes
+								NOT = { has_relation_lover = scope:root_scope }
+								scope:root_scope = {
+									can_start_scheme = {
+										type = seduce
+										target_character = prev
+									}
+								}
+							}
+							add_to_list = sway_targets
+						}
+						every_neighboring_and_across_water_top_liege_realm_owner = {
+							limit = {
+								is_available_ai_adult = yes
+								possibly_interested_in_character_trigger = { CHARACTER = scope:root_scope }
+								might_cheat_on_every_partner_trigger = yes
+								NOT = { has_relation_lover = scope:root_scope }
+								scope:root_scope = {
+									can_start_scheme = {
+										type = seduce
+										target_character = prev
+									}
+								}
+							}
+							every_tributary = {
+								limit = {
+									is_available_ai_adult = yes
+									possibly_interested_in_character_trigger = { CHARACTER = scope:root_scope }
+									might_cheat_on_every_partner_trigger = yes
+									NOT = { has_relation_lover = scope:root_scope }
+									scope:root_scope = {
+										can_start_scheme = {
+											type = seduce
+											target_character = prev
+										}
+									}
+								}
+								add_to_list = seduce_targets
+							}
+							add_to_list = seduce_targets
+						}
+						random_in_list = {
+							list = seduce_targets
+							limit = {
+								save_temporary_scope_as = potential_seduce_target
+								NOT = {
+									scope:root_scope = {
+										any_scheme = { scheme_target_character = scope:potential_seduce_target } #Don't Sway _and_ Murder your target
+									}
+								}
+							}
+							weight = {
+								base = 1
+								modifier = {
+									add = -100
+									is_spouse_of = scope:root_scope
+								}
+								modifier = {
+									add = 10
+									opinion = {
+										target = scope:root_scope
+										value >= 20
+									}
+								}
+								modifier = {
+									OR = {
+										realm_size <= scope:root_scope.realm_size
+										primary_title.tier <= scope:root_scope.primary_title.tier
+									}
+									add = 250
+								}
+								modifier = {
+									primary_title = { is_neighbor_to_realm = scope:root_scope }
+									add = 250
+								}
+								modifier = {
+									scope:root_scope = {
+										is_character_interaction_potentially_accepted = {
+											recipient = prev
+											interaction = offer_tributary_status_interaction
+											ai_accept = -30
+										}
+									}
+									add = 1000
+								}
+							}
+							save_scope_as = seduce_target
+						}
+						if = {
+							limit = { exists = scope:seduce_target }
+							start_scheme = {
+								type = seduce
+								target_character = scope:seduce_target
+							}
+						}
+					}		
+				}
+			}
+		}
+	}
+
+	#Yearly check
+	effect_group = {
+		days = { 260 460 }
+
+		triggered_effect = {
+			trigger = {
+				story_owner = {
+					is_ai = yes
+					top_liege = this
+					is_at_war = no					
+				}
+			}
+			effect = {
+				story_owner = {
+					save_scope_as = root_scope
+					####### WAR
+					#Destruction: Can we start a war?
+					if = {
+						limit = {
+							house = { has_house_power_parameter = aspect_of_destruction }
+							war_chest_gold >= war_chest_gold_maximum
+						}
+						add_stress = major_stress_loss
+						ai_start_best_war = {
+							cb = { 
+								make_tributary_cb
+								mandala_raze_capital_structure_cb
+							}
+							is_valid = {
+								scope:target_character = {
+									current_military_strength < scope:root_scope.current_military_strength
+									OR = {
+										gold < scope:root_scope.gold
+										current_military_strength <= scope:root_scope.fifty_percent_of_current_military_strength
+									}
+								}
+							}
+						}
+					}
+					###### ACTIVITIES
+					#Pilgrimages
+					if = {
+						limit = { can_host_activity = activity_pilgrimage }
+						random = {
+							chance = {
+								value = 10
+								if = {
+									limit = { has_mandala_aspect_trigger = no }
+									add = 90
+								}
+								if = {
+									limit = { piety_level < max_piety_level }
+									add = 10
+								}
+								if = {
+									limit = { piety_level < very_high_piety_level }
+									add = 15
+								}
+								if = {
+									limit = { piety_level < high_piety_level }
+									add = 20
+								}
+								if = {
+									limit = { piety_level < medium_piety_level }
+									add = 20
+								}
+							}
+							ai_attempt_to_host_activity = activity_pilgrimage
+						}
+					}
+					#Feasts
+					if = {
+						limit = {
+							house = { has_house_power_parameter = aspect_of_serenity }
+							can_host_activity = activity_feast
+						}
+						random = {
+							chance = 50
+							ai_attempt_to_host_activity = activity_feast
+						}	
+					}
+				}
+			}
+		}
+	}
+
+}

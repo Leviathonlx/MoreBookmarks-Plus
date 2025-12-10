@@ -1,0 +1,829 @@
+﻿# root: The province in which the building was completed
+# scope:character: The character that paid for the construction, if available
+on_building_completed = {
+	effect = {
+		#save the county holder as the character in case the construction wasn't started through GUI or by the AI 
+		if = {
+			limit = {
+				NOT = { exists = scope:character }
+			}
+			root.county.holder = {
+				save_scope_as = character
+			}
+		}
+		root = {
+			# Preservation tenet
+			if = {
+				limit = {
+					scope:character.faith = { has_doctrine_parameter = building_temples_gives_development }
+					OR = {
+						has_holding_type = church_holding
+						has_holding_type = temple_citadel_holding
+					}
+					NOT = { county = { has_variable = dev_gain_cooldown } }
+				}
+				scope:character = {
+					send_interface_toast = {
+						title = building_temples_gives_development_toast
+						left_icon = root
+						root.county = {
+							change_development_progress_with_overflow = minor_development_progress_gain
+							set_variable = {
+								name = dev_gain_cooldown
+								value = yes
+								days = 365
+							}
+						}
+					}
+				}
+			}
+			
+			# Hard working Tradition
+			if = {
+				limit = {
+					culture = { has_cultural_parameter = development_gain_on_building_complete }
+					NOT = { county = { has_variable = dev_gain_cooldown } }
+				}
+				county = {
+					change_development_progress_with_overflow = 25
+					set_variable = {
+						name = dev_gain_cooldown
+						value = yes
+						days = 365
+					}
+				}
+			}
+
+			# Metal crafting Tradition
+			if = {
+				limit = {
+					culture = { has_cultural_parameter = prestige_gain_on_building_complete_in_mountains }
+					OR = {
+						terrain = mountains
+						terrain = desert_mountains
+					}
+				}
+				scope:character = {
+					add_prestige = medium_prestige_value
+				}
+			}
+
+			# Yashima
+			if = {
+				limit = {
+					culture = { has_cultural_parameter = prestige_gain_on_building_complete_in_mountains_forest }
+					OR = {
+						terrain = mountains
+						terrain = forest
+					}
+				}
+				scope:character = {
+					add_prestige = medium_prestige_value
+				}
+			}
+			
+			# Sacred Mountains Tradition
+			if = {
+				limit = {
+					scope:character.culture = { has_cultural_parameter = piety_gain_on_building_complete_in_mountains }
+					OR = {
+						terrain = mountains
+						terrain = desert_mountains
+					}
+				}
+				scope:character = {
+					add_piety = minor_piety_value
+				}
+			}
+			
+			# Sacred Groves Tradition
+			if = {
+				limit = {
+					scope:character.culture = { has_cultural_parameter = piety_gain_on_building_complete_in_forest_taiga }
+					OR = {
+						terrain = forest
+						terrain = taiga
+						terrain = jungle
+					}
+				}
+				scope:character = {
+					add_piety = minor_piety_value
+				}
+			}
+
+			# FP2 Dynasty perk
+			if = {
+				limit = {
+					has_holding_type = city_holding
+					exists = scope:character.dynasty
+					scope:character.dynasty = {
+						has_dynasty_perk = fp2_urbanism_legacy_4
+					}
+				}
+				county = {
+					holder = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							title = prestige_gained_from_building_completion
+							left_icon = root.barony
+							add_prestige = medium_prestige_gain
+						}
+					}
+					#### Chance to add super guest!
+					# Set variables
+					random = {
+						chance = 10
+						modifier = {
+							add = county.development_level
+						}
+						set_variable = {
+							name = number_prestigious_new_guests
+							value = 1
+						}
+						if = {
+							limit = { county.development_level >= max_development_level  }
+
+							set_variable = {
+								name = holding_quality
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { county.development_level >= great_development_level  }
+							set_variable = {
+								name = holding_quality
+								value = 3
+							}
+						}
+						else_if = {
+							limit = { county.development_level >= good_development_level  }
+							set_variable = {
+								name = holding_quality
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { county.development_level >= medium_development_level  }
+							set_variable = {
+								name = holding_quality
+								value = 2
+							}
+						}
+						else_if = {
+							limit = { county.development_level >= bad_development_level  }
+							set_variable = {
+								name = holding_quality
+								value = 1
+							}
+						}
+						else = {
+							set_variable = {
+								name = holding_quality
+								value = 1
+							}
+						}
+					}
+
+					holder = {
+						# Trigger the hidden event
+						trigger_event = fp2_other_decisions.0001
+					}
+				}
+			}
+
+			# Struggle parameters
+			if = {
+				limit = {
+					has_holding_type = castle_holding
+					scope:character = {
+						any_character_struggle = {
+							involvement = involved
+							has_struggle_phase_parameter = completing_building_in_castle_gives_development
+						}
+					}
+				}
+				county = { change_development_progress_with_overflow = 10 }
+			}
+
+			if = {
+				limit = {
+					has_holding_type = church_holding
+					scope:character = {
+						any_character_struggle = {
+							involvement = involved
+							has_struggle_phase_parameter = completing_building_in_temple_gives_piety
+						}
+					}
+				}
+				scope:character = { add_piety = medium_piety_gain }
+			}
+
+			# Struggle catalysts
+			if = {
+				limit = {
+					has_holding_type = castle_holding
+					scope:character = {
+						any_character_struggle = {
+							involvement = involved
+							phase_has_catalyst = catalyst_new_building_in_castle
+						}
+					}
+				}
+				scope:character = {
+					every_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst = {
+							catalyst = catalyst_new_building_in_castle
+							character = scope:character
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					has_holding_type = city_holding
+					scope:character = {
+						any_character_struggle = {
+							involvement = involved
+							phase_has_catalyst = catalyst_new_building_in_city
+						}
+					}
+				}
+				scope:character = {
+					every_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst = {
+							catalyst = catalyst_new_building_in_city
+							character = scope:character
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					has_holding_type = church_holding
+					scope:character = {
+						any_character_struggle = {
+							involvement = involved
+							phase_has_catalyst = catalyst_new_building_in_temple
+						}
+					}
+				}
+				scope:character = {
+					every_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst = {
+							catalyst = catalyst_new_building_in_temple
+							character = scope:character
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					has_holding_type = church_holding
+					county.faith.religion = religion:islam_religion
+					scope:character = {
+						any_character_struggle = {
+							involvement = involved
+							phase_has_catalyst = catalyst_new_islamic_temple_construction
+						}
+					}
+				}
+				scope:character = {
+					every_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst = {
+							catalyst = catalyst_new_islamic_temple_construction
+							character = scope:character
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					scope:character = {
+						any_character_struggle = {
+							involvement = involved
+							phase_has_catalyst = catalyst_new_building_in_holdings
+						}
+					}
+				}
+				scope:character = {
+					every_character_struggle = {
+						involvement = involved
+						activate_struggle_catalyst = {
+							catalyst = catalyst_new_building_in_holdings
+							character = scope:character
+						}
+					}
+				}
+			}
+			
+			# Points of Interest
+			# Apply them here directly so they are more promptly added than monthly via the POI update
+			if = {
+				limit = {
+					has_special_building = no
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_building_with_flag = { flag = travel_point_of_interest_martial }
+						has_building_with_flag = { flag = travel_point_of_interest_martial_minor }
+					}
+					NOT = { has_travel_point_of_interest = poi_special_buildings_martial }
+				}
+				add_travel_point_of_interest = poi_special_buildings_martial
+			}
+			else_if = {
+				limit = {
+					has_building_with_flag = { flag = travel_point_of_interest_learning }
+					NOT = { has_travel_point_of_interest = poi_special_buildings_learning }
+				}
+				add_travel_point_of_interest = poi_special_buildings_learning
+			}
+			else_if = {
+				limit = {
+					has_building_with_flag = { flag = travel_point_of_interest_religious }
+					NOT = { has_travel_point_of_interest = poi_special_buildings_religious }
+				}
+				add_travel_point_of_interest = poi_special_buildings_religious
+			}
+			else_if = {
+				limit = {
+					has_building_with_flag = { flag = travel_point_of_interest_diplomatic }
+					NOT = { has_travel_point_of_interest = poi_special_buildings_diplomatic }
+				}
+				add_travel_point_of_interest = poi_special_buildings_diplomatic
+			}
+			else_if = {
+				limit = {
+					has_building_with_flag = { flag = travel_point_of_interest_wonder }
+					NOT = { has_travel_point_of_interest = poi_special_buildings_wonder }
+				}
+				add_travel_point_of_interest = poi_special_buildings_wonder
+			}
+			else_if = {
+				limit = {
+					has_building_with_flag = { flag = travel_point_of_interest_economic }
+					NOT = { has_travel_point_of_interest = poi_special_buildings_economic }
+				}
+				add_travel_point_of_interest = poi_special_buildings_economic
+			}
+
+			# The Builder event chain
+			if = {
+				limit = { 
+					has_variable = the_builder_holding
+					NOT = { has_variable = the_builder_finished }
+				}
+				var:the_builder_holding = { save_scope_as = holding_initiator }
+				#Did the Builder actually finish the holding, or was it cancelled?
+				scope:holding_initiator = {
+					if = {
+						limit = {
+							is_alive = yes
+							is_landed_or_landless_administrative = yes
+							is_available = yes
+						}
+						#Then remove the safeguard event that would clean up the Builder
+						if = {
+							limit = { has_variable = the_builder_holding_cancelled_safeguard }
+							remove_variable = the_builder_holding_cancelled_safeguard
+						}
+						#And trigger reward event
+						trigger_event = bp2_yearly.1071
+					}
+				}
+				set_variable = { name = the_builder_finished }
+			}
+			# Every time the Builder builds in their holding...
+			if = {
+				limit = {
+					scope:character ?= { 
+						OR = {
+							has_character_modifier = the_city_builder_modifier
+							has_character_modifier = the_castle_builder_modifier
+							has_character_modifier = the_temple_builder_modifier
+						}
+					}
+				}
+				county = { change_development_progress = minor_development_progress_gain }
+				if = {
+					limit = {
+						scope:character ?= { has_character_modifier = the_city_builder_modifier }
+					}
+					scope:character = { add_gold = minor_gold_value }
+				}
+				if = {
+					limit = {
+						scope:character ?= { has_character_modifier = the_castle_builder_modifier }
+					}
+					scope:character = { add_prestige = minor_prestige_gain }
+				}
+				if = {
+					limit = {
+						scope:character ?= { has_character_modifier = the_temple_builder_modifier }
+					}
+					scope:character = { add_piety = minor_piety_gain }
+				}
+			}
+			#end any landless adventurer's construction task contract
+			if = {
+				limit = {
+					any_player = {
+						any_character_active_contract = {
+							task_contract_type = laamp_construction_contract
+							task_contract_employer = scope:character
+							save_temporary_scope_as = construction_contract
+						}
+					}
+				}
+				scope:construction_contract = {
+					if = {
+						limit = {
+							task_contract_taker.capital_province.county = root.county
+						}
+						complete_task_contract = success_critical
+					}
+					else = {
+						complete_task_contract = failure_standard
+					}
+				}
+			}
+
+			# Inspection - Has Holding Modifier 
+			if = {
+				limit = {
+					has_province_modifier = inspection_empty_lands_domain_modifier
+				}
+				remove_province_modifier = inspection_empty_lands_domain_modifier
+				add_random_economic_building_effect = yes
+			}
+			else_if = {
+				limit = {
+					has_province_modifier = inspection_empty_lands_border_modifier
+				}
+				remove_province_modifier = inspection_empty_lands_border_modifier
+				add_random_fortification_building_effect = yes
+			}
+			
+			# Admin - Governors get rewards for constructing buildings in governed counties
+			if = {
+				limit = {
+					scope:character = {
+						OR = {
+							is_governor = yes
+							AND = {
+								min_appointment_tier = tier_county
+								is_governor_or_admin_count = yes
+							}
+						}
+					}
+				}
+				scope:character = {
+					send_interface_message = {
+						type = msg_governor_duties
+						title = msg_governor_duties_t
+						desc = admin_construction_completed_desc
+						right_icon = root.barony
+						
+						if = {
+							limit = {
+								government_allows = merit
+							}
+							change_merit = building_construction_merit_gain_value
+						}
+						else = {
+							change_influence = estate_construction_influence_gain_value
+						}
+						increase_governance_effect = { VALUE = 4 }
+					}
+				}
+			}
+			
+			# Harrying of the North - Pacification Gain
+			if = {
+				limit = {
+					scope:character.culture = culture:norman
+					has_global_variable = harrying_of_the_north
+					exists = global_var:harrying_of_the_north.story_owner.var:pacification
+				}
+				global_var:harrying_of_the_north.story_owner = {
+					change_variable = {
+						name = pacification
+						add = 2
+					}
+				}
+			}
+
+			# Devaraja consecration event
+			if = {
+				limit = {
+					OR = {
+						has_building_with_flag = { flag = temple_citadel }
+						has_building_with_flag = { flag = temple }
+						has_building_with_flag = { flag = mandala_capital_building }
+					}
+					NOT = { has_variable = mandala_consecrated_walls }
+					scope:character = {
+						is_available_for_activity_trigger = yes
+						government_has_flag = government_is_mandala
+						has_mandala_aspect_trigger = yes
+					}
+				}
+				scope:character = {
+					trigger_event = devaraja.0005
+				}
+				set_variable = {
+					name = mandala_consecrated_walls
+					years = 30
+				}
+			}
+
+			# Brewery counter
+			brewery_counter_effect = yes
+			
+			# Coronation Promise
+			if = {
+				limit = {
+					scope:character = root.province_owner.liege
+					scope:character = { has_character_modifier = coronation_vassal_building_modifier }
+				}
+				scope:character = {
+					send_interface_toast = {
+						title = coronation_vassal_building_tt
+						left_icon = root
+						add_prestige = medium_prestige_gain
+					}
+				}
+			}
+		}
+
+		#####################
+		# Mandala Government
+		#####################
+
+		scope:character = {
+			if = {
+				limit = { government_has_flag = government_is_mandala }
+				if = {
+					limit = {
+						exists = house
+						house = { has_house_power_parameter = aspect_of_creation }
+					}
+					mandala_upgrade_creator_effect = yes
+					house = {
+						increment_variable_effect = {
+							VAR = num_buildings_built
+							VAL = 1
+						}
+					}
+				}
+			}
+		}
+
+		# Building Oath
+		scope:character = {
+			if = {
+				limit = {
+					is_alive = yes
+					has_variable = stewardship_oath_2_buildings
+				}
+				change_variable = {
+					name = stewardship_oath_2_buildings
+					add = 1
+				}
+				add_to_variable_list = {
+					name = stewardship_oath_2_building_list
+					target = root
+				}
+			}
+		}
+	}
+}
+
+# root: The province in which the building was started
+# scope:character: The character that paid for the construction, if available
+on_building_started = {
+	effect = {
+		#save the county holder as the character in case the construction wasn't started through GUI or by the AI 
+		if = {
+			limit = {
+				NOT = { exists = scope:character }
+			}
+			root.county.holder = {
+				save_scope_as = character
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+	  				has_construction_with_flag = temple
+					has_construction_with_flag = castle
+					has_construction_with_flag = city
+	  			}
+				any_player = {
+					has_government = landless_adventurer_government
+					in_diplomatic_range = scope:character					
+					can_create_task_contract = {
+						type_name = laamp_construction_contract
+						employer = scope:character						
+					}
+					save_temporary_scope_as = player_laamp
+				}
+			}
+			scope:player_laamp = {
+				create_task_contract = {
+					task_contract_employer = scope:character
+					task_contract_type = laamp_construction_contract
+					task_contract_tier = scope:character.task_contract_tier_value
+					location = scope:character.capital_province
+					save_scope_as = new_contract
+				}
+				scope:new_contract = {
+					set_variable = {
+						name = task_contract_employer
+						value = scope:character
+					}
+					set_variable = {
+						name = task_contract_destination
+						value = root
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_province_modifier = travel_extra_building_resources_modifier
+			}
+			if = {
+				limit = {
+					has_variable = extra_building_resources 
+					var:extra_building_resources > 1
+				}
+				change_variable = {
+					name = extra_building_resources
+					subtract = 1
+				}
+				remove_province_modifier = travel_extra_building_resources_modifier
+				add_province_modifier = travel_extra_building_resources_modifier
+			}
+			else = {
+				remove_province_modifier = travel_extra_building_resources_modifier
+				remove_variable = extra_building_resources
+			}
+		}
+	}
+}
+
+# root: The province in which the building was cancelled
+# scope:character: The character that paid for the construction, if available
+on_building_cancelled = {
+	effect = {}
+}
+
+# root: The holder of the province doing the razing
+# province: The province in which the holding exists
+on_holding_razed = {
+	effect = {
+		scope:province.county = { set_variable = was_razed }
+		send_interface_toast = {
+			title = province_razed_toast_title
+			left_icon = scope:province.barony
+			add_gold = {
+				value = minor_gold_value
+				add = scope:province.county.development_level
+			}
+			scope:province = {
+				if = {
+					limit = {
+						this = county.title_province
+						county.development_level >= 1
+					}
+					county = {
+						change_development_progress_with_overflow = {
+							value = scope:province.county.development_level
+							multiply = 10
+							multiply = -1
+						}
+					}
+				}
+				if = {
+					limit = {
+						this = county.title_province
+						county = {
+							uses_county_fertility = yes
+						}
+					}
+					county = {
+						change_county_fertility = medium_county_fertility_level_gain
+					}
+				}
+				if = {
+					limit = {
+						has_university_building_trigger = yes
+					}
+					if = {
+						limit = {
+							has_building_or_higher = generic_university
+						}
+						remove_building = generic_university
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = al_azhar_university
+						}
+						remove_building = al_azhar_university
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = sankore_university
+						}
+						remove_building = sankore_university
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = siena_university
+						}
+						remove_building = siena_university
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = nalanda_university
+						}
+						remove_building = nalanda_university
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = house_of_wisdom_01
+						}
+						remove_building = house_of_wisdom_01
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = al_qarawiyyin_university_01
+						}
+						remove_building = al_qarawiyyin_university_01
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = somapura_university_01
+						}
+						remove_building = somapura_university_01
+					}
+					else_if = {
+						limit = {
+							has_building_or_higher = cluny_abbey_01
+						}
+						remove_building = cluny_abbey_01
+					}
+				}
+			}
+		}
+	}
+}
+
+# root: The holder of the province doing the rebuilding
+# province: The province in which the great building exists
+on_great_building_rebuilt = {
+	effect = {
+		add_piety_experience = {
+			add = minor_piety_gain
+			multiply = piety_level
+		}
+		hidden_effect = {
+			if = {
+				limit = { has_character_modifier = mandala_rise_from_the_ashes_modifier }
+				remove_character_modifier = mandala_rise_from_the_ashes_modifier
+			}
+			if = {
+				limit = {
+					NOT = { has_character_flag = devaraja_flag }
+					has_mandala_aspect_trigger = yes
+				}
+				add_character_flag = devaraja_flag
+			}
+		}	
+		add_character_modifier = {
+			modifier = mandala_rise_from_the_ashes_modifier
+			years = 10
+		}
+		#Memory
+		create_character_memory = { type = rebuilt_mandala_temple_memory }
+		scope:new_memory ?= {
+			set_variable = {
+				name = mandala_capital_rebuilt_location
+				value = scope:province
+			}
+			if = {
+				limit = { exists = var:mandala_capital_rebuilt_location }
+				#To prevent 'unused except in loc' errors :catto:
+			}
+		}
+	}
+}

@@ -1,0 +1,4004 @@
+﻿# Interactions relating to the education of children
+
+
+# Designate guardian and ward in your own court
+educate_child_interaction = {
+	category = interaction_category_friendly
+	common_interaction = yes
+	icon = child
+
+	send_name = SEND_PROPOSAL
+	desc = educate_child_interaction_desc
+
+	# secondary_actor = guardian
+	# actor = guardian.liege - can be same as guardian
+	# secondary_recipient = ward
+	# recipient = ward.liege - can be same as ward
+
+	redirect = {
+		if = {
+			limit = {
+				scope:actor = { is_ai = no }
+			}
+			scope:actor = {
+				#If the character performing the action is a child, let's set ourselves as the ward
+				if = {
+					limit = {
+						is_adult = no
+						is_physically_able = yes
+						num_of_relation_guardian = 0
+					}
+					save_scope_as = secondary_recipient
+				}
+				#If the character peforming the action is an adult, let's set ourselves as the guardian
+				else_if = {
+					limit = {
+						is_physically_able_adult = yes
+						num_of_relation_ward < 2
+						scope:recipient != scope:secondary_recipient
+					}
+					save_scope_as = secondary_actor
+				}
+				#Otherwise just pick whoever chum for the guardian position
+				else = {
+					random_courtier = {
+						limit = {
+							is_physically_able_adult = yes
+							num_of_relation_ward < 2
+						}
+						weight = {
+							base = 1
+							modifier = {
+								add = 5
+								culture = scope:actor.culture
+							}
+							modifier = {
+								add = 2
+								faith = scope:actor.faith
+							}
+							modifier = {
+								add = 10
+								has_council_position = councillor_court_chaplain
+							}
+							modifier = {
+								add = 2
+								is_councillor = yes
+							}
+							modifier = {
+								add = 3
+								this.dynasty = scope:actor.dynasty
+							}
+							modifier = {
+								add = 2
+								has_education_rank_4_trigger = yes
+							}
+							modifier = {
+								add = 1
+								has_education_rank_3_trigger = yes
+							}
+						}
+						save_scope_as = secondary_actor
+					}
+				}
+				if = {
+					limit = {
+						exists = employer
+						employer != scope:actor
+					}
+
+					employer = {
+						save_scope_as = actor
+					}
+				}
+			}
+
+			scope:recipient = {
+				if = {
+					limit = {
+						is_physically_able_adult = yes
+						num_of_relation_ward < 2
+					}
+					save_scope_as = secondary_actor
+				}
+				else = {
+					save_scope_as = secondary_recipient
+				}
+
+				if = {
+					limit = {
+						exists = employer
+						employer != scope:recipient
+					}
+
+					employer = {
+						save_scope_as = recipient
+					}
+				}
+			}
+		}
+	}
+
+	populate_actor_list = {
+		scope:actor = {
+			if = {
+				limit = {
+					is_physically_able_adult = yes
+					num_of_relation_ward < 2
+				}
+				add_to_list = characters
+			}
+			every_courtier = {
+				limit = {
+					is_physically_able_adult = yes
+					num_of_relation_ward < 2
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	populate_recipient_list = {
+		scope:recipient = {
+			if = {
+				limit = {
+					is_adult = no
+					is_physically_able = yes
+					num_of_relation_guardian = 0
+					trigger_if = {
+						limit = {
+							scope:actor = {
+								is_landless_adventurer = no
+							}
+						}
+						is_available = yes
+					}
+					trigger_else = {
+						is_available_allow_travelling = yes
+					}
+					trigger_if = { #If a hostage then only if scope:actor is the hostage taker
+						limit = {
+							is_hostage = yes
+						}
+						is_hostage_of = scope:actor
+					}
+				}
+				add_to_list = characters
+			}
+			every_courtier = {
+				limit = {
+					is_available_quick = {
+						adult = no
+						alive = yes
+						imprisoned = no
+						incapable = no
+					}
+					num_of_relation_guardian = 0
+					trigger_if = {
+						limit = {
+							scope:actor = {
+								is_landless_adventurer = no
+							}
+						}
+						is_available = yes
+					}
+					trigger_else = {
+						is_available_allow_travelling = yes
+					}
+					trigger_if = {
+						limit = {
+							scope:actor = { is_ai = yes }
+						}
+						is_close_family_of = scope:actor
+					}
+					trigger_if = { #If a hostage then only if scope:actor is the hostage taker
+						limit = {
+							is_hostage = yes
+						}
+						is_hostage_of = scope:actor
+					}
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	greeting = positive
+	notification_text = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:actor = scope:secondary_actor
+					scope:recipient != scope:secondary_recipient
+				}
+				desc = EDUCATE_RECIPIENT_CHILD_PERSONALLY_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = scope:secondary_actor
+					scope:recipient = scope:secondary_recipient
+				}
+				desc = EDUCATE_RECIPIENT_PERSONALLY_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+					scope:recipient != scope:secondary_recipient
+					scope:actor != scope:secondary_actor
+				}
+				desc = EDUCATE_RECIPIENT_CHILD_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+					scope:recipient = scope:secondary_recipient
+					scope:actor != scope:secondary_actor
+				}
+				desc = EDUCATE_RECIPIENT_REQUEST
+			}
+		}
+	}
+
+	prompt = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					NOT = { exists = scope:secondary_actor }
+				}
+				desc = EDUCATE_SELECT_YOUR_GUARDIAN
+			}
+			triggered_desc = {
+					trigger = {
+						NOT = { exists = scope:secondary_recipient }
+					}
+				desc = EDUCATE_SELECT_YOUR_WARD
+			}
+		}
+	}
+
+	is_shown = {
+		scope:recipient = {
+			is_in_the_same_court_as = scope:actor
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_actor
+			}
+			scope:secondary_actor = {
+				is_adult = yes
+				num_of_relation_ward < 2
+			}
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = {
+				is_adult = no
+				num_of_relation_guardian = 0
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:recipient = {
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+			trigger_if = {
+				limit = {
+					this != scope:actor
+				}
+				is_courtier_of = scope:actor
+			}
+
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_actor
+			}
+			scope:secondary_actor = {
+				is_imprisoned = no
+				NOT = { has_trait = incapable }
+			}
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = {
+				is_imprisoned = no
+				trigger_if = {
+					limit = {
+						scope:actor = {
+							is_landless_adventurer = no
+						}
+					}
+					is_travelling = no #The child in question should not already have a travel plan
+				}
+				NOT = { has_trait = incapable }
+				NOT = { exists = var:hostage_travelling_to_warden }
+				trigger_if = {
+					limit = { is_hostage = yes }
+					is_courtier_of = scope:actor
+				}
+			}
+		}
+		custom_description = {
+			text = character_to_guard_exists
+			subject = scope:actor
+			scope:actor = {
+				OR = {
+					any_courtier = {
+						is_adult = yes
+						num_of_relation_ward < 2
+						is_imprisoned = no
+						NOT = { has_trait = incapable }
+					}
+					AND = {
+						is_adult = yes
+						num_of_relation_ward < 2
+						is_imprisoned = no
+						NOT = { has_trait = incapable }
+					}
+				}
+			}
+		}
+		custom_description = {
+			text = character_to_educate_exists
+			object = scope:actor
+			scope:actor = {
+				OR = {
+					any_courtier = {
+						is_adult = no
+						num_of_relation_guardian = 0
+						is_imprisoned = no
+						NOT = { has_trait = incapable }
+					}
+					AND = {
+						is_adult = no
+						num_of_relation_guardian = 0
+						is_imprisoned = no
+						NOT = { has_trait = incapable }
+					}
+				}
+			}
+		}
+		trigger_if = { # Ward
+			limit = { exists = scope:secondary_recipient }
+			scope:secondary_recipient = {
+				custom_tooltip = {
+					text = ward_travelling_tt
+					NOT = { exists = var:ward_travelling_to_guardian }
+				}
+				custom_tooltip = {
+					text = hostage_travelling_tt
+					NOT = { exists = var:hostage_travelling_to_warden }
+				}
+				# Structured this way for tooltip purposes
+				trigger_if = {
+					limit = { exists = var:ward_waiting_for_guardian }
+					var:ward_waiting_for_guardian = {
+						custom_tooltip = {
+							text = guardian_travelling_tt
+							NOT = { exists = scope:secondary_recipient.var:ward_waiting_for_guardian }
+						}
+					}
+				}
+			}
+		}
+		trigger_if = { # Guardian
+			limit = { exists = scope:secondary_actor }
+			scope:secondary_actor = {
+				custom_tooltip = {
+					text = guardian_travelling_tt
+					NOT = { exists = var:guardian_travelling_to_ward }
+				}
+				custom_tooltip = {
+					text = hostage_travelling_tt
+					NOT = { exists = var:hostage_travelling_to_warden }
+				}
+				# Structured this way for tooltip purposes
+				trigger_if = {
+					limit = { exists = var:guardian_waiting_for_ward }
+					var:guardian_waiting_for_ward = {
+						custom_tooltip = {
+							text = ward_travelling_tt
+							NOT = { scope:secondary_actor.num_of_relation_ward >= 1 }
+						}
+					}
+				}
+			}
+		}
+		#limit range for landless adventurers
+		trigger_if = {
+			limit = {
+				scope:actor = {
+					has_government = landless_adventurer_government
+				}
+			}
+			#Has to be used instead of diplo range checks in laamp to landed interactions
+			ep3_laamp_diplo_range_trigger = {
+				TARGET = scope:recipient
+				LAAMP = scope:actor
+			}
+		}
+	}
+
+	can_be_picked = { #Potential Issue: This is only evaluated if both secondary recipient/actor are unselected TIT-49632
+		trigger_if = {
+			limit = {
+				OR = {
+					AND = {
+						is_ruler = no
+						liege ?= {
+							is_landless_adventurer = no
+						}
+					}
+					AND = {
+						is_ruler = yes
+						is_landless_adventurer = no
+					}
+				}
+			}
+			is_available = yes
+		}
+		trigger_else = {
+			is_available_allow_travelling = yes
+		}
+		is_at_home = yes
+		# Under offer
+		custom_tooltip = {
+			text = ward_already_offered_awaiting_response_tt
+			NOT = { has_character_flag = under_offer_as_ward_flag }
+		}
+		custom_tooltip = {
+			text = guardian_already_offered_awaiting_response_tt
+			NOT = { has_character_flag = under_offer_as_guardian_flag }
+		}
+		# Already offered
+		custom_tooltip = {
+			text = ward_already_offered_awaiting_travel_tt
+			NOR = {
+				exists = var:ward_travelling_to_guardian
+				exists = var:ward_waiting_for_guardian
+			}
+		}
+		custom_tooltip = {
+			text = guardian_already_offered_awaiting_travel_tt
+			NOR = {
+				exists = var:guardian_travelling_to_ward
+				AND = {
+					exists = var:guardian_waiting_for_ward
+					any_relation = { type = ward }
+				}
+			}
+		}
+		# Hostage
+		custom_tooltip = {
+			text = hostage_travelling_tt
+			NOT = { exists = var:hostage_travelling_to_warden }
+		}
+		# Guardian has too many students
+		num_of_relation_ward <= 2
+		trigger_if = {
+			limit = { exists = var:character_requested_as_educator }
+			num_of_relation_ward <= 1
+		}
+	}
+
+	on_accept = {
+		scope:secondary_recipient = {
+			save_scope_as = ward
+			scope:secondary_actor = { save_scope_as = guardian }
+			scope:recipient = { save_scope_as = ward_liege }
+			scope:actor = { save_scope_as = guardian_liege }
+		}
+
+		if = {
+			limit = { scope:ward.age >= 15 }
+			custom_description_no_bullet = {
+				text = ward_nearing_adulthood_tt
+				object = scope:ward
+			}
+		}
+
+		scope:guardian_liege = {
+			send_interface_message = {
+				type = event_childhood_neutral
+				title = educate_child_interaction_notification
+				left_icon = scope:guardian
+				right_icon = scope:ward
+				educate_child_interaction_effect = yes
+				show_as_tooltip = {
+					scope:ward = {
+						if = {
+							limit = { exists = var:ward_travelling_to_guardian }
+							custom_tooltip = ward_departs_tt
+						}
+						else_if = {
+							limit = { exists = scope:guardian.var:guardian_travelling_to_ward }
+							scope:guardian = { custom_tooltip = guardian_departs_tt }
+						}
+						else = {
+							set_relation_guardian = scope:guardian
+						}
+					}
+				}
+			}
+		}
+		#to see the "becomes guardian of x" effect in the interaction confirmation window
+		show_as_tooltip = {
+			scope:guardian  = { set_relation_ward = scope:ward }
+		}
+	}
+
+	auto_accept = yes
+
+	ai_accept = {
+		base = 100
+	}
+
+	send_option = {
+		is_shown = {
+			exists = scope:secondary_actor
+			exists = scope:secondary_recipient
+			scope:secondary_actor.culture != scope:secondary_recipient.culture
+		}
+		flag = convert_culture
+		localization = EDUCATE_CHILD_OPTION_CONVERT_CULTURE
+		current_description = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_actor
+						scope:secondary_actor = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_CULTURE_TT_TO_RECIPIENT
+				}
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_recipient
+						scope:secondary_recipient = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_CULTURE_TT_TO_ACTOR
+				}
+			}
+		}
+	}
+	send_option = {
+		is_shown = {
+			exists = scope:secondary_actor
+			exists = scope:secondary_recipient
+			scope:secondary_actor.faith != scope:secondary_recipient.faith
+		}
+		flag = convert_faith
+		localization = EDUCATE_CHILD_OPTION_CONVERT_FAITH
+		current_description = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_actor
+						scope:secondary_actor = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_FAITH_TT_TO_RECIPIENT
+				}
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_recipient
+						scope:secondary_recipient = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_FAITH_TT_TO_ACTOR
+				}
+			}
+		}
+	}
+	send_option = {
+		is_shown = {
+			scope:recipient = {
+				custom_tooltip = {
+					text = activity_education_no_culture_center #needed for error supression
+					OR = {
+						any_realm_province = {
+							is_higher_studies_location = yes
+						}
+						any_realm_county = {
+							has_county_modifier = pandidakterion_university_modifier
+						}
+					}
+				}
+			}
+		}
+		is_valid = {
+			scope:actor.gold >= scope:actor.medium_gold_value
+		}
+		flag = send_to_university
+		localization = EDUCATION_UNIVERSITY
+	}
+	send_option = {
+		is_shown = {
+			exists = scope:actor
+			exists = scope:secondary_actor
+			scope:secondary_actor != scope:actor
+		}
+		is_valid = {
+			scope:actor = {
+				has_usable_hook = scope:secondary_actor
+			}
+		}
+		flag = education_hook
+		localization = EDUCATION_HOOK
+	}
+
+	should_use_extra_icon = {
+		scope:actor = { has_usable_hook = scope:recipient }
+	}
+	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
+
+	send_options_exclusive = no
+
+	ai_targets = {
+		ai_recipients = self
+	}
+
+	ai_frequency_by_tier = {
+		barony = 60
+		county = 36
+		duchy = 12
+		kingdom = 12
+		empire = 12
+		hegemony = 12
+	}
+
+	ai_potential = {
+		OR = {
+			AND = {
+				is_adult = no
+				is_physically_able = yes
+				num_of_relation_guardian = 0
+			}
+			any_courtier = {
+				is_adult = no
+				is_physically_able = yes
+				num_of_relation_guardian = 0
+				is_close_family_of = root
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 100
+
+		modifier = { # Slight preference for older heirs
+			add = scope:secondary_recipient.age
+		}
+
+		modifier = { # Prefer to educate your own heirs
+			add = 900
+			scope:actor = scope:secondary_actor
+			scope:secondary_recipient = {
+				is_heir_of = scope:actor
+			}
+		}
+
+		modifier = { # Otherwise, find a good educator for them
+			add = 200
+			scope:secondary_actor = {
+				OR = {
+					has_education_rank_4_trigger = yes
+					has_education_rank_3_trigger = yes
+				}
+			}
+			scope:secondary_recipient = {
+				is_heir_of = scope:actor
+			}
+		}
+
+		modifier = { # Generally prefer your own flesh & blood to educate children
+			add = 200
+			exists = scope:secondary_actor.dynasty
+			exists = scope:actor.dynasty
+			scope:secondary_actor.dynasty = scope:actor.dynasty
+		}
+
+		modifier = { # Also prefer friends & lovers
+			add = 100
+			scope:secondary_actor = {
+				OR = {
+					has_relation_lover = scope:actor
+					has_relation_friend = scope:actor
+					has_secret_relation_lover = scope:actor
+					has_relation_soulmate = scope:actor
+					has_relation_best_friend = scope:actor
+				}
+			}
+		}
+
+		modifier = { # The AI shouldn't change culture/faith of their children
+			add = -1000
+				scope:secondary_recipient.culture = scope:actor.culture
+				scope:secondary_recipient.faith = scope:actor.faith
+				OR = {
+					scope:convert_culture = yes
+					scope:convert_faith = yes
+				}
+		}
+
+		modifier = { # The AI should not convert child of vassals with protected religious right
+			add = -1000
+			scope:convert_faith = yes
+			scope:recipient = { is_vassal_of = scope:actor }
+			scope:recipient = { vassal_contract_has_flag = religiously_protected }
+		}
+
+		modifier = { # If your kids aren't of your culture/faith, make them so!
+			add = 900
+			scope:secondary_actor.culture = scope:actor.culture
+			scope:secondary_actor.faith = scope:actor.faith
+			NOR = {
+				scope:secondary_recipient.culture = scope:actor.culture
+				scope:secondary_recipient.faith = scope:actor.faith
+			}
+			scope:convert_culture = yes
+			scope:convert_faith = yes
+		}
+
+		modifier = { # If your kids aren't of your culture/faith, make them so!
+			add = 500
+			scope:secondary_actor.culture = scope:actor.culture
+			scope:secondary_recipient.culture != scope:actor.culture
+			scope:convert_culture = yes
+		}
+
+		modifier = { # If your kids aren't of your culture/faith, make them so!
+			add = 500
+			scope:secondary_actor.faith = scope:actor.faith
+			scope:secondary_recipient.faith != scope:actor.faith
+			scope:convert_faith = yes
+		}
+
+		modifier = { # Rivals are not welcome
+			add = -1000
+			scope:secondary_recipient = {
+				OR = {
+					has_relation_rival = scope:actor
+					has_relation_nemesis = scope:actor
+				}
+			}
+		}
+
+		modifier = { # Random peasants can only dream about educating noble children!
+			add = -1000
+			scope:actor = {
+				is_lowborn = no
+			}
+			scope:secondary_recipient = {
+				is_lowborn = yes
+				NOR = {
+					is_councillor = yes
+					is_knight = yes
+				}
+			}
+		}
+
+		modifier = { # Don't care about random children
+			factor = 0
+			scope:secondary_recipient = {
+				NOR = {
+					is_close_family_of = scope:actor
+					this = scope:actor
+				}
+			}
+		}
+
+		modifier = { # Don't spend gold on this unless very, very rich
+			factor = 0
+			scope:send_to_university = yes
+
+			scope:actor.short_term_gold < scope:actor.monumental_gold_value
+		}
+	}
+}
+
+#Offer a ward to a landed character
+#This interaction is referenced in code! If it's renamed you have to ping a coder
+offer_ward_interaction = {
+	category = interaction_category_friendly
+	icon = child
+	interface_priority = 31
+
+	desc = offer_ward_interaction_desc
+
+	send_name = SEND_PROPOSAL
+
+
+	# secondary_actor = ward
+	# actor = ward.liege - can be same as ward
+	# secondary_recipient = guardian
+	# recipient = guardian.liege - can be same as guardian
+
+	redirect = {
+		scope:recipient = {
+			if = {
+				limit = {
+					exists = employer
+					employer != scope:recipient
+				}
+				save_scope_as = secondary_recipient
+				employer = {
+					save_scope_as = recipient
+				}
+			}
+		}
+	}
+
+	populate_actor_list = {
+		scope:actor = {
+			if = {
+				limit = {
+					is_adult = no
+					is_physically_able = yes
+					NOT = {
+						any_relation = {
+							type = guardian
+							this = scope:recipient
+						}
+					}
+					is_hostage = no
+					is_travelling = no #Can be removed once the can_be_picked is fixed to re-evaluate
+				}
+				add_to_list = characters
+			}
+			every_courtier = {
+				limit = {
+					is_adult = no
+					is_physically_able = yes
+					NOT = {
+						any_relation = {
+							type = guardian
+							this = scope:recipient
+						}
+					}
+					is_hostage = no
+					is_travelling = no #Can be removed once the can_be_picked is fixed to re-evaluate
+				}
+				add_to_list = characters
+			}
+			every_courtier_away = {
+				limit = {
+					is_adult = no
+					is_physically_able = yes
+					NOT = {
+						any_relation = {
+							type = guardian
+							this = scope:recipient
+						}
+					}
+					is_hostage = no
+					is_travelling = no #Can be removed once the can_be_picked is fixed to re-evaluate
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	populate_recipient_list = {
+		scope:recipient = {
+			if = {
+				limit = {
+					is_adult = yes
+					num_of_relation_ward < 2
+				}
+				add_to_list = characters
+			}
+			every_courtier = {
+				limit = {
+					is_adult = yes
+					num_of_relation_ward < 2
+					NOR = {
+						is_theocratic_lessee = yes
+						is_consort_of = scope:recipient
+					}
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	greeting = positive
+	notification_text = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:actor = scope:secondary_actor
+					scope:recipient != scope:secondary_recipient
+				}
+				desc = EDUCATE_ACTOR_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = scope:secondary_actor
+					scope:recipient = scope:secondary_recipient
+				}
+				desc = EDUCATE_ACTOR_PERSONALLY_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+					scope:recipient != scope:secondary_recipient
+					scope:actor != scope:secondary_actor
+				}
+				desc = EDUCATE_ACTOR_CHILD_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+					scope:recipient = scope:secondary_recipient
+					scope:actor != scope:secondary_actor
+				}
+				desc = EDUCATE_ACTOR_CHILD_PERSONALLY_REQUEST
+			}
+		}
+	}
+
+	prompt = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					exists = scope:secondary_actor
+					scope:actor = scope:recipient
+				}
+				desc = EDUCATE_SELECT_YOUR_GUARDIAN
+			}
+			triggered_desc = {
+				trigger = {
+					exists = scope:secondary_actor
+					scope:secondary_actor = {
+						is_adult = no
+					}
+				}
+				desc = EDUCATE_SELECT_THEIR_GUARDIAN
+			}
+			desc = EDUCATE_SELECT_YOUR_WARD
+		}
+	}
+
+	is_shown = {
+		scope:recipient = {
+			this != scope:actor
+			is_playable_character = yes
+			is_alive = yes
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = {
+				is_adult = yes
+				NOR = {
+					is_theocratic_lessee = yes
+					is_consort_of = scope:recipient
+				}
+			}
+		}
+		trigger_if = {
+			limit = {
+				scope:actor = {
+					has_government = landless_adventurer_government
+				}
+			}
+			scope:recipient = {
+				is_courtier_of = scope:actor
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		custom_description = {
+			text = character_to_guard_exists
+			subject = scope:recipient
+			scope:recipient = {
+				OR = {
+					AND = {
+						is_adult = yes
+						num_of_relation_ward < 2
+					}
+					any_courtier = {
+						is_adult = yes
+						num_of_relation_ward < 2
+					}
+				}
+			}
+		}
+		custom_description = {
+			text = character_to_educate_exists
+			object = scope:actor
+			scope:actor = {
+				OR = {
+					any_courtier = {
+						is_adult = no
+						is_physically_able = yes
+						NOR = {
+							any_relation = {
+								type = guardian
+								this = scope:recipient
+							}
+							any_relation = {
+								type = guardian
+								OR = {
+									is_at_war_with = scope:actor
+									any_liege_or_above = { is_at_war_with = scope:actor }
+								}
+							}
+						}
+					}
+					AND = {
+						is_adult = no
+						is_physically_able = yes
+						NOR = {
+							any_relation = {
+								type = guardian
+								this = scope:recipient
+							}
+							any_relation = {
+								type = guardian
+								OR = {
+									is_at_war_with = scope:actor
+									any_liege_or_above = { is_at_war_with = scope:actor }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		NOT = {
+			scope:actor = { is_at_war_with = scope:recipient }
+		}
+		scope:recipient = {
+			is_imprisoned = no
+		}
+		trigger_if = { # Ward
+			limit = {
+				exists = scope:secondary_actor
+			}
+			scope:secondary_actor = {
+				is_imprisoned = no
+				custom_tooltip = {
+					text = ward_travelling_tt
+					NOT = { exists = var:ward_travelling_to_guardian }
+				}
+				custom_tooltip = {
+					text = hostage_travelling_tt
+					NOT = { exists = var:hostage_travelling_to_warden }
+				}
+				# Structured this way for tooltip purposes
+				trigger_if = {
+					limit = { exists = var:ward_waiting_for_guardian }
+					var:ward_waiting_for_guardian = {
+						custom_tooltip = {
+							text = guardian_travelling_tt
+							NOT = { exists = scope:secondary_actor.var:ward_waiting_for_guardian }
+						}
+					}
+				}
+			}
+		}
+		trigger_if = { # Guardian
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = {
+				is_imprisoned = no
+				custom_tooltip = {
+					text = guardian_travelling_tt
+					NOT = { exists = var:guardian_travelling_to_ward }
+				}
+				custom_tooltip = {
+					text = hostage_travelling_tt
+					NOT = { exists = var:hostage_travelling_to_warden }
+				}
+				# Structured this way for tooltip purposes
+				trigger_if = {
+					limit = { exists = var:guardian_waiting_for_ward }
+					var:guardian_waiting_for_ward = {
+						custom_tooltip = {
+							text = ward_travelling_tt
+							NOT = { exists = scope:secondary_recipient.var:guardian_waiting_for_ward }
+						}
+					}
+				}
+			}
+		}
+		#limit range for landless adventurers
+		trigger_if = {
+			limit = {
+				scope:actor = {
+					has_government = landless_adventurer_government
+				}
+			}
+			#Has to be used instead of diplo range checks in laamp to landed interactions
+			ep3_laamp_diplo_range_trigger = {
+				TARGET = scope:recipient
+				LAAMP = scope:actor
+			}
+		}
+	}
+
+	can_be_picked = {
+		is_available = yes #Potential Issue: This is only evaluated if both secondary recipient/actor are unselected TIT-49632
+		# Under offer
+		custom_tooltip = {
+			text = ward_already_offered_awaiting_response_tt
+			NOT = { has_character_flag = under_offer_as_ward_flag }
+		}
+		custom_tooltip = {
+			text = guardian_already_offered_awaiting_response_tt
+			NOT = { has_character_flag = under_offer_as_guardian_flag }
+		}
+		# Already offered
+		custom_tooltip = {
+			text = ward_already_offered_awaiting_travel_tt
+			NOR = {
+				exists = var:ward_travelling_to_guardian
+				exists = var:ward_waiting_for_guardian
+			}
+		}
+		custom_tooltip = {
+			text = guardian_already_offered_awaiting_travel_tt
+			NOR = {
+				exists = var:guardian_travelling_to_ward
+				AND = {
+					exists = var:guardian_waiting_for_ward
+					any_relation = { type = ward }
+				}
+			}
+		}
+		# Hostage
+		custom_tooltip = {
+			text = hostage_travelling_tt
+			NOT = { exists = var:hostage_travelling_to_warden }
+		}
+	}
+
+	on_send = {
+		scope:secondary_recipient = {
+			add_character_flag = {
+				flag = under_offer_as_guardian_flag
+				months = 1
+			}
+		}
+		scope:secondary_actor = {
+			add_character_flag = {
+				flag = under_offer_as_ward_flag
+				months = 1
+			}
+		}
+	}
+
+	on_accept = {
+		scope:secondary_actor = { save_scope_as = ward }
+		scope:actor = { save_scope_as = ward_liege }
+		scope:recipient = { save_scope_as = guardian_liege }
+		scope:secondary_recipient = { save_scope_as = guardian }
+
+		if = {
+			limit = { scope:ward.age >= 15 }
+			custom_description_no_bullet = {
+				text = ward_nearing_adulthood_tt
+				object = scope:ward
+			}
+		}
+
+		# Handle existing guardian
+		scope:ward = {
+			if = {
+				limit = {
+					any_relation = {
+						type = guardian
+						this != scope:guardian
+					}
+				}
+				random_relation = {
+					type = guardian
+					save_scope_as = old_guardian
+
+					#Letter event to guardian
+					if = {
+						limit = {
+							scope:old_guardian != scope:actor
+						}
+						scope:old_guardian = { trigger_event = char_interaction.0090 }
+					}
+				}
+				scope:actor = {
+					send_interface_message = {
+						type = event_childhood_neutral
+						title = remove_guardian_interaction_notification
+						left_icon = scope:old_guardian
+						right_icon = scope:ward
+						remove_guardian_effect = {
+							GUARDIAN = scope:old_guardian
+							WARD = scope:ward
+							RETURN_WARD = yes
+							HIDE_OPINION = no
+						}
+
+						#Was education promised in interaction or in vassal.2001? Then you get an opinion penalty
+						if = {
+							limit = {
+								exists = scope:ward.var:character_requested_as_educator
+								scope:ward.var:character_requested_as_educator = scope:old_guardian
+								exists = scope:ward.var:character_making_education_request
+								scope:ward.var:character_making_education_request = {
+									is_alive = yes
+									OR = {
+										this = scope:old_guardian
+										scope:old_guardian = { is_courtier_of = prev }
+									}
+									this != scope:actor
+								}
+							}
+							scope:ward.var:character_making_education_request = {
+								add_opinion = {
+									modifier = insult_opinion
+									target = scope:actor
+									opinion = -15
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		show_as_tooltip = {
+			scope:guardian  = { set_relation_ward = scope:ward }
+			educate_child_interaction_effect = yes
+		}
+
+		scope:actor = {
+			if = {
+				limit = {
+					this != scope:recipient
+					scope:ward = {
+						#num_of_relation_guardian = 0
+						NOR = {
+							any_relation = {
+								type = guardian
+								this = scope:recipient
+							}
+							any_relation = {
+								type = guardian
+								OR = {
+									is_at_war_with = scope:actor
+									any_liege_or_above = { is_at_war_with = scope:actor }
+								}
+							}
+						}
+					}
+					scope:guardian = { num_of_relation_ward < 2	}
+				}
+				trigger_event = char_interaction.0080
+			}
+		}
+
+		# If we're a clan this interaction affects unity
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = miniscule_unity_gain
+			DESC = clan_unity_ward_offerage.desc
+			REVERSE_NON_HOUSE_TARGET = yes
+		}
+	}
+
+	on_decline = {
+		# If we're a clan this interaction affects unity. Conditioned to the opinion modifier to avoid exploit
+		if = {
+			limit = {
+				NOT = {
+					scope:actor = {
+						has_opinion_modifier = {
+							modifier = declined_ward_opinion
+							target = scope:recipient
+						}
+					}
+				}
+			}
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = miniscule_unity_loss
+				DESC = clan_unity_ward_decline.desc
+				REVERSE_NON_HOUSE_TARGET = yes
+			}
+		}
+
+
+		scope:actor = {
+			trigger_event = char_interaction.0081
+			add_opinion = {
+				modifier = declined_ward_opinion
+				target = scope:recipient
+			}
+		}
+
+		scope:secondary_recipient = { remove_character_flag = under_offer_as_guardian_flag }
+		scope:secondary_actor = { remove_character_flag = under_offer_as_ward_flag }
+	}
+
+	auto_accept = {
+		custom_description = {
+			text = "spending_hook"
+			subject = scope:actor
+			object = scope:recipient
+			scope:education_hook = yes
+			scope:actor = { has_strong_hook = scope:recipient }
+		}
+	}
+
+	ai_accept = {
+		base = 0
+
+		# AI should always accept children the Player has jurisdiction over
+		# You can always send your own child away
+		modifier = {
+			add = 200
+			scope:secondary_actor = {
+				is_adult = no
+				is_child_of = scope:actor
+			}
+			desc = AI_YOUR_OWN_CHILD
+		}
+		# Including you
+		modifier = {
+			add = 200
+			scope:secondary_actor = scope:actor
+			desc = AI_EDUCATE_YOU
+		}
+		# You can always send your courtier's child away
+		modifier = {
+			add = 200
+			scope:secondary_actor = {
+				is_adult = no
+				NOT = { is_child_of = scope:actor }
+				is_courtier_of = scope:actor
+			}
+			#But only if you are of interest to the educator. To educate the courtier of a count is of no interest to a foreign emperor.
+			scope:secondary_recipient ?= {
+				OR = {
+					is_of_major_or_minor_interest_trigger = { CHARACTER = scope:actor }
+					is_of_major_or_minor_interest_trigger = { CHARACTER = scope:secondary_actor }
+					highest_held_title_tier <= scope:actor.highest_held_title_tier
+				}
+			}
+			desc = AI_YOUR_COURTIER_CHILD
+		}
+
+		#Weak hook: extra points
+		modifier = {
+			scope:education_hook = yes
+			add = 100
+			scope:actor = { NOT = { has_strong_hook = scope:recipient } }
+			desc = SCHEME_WEAK_HOOK_USED
+		}
+
+		modifier = { # Respect the liege
+			add = 50
+			scope:recipient = { target_is_liege_or_above = scope:actor }
+			desc = EDUCATE_CHILD_ACTOR_IS_MY_LIEGE
+		}
+
+		#If the child is theirs they are more likely to accept
+		modifier = {
+			add = 100
+			scope:secondary_actor = {
+				is_child_of = scope:recipient
+				is_adult = no
+			}
+			desc = AI_MY_CHILD
+		}
+
+		#If the child is the educator's child they should be more likely to accept
+		modifier = {
+			add = 100
+			exists = scope:secondary_recipient
+			scope:secondary_actor = {
+				is_adult = no
+				is_child_of = scope:secondary_recipient
+			}
+			desc = AI_MY_CHILD
+		}
+
+		#Their opinion of you matters!
+		opinion_modifier = {
+			opinion_target = scope:actor
+			who = scope:recipient
+			multiplier = 0.5
+			desc = AI_OPINION_REASON
+		}
+
+		#Make less likely that they accept if they are of another culture
+		modifier = {
+			add = -10
+			trigger = {
+				scope:secondary_actor = {
+					culture = { has_same_culture_heritage = scope:recipient.culture }
+					NOT = { has_same_culture_as = scope:recipient }
+				}
+			}
+			desc = AI_NOT_CULTURE
+		}
+
+		modifier = {
+			add = -20
+			trigger = {
+				scope:secondary_actor = {
+					NOT = { culture = { has_same_culture_heritage = scope:recipient.culture } }
+				}
+			}
+			desc = AI_NOT_CULTURE
+		}
+
+		#Less likely if they don't like other religion
+		modifier = {
+			add = {
+				value = -5
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					subtract = 5
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					subtract = 10
+				}
+			}
+			trigger = {
+				scope:recipient.faith != scope:actor.faith
+			}
+			desc = AI_RELIGION
+		}
+
+		#The better the educator is at a skill, the less likely they are to accept
+		compare_modifier = {
+			trigger = {
+				scope:secondary_recipient ?= {
+					diplomacy >= 10
+				}
+				scope:actor != scope:secondary_actor
+			}
+			target = scope:secondary_recipient
+			value = diplomacy
+			step = 4
+			multiplier = -0.5
+			offset = -2
+			max = 0
+			desc = AI_GUARDIAN_SKILL_DIPLOMACY
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_recipient ?= {
+					martial >= 10
+				}
+				scope:actor != scope:secondary_actor
+			}
+			target = scope:secondary_recipient
+			value = martial
+			step = 4
+			multiplier = -0.5
+			offset = -2
+			max = 0
+			desc = AI_GUARDIAN_SKILL_MARTIAL
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_recipient ?= {
+					stewardship >= 10
+				}
+				scope:actor != scope:secondary_actor
+			}
+			target = scope:secondary_recipient
+			value = stewardship
+			step = 4
+			multiplier = -0.5
+			offset = -2
+			max = 0
+			desc = AI_GUARDIAN_SKILL_STEWARDSHIP
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_recipient ?= {
+					intrigue >= 10
+				}
+				scope:actor != scope:secondary_actor
+			}
+			target = scope:secondary_recipient
+			value = intrigue
+			step = 4
+			multiplier = -0.5
+			offset = -2
+			max = 0
+			desc = AI_GUARDIAN_SKILL_INTRIGUE
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_recipient ?= {
+					learning >= 10
+				}
+				scope:actor != scope:secondary_actor
+			}
+			target = scope:secondary_recipient
+			value = learning
+			step = 4
+			multiplier = -0.5
+			offset = -2
+			max = 0
+			desc = AI_GUARDIAN_SKILL_LEARNING
+		}
+
+		#The better you as an educator is at a skill, the more likely they are to accept
+		compare_modifier = {
+			trigger = {
+				AND = {
+					scope:actor = scope:secondary_actor
+					scope:actor = {
+						diplomacy >= 11
+					}
+				}
+			}
+			target = scope:actor
+			value = diplomacy
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_DIPLOMACY
+		}
+		compare_modifier = {
+			trigger = {
+				AND = {
+					scope:actor = scope:secondary_actor
+					scope:actor = {
+						martial >= 11
+					}
+				}
+			}
+			target = scope:actor
+			value = martial
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_MARTIAL
+		}
+		compare_modifier = {
+			trigger = {
+				AND = {
+					scope:actor = scope:secondary_actor
+					scope:actor = {
+						stewardship >= 11
+					}
+				}
+			}
+			target = scope:actor
+			value = stewardship
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_STEWARDSHIP
+		}
+		compare_modifier = {
+			trigger = {
+				AND = {
+					scope:actor = scope:secondary_actor
+					scope:actor = {
+						intrigue >= 11
+					}
+				}
+			}
+			target = scope:actor
+			value = intrigue
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_INTRIGUE
+		}
+		compare_modifier = {
+			trigger = {
+				AND = {
+					scope:actor = scope:secondary_actor
+					scope:actor = {
+						learning >= 11
+					}
+				}
+			}
+			target = scope:actor
+			value = learning
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_LEARNING
+		}
+
+		#More/Less likely based on difference in rank between actor and recipient
+		modifier = {
+			add = 20
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 1
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 30
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 2
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 40
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 3
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 50
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 4
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 60
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 5
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -20
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -1
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -30
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -2
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -40
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -3
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -50
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -4
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -60
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -5
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+
+		modifier = {
+			add = intimidated_reason_value
+			scope:recipient = {
+				target_is_liege_or_above = scope:actor
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = cowed_reason_value
+			scope:recipient = {
+				target_is_liege_or_above = scope:actor
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+
+		modifier = {
+			add = intimidated_external_reason_value
+			scope:recipient = {
+				NOT = { target_is_liege_or_above = scope:actor }
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = cowed_external_reason_value
+			scope:recipient = {
+				NOT = { target_is_liege_or_above = scope:actor }
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+		modifier = {
+			add = diarch_should_educate_liege_value
+			scope:actor.diarch ?= scope:recipient
+			desc = DIARCH_SHOULD_EDUCATE_LIEGE_TO_DIARCH
+		}
+
+		# Unity modifiers
+		evaluate_action_increasing_house_unity = {
+			VALUE = 100
+		}
+	}
+
+	send_option = {
+		is_shown = {
+			exists = scope:secondary_actor
+			exists = scope:secondary_recipient
+			scope:secondary_actor.culture != scope:secondary_recipient.culture
+		}
+		flag = convert_culture
+		localization = EDUCATE_CHILD_OPTION_CONVERT_CULTURE
+		current_description = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_actor
+						scope:secondary_actor = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_CULTURE_TT_TO_RECIPIENT
+				}
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_recipient
+						scope:secondary_recipient = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_CULTURE_TT_TO_ACTOR
+				}
+			}
+		}
+	}
+	send_option = {
+		is_shown = {
+			exists = scope:secondary_actor
+			exists = scope:secondary_recipient
+			scope:secondary_actor.faith != scope:secondary_recipient.faith
+		}
+		flag = convert_faith
+		localization = EDUCATE_CHILD_OPTION_CONVERT_FAITH
+		current_description = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_actor
+						scope:secondary_actor = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_FAITH_TT_TO_RECIPIENT
+				}
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_recipient
+						scope:secondary_recipient = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_FAITH_TT_TO_ACTOR
+				}
+			}
+		}
+	}
+	send_option = {
+		is_shown = {
+			OR = {
+				scope:recipient = {
+					custom_tooltip = {
+						text = activity_education_no_culture_center #needed for error supression
+						OR = {
+							any_realm_province = {
+								is_higher_studies_location = yes
+							}
+							any_realm_county = {
+								has_county_modifier = pandidakterion_university_modifier
+							}
+						}
+					}
+				}
+				scope:actor = {
+					this = scope:secondary_actor
+					custom_tooltip = {
+						text = activity_education_no_culture_center #needed for error supression
+						OR = {
+							any_realm_province = {
+								is_higher_studies_location = yes
+							}
+							any_realm_county = {
+								has_county_modifier = pandidakterion_university_modifier
+							}
+						}
+					}
+				}
+			}
+		}
+		is_valid = {
+			scope:actor.gold >= scope:actor.monumental_gold_value
+		}
+		starts_enabled = { always = yes	}
+		flag = send_to_university
+		localization = EDUCATION_UNIVERSITY
+	}
+	send_option = {
+		is_valid = {
+			scope:actor = {
+				has_usable_hook = scope:recipient
+			}
+		}
+		flag = education_hook
+		localization = EDUCATION_HOOK
+	}
+	should_use_extra_icon = {
+		scope:actor = { has_usable_hook = scope:recipient }
+	}
+	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
+
+	send_options_exclusive = no
+
+	ai_targets = {
+		ai_recipients = vassals
+		ai_recipients = head_of_faith
+		max = 10
+	}
+
+	ai_frequency_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 36
+		kingdom = 12
+		empire = 6
+		hegemony = 6
+	}
+
+	ai_potential = {
+		any_courtier = {
+			is_adult = no
+			is_physically_able = yes
+			is_child_of = root
+			num_of_relation_guardian = 0
+		}
+		any_vassal = {
+			primary_title.tier >= tier_county
+			opinion = {
+				target = root
+				value <= -25
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 0
+
+		modifier = { # The AI wants to use wards to improve opinion with their vassals
+			add = 500
+			scope:actor = {
+				NOT = {
+					has_trait = paranoid
+				}
+			}
+			scope:recipient = scope:secondary_recipient
+			scope:recipient = {
+				is_ruler = yes
+				primary_title.tier >= tier_county
+				OR = {
+					AND = {
+						is_vassal_of = scope:actor
+						opinion = {
+							target = scope:actor
+							value <= -25
+						}
+					}
+					AND = {
+						is_powerful_vassal_of = scope:actor
+						opinion = {
+							target = scope:actor
+							value <= 25
+						}
+					}
+				}
+			}
+		}
+
+		modifier = { # Zealous AI's want their head of faith to educate their children
+			add = 600
+			scope:actor = {
+				OR = {
+					has_trait = zealous
+					ai_zeal >= 90
+				}
+			}
+			scope:recipient = scope:secondary_recipient
+			scope:recipient = scope:actor.faith.religious_head
+			scope:recipient = {
+				is_ai = yes # Don't spam players
+				num_of_relation_ward < 2
+			}
+		}
+
+		# Unity modifiers
+		evaluate_action_increasing_house_unity = {
+			VALUE = 100
+		}
+
+		modifier = { # Don't send your primary heir away
+			factor = 0
+			scope:secondary_actor = {
+				is_primary_heir_of = scope:actor
+			}
+		}
+
+		modifier = { # The AI shouldn't change culture/faith of their children
+			factor = 0
+			OR = {
+				scope:convert_culture = yes
+				scope:convert_faith = yes
+			}
+		}
+
+		modifier = { # Don't care about random children
+			factor = 0
+			scope:secondary_actor = {
+				NOR = {
+					is_close_family_of = scope:actor
+					this = scope:actor
+				}
+			}
+		}
+
+		modifier = { # Don't send children that are in need of a culture conversion
+			factor = 0
+			scope:secondary_actor.culture != scope:actor.culture
+		}
+
+		modifier = { # Don't send away yourself
+			factor = 0
+			scope:secondary_actor = scope:actor
+		}
+
+		modifier = { # Rivals are not welcome
+			factor = 0
+			scope:recipient = {
+				OR = {
+					has_relation_rival = scope:actor
+					has_relation_nemesis = scope:actor
+				}
+			}
+		}
+
+		modifier = { # Don't backtrack
+			factor = 0
+			scope:secondary_actor = {
+				any_relation = {
+					type = guardian
+					OR = {
+						is_vassal_of = scope:actor
+						this = scope:actor.faith.religious_head
+					}
+				}
+			}
+		}
+
+		modifier = { # Don't override players
+			factor = 0
+			scope:secondary_actor = {
+				has_character_flag = player_educated
+			}
+		}
+
+		modifier = { # Don't spend gold on this unless very, very rich
+			factor = 0
+			scope:send_to_university = yes
+
+			scope:actor.short_term_gold <= scope:actor.monumental_gold_value
+		}
+	}
+}
+
+# Request guardianship
+offer_guardianship_interaction = {
+	category = interaction_category_friendly
+	icon = child
+	interface_priority = 32
+
+	desc = offer_guardianship_interaction_desc
+
+	# secondary_actor = guardian
+	# actor = guardian.liege - can be same as guardian
+	# secondary_recipient = ward
+	# recipient = ward.liege - can be same as ward
+
+	redirect = {
+		if = {
+			limit = {
+				scope:actor = { is_ai = no }
+			}
+			scope:recipient = {
+				if = {
+					limit = {
+						exists = employer
+						employer != scope:recipient
+					}
+					if = {
+						limit = {
+							is_adult = no
+							#num_of_relation_guardian = 0
+						}
+						save_scope_as = secondary_recipient
+					}
+					employer = {
+						save_scope_as = recipient
+					}
+				}
+				else_if = {
+					limit = {
+						is_ruler = yes
+						is_adult = no
+					}
+					save_scope_as = recipient
+					save_scope_as = secondary_recipient
+				}
+			}
+		}
+	}
+
+	populate_actor_list = {
+		scope:actor = {
+			if = {
+				limit = {
+					is_adult = yes
+					num_of_relation_ward < 2
+					bp2_valid_for_standard_interactions_trigger = yes
+					is_hostage = no
+				}
+				add_to_list = characters
+			}
+			every_courtier = {
+				limit = {
+					is_adult = yes
+					num_of_relation_ward < 2
+					NOR = {
+						is_theocratic_lessee = yes
+						is_consort_of = scope:actor
+					}
+					bp2_valid_for_standard_interactions_trigger = yes
+					is_hostage = no
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	populate_recipient_list = {
+		scope:recipient = {
+			if = {
+				limit = {
+					is_available_child_allow_travel = yes
+					bp2_valid_for_standard_interactions_trigger = yes
+				}
+			}
+			add_to_list = characters
+			every_courtier = {
+				limit = {
+					is_available_child_allow_travel = yes
+					trigger_if = {
+						limit = {
+							scope:actor = { is_ai = yes }
+						}
+						is_close_family_of = scope:recipient
+					}
+					bp2_valid_for_standard_interactions_trigger = yes
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	greeting = positive
+	notification_text = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					# I assign, myself, to educate not you, but your...
+					scope:actor = scope:secondary_actor
+					scope:recipient != scope:secondary_recipient
+				}
+				desc = EDUCATE_RECIPIENT_CHILD_PERSONALLY_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+					# I assign, myself, to educate you, yourself!
+					scope:actor = scope:secondary_actor
+					scope:recipient = scope:secondary_recipient
+				}
+				desc = EDUCATE_RECIPIENT_PERSONALLY_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+				# I assign, not myself, to educate not you, but your...
+					scope:recipient != scope:secondary_recipient
+					scope:actor != scope:secondary_actor
+				}
+				desc = EDUCATE_RECIPIENT_CHILD_REQUEST
+			}
+			triggered_desc = {
+				trigger = {
+				# I assign, not myself, to educate you, yourself
+					scope:recipient = scope:secondary_recipient
+					scope:actor != scope:secondary_actor
+				}
+				desc = EDUCATE_RECIPIENT_REQUEST
+			}
+		}
+	}
+
+	prompt = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					NOT = { exists = scope:secondary_actor }
+				}
+				desc = EDUCATE_SELECT_YOUR_GUARDIAN
+			}
+			triggered_desc = {
+				trigger = {
+					NOT = { exists = scope:secondary_recipient }
+				}
+				desc = EDUCATE_SELECT_THEIR_WARD
+			}
+			desc = EDUCATE_SELECT_YOUR_WARD_OR_GUARDIAN
+		}
+	}
+
+	is_shown = {
+		scope:recipient = {
+			this != scope:actor
+			is_playable_character = yes
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = { is_adult = no }
+		}
+		trigger_if = {
+			limit = {
+				scope:actor = {
+					has_government = landless_adventurer_government
+				}
+			}
+			scope:recipient = {
+				is_courtier_of = scope:actor
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		custom_description = {
+			text = character_to_educate_exists
+			object = scope:recipient
+			scope:recipient = {
+				OR = {
+					any_courtier = {
+						is_adult = no
+						#num_of_relation_guardian = 0
+					}
+					AND = {
+						is_adult = no
+						#num_of_relation_guardian = 0
+					}
+				}
+			}
+		}
+		custom_description = {
+			text = character_to_guard_exists
+			subject = scope:recipient
+			scope:recipient = {
+				OR = {
+					any_courtier = {
+						is_adult = yes
+						num_of_relation_ward < 2
+					}
+					AND = {
+						is_adult = yes
+						num_of_relation_ward < 2
+					}
+				}
+			}
+		}
+		NOT = {
+			scope:actor = { is_at_war_with = scope:recipient }
+		}
+		scope:recipient = {
+			is_imprisoned = no
+			bp2_valid_for_standard_interactions_trigger = yes
+		}
+		trigger_if = { # Ward
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = {
+				is_available = yes
+				is_imprisoned = no
+				bp2_valid_for_standard_interactions_trigger = yes
+				custom_tooltip = {
+					text = ward_travelling_tt
+					NOT = { exists = var:ward_travelling_to_guardian }
+				}
+				custom_tooltip = {
+					text = hostage_travelling_tt
+					NOT = { exists = var:hostage_travelling_to_warden }
+				}
+				# Structured this way for tooltip purposes
+				trigger_if = {
+					limit = { exists = var:ward_waiting_for_guardian }
+					var:ward_waiting_for_guardian = {
+						custom_tooltip = {
+							text = guardian_travelling_tt
+							NOT = { exists = scope:secondary_recipient.var:ward_waiting_for_guardian }
+						}
+					}
+				}
+			}
+		}
+		trigger_if = { # Guardian
+			limit = {
+				exists = scope:secondary_actor
+			}
+			scope:secondary_actor = {
+				is_imprisoned = no
+				custom_tooltip = {
+					text = guardian_travelling_tt
+					NOT = { exists = var:guardian_travelling_to_ward }
+				}
+				custom_tooltip = {
+					text = hostage_travelling_tt
+					NOT = { exists = var:hostage_travelling_to_warden }
+				}
+
+				# Structured this way for tooltip purposes
+				trigger_if = {
+					limit = { exists = var:guardian_waiting_for_ward }
+					var:guardian_waiting_for_ward = {
+						custom_tooltip = {
+							text = ward_travelling_tt
+							NOT = { exists = scope:secondary_actor.var:guardian_waiting_for_ward }
+						}
+					}
+				}
+			}
+		}
+		#limit range for landless adventurers
+		trigger_if = {
+			limit = {
+				scope:actor = {
+					has_government = landless_adventurer_government
+				}
+			}
+			#Has to be used instead of diplo range checks in laamp to landed interactions
+			ep3_laamp_diplo_range_trigger = {
+				TARGET = scope:recipient
+				LAAMP = scope:actor
+			}
+		}
+	}
+
+	can_be_picked = { #Potential Issue: This is only evaluated if both secondary recipient/actor are unselected TIT-49632
+		is_available = yes
+		# Under offer
+		custom_tooltip = {
+			text = ward_already_offered_awaiting_response_tt
+			NOT = { has_character_flag = under_offer_as_ward_flag }
+		}
+		custom_tooltip = {
+			text = guardian_already_offered_awaiting_response_tt
+			NOT = { has_character_flag = under_offer_as_guardian_flag }
+		}
+		# Already offered
+		custom_tooltip = {
+			text = ward_already_offered_awaiting_travel_tt
+			NOR = {
+				exists = var:ward_travelling_to_guardian
+				exists = var:ward_waiting_for_guardian
+			}
+		}
+		custom_tooltip = {
+			text = guardian_already_offered_awaiting_travel_tt
+			NOR = {
+				exists = var:guardian_travelling_to_ward
+				AND = {
+					exists = var:guardian_waiting_for_ward
+					any_relation = { type = ward }
+				}
+			}
+		}
+		# Hostage
+		custom_tooltip = {
+			text = hostage_travelling_tt
+			NOT = { exists = var:hostage_travelling_to_warden }
+		}
+	}
+
+	on_send = {
+		scope:secondary_recipient = {
+			add_character_flag = {
+				flag = under_offer_as_ward_flag
+				months = 1
+			}
+		}
+		scope:secondary_actor = {
+			add_character_flag = {
+				flag = under_offer_as_guardian_flag
+				months = 1
+			}
+		}
+	}
+
+	on_accept = {
+		scope:secondary_actor = { save_scope_as = guardian }
+		scope:actor = { save_scope_as = guardian_liege }
+		scope:secondary_recipient = { save_scope_as = ward }
+		scope:recipient = { save_scope_as = ward_liege }
+
+		if = {
+			limit = { scope:ward.age >= 15 }
+			custom_description_no_bullet = {
+				text = ward_nearing_adulthood_tt
+				object = scope:ward
+			}
+		}
+
+		show_as_tooltip = {
+			scope:guardian = { set_relation_ward = scope:ward }
+			educate_child_interaction_effect = yes
+		}
+
+		if = {
+			limit = {
+				scope:actor = {
+					is_ai = no
+				}
+			}
+			scope:ward = {
+				add_character_flag = player_educated
+			}
+		}
+
+		if = { #To block against too many wards
+			limit = {
+				scope:guardian = { num_of_relation_ward < 2	}
+			}
+
+			save_scope_value_as = { #To give right tooltip in char_interaction.0080
+				name = offer_guardianship_interaction
+				value = yes
+			}
+
+			scope:actor = {
+				if = {
+					limit = { this != scope:recipient }
+					trigger_event = char_interaction.0080
+				}
+			}
+		}
+		else = { #Notifications about the relationship being blocked because actor tried to set it with too many
+			scope:recipient = {
+				trigger_event = char_interaction.0078
+			}
+			scope:actor = {
+				trigger_event = char_interaction.0079
+			}
+		}
+
+		# If we're a clan this interaction affects unity
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = miniscule_unity_gain
+			DESC = clan_unity_guardianship.desc
+			REVERSE_NON_HOUSE_TARGET = yes
+		}
+	}
+
+	on_decline = {
+		if = {
+			limit = {
+				NOT = {
+					scope:actor = {
+						has_opinion_modifier = {
+							target = scope:recipient
+							modifier = declined_guardianship_opinion
+						}
+					}
+				}
+			}
+			# If we're a clan this interaction affects unity; conditioned by the opinion modifer to avoid exploit
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = miniscule_unity_loss
+				DESC = clan_unity_guardianship_decline.desc
+				REVERSE_NON_HOUSE_TARGET = yes
+			}
+		}
+
+		scope:actor = {
+			trigger_event = char_interaction.0081
+			add_opinion = {
+				modifier = declined_guardianship_opinion
+				target = scope:recipient
+				opinion = -15
+			}
+		}
+		scope:recipient = {
+			if = {
+				limit = {
+					is_ai = no
+				}
+				add_character_flag = { flag = ai_guardianship_ask_cooldown years = 5 }
+			}
+		}
+
+		scope:secondary_recipient = { remove_character_flag = under_offer_as_ward_flag }
+		scope:secondary_actor = { remove_character_flag = under_offer_as_guardian_flag }
+	}
+
+	auto_accept = {
+		custom_description = {
+			text = "spending_hook"
+			subject = scope:actor
+			object = scope:recipient
+			scope:education_hook = yes
+			scope:actor = { has_strong_hook = scope:recipient }
+		}
+	}
+
+	ai_accept = {
+		base = -50
+
+		#Weak hook: extra points
+		modifier = {
+			scope:education_hook = yes
+			add = 200
+			scope:actor = { NOT = { has_strong_hook = scope:recipient } }
+			desc = SCHEME_WEAK_HOOK_USED
+		}
+
+		modifier = { # Respect the liege
+			add = 100
+			scope:recipient = { target_is_liege_or_above = scope:actor }
+			desc = EDUCATE_CHILD_ACTOR_IS_MY_LIEGE
+		}
+
+		#If the child is the educator's child they should be more likely to accept
+		modifier = {
+			add = 100
+			scope:secondary_recipient ?= {
+				is_adult = no
+				is_child_of = scope:secondary_actor
+			}
+			desc = AI_GUARDIANS_OWN_CHILD
+		}
+
+		modifier = {
+			add = -75
+			scope:secondary_actor.court_owner = {
+				NOR = {
+					this = scope:recipient.court_owner
+					this = scope:secondary_recipient.court_owner
+				}
+			}
+			NOT = { scope:secondary_recipient ?= { is_child_of = scope:actor } }
+			NOT = { scope:secondary_recipient ?= { is_child_of = scope:recipient } }
+			NOT = { scope:recipient = { target_is_liege_or_above = scope:actor } }
+			desc = AI_FOREIGN_COURT
+		}
+
+		modifier = {
+			add = -100
+			scope:secondary_actor.court_owner = {
+				NOR = {
+					this = scope:recipient.court_owner
+					this = scope:secondary_recipient.court_owner
+				}
+			}
+			NOT = { scope:secondary_recipient ?= { is_child_of = scope:actor } }
+			scope:secondary_recipient ?= { is_child_of = scope:recipient }
+			NOR = {
+				scope:recipient = { target_is_liege_or_above = scope:actor }
+				scope:recipient = { target_is_vassal_or_below = scope:actor}
+			}
+			desc = AI_CHILD_TO_FOREIGN_COURT
+		}
+
+		modifier = {
+			add = -50
+			scope:secondary_actor.court_owner = {
+				NOR = {
+					this = scope:recipient.court_owner
+					this = scope:secondary_recipient.court_owner
+				}
+			}
+			NOT = { scope:secondary_recipient ?= { is_child_of = scope:actor } }
+			scope:secondary_recipient ?= { is_child_of = scope:recipient }
+			scope:recipient = { target_is_vassal_or_below = scope:actor}
+			desc = AI_CHILD_TO_VASSAL_COURT
+		}
+
+		modifier = {
+			add = 25
+			scope:secondary_recipient ?= {
+				is_close_or_extended_family_of = scope:secondary_actor
+			}
+
+			desc = AI_CHILD_EDUCATED_BY_FAMILY
+		}
+
+		modifier = {
+			add = -100
+			scope:convert_culture = yes
+			scope:secondary_recipient.culture = scope:recipient.culture
+			desc = AI_CONVERT_CULTURE
+		}
+
+		modifier = {
+			add = -100
+			scope:convert_faith = yes
+			scope:secondary_recipient.faith = scope:recipient.faith
+			desc = AI_CONVERT_FAITH
+		}
+
+		modifier = {
+			add = 50
+			scope:recipient = { has_relation_friend = scope:actor }
+			desc = AI_YOUR_FRIEND
+		}
+
+		modifier = {
+			add = -50
+			scope:recipient = { has_relation_rival = scope:actor }
+			desc = AI_YOUR_RIVAL
+		}
+
+		# If the guardian is the child's secret father, the mother is more likely to send them
+		modifier = {
+			add = 100
+			exists = scope:secondary_recipient.mother
+			scope:recipient = scope:secondary_recipient.mother
+			OR = {
+				scope:actor = {
+					any_known_secret = {
+						OR = {
+							secret_type = secret_unmarried_illegitimate_child
+							secret_type = secret_disputed_heritage
+						}
+						secret_target ?= scope:secondary_recipient
+					}
+				}
+				scope:secondary_recipient = { has_trait = disputed_heritage }
+				AND = {
+					scope:secondary_recipient = { has_trait = bastard }
+					NOT = { exists = scope:secondary_recipient.father }
+				}
+			}
+			exists = scope:secondary_recipient.real_father
+			scope:secondary_recipient.real_father = scope:secondary_actor
+			desc = AI_YOU_ARE_THE_FATHER
+		}
+
+		#Their opinion of you matters!
+		opinion_modifier = {
+			opinion_target = scope:actor
+			who = scope:recipient
+			multiplier = 1
+			desc = AI_OPINION_REASON
+		}
+
+		#Make less likely that they accept you as educator if they are of another culture
+		modifier = {
+			add = -5
+			trigger = {
+				scope:actor = {
+					this = scope:secondary_actor
+					culture = { has_same_culture_heritage = scope:recipient.culture }
+					NOT = { has_same_culture_as = scope:recipient }
+				}
+			}
+			desc = AI_NOT_CULTURE
+		}
+
+		modifier = {
+			add = -10
+			trigger = {
+				scope:actor = {
+					this = scope:secondary_actor
+					NOT = { culture = { has_same_culture_heritage = scope:recipient.culture } }
+				}
+			}
+			desc = AI_NOT_CULTURE
+		}
+
+		#Less likely if they don't like other religion
+		modifier = {
+			add = {
+				value = -5
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_hostile_level
+							}
+						}
+					}
+					subtract = 5
+				}
+				if = {
+					limit = {
+						scope:recipient.faith = {
+							faith_hostility_level = {
+								target = scope:actor.faith
+								value >= faith_evil_level
+							}
+						}
+					}
+					subtract = 10
+				}
+			}
+			trigger = {
+				scope:recipient.faith != scope:actor.faith
+			}
+			desc = AI_RELIGION
+		}
+
+		#The better the educator is at a skill, the more likely they are to accept
+		compare_modifier = {
+			trigger = {
+				scope:secondary_actor = {
+					diplomacy >= 11
+				}
+			}
+			target = scope:secondary_actor
+			value = diplomacy
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_DIPLOMACY
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_actor = {
+					martial >= 11
+				}
+			}
+			target = scope:secondary_actor
+			value = martial
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_MARTIAL
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_actor = {
+					stewardship >= 11
+				}
+			}
+			target = scope:secondary_actor
+			value = stewardship
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_STEWARDSHIP
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_actor = {
+					intrigue >= 11
+				}
+			}
+			target = scope:secondary_actor
+			value = intrigue
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_INTRIGUE
+		}
+		compare_modifier = {
+			trigger = {
+				scope:secondary_actor = {
+					learning >= 11
+				}
+			}
+			target = scope:secondary_actor
+			value = learning
+			step = 4
+			multiplier = 0.75
+			offset = -5
+			min = 0
+			desc = AI_GUARDIAN_SKILL_LEARNING
+		}
+
+		# FP3 Beacon of Learning tradition (it makes a higher education trait more likely)
+		modifier = {
+			add = 15
+			scope:secondary_actor = {
+				culture = { has_cultural_parameter = guardian_education_better_outcomes }
+			}
+			desc = tradition_fp3_beacon_of_learning_name
+		}
+
+		#More/Less likely based on difference in rank between actor and recipient
+		modifier = {
+			add = 30
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 1
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 40
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 2
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 50
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 3
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 60
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 4
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = 70
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = 5
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -30
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -1
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -40
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -2
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -50
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -3
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -60
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -4
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+		modifier = {
+			add = -70
+			scope:actor = {
+				tier_difference = {
+					target = scope:recipient
+					value = -5
+				}
+			}
+			desc = AI_RANK_DIFF
+		}
+
+		#More likely to accept if you have an alliance
+		modifier = {
+			add = 40
+			scope:actor = { is_allied_to = scope:recipient }
+			desc = AI_HAS_ALLIANCE
+		}
+
+		modifier = {
+			add = 50
+			scope:recipient = {
+				target_is_liege_or_above = scope:actor
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = 100
+			scope:recipient = {
+				target_is_liege_or_above = scope:actor
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+
+		modifier = {
+			add = 10
+			scope:recipient = {
+				NOT = { target_is_liege_or_above = scope:actor }
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 1
+				}
+			}
+			desc = INTIMIDATED_REASON
+		}
+		modifier = {
+			add = 20
+			scope:recipient = {
+				NOT = { target_is_liege_or_above = scope:actor }
+				has_dread_level_towards = {
+					target = scope:actor
+					level = 2
+				}
+			}
+			desc = COWED_REASON
+		}
+		modifier = {
+			add = 20
+			scope:actor = {
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+				target_is_vassal_or_below = scope:recipient
+				court_grandeur_current_level >= 7
+				court_grandeur_current_level < 9
+			}
+			desc = GRANDEUR_REASON
+		}
+		modifier = {
+			add = 40
+			scope:actor = {
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+				target_is_vassal_or_below = scope:recipient
+				court_grandeur_current_level >= 9
+			}
+			desc = GRANDEUR_REASON
+		}
+
+		modifier = {
+			add = -200
+			scope:recipient.house ?= {
+				scope:secondary_recipient.house ?= this
+				NOT = { scope:actor.house ?= this }
+				any_house_relation = {
+					has_house_relation_level = feud
+					any_relation_house = { scope:actor.house ?= this }
+				}
+			}
+			desc = AI_GUARDIAN_FEUD_HESITANCE
+		}
+
+		modifier = {
+			add = diarch_should_educate_liege_value
+			scope:recipient.diarch ?= scope:actor
+			desc = DIARCH_SHOULD_EDUCATE_DIARCH_TO_LIEGE
+		}
+
+		# Unity modifiers
+		evaluate_action_increasing_house_unity = {
+			VALUE = 100
+		}
+	}
+
+	send_option = {
+		is_shown = {
+			exists = scope:secondary_actor
+			exists = scope:secondary_recipient
+			scope:secondary_actor.culture != scope:secondary_recipient.culture
+		}
+		flag = convert_culture
+		localization = EDUCATE_CHILD_OPTION_CONVERT_CULTURE
+		current_description = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_actor
+						scope:secondary_actor = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_CULTURE_TT_TO_RECIPIENT
+				}
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_recipient
+						scope:secondary_recipient = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_CULTURE_TT_TO_ACTOR
+				}
+			}
+		}
+	}
+	send_option = {
+		is_shown = {
+			exists = scope:secondary_actor
+			exists = scope:secondary_recipient
+			scope:secondary_actor.faith != scope:secondary_recipient.faith
+		}
+		flag = convert_faith
+		localization = EDUCATE_CHILD_OPTION_CONVERT_FAITH
+		current_description = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_actor
+						scope:secondary_actor = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_FAITH_TT_TO_RECIPIENT
+				}
+				triggered_desc = {
+					trigger = {
+						exists = scope:secondary_recipient
+						scope:secondary_recipient = { is_adult = no }
+					}
+					desc = EDUCATE_CHILD_OPTION_CONVERT_FAITH_TT_TO_ACTOR
+				}
+			}
+		}
+	}
+	send_option = {
+		is_shown = {
+			scope:recipient = {
+				custom_tooltip = {
+					text = activity_education_no_culture_center #needed for error supression
+					OR = {
+						any_realm_province = {
+							is_higher_studies_location = yes
+						}
+						any_realm_county = {
+							has_county_modifier = pandidakterion_university_modifier
+						}
+					}
+				}
+			}
+		}
+		is_valid = {
+			scope:actor.gold >= scope:actor.medium_gold_value
+		}
+		starts_enabled = { always = yes	}
+		flag = send_to_university
+		localization = EDUCATION_UNIVERSITY
+	}
+	send_option = {
+		is_valid = {
+			scope:actor = {
+				has_usable_hook = scope:recipient
+			}
+		}
+		flag = education_hook
+		localization = EDUCATION_HOOK
+	}
+	should_use_extra_icon = {
+		scope:actor = { has_usable_hook = scope:recipient }
+	}
+	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
+
+	send_options_exclusive = no
+
+	ai_targets = {
+		ai_recipients = vassals
+		max = 10
+	}
+
+	ai_frequency_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 60
+		kingdom = 60
+		empire = 12
+		hegemony = 12
+	}
+
+	ai_potential = {
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	ai_will_do = {
+		base = 0
+
+		modifier = { # Liege's should want to culture/faith convert their vassal's children
+			add = 100
+
+			scope:convert_culture = yes
+			scope:convert_faith = yes
+
+			scope:secondary_actor = {
+				culture = scope:actor.culture
+				faith = scope:actor.faith
+			}
+			scope:secondary_recipient = {
+				OR = {
+					is_heir_of = scope:recipient
+					scope:secondary_recipient = scope:recipient
+				}
+			}
+		}
+
+		modifier = { # Liege's should want to culture/faith convert their vassal's children
+			add = 95
+
+			scope:convert_culture = yes
+
+			scope:secondary_actor = {
+				culture = scope:actor.culture
+			}
+			scope:secondary_recipient = {
+				OR = {
+					is_heir_of = scope:recipient
+					scope:secondary_recipient = scope:recipient
+				}
+			}
+		}
+
+		modifier = { # Liege's should want to culture/faith convert their vassal's children
+			add = 90
+
+			scope:convert_faith = yes
+
+			scope:secondary_actor = {
+				faith = scope:actor.faith
+			}
+			scope:secondary_recipient = {
+				OR = {
+					is_heir_of = scope:recipient
+					scope:secondary_recipient = scope:recipient
+				}
+			}
+		}
+
+		modifier = { # Players shouldn't be spammed
+			add = -90
+
+			scope:secondary_recipient = {
+				is_ai = no
+			}
+		}
+
+		# Unity modifiers
+		evaluate_action_increasing_house_unity = {
+			VALUE = 100
+		}
+
+		modifier = { # Players shouldn't be spammed
+			factor = 0
+
+			scope:recipient = {
+				has_character_flag = ai_guardianship_ask_cooldown
+			}
+		}
+
+		modifier = { # Don't ask to convert faith if that's already a thing
+			factor = 0
+
+			scope:convert_faith = yes
+			NOT = { scope:convert_culture = yes }
+
+			scope:secondary_recipient = {
+				any_relation = {
+					faith = scope:actor.faith
+					type = guardian
+					has_relation_flag = {
+						target = scope:secondary_recipient
+						relation = ward
+						flag = convert_faith
+					}
+				}
+			}
+		}
+
+		modifier = { # Don't ask to convert culture if that's already a thing
+			factor = 0
+
+			scope:convert_culture = yes
+			NOT = { scope:convert_faith = yes }
+
+			scope:secondary_recipient = {
+				any_relation = {
+					culture = scope:actor.culture
+					type = guardian
+					has_relation_flag = {
+						target = scope:secondary_recipient
+						relation = ward
+						flag = convert_culture
+					}
+				}
+			}
+		}
+
+		modifier = { # Don't ask to convert culture and faith if that's already a thing
+			factor = 0
+
+			scope:convert_culture = yes
+			scope:convert_faith = yes
+
+			scope:secondary_recipient = {
+				any_relation = {
+					culture = scope:actor.culture
+					faith = scope:actor.faith
+					type = guardian
+					has_relation_flag = {
+						target = scope:secondary_recipient
+						relation = ward
+						flag = convert_culture
+					}
+				}
+			}
+		}
+
+		modifier = { # Don't spend gold on this unless very, very rich
+			factor = 0
+			scope:send_to_university = yes
+
+			scope:actor.short_term_gold <= scope:actor.monumental_gold_value
+		}
+	}
+}
+
+remove_guardian_interaction = {
+	category = interaction_category_friendly
+	desc = remove_guardian_interaction_desc
+	icon = child
+
+	force_notification = yes
+	greeting = positive
+	notification_text = REMOVE_GUARDIAN_INTERACTION
+	use_diplomatic_range = no
+
+	is_shown = {
+		scope:actor = { is_ruler = yes }
+		OR = {
+			scope:recipient = {
+				any_relation = {
+					type = ward
+					remove_guardian_interaction_visible_ward_trigger = yes
+				}
+			}
+			scope:recipient = {
+				remove_guardian_interaction_visible_ward_trigger = yes
+				any_relation = { type = guardian always = yes }
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:recipient = {
+			#RECIPIENT = GUARDIAN
+			trigger_if = {
+				limit = { scope:recipient = { is_adult = yes } }
+
+				#Diplo availability/not imprisoned
+
+				any_relation = {
+					type = ward
+
+					remove_guardian_interaction_visible_ward_trigger = yes
+					remove_guardian_interaction_available_ward_trigger = yes
+				}
+
+
+				#War blocker
+				NOR = {
+					is_at_war_with = scope:actor
+					any_liege_or_above = { is_at_war_with = scope:actor }
+				}
+			}
+			#RECIPIENT = WARD
+			trigger_else = {
+
+				#Diplo availability
+				remove_guardian_interaction_visible_ward_trigger = yes
+				remove_guardian_interaction_available_ward_trigger = yes
+
+				any_relation = {
+					type = guardian
+				}
+
+				#War blocker
+				any_relation = {
+					type = guardian
+					NOR = {
+						is_at_war_with = scope:actor
+						any_liege_or_above = { is_at_war_with = scope:actor }
+					}
+				}
+			}
+		}
+
+		#Misc
+		#scope:actor = { is_imprisoned = no }
+	}
+
+	auto_accept = yes
+
+	ai_min_reply_days = 1
+	ai_max_reply_days = 3
+
+	on_accept = {
+		#Save guardian scope
+		if = {
+			limit = { scope:recipient = { is_adult = yes } }
+			scope:recipient = {
+				save_scope_as = guardian
+			}
+		}
+		else = {
+			scope:recipient = { every_relation = { type = guardian save_scope_as = guardian } }
+		}
+
+		#Save ward(s) scope(s)
+		scope:guardian = {
+			#If the recipient is the ward, always pick them as ward
+			if = {
+				limit = {
+					this != scope:recipient
+				}
+				scope:recipient = { save_scope_as = ward }
+			}
+			#If recipient is the guardian, pick a random ward as ward 1 and if there is an additional one, set is as ward 2
+			else = {
+				random_relation = {
+					type = ward
+					limit = {
+						remove_guardian_interaction_visible_ward_trigger = yes
+						remove_guardian_interaction_available_ward_trigger = yes
+					}
+					save_scope_as = ward
+					save_scope_as = secondary_recipient
+				}
+				if = {
+					limit = {
+						any_relation = {
+							type = ward
+							remove_guardian_interaction_visible_ward_trigger = yes
+							remove_guardian_interaction_available_ward_trigger = yes
+							NOR = {
+								this = scope:ward
+								scope:ward = scope:recipient #because if we target a specific child, no 2nd ward
+							}
+						}
+					}
+					random_relation = {
+						type = ward
+						limit = {
+							remove_guardian_interaction_visible_ward_trigger = yes
+							remove_guardian_interaction_available_ward_trigger = yes
+							NOR = {
+								this = scope:ward
+								this = scope:recipient
+							}
+						}
+						save_scope_as = ward_2
+					}
+				}
+			}
+		}
+
+		#Letter event to guardian
+		if = {
+			limit = {
+				scope:guardian != scope:actor
+			}
+			scope:guardian = {
+				trigger_event = char_interaction.0090
+			}
+		}
+
+		#Handling the wards and feedback to actor
+		scope:actor = {
+			send_interface_message = {
+				type = event_childhood_neutral
+				title = remove_guardian_interaction_notification
+				left_icon = scope:guardian
+				right_icon = scope:ward
+				remove_guardian_effect = {
+					GUARDIAN = scope:guardian
+					WARD = scope:ward
+					RETURN_WARD = yes
+					HIDE_OPINION = no
+				}
+				if = {
+					limit = { exists = scope:ward_2 }
+					remove_guardian_effect = {
+						GUARDIAN = scope:guardian
+						WARD = scope:ward_2
+						RETURN_WARD = yes
+						HIDE_OPINION = no
+					}
+				}
+
+				#Was education promised in interaction or in vassal.2001? Then you get an opinion penalty
+				if = {
+					limit = {
+						exists = scope:ward.var:character_requested_as_educator
+						scope:ward.var:character_requested_as_educator = scope:guardian
+						exists = scope:ward.var:character_making_education_request
+						scope:ward.var:character_making_education_request = {
+							is_alive = yes
+							OR = {
+								this = scope:guardian
+								scope:guardian = { is_courtier_of = prev }
+							}
+							this != scope:actor
+						}
+					}
+					scope:ward.var:character_making_education_request = {
+						add_opinion = {
+							modifier = insult_opinion
+							target = scope:actor
+							opinion = -15
+						}
+					}
+				}
+			}
+		}
+
+		#Remove guardian opinion from guardian/guardian's liege
+		#Ward
+		if = {
+			limit = { scope:actor = scope:ward.liege } #Only show if actor is ward's liege
+			guardian_remove_opinion_effect = {
+				GUARDIAN = scope:guardian
+				WARD = scope:ward
+				WARD_LIEGE = scope:ward.liege
+			}
+		}
+		else = {
+			hidden_effect = { #Else hide it
+				guardian_remove_opinion_effect = {
+					GUARDIAN = scope:guardian
+					WARD = scope:ward
+					WARD_LIEGE = scope:ward.liege
+				}
+			}
+		}
+		#Ward_2
+		if = {
+			limit = {
+				exists = scope:ward_2
+				scope:actor = scope:ward_2.liege #Only show guardian opinion removed if actor is ward_2's liege
+				scope:actor != scope:ward.liege #also don't show it twice if both wards' are actor's
+			}
+			guardian_remove_opinion_effect = {
+				GUARDIAN = scope:guardian
+				WARD = scope:ward_2
+				WARD_LIEGE = scope:ward_2.liege
+			}
+		}
+		else_if = {
+			limit = {
+				exists = scope:ward_2
+			}
+			hidden_effect = { #Else hide it
+				guardian_remove_opinion_effect = {
+					GUARDIAN = scope:guardian
+					WARD = scope:ward_2
+					WARD_LIEGE = scope:ward_2.liege
+				}
+			}
+		}
+
+		#Make the liege of the ward(s) insulted if actor is not the liege of the ward
+		if = {
+			limit = {
+				NOR = {
+					scope:ward.liege = scope:actor
+					scope:ward = scope:actor
+				}
+			}
+			scope:ward.liege = {
+				add_opinion = {
+					modifier = insulted_opinion
+					target = scope:actor
+					opinion = -15
+				}
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:ward_2
+				NOR = {
+					scope:ward_2.liege = scope:actor
+					scope:ward_2.liege = scope:ward.liege
+					scope:ward_2 = scope:actor
+				}
+			}
+			scope:ward_2.liege = {
+				add_opinion = {
+					modifier = insulted_opinion
+					target = scope:actor
+					opinion = -15
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				scope:actor = {
+					NOT = {
+						has_character_flag = guardian_unity_block
+					}
+				}
+			}
+			# If we're a clan this interaction affects unity
+			add_clan_unity_interaction_effect = {
+				CHARACTER = scope:actor
+				TARGET = scope:recipient
+				VALUE = minor_unity_loss
+				DESC = clan_unity_removed_guardian.desc
+				REVERSE_NON_HOUSE_TARGET = yes
+			}
+		}
+		scope:actor = {
+			if = {
+				limit = {
+					is_ai = no
+					government_has_flag = government_is_clan
+				}
+			}
+			add_character_flag = {
+				flag = guardian_unity_block
+				months = 3
+			}
+		}
+	}
+}
+
+make_child_learn_language_interaction = {
+	category = interaction_category_friendly
+	common_interaction = yes
+	icon = icon_scheme_learn_language
+
+	send_name = study_language
+
+	desc = make_child_learn_language_interaction_desc
+
+	redirect = {
+		scope:actor = {
+			if = {
+				limit = {
+					scope:recipient = {
+						can_start_scheme = { type = learn_language target_character = prev }
+					}
+				}
+				save_scope_as = secondary_actor
+			}
+			else_if = {
+				limit = {
+					any_courtier = {
+						scope:recipient = {
+							can_start_scheme = { type = learn_language target_character = prev }
+						}
+					}
+				}
+				random_courtier = {
+					limit = {
+						scope:recipient = {
+							can_start_scheme = { type = learn_language target_character = prev }
+						}
+					}
+					save_scope_as = secondary_actor
+				}
+			}
+			else_if = {
+				limit = {
+					any_vassal = {
+						scope:recipient = {
+							can_start_scheme = { type = learn_language target_character = prev }
+						}
+					}
+				}
+				random_vassal = {
+					limit = {
+						scope:recipient = {
+							can_start_scheme = { type = learn_language target_character = prev }
+						}
+					}
+					save_scope_as = secondary_actor
+				}
+			}
+		}
+		scope:recipient = {
+			save_scope_as = secondary_recipient
+
+			if = {
+				limit = {
+					exists = employer
+					employer != scope:recipient
+				}
+
+				employer = {
+					save_scope_as = recipient
+				}
+			}
+		}
+	}
+
+	populate_actor_list = {
+		scope:actor = {
+			if = {
+				limit = {
+					is_physically_able_adult = yes
+					exists = scope:secondary_recipient
+					scope:secondary_recipient = {
+						can_start_scheme = { type = learn_language target_character = prev }
+					}
+				}
+				add_to_list = characters
+			}
+			every_courtier = {
+				limit = {
+					is_physically_able_adult = yes
+					exists = scope:secondary_recipient
+					scope:secondary_recipient = {
+						can_start_scheme = { type = learn_language target_character = prev }
+					}
+				}
+				add_to_list = characters
+			}
+			every_vassal = {
+				limit = {
+					is_physically_able_adult = yes
+					exists = scope:secondary_recipient
+					scope:secondary_recipient = {
+						can_start_scheme = { type = learn_language target_character = prev }
+					}
+				}
+				add_to_list = characters
+			}
+			if = {
+				limit = {
+					NOT = {
+						exists = scope:secondary_recipient
+					}
+				}
+				every_courtier = {
+					limit = {
+						is_physically_able_adult = yes
+					}
+					add_to_list = characters
+				}
+				every_vassal = {
+					limit = {
+						is_physically_able_adult = yes
+					}
+					add_to_list = characters
+				}
+			}
+		}
+	}
+
+	populate_recipient_list = {
+		scope:recipient = {
+			every_courtier = {
+				limit = {
+					is_adult = no
+					is_physically_able = yes
+					age >= 6
+					is_close_or_extended_family_of = scope:actor
+					is_ai = yes
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	greeting = positive
+	notification_text = {
+		desc = MAKE_LEARN_LANGUAGE_REQUEST
+	}
+
+	prompt = {
+		desc = SELECT_TARGET_LANGUAGE_SCHEME
+	}
+
+	is_shown = {
+		has_ep1_court_positions_dlc_trigger = yes
+		scope:recipient = {
+			is_in_the_same_court_as = scope:actor
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = {
+				is_adult = no
+				is_ai = yes
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:recipient = {
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+			OR = {
+				employs_court_position = court_tutor_court_position
+				employs_court_position = court_guru_court_position
+			}
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_actor
+			}
+			scope:secondary_actor = {
+				is_imprisoned = no
+				NOT = { has_trait = incapable }
+			}
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_recipient = {
+				is_adult = no
+				is_physically_able = yes
+				age >= 6
+				is_close_or_extended_family_of = scope:actor
+				custom_description = {
+					text = already_scheming_language
+					NOT = {
+						any_scheme = {
+							type = learn_language
+						}
+					}
+				}
+			}
+			custom_description = {
+				text = no_target_language
+				scope:actor = {
+					OR = {
+						scope:secondary_recipient = {
+							can_start_scheme = { type = learn_language target_character = prev }
+						}
+						any_courtier = {
+							scope:secondary_recipient = {
+								can_start_scheme = { type = learn_language target_character = prev }
+							}
+						}
+						any_vassal = {
+							scope:secondary_recipient = {
+								can_start_scheme = { type = learn_language target_character = prev }
+							}
+						}
+					}
+				}
+			}
+		}
+		trigger_if = {
+			limit = {
+				exists = scope:secondary_actor
+				exists = scope:secondary_recipient
+			}
+			scope:secondary_actor = {
+				scope:secondary_recipient = {
+					can_start_scheme = { type = learn_language target_character = prev }
+				}
+			}
+		}
+	}
+
+	can_be_picked = {
+		is_at_home = yes
+	}
+
+	on_accept = {
+		scope:actor = {
+			send_interface_message = {
+				type = event_childhood_neutral
+				title = make_child_learn_language_interaction_notification
+				left_icon = scope:secondary_recipient
+				right_icon = scope:secondary_actor
+				scope:secondary_recipient = {
+					custom_tooltip = secondary_actors_language
+					begin_scheme_basic_effect = {
+						SCHEME_TYPE = learn_language
+						TARGET_TYPE = target_character
+						TARGET_SCOPE = scope:secondary_actor
+					}
+					if = {
+						limit = {
+							scope:actor = {
+								OR = {
+									AND = {
+										exists = court_position:court_tutor_court_position
+										court_position:court_tutor_court_position = {
+											aptitude:court_tutor_court_position = 1
+										}
+									}
+									AND = {
+										exists = court_position:court_guru_court_position
+										court_position:court_guru_court_position = {
+											aptitude:court_guru_court_position = 1
+										}
+									}
+								}
+							}
+						}
+						custom_tooltip = court_tutor_child_language_rank_1
+						hidden_effect = {
+							random_scheme = {
+								type = learn_language
+								add_scheme_modifier = {
+									type = court_tutor_child_language_rank_1_modifier
+								}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							scope:actor = {
+								OR = {
+									AND = {
+										exists = court_position:court_tutor_court_position
+										court_position:court_tutor_court_position = {
+											aptitude:court_tutor_court_position = 2
+										}
+									}
+									AND = {
+										exists = court_position:court_guru_court_position
+										court_position:court_guru_court_position = {
+											aptitude:court_guru_court_position = 2
+										}
+									}
+								}
+							}
+						}
+						custom_tooltip = court_tutor_child_language_rank_2
+						hidden_effect = {
+							random_scheme = {
+								type = learn_language
+								add_scheme_modifier = {
+									type = court_tutor_child_language_rank_2_modifier
+								}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							scope:actor = {
+								OR = {
+									AND = {
+										exists = court_position:court_tutor_court_position
+										court_position:court_tutor_court_position = {
+											aptitude:court_tutor_court_position = 3
+										}
+									}
+									AND = {
+										exists = court_position:court_guru_court_position
+										court_position:court_guru_court_position = {
+											aptitude:court_guru_court_position = 3
+										}
+									}
+								}
+							}
+						}
+						custom_tooltip = court_tutor_child_language_rank_3
+						hidden_effect = {
+							random_scheme = {
+								type = learn_language
+								add_scheme_modifier = {
+									type = court_tutor_child_language_rank_3_modifier
+								}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							scope:actor = {
+								OR = {
+									AND = {
+										exists = court_position:court_tutor_court_position
+										court_position:court_tutor_court_position = {
+											aptitude:court_tutor_court_position = 4
+										}
+									}
+									AND = {
+										exists = court_position:court_guru_court_position
+										court_position:court_guru_court_position = {
+											aptitude:court_guru_court_position = 4
+										}
+									}
+								}
+							}
+						}
+						custom_tooltip = court_tutor_child_language_rank_4
+						hidden_effect = {
+							random_scheme = {
+								type = learn_language
+								add_scheme_modifier = {
+									type = court_tutor_child_language_rank_4_modifier
+								}
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							scope:actor = {
+								OR = {
+									AND = {
+										exists = court_position:court_tutor_court_position
+										court_position:court_tutor_court_position = {
+											aptitude:court_tutor_court_position = 5
+										}
+									}
+									AND = {
+										exists = court_position:court_guru_court_position
+										court_position:court_guru_court_position = {
+											aptitude:court_guru_court_position = 5
+										}
+									}
+								}
+							}
+						}
+						custom_tooltip = court_tutor_child_language_rank_5
+						hidden_effect = {
+							random_scheme = {
+								type = learn_language
+								add_scheme_modifier = {
+									type = court_tutor_child_language_rank_5_modifier
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	auto_accept = yes
+
+	ai_accept = {
+		base = 100
+	}
+
+	ai_frequency_by_tier = {
+		barony = 0
+		county = 240
+		duchy = 72
+		kingdom = 36
+		empire = 36
+		hegemony = 36
+	}
+
+	ai_targets = {
+		ai_recipients = children
+		max = 5
+	}
+
+	ai_potential = {
+		has_ep1_court_positions_dlc_trigger = yes
+		OR = {
+			employs_court_position = court_tutor_court_position
+			employs_court_position = court_guru_court_position
+		}
+		primary_title.tier >= tier_county
+	}
+
+	ai_will_do = {
+		base = 0
+
+		modifier = { # The AI wants to prepare their children for ruling their vassals
+			add = 100
+			any_vassal = {
+				primary_title.tier >= tier_county
+				knows_language_of_culture = scope:secondary_actor.culture
+			}
+		}
+	}
+}

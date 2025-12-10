@@ -1,0 +1,2165 @@
+﻿# character just about to die in root scope
+# if a killer is known, it's set as scope:killer
+#Triggered by code
+
+on_death = {
+	effect = {
+		play_music_cue = "mx_cue_death"
+
+		add_character_flag = { flag = about_to_die_but_not_dead_yet_flag } # Used in perk calc
+
+		# Legend inheritance
+		if = {
+			limit = {
+				has_ce1_dlc_trigger = yes
+				is_ai = no
+				exists = promoted_legend
+			}
+			promoted_legend = {
+				set_variable = ce1_neverending_story_achievement_possible_legend
+			}
+			player_heir ?= {
+				set_variable = ce1_neverending_story_achievement_possible
+			}
+		}
+
+		if = { # Inherit Flavorisation
+			limit = {
+				is_ruler = yes
+				exists = primary_heir
+				OR = {
+					has_variable = flavourise_camp_purpose_mercenaries
+					has_variable = flavourise_camp_purpose_wanderers
+					has_variable = flavourise_camp_purpose_scholars
+					has_variable = flavourise_camp_purpose_explorers
+					has_variable = flavourise_camp_purpose_brigands
+					has_variable = flavourise_camp_purpose_legitimists
+				}
+			}
+			if = {
+				limit = {
+					has_variable = flavourise_camp_purpose_mercenaries
+				}
+				primary_heir ?= { set_variable = flavourise_camp_purpose_mercenaries }
+			}
+			else_if = {
+				limit = {
+					has_variable = flavourise_camp_purpose_wanderers
+				}
+				primary_heir ?= { set_variable = flavourise_camp_purpose_wanderers }
+			}
+			else_if = {
+				limit = {
+					has_variable = flavourise_camp_purpose_scholars
+				}
+				primary_heir ?= { set_variable = flavourise_camp_purpose_scholars }
+			}
+			else_if = {
+				limit = {
+					has_variable = flavourise_camp_purpose_explorers
+				}
+				primary_heir ?= { set_variable = flavourise_camp_purpose_explorers }
+			}
+			else_if = {
+				limit = {
+					has_variable = flavourise_camp_purpose_brigands
+				}
+				primary_heir ?= { set_variable = flavourise_camp_purpose_brigands }
+			}
+			else_if = {
+				limit = {
+					has_variable = flavourise_camp_purpose_legitimists
+				}
+				primary_heir ?= { set_variable = flavourise_camp_purpose_legitimists }
+			}
+		}
+
+		if = { # Inherit Directives
+			limit = {
+				is_ruler = yes
+				top_liege != this
+				primary_heir ?= {
+					NOR = {
+						has_character_flag = vassal_directive_improve_development
+						has_character_flag = vassal_directive_train_commanders
+						has_character_flag = vassal_directive_build_maa
+						has_character_flag = vassal_directive_convert_faith
+						has_character_flag = vassal_directive_convert_culture
+						has_character_flag = vassal_directive_improve_cultural_acceptance
+						has_character_flag = vassal_directive_building_focus_fortification
+						has_character_flag = vassal_directive_building_focus_military
+						has_character_flag = vassal_directive_building_focus_economy
+					}
+				}
+				OR = {
+					has_character_flag = vassal_directive_improve_development
+					has_character_flag = vassal_directive_train_commanders
+					has_character_flag = vassal_directive_build_maa
+					has_character_flag = vassal_directive_convert_faith
+					has_character_flag = vassal_directive_convert_culture
+					has_character_flag = vassal_directive_improve_cultural_acceptance
+					has_character_flag = vassal_directive_building_focus_fortification
+					has_character_flag = vassal_directive_building_focus_military
+					has_character_flag = vassal_directive_building_focus_economy
+				}
+			}
+			if = {
+				limit = {
+					has_variable = vassal_directive_improve_development
+				}
+				primary_heir ?= { set_variable = vassal_directive_improve_development }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_train_commanders
+				}
+				primary_heir ?= { set_variable = vassal_directive_train_commanders }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_build_maa
+				}
+				primary_heir ?= { set_variable = vassal_directive_build_maa }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_convert_faith
+				}
+				primary_heir ?= { set_variable = vassal_directive_convert_faith }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_convert_culture
+				}
+				primary_heir ?= { set_variable = vassal_directive_convert_culture }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_improve_cultural_acceptance
+				}
+				primary_heir ?= { set_variable = vassal_directive_improve_cultural_acceptance }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_building_focus_fortification
+				}
+				primary_heir ?= { set_variable = vassal_directive_building_focus_fortification }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_building_focus_military
+				}
+				primary_heir ?= { set_variable = vassal_directive_building_focus_military }
+			}
+			else_if = {
+				limit = {
+					has_variable = vassal_directive_building_focus_economy
+				}
+				primary_heir ?= { set_variable = vassal_directive_building_focus_economy }
+			}
+		}
+
+		if = {
+			limit = {
+				has_bp2_dlc_trigger = yes
+				prestige_level >= 3 #Illustrious
+				player_heir ?= {
+					is_child_of = root
+					age >= 6 #Can happen as a child, but also as an adult.
+					NOT = {
+						has_character_flag = bp2_prestige_piety_chain
+					}
+				}
+				NOR = {
+					has_character_flag = bp2_prestige_piety_chain
+					prestige_level < piety_level #higher stat gives the chain
+				}
+			}
+			save_scope_as = famous_parent
+			player_heir = {
+				set_variable = {
+					name = parent_fame_lvl
+					value = scope:famous_parent.prestige_level
+				}
+				create_character_memory = {
+					type = famed_parent_became_very_famous
+					participants = {
+						famed_parent = scope:famous_parent
+					}
+				}
+				trigger_event = {
+					id = bp2_yearly.4010
+					days = 5
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_bp2_dlc_trigger = yes
+				piety_level >= 3 #Illustrious
+				player_heir ?= {
+					is_child_of = root
+					age >= 6 #Can happen as a child, but also as an adult.
+					faith = root.faith
+					NOT = {
+						has_character_flag = bp2_prestige_piety_chain
+					}
+				}
+				NOR = {
+					has_character_flag = bp2_prestige_piety_chain
+					piety_level < prestige_level #higher stat gives the chain
+				}
+				faith = {
+					NOR = {
+						trait_is_virtue = humble
+						trait_is_virtue = content
+					}
+				}
+			}
+			save_scope_as = pious_parent
+			player_heir = {
+				set_variable = {
+					name = parent_piety_lvl
+					value = scope:pious_parent.piety_level
+				}
+				create_character_memory = {
+					type = pious_parent_became_very_pious
+					participants = {
+						pious_parent = scope:pious_parent
+					}
+				}
+				trigger_event = {
+					id = bp2_yearly.4020
+					days = 10
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				exists = player_heir
+			}
+			player_heir = {
+				apply_hold_court_grace_effect = yes
+			}
+			if = {
+				limit = {
+					player_heir = { is_ai = no }
+				}
+				player_heir = {
+					every_held_title = {
+						limit = {
+							is_nomad_title = yes
+						}
+						set_variable = player_domicile_title
+					}
+				}
+			}
+			if = {
+				limit = {
+					is_ai = no
+				}
+				every_held_title = {
+					limit = {
+						is_nomad_title = yes
+					}
+					set_variable = player_domicile_title
+				}
+				player_heir = {
+					add_character_flag = {
+						flag = tutorial_reactive_advice_succession
+					}
+				}
+				if = {
+					limit = {
+						has_royal_court = yes
+						any_sponsored_inspiration = { }
+					}
+					save_scope_as = old_ruler
+					every_sponsored_inspiration = { add_to_list = inherited_inspiration_list }
+					player_heir = {
+						trigger_event = { id = fund_inspiration.9005 days = 5 }
+					}
+				}
+			}
+			if = {
+				limit = { has_character_flag = undertaking_hungarian_migration }
+				player_heir = {
+					add_character_flag = {
+						flag = undertaking_hungarian_migration
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				exists = player_heir
+			}
+			trigger_event = {
+				id = fp3_yearly.2030
+				days = 16
+			}
+		}
+
+		if = { # Lower Grandeur a little bit on death
+			limit = {
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+				primary_heir ?= {
+					has_royal_court = no
+				}
+			}
+			change_current_court_grandeur = grandeur_loss_on_succession_value
+		}
+
+		if = { # Grandeur in elective realms
+			limit = {
+				has_royal_court = yes
+				has_dlc_feature = royal_court
+				primary_heir ?= {
+					has_royal_court = no
+				}
+				primary_title = {
+					has_order_of_succession = election
+				}
+			}
+			primary_heir = {
+				set_variable = {
+					name = previous_holder_grandeur_value
+					value = prev.court_grandeur_current
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				exists = global_var:mongol_empire_was_broken_up
+				exists = global_var:handed_out_mongolia_in_mongol_succession # If Mongolia wasn't properly granted, something has gone wrong, and the primary_heir should receive the Mongol Empire as expected
+				any_held_title = {
+					this = title:e_mongol_empire
+				}
+			}
+			destroy_title = title:e_mongol_empire
+		}
+
+		# Fix gods-damned Bavaria splitting from East Francia in an ugly fashion in 867.
+		if = {
+			limit = {
+				# Make sure we're looking at the right guy & that the circumstances haven't changed too much.
+				this = character:90107
+				highest_held_title_tier = tier_kingdom
+				has_realm_law = confederate_partition_succession_law
+				# Bavaria should be in a fit state for interfering with the handout order.
+				title:k_bavaria = {
+					OR = {
+						is_title_created = no
+						holder = root
+					}
+					any_in_de_jure_hierarchy = {
+						tier = tier_county
+						# More than 50%.
+						count >= 22
+						holder = {
+							any_liege_or_above = { this = root }
+						}
+					}
+				}
+				NOT = { has_primary_title = title:k_bavaria }
+				# Players can sort this themselves: you just need to have Bavaria as your primary title and it's all fine.
+				is_ai = yes
+			}
+			# If we've got no Bavaria, create it.
+			if = {
+				limit = {
+					title:k_bavaria = { is_title_created = no }
+				}
+				create_title_and_vassal_change = {
+					type = created
+					save_scope_as = change
+				}
+				title:k_bavaria = {
+					change_title_holder = {
+						holder = root
+						change = scope:change
+					}
+				}
+				resolve_title_and_vassal_change = scope:change
+			}
+			# Then switch around.
+			set_primary_title_to = title:k_bavaria
+		}
+
+		# Diarchies
+		## Handle regency loyalties.
+		if = {
+			limit = {
+				# We only want to hand this to children.
+				primary_heir ?= { is_adult = no }
+				# Now, what type of regent are we checking?
+				## An actual regency.
+				trigger_if = {
+					limit = {
+						has_active_diarchy = yes
+						has_diarchy_active_parameter = diarchy_is_regency
+					}
+					diarch = { regent_would_remain_loyal_after_death_trigger = yes }
+				}
+				## An organised would-be regency.
+				trigger_else_if = {
+					limit = { exists = designated_diarch }
+					designated_diarch = { regent_would_remain_loyal_after_death_trigger = yes }
+				}
+				## Otherwise, stop the flow.
+				trigger_else = { always = no }
+			}
+			# Nab our affected character.
+			## Actual regents.
+			if = {
+				limit = {
+					has_active_diarchy = yes
+					has_diarchy_active_parameter = diarchy_is_regency
+				}
+				diarch = { save_scope_as = liege_loyalist }
+			}
+			## Designated regents.
+			else = {
+				designated_diarch = { save_scope_as = liege_loyalist }
+			}
+			# Now, give 'em a hook that'll last till their 20th birthday.
+			primary_heir ?= {
+				if = {
+					limit = { is_alive = yes }
+
+					add_hook = {
+						type = predecessor_loyalty_hook
+						target = scope:liege_loyalist
+						years = regent_loyal_after_death_hook_duration_years_value
+					}
+					reverse_add_opinion = {
+						target = scope:liege_loyalist
+						modifier = promise_to_predecessor
+						opinion = 50
+					}
+					# Plus remember who the promise was made to.
+					set_variable = {
+						name = promise_to_predecessor
+						value = root
+						years = regent_loyal_after_death_hook_duration_years_value
+					}
+				}
+			}
+		}
+		## Transfer co-monarchies.
+		if = {
+			limit = {
+				has_active_diarchy = yes
+				has_diarchy_active_parameter = diarchy_is_co_rulership
+				primary_heir ?= {
+					highest_held_title_tier < root.highest_held_title_tier
+					NOR = {
+						this = root.diarch
+						AND = {
+							has_active_diarchy = yes
+							has_diarchy_active_parameter = diarchy_is_co_rulership
+						}
+					}
+				}
+			}
+			# Register our current diarch.
+			diarch = { save_scope_as = co_ruler }
+			# Register our current SoP swing, minus a little for the death.
+			save_scope_value_as = {
+				name = sop_swing
+				value = {
+					add = diarchy_swing
+					add = -20
+					min = 0
+				}
+			}
+			# Aaaand check what type of diarchy we want.
+			if = {
+				limit = { has_diarchy_active_parameter = diarchy_type_is_junior_emperorship }
+				save_scope_value_as = {
+					name = diarchy_type
+					value = flag:junior_emperorship
+				}
+			}
+			else_if = {
+				limit = { has_diarchy_active_parameter = diarchy_type_is_co_emperorship }
+				save_scope_value_as = {
+					name = diarchy_type
+					value = flag:co_emperorship
+				}
+			}
+			else = {
+				save_scope_value_as = {
+					name = diarchy_type
+					value = flag:co_monarchy
+				}
+			}
+			# Cue up our event.
+			primary_heir ?= {
+				trigger_event = {
+					id = diarchy.0024
+					delayed = yes
+				}
+			}
+		}
+
+		invalidate_claimant_factions_on_death_effect = yes
+
+		# EP2 - Handle Grand Wedding betrothals
+		if = {
+			limit = {
+				is_ai = no
+				has_variable = promised_grand_wedding_marriage_countdown
+				exists = player_heir
+			}
+			var:promised_grand_wedding_marriage_countdown = { save_scope_as = temp_marriage_scope }
+			player_heir = {
+				set_variable = {
+					name = promised_grand_wedding_marriage_countdown
+					value = prev.var:promised_grand_wedding_marriage_countdown
+					years = grand_wedding_timeout_alt
+				}
+				# Notification that the countdown has expired (one day before, to avoid getting the variable deleted before we have used it)
+				trigger_event = {
+					id = ep2_wedding.0001
+					days = grand_wedding_timeout_notification_alt
+				}
+			}
+		}
+		if = {
+			limit = {
+				is_ai = no
+				has_variable = promised_grand_wedding_marriage_countdown
+				exists = primary_heir
+				NOT = {
+					primary_heir = {
+						has_variable = promised_grand_wedding_marriage_countdown
+					}
+				}
+			}
+			var:promised_grand_wedding_marriage_countdown = { save_scope_as = temp_marriage_scope }
+			primary_heir = {
+				set_variable = {
+					name = promised_grand_wedding_marriage_countdown
+					value = prev.var:promised_grand_wedding_marriage_countdown
+					years = grand_wedding_timeout_alt
+				}
+				# Notification that the countdown has expired (one day before, to avoid getting the variable deleted before we have used it)
+				trigger_event = {
+					id = ep2_wedding.0001
+					days = grand_wedding_timeout_notification_alt
+				}
+			}
+		}
+		if = {
+			limit = {
+				# You are a spouse to be
+				has_variable = promised_grand_wedding_by
+				# your Grand Wedding has not been organized yet
+				NOR = {
+					exists = involved_activity
+					involved_activity ?= {
+						has_activity_type = activity_wedding
+						OR = {
+							special_guest:spouse_1 ?= root
+							special_guest:spouse_2 ?= root
+						}
+					}
+				}
+			}
+			save_scope_as = dead_spouse
+			# Free the betrothed
+			betrothed = {
+				save_scope_as = alive_spouse
+				trigger_event = ep2_wedding.0003
+			}
+			# Free the host if they were not the betrothed themselves
+			if = {
+				limit = {
+					NOT = { betrothed = { has_variable = promised_grand_wedding_marriage_countdown } }
+				}
+				var:promised_grand_wedding_by = { trigger_event = ep2_wedding.0002 }
+			}
+		}
+
+		# EP2 - Complete murder intents
+		# Complete activity intent if relevant
+		if = {
+			limit = {
+				exists = involved_activity
+				scope:killer.involved_activity ?= root.involved_activity
+				scope:killer = {
+					has_activity_intent = murder_attendee_intent
+					intent_target = root
+				}
+			}
+			scope:killer = {
+				save_scope_as = intent_completer
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = activity_intent_complete_toast
+					left_icon = root
+					complete_activity_intent = yes
+				}
+				# Achievements.
+				if = {
+					limit = {
+						is_ai = no
+						exists = global_var:started_hunting_accident_achievement
+					}
+					set_global_variable = {
+						name = finished_hunting_accident_achievement
+						value = yes
+					}
+				}
+			}
+		}
+
+		# EP2 - Death while traveling
+		# Send relevant event to player heir
+		if = {
+			limit = {
+				exists = player_heir
+				exists = involved_activity
+				is_travelling = yes
+				# Tour has their own death invalidation event
+				trigger_if = {
+					limit = {
+						involved_activity ?= {
+							has_activity_type = activity_tour
+						}
+					}
+				}
+				# Hunt has their own death invalidation event at actual hunt
+				NAND = {
+					involved_activity ?= { has_activity_type = activity_hunt }
+					location = involved_activity.activity_location
+				}
+			}
+			# Save a couple things for loc
+			save_scope_as = predecessor
+			scope:predecessor.location = { save_scope_as = predecessor_location }
+			involved_activity.activity_location = { save_scope_as = travel_destination }
+			# Figure out if we were heading to or home from an activity
+			if = {
+				limit = { exists = involved_activity }
+				if = {
+					limit = {
+						exists = scope:predecessor_location
+						scope:predecessor_location = scope:travel_destination
+					}
+					save_scope_as = at_destination
+				}
+				else = {
+					save_scope_as = to_activity
+				}
+			}
+			# Fire event for player heir
+			player_heir = {
+				if = {
+					limit = { is_available = yes }
+					trigger_event = {
+						id = travel_events.0010
+						days = 1
+					}
+				}
+				else_if = {
+					limit = {
+						NOT = { location ?= scope:predecessor_location }
+					}
+					trigger_event = {
+						id = travel_events.0011
+						days = 1
+					}
+				}
+			}
+		}
+
+		#EP2 - Death on a Pilgrimage
+		#Did we like our predecessor?
+		player_heir ?= {
+			if = {
+				limit = {
+					OR = {
+						opinion = {
+							target = root
+							value > 10
+						}
+						has_any_good_relationship_with_root_trigger = yes
+					}
+					is_alive = yes #if the predecessor died during a murder feast/bloody wedding is quite likely that the heir would've died too
+				}
+				add_character_flag = pilgrimage_liked_my_predecessor
+			}
+		}
+
+		# Event Setup
+		## FP1: Rumoured Draugr - fp1_yearly.0051
+		if = {
+			limit = {
+				#DLC check.
+				has_fp1_dlc_trigger = yes
+				#Must be within the player's court.
+				is_knight = yes
+				court_owner = { is_ai = no }
+				#Must be an intimidating fighter.
+				prowess >= extremely_high_skill_rating
+				#Aaaaand must have a personality that makes people think they'd come back to harass the living.
+				calc_true_if = {
+					amount >= 2
+					has_trait = wrathful
+					has_trait = arrogant
+					has_trait = deceitful
+					has_trait = craven
+					has_trait = ambitious
+					has_trait = arbitrary
+					has_trait = cynical
+					has_trait = vengeful
+					has_trait = sadistic
+				}
+			}
+			save_scope_as = potential_draugr
+			court_owner = {
+				set_variable = {
+					name = potential_draugr
+					value = scope:potential_draugr
+					years = 5
+				}
+			}
+		}
+		## EP1: Might later be rumored to haunt the location in a court event
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						exists = capital_province
+						location = capital_province
+						exists = player_heir
+						OR = {
+							any_close_family_member = { this = root.player_heir }
+							any_spouse = { this = root.player_heir }
+						}
+					}
+					AND = {
+						court_owner ?= {
+							is_ai = no
+							exists = capital_province
+						}
+						location = court_owner.capital_province
+						OR = {
+							any_close_family_member = { this = root.court_owner }
+							any_spouse = { this = root.court_owner }
+						}
+					}
+				}
+			}
+			location = {
+				set_variable = {
+					name = possible_haunting
+					value = prev
+					years = 100
+				}
+			}
+		}
+
+		if = {
+			limit = { has_royal_court = yes }
+			# Clear pay homage once-per-liege grace
+			every_vassal = {
+				if = {
+					limit = { has_variable = homage_type }
+					remove_variable = homage_type
+				}
+			}
+			# Check equipped artifacts
+			if = {
+				limit = {
+					any_equipped_character_artifact = { ep1_artifact_is_court_artifact_trigger = yes }
+				}
+				every_equipped_character_artifact = {
+					limit = { ep1_artifact_is_court_artifact_trigger = yes }
+					set_variable = equipped_court_succession
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				any_relation = {
+					type = best_friend
+				}
+			}
+			# Ritual best friends have a bad, bad, *bad* time.
+			if = {
+				limit = {
+					valid_ritualised_best_friendship_one_way_trigger = { ACTOR_FRIEND = root }
+				}
+				random_relation = {
+					type = best_friend
+					limit = { culture_valid_for_ritualised_best_friends_trigger = yes }
+					# Save a flag for the death management event's ease.
+					add_character_flag = dead_ritual_best_friend
+				}
+			}
+			# Best friend loses synergy
+			if = {
+				limit = { has_any_best_friend_synergy_bonus_modifier_trigger = yes }
+				remove_every_best_friend_synergy_bonus_modifier_effect = yes
+			}
+			random_relation = {
+				type = best_friend
+				if = {
+					limit = { has_any_best_friend_synergy_bonus_modifier_trigger = yes }
+					remove_every_best_friend_synergy_bonus_modifier_effect = yes
+				}
+			}
+		}
+
+		# Struggle Catalysts
+		## Generic unnatural deaths.
+		if = {
+			limit = { exists = scope:killer }
+			if = { # FP2/Generic
+				limit = {
+					is_important_or_vip_struggle_character = yes
+					any_character_struggle = {
+						involvement = involved
+						phase_has_catalyst = catalyst_unnatural_death_important_character
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					activate_struggle_catalyst = {
+						catalyst = catalyst_unnatural_death_important_character
+						character = root
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_trait = fp3_struggle_supporter
+					any_character_struggle = {
+						involvement = involved
+						phase_has_catalyst = catalyst_unnatural_death_supporter
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					activate_struggle_catalyst = {
+						catalyst = catalyst_unnatural_death_supporter
+						character = root
+					}
+					log_debug_variable_for_persian_struggle_effect = { VAR = unrest_catalyst_unnatural_death_supporter }
+				}
+			}
+			if = {
+				limit = {
+					has_trait = fp3_struggle_detractor
+					any_character_struggle = {
+						involvement = involved
+						phase_has_catalyst = catalyst_unnatural_death_detractor
+					}
+				}
+				every_character_struggle = {
+					involvement = involved
+					activate_struggle_catalyst = {
+						catalyst = catalyst_unnatural_death_detractor
+						character = root
+					}
+					log_debug_variable_for_persian_struggle_effect = { VAR = stabil_catalyst_unnatural_death_detractor }
+				}
+			}
+		}
+		## Caliphal deaths.
+		if = {
+			limit = { has_title = title:d_sunni }
+			## Did they die violently?
+			### Checked against the struggle directly: the caliph may, after all, be entirely unrelated & this catalyst is FP3-specific.
+			if = {
+				limit = {
+					exists = scope:killer
+					struggle:persian_struggle ?= {
+						phase_has_catalyst = catalyst_caliph_died_violently
+						NOT = { has_variable = significant_character_death_cooldown }
+					}
+				}
+				struggle:persian_struggle = {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_caliph_died_violently
+						character = root
+					}
+					log_debug_variable_for_persian_struggle_effect = { VAR = concession_catalyst_caliph_died_violently }
+					set_variable = {
+						name = significant_character_death_cooldown
+						value = yes
+						years = catalyst_cooldown_between_significant_character_deaths_years_value
+					}
+				}
+			}
+			## If not, give the natural version.
+			### Checked against the struggle directly: the caliph may, after all, be entirely unrelated & this catalyst is FP3-specific.
+			else_if = {
+				limit = {
+					struggle:persian_struggle ?= {
+						phase_has_catalyst = catalyst_caliph_died_naturally
+						NOT = { has_variable = significant_character_death_cooldown }
+					}
+				}
+				struggle:persian_struggle = {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_caliph_died_naturally
+						character = root
+					}
+					log_debug_variable_for_persian_struggle_effect = { VAR = concession_catalyst_caliph_died_naturally }
+					set_variable = {
+						name = significant_character_death_cooldown
+						value = yes
+						years = catalyst_cooldown_between_significant_character_deaths_years_value
+					}
+				}
+			}
+		}
+		# Other Struggle Stuff
+		## Caliphal deaths part 2: because people tend to remember stuff like that.
+		if = {
+			limit = {
+				has_title = title:d_sunni
+				# Check that scope:killer is in some way involved in the on-going disputes.
+				scope:killer ?= {
+					any_character_struggle = { this = struggle:persian_struggle }
+					# Inter-familial murders within the caliphate don't count, that's just politics.
+					exists = root.dynasty
+					NOT = { dynasty ?= root.dynasty }
+				}
+			}
+			# Cool, we've established you're involved enough to assign traits to and don't have extenuating circumstances.
+			scope:killer = {
+				# Are you a supporter? If so, invert.
+				if = {
+					limit = { has_trait = fp3_struggle_supporter }
+					send_interface_toast = {
+						type = event_toast_effect_neutral
+						title = persian_struggle.tt.supporter_killed_caliph
+						left_icon = root
+						hidden_effect = { remove_trait = fp3_struggle_supporter }
+						add_trait_force_tooltip = fp3_struggle_detractor
+					}
+				}
+				# Are you neutral? If so, become a detractor.
+				else_if = {
+					limit = {
+						NOR = {
+							has_trait = fp3_struggle_supporter
+							has_trait = fp3_struggle_detractor
+						}
+					}
+					send_interface_toast = {
+						type = event_toast_effect_neutral
+						title = persian_struggle.tt.neutral_killed_caliph
+						left_icon = root
+						add_trait = fp3_struggle_detractor
+					}
+				}
+				# Else you're a detractor? You're good, carry on as you are.
+			}
+		}
+
+		every_close_family_member = {
+			create_character_memory = {
+				type = relative_died
+
+				participants = {
+					dead_relation = root
+				}
+			}
+			if = {
+				limit = {
+					is_adult = no
+				}
+				scope:new_memory = {
+					set_variable = {
+						name = childhood_memory
+					}
+				}
+			}
+		}
+
+		every_spouse = {
+			limit = {
+				NOR = {
+					has_relation_friend = root
+					has_relation_rival = root
+					has_relation_lover = root
+					is_close_family_of = root
+				}
+			}
+			create_character_memory = {
+				type = spouse_died
+
+				participants = {
+					dead_relation = root
+				}
+			}
+		}
+
+		# Tournament
+		tournament_versus_qualifier_death_effect = yes
+
+		# Petition Liege invalidation
+		if = {
+			limit = {
+				any_vassal = { var:petition_liege_scope ?= root }
+			}
+			every_vassal = {
+				limit = { var:petition_liege_scope ?= root }
+				trigger_event = { on_action = petition_liege_travel_planner_exit }
+				current_travel_plan = { 
+					if = {
+						limit = { can_cancel = yes }
+						cancel_travel_plan = yes
+					}
+				}
+			}
+		}
+		# Pay Homage invalidation
+		if = {
+			limit = {
+				any_vassal = { var:homage_liege_scope ?= root }
+			}
+			every_vassal = {
+				limit = { var:homage_liege_scope ?= root }
+				trigger_event = { on_action = pay_homage_travel_planner_exit }
+				current_travel_plan = { 
+					if = {
+						limit = { can_cancel = yes }
+						cancel_travel_plan = yes
+					}
+				}
+			}
+		}
+		# Bow Before Liege invalidation
+		if = {
+			limit = {
+				any_vassal = { var:pledge_loyalty_to_liege_scope ?= root }
+			}
+			every_vassal = {
+				limit = { var:pledge_loyalty_to_liege_scope ?= root }
+				trigger_event = { on_action = pledge_loyalty_to_liege_travel_planner_exit }
+				current_travel_plan = { 
+					if = {
+						limit = { can_cancel = yes }
+						cancel_travel_plan = yes
+					}
+				}
+			}
+		}
+
+		# Court position boon invalidation
+		if = {
+			limit = { exists = var:booner_target }
+			employed_booner_invalidation_effect = { EMPLOYEE = root LIEGE = root.employer }
+		}
+		# Cleanup booner focus on dead courtiers
+		employer ?= {
+			every_court_position_holder = {
+				limit = { var:booner_target ?= root }
+				remove_variable = booner_target
+			}
+		}
+
+		# Ward travel invalidation
+		if = {
+			limit = {
+				exists = var:ward_travelling_to_guardian
+				is_travelling = yes
+			}
+			save_scope_as = ward
+			var:ward_travelling_to_guardian = {
+				save_scope_as = guardian
+				liege ?= { save_scope_as = guardian_liege }
+			}
+			var:character_making_education_request ?= { save_scope_as = ward_liege }
+			# Inform Guardian
+			scope:guardian ?= {
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = ward_invalidated_during_travel_title
+					left_icon = scope:ward
+					right_icon = scope:ward_liege
+					show_as_tooltip = {
+						scope:ward = { death = { death_reason = death_fight } }
+					}
+				}
+			}
+			# Inform Liege
+			scope:ward_liege ?= {
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = ward_invalidated_during_travel_title
+					left_icon = scope:ward
+					right_icon = scope:guardian
+					show_as_tooltip = {
+						scope:ward = { death = { death_reason = death_fight } }
+					}
+				}
+			}
+			# Inform Guardian Liege
+			if = {
+				limit = {
+					exists = scope:guardian_liege
+					scope:guardian_liege != scope:guardian
+				}
+				scope:guardian_liege = {
+					send_interface_toast = {
+						type = event_toast_effect_neutral
+						title = ward_invalidated_during_travel_title
+						left_icon = scope:ward
+						right_icon = scope:guardian
+						show_as_tooltip = {
+							scope:ward = { death = { death_reason = death_fight } }
+						}
+					}
+				}
+			}
+		}
+		# Guardian travel invalidation
+		else_if = {
+			limit = {
+				exists = var:guardian_travelling_to_ward
+				is_travelling = yes
+			}
+			save_scope_as = guardian
+			liege ?= { save_scope_as = guardian_liege }
+			var:guardian_travelling_to_ward = {
+				save_scope_as = ward
+				var:character_making_education_request ?= { save_scope_as = ward_liege }
+			}
+			scope:ward = {
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = guardian_invalidated_during_travel_title
+					left_icon = scope:guardian
+					show_as_tooltip = {
+						scope:guardian = { death = { death_reason = death_fight } }
+					}
+				}
+			}
+			if = {
+				limit = {
+					exists = scope:ward_liege
+					scope:ward_liege != scope:ward
+				}
+				scope:ward_liege = {
+					send_interface_toast = {
+						type = event_toast_effect_neutral
+						title = guardian_invalidated_during_travel_title
+						left_icon = scope:guardian
+						right_icon = scope:ward
+						show_as_tooltip = {
+							scope:guardian = { death = { death_reason = death_fight } }
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					exists = scope:guardian_liege
+					scope:guardian_liege != scope:guardian
+				}
+				scope:guardian_liege = {
+					send_interface_toast = {
+						type = event_toast_effect_neutral
+						title = guardian_invalidated_during_travel_title
+						left_icon = scope:guardian
+						right_icon = scope:ward
+						show_as_tooltip = {
+							scope:guardian = { death = { death_reason = death_fight } }
+						}
+					}
+				}
+			}
+		}
+
+		# BP2
+		if = { # Hostage travel
+			limit = {
+				exists = var:hostage_travelling_to_warden
+				is_travelling = yes
+			}
+			save_scope_as = hostage
+			liege = {
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = hostage_invalidated_during_travel_title
+					left_icon = scope:hostage
+					right_icon = scope:hostage.var:hostage_travelling_to_warden
+					show_as_tooltip = {
+						scope:hostage = {
+							death = { death_reason = death_fight }
+						}
+					}
+				}
+			}
+			var:hostage_travelling_to_warden = {
+				save_scope_as = warden
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = hostage_invalidated_during_travel_title
+					left_icon = scope:hostage
+					right_icon = scope:hostage.liege
+					show_as_tooltip = {
+						scope:hostage = {
+							death = { death_reason = death_fight }
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = { is_hostage = yes }
+			save_scope_as = hostage
+			home_court = {
+				save_scope_as = hostage_home_court
+				set_variable = {
+					name = let_my_hostage_die
+					value = scope:hostage.warden
+				}
+			}
+			warden = {
+				set_variable = {
+					name = hostage_died
+					value = scope:hostage_home_court
+				}
+				save_scope_as = hostage_warden
+				trigger_event = { id = bp2_hostage_system.0300 days = 1 }
+				if = {
+					limit = {
+						NOT = { is_close_family_of = scope:hostage }
+					}
+					create_character_memory = {
+						type = hostage_died
+
+						participants = {
+							home_court = scope:hostage.home_court
+							hostage = scope:hostage
+						}
+					}
+				}
+			}
+		}
+
+		# Clan Succession effects
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= {
+					OR = {
+						has_house_unity_stage = competitive
+						has_house_unity_stage = antagonistic
+					}
+				}
+			}
+			every_vassal = {
+				limit = { house ?= root.house }
+				add_unpressed_claim = root.primary_title
+			}
+		}
+
+		# When the house head of a clan dies, they have an impact on their house's unity
+		# Effect of reducing the house unity has to be delayed in death_management.0100 so that your succession laws don't change from lowered house unity before the succession happens
+		if = {
+			limit = {
+				government_has_flag = government_is_clan
+				house ?= {
+					house_head = root
+					NOT = { has_house_unity_stage = impassive }
+				}
+				primary_title.title_held_years >= 1
+			}
+			#calculate the unity value you should lose on this character and save it to pass it to the add_unity_value effect in the death_management.0100 event
+			save_scope_value_as = {
+				name = unity_change
+				value = {
+					value = 10
+					add = root.primary_title.title_held_years
+					multiply = -1
+					min = -50
+				}
+			}
+			save_scope_as = dead_house_head
+			#trigger the death_management.0100 event that will remove the unity after succession happens
+			if = {
+				limit = {
+					exists = player_heir
+				}
+				player_heir = {
+					trigger_event = {
+						id = death_management.0100
+						delayed = yes
+					}
+				}
+			}
+		}
+
+		# If someone has set out a revenge quest on you, give them an event
+		if = {
+			limit = {
+				exists = var:8180_marked_for_death
+			}
+			var:8180_marked_for_death = {
+				trigger_event = {
+					id = legend_spread_events.8181
+					weeks = 1
+				}
+			}
+		}
+
+		if = { # Add Legitimacy Legacy Level 2
+			limit = {
+				dynasty ?= {
+					has_dynasty_perk = ce1_legitimacy_legacy_2
+				}
+				exists = player_heir
+			}
+			player_heir = {
+				add_character_modifier = {
+					modifier = ce1_lasting_line
+					years = 10
+				}
+			}
+		}
+
+		# In Admin Realms, you inherit a portion of your predecessor's Influence on succession
+		if = {
+			limit = {
+				government_allows = administrative
+				influence > 0
+				exists = house
+				player_heir ?= { # Let's make sure we don't give Influence to anyone that shouldn't get it
+					house ?= root.house
+				}
+			}
+			player_heir ?= {
+				change_influence = {
+					value = root.influence
+					multiply = {
+						value = 0.2 # Default value
+						if = {
+							limit = {
+								root = { domicile ?= { has_domicile_parameter = estate_inherit_influence_large_bonus } }
+							}
+							add = influence_inherit_large_bonus_value
+						}
+						else_if = {
+							limit = {
+								root = { domicile ?= { has_domicile_parameter = estate_inherit_influence_medium_bonus } }
+							}
+							add = influence_inherit_medium_bonus_value
+						}
+						else_if = {
+							limit = {
+								root = { domicile ?= { has_domicile_parameter = estate_inherit_influence_small_bonus } }
+							}
+							add = influence_inherit_small_bonus_value
+						}
+					}
+				}
+			}
+		}
+
+		# EP3 - Become Adventurer - Succession
+		trigger_event = ep3_laamps.0012
+
+		# EP3 - Adventurer support invalidation
+		ep3_laamp_supporter_invalidated_effect = yes
+
+		# EP3 - Varangian Palace Pillaging
+		if = {
+			limit = {
+				primary_title = title:e_byzantium
+				OR = {
+					"number_maa_regiments_of_type(varangian_guards)" >= 1
+					number_title_maa_regiments_of_type = {
+						target = varangian_guards
+						value >= 1
+					}
+					any_court_position_holder = {
+						type = akolouthos_court_position
+						ep3_varangian_trigger = yes
+					}
+				}
+			}
+			save_scope_as = dead_emperor
+			if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 0
+						value <= 100
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 1
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 100
+						value <= 200
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 2
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 200
+						value <= 300
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 3
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 300
+						value <= 400
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 4
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 400
+						value <= 500
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 5
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 500
+						value <= 600
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 6
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 600
+						value <= 700
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 7
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 700
+						value <= 800
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 8
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					number_maa_soldiers_of_type = {
+						target = varangian_guards
+						value > 800
+						value <= 900
+					}
+				}
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 9
+					}
+				}
+			}
+			else = {
+				primary_heir = {
+					set_variable = {
+						name = varangian_regiments
+						value = 10
+					}
+				}
+			}
+			primary_heir = {
+				trigger_event = {
+					id = ep3_emperor_yearly.3000
+					days = { 10 20 }
+				}
+			}
+		}
+
+		# EP3 - Grand Ambitions Story Cycle
+		if = {
+			limit = {
+				any_targeting_scheme = {
+					scheme_type = depose
+					scheme_owner = {
+						any_owned_story = {
+							type = grand_ambitions_story_cycle
+							var:target_char ?= root
+						}
+					}
+				}
+			}
+			save_scope_as = previous_story_target
+			# Get the scope of the story owner
+			random_targeting_scheme = {
+				limit = {
+					scheme_type = depose
+					scheme_owner = {
+						any_owned_story = {
+							type = grand_ambitions_story_cycle
+							var:target_char ?= root
+						}
+					}
+				}
+				# Fire an event to the story owner letting them know that their target is dead and letting them choose if they should continue their story and start a new scheme against the heir
+				scheme_owner = { trigger_event = grand_ambitions.0500 }
+			}
+		}
+
+		# EP3, Hasan story cycle stuff
+		if = {
+			limit = {
+				root = character:3096
+			}
+			save_scope_as = ismaili_caliph
+			character:41702 ?= {
+				trigger_event = {
+					id = hasan_sabbah.1030
+					days = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				character:41702 ?= {
+					any_owned_story = {
+						type = story_hasan
+						var:ultimate_foe ?= root
+					}
+				}
+			}
+			character:41702 = {
+				random_owned_story = {
+					type = story_hasan
+					if = {
+						limit = {
+							scope:killer = character:41702
+						}
+						hasan_sabbah_end_war = {
+							HASAN = character:41702
+							SELJUK = root
+						}
+					}
+					else = {
+						set_variable = {
+							name = ultimate_foe
+							value = root.player_heir
+						}
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				is_diarch = yes
+				liege = { has_diarchy_active_parameter = diarchy_is_co_rulership }
+			}
+			end_diarchy = yes
+		}
+
+		# EP3, Wallada transfers possessions to her heir
+		if = {
+			limit = {
+				root = character:andalusian_0003
+				exists = player_heir
+			}
+			# save Wallada's scope
+			save_scope_as = wallada
+			random_artifact = {
+				limit = {
+					has_artifact_modifier = double_moon_modifier
+				}
+				set_owner = scope:wallada.primary_heir
+				save_scope_as = double_moon_book
+			}
+			primary_heir = {
+				trigger_event = {
+					id = ep3_story_cycle_violet_poet.0004
+					days = 1
+				}
+			}
+		}
+
+		# Populate new contracts for laamp heirs.
+		player_heir ?= {
+			trigger_event = {
+				id = ep3_laamps.9982
+				days = 1
+			}
+		}
+
+		# EP3, Legitimist supporter payment inheritance
+		if = {
+			limit = {
+				has_variable_list = legitimist_supporters
+			}
+			every_in_list = {
+				variable = legitimist_supporters
+				limit = {
+					NOT = {
+						is_target_in_variable_list = {
+							name = legitimist_payed_supporters
+							target = this
+						}
+					}
+					is_alive = yes
+					has_variable = legitimist_obligations_left
+				}
+				save_scope_as = petitioned_ruler
+				root = {
+					save_scope_as = previous_ruler
+					player_heir ?= {
+						trigger_event = {
+							id = ep3_laamps.8109
+							months = { 1 6 }
+						}
+					}
+				}
+			}
+		}
+
+		if = { # Nomadic - Add claim to vassals
+			limit = {
+				government_has_flag = "government_is_nomadic"
+			}
+			every_vassal = {
+				if = {
+					limit = {
+						is_kurultai_trigger = yes
+					}
+					add_pressed_claim = root.primary_title
+				}
+				else = {
+					add_unpressed_claim = root.primary_title
+				}
+			}
+		}
+
+		
+
+		# Additional Flavor Titles
+		additional_flavor_check_death_effect = yes
+
+		#Removes special modifiers for blood bros
+		mpo_remove_blood_brother_modifiers_effect = yes
+
+		#Tracking whether Genghis is dead or not
+		if = {
+			limit =	{
+				this = character:125501
+			}
+			set_global_variable = genghis_died
+			if = {
+				limit = {
+					NOT = {
+						any_held_title = {
+							this = title:e_mongol_empire
+						}
+					}
+				}
+				set_global_variable = {
+					name = temujin_failed
+					value = yes
+					years = 50
+				}
+			}
+		}
+		#Greatest of khans stuff should pass to heir during initial war phase
+		if = {
+			limit = {
+				any_character_war = {
+					using_cb = mpo_great_war_of_defiance_cb
+					primary_defender = root
+				}
+				primary_heir = player_heir
+			}
+			gok_war_of_defiance_heir_transfer_effect = yes
+		}
+
+		# MPO: Summon Wealthy Visitors notification event
+		if = {
+			limit = { has_variable = merchant_var }
+			save_scope_as = merchant
+			var:merchant_employer = {
+				send_interface_toast = {
+					title = mpo_call_for_merchants_dead_merchant_toast
+					right_icon = scope:merchant
+					custom_tooltip = mpo_call_for_merchants_dead_merchant_desc
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_held_title = {
+					has_variable = guaranteed_disastrous_succession
+				}
+			}
+			primary_heir = {
+				add_character_flag = had_mongolia_split
+				save_scope_as = mongol_heir
+			}
+			every_held_title = {
+				limit = {
+					has_variable = guaranteed_disastrous_succession
+				}
+				remove_variable = guaranteed_disastrous_succession
+			}
+			break_up_mongol_empire_effect = yes
+			scope:mongol_heir = {
+				if = {
+					limit = {
+						has_character_flag = had_mongolia_split
+					}
+					trigger_event = {
+						id = mpo_chaotic_kurultai_succession.1000
+						days = 1
+					}
+				}
+			}
+		}
+
+		#ACH Officiator death during a coronation_advocate_domain
+
+		if = {
+			limit = {
+				has_character_flag = coronation_officiator
+				involved_activity ?= {
+					has_activity_type = activity_coronation
+				}
+			}
+			involved_activity ?= {
+				save_scope_as = activity
+				activity_host = {
+					trigger_event = {
+						id = coronation_events.0301 
+						days = 1 
+					}
+				}
+			}
+		}
+
+		#ACH Crowned laws reset. If an heir is already crowned, their laws will be reset after the inheritance.
+
+		if = {
+			limit = {
+				coronation_trigger = yes
+				NOT = { has_game_rule = coronation_laws_off }
+			}
+			if = {
+				limit = {
+					has_realm_law = crowned_king
+				}
+				remove_realm_law = crowned_king
+				add_realm_law_skip_effects = uncrowned
+			}
+			else_if = {
+				limit = {
+					has_realm_law = crowned_emperor
+				}
+				remove_realm_law = crowned_emperor
+				add_realm_law_skip_effects = uncrowned
+			}
+		}
+		
+		### TGP ###
+		## China ##
+		# Imperial murder catalyst
+		if = {
+			limit = {
+				exists = title:h_china.holder
+				house ?= title:h_china.holder.house
+				exists = scope:killer
+			}
+			save_scope_as = imperial_death
+			situation:dynastic_cycle = {
+				if = {
+					limit = {
+						scope:imperial_death = title:h_china.holder
+						situation_top_has_catalyst = catalyst_hegemon_murdered
+					}
+					trigger_situation_catalyst = {
+						catalyst = catalyst_hegemon_murdered
+						character = scope:imperial_death
+					}
+				}
+				else_if = {
+					limit = {
+						situation_top_has_catalyst = catalyst_imperial_family_member_murdered
+					}
+					trigger_situation_catalyst = {
+						catalyst = catalyst_imperial_family_member_murdered
+						character = scope:imperial_death
+					}
+				}
+			}
+		}
+		
+		# Merit based governments
+		if = {
+			limit = {
+				government_allows = merit
+			}
+			# If you have the aspriation to allow heirs to inherit some merit - give them merit
+			if = {
+				limit = {
+					house ?= {
+						OR = {
+							has_house_power_parameter = inherit_merit_bonus_1
+							has_house_power_parameter = inherit_merit_bonus_2
+							has_house_power_parameter = inherit_merit_bonus_3
+							has_house_power_parameter = inherit_merit_bonus_4
+						}
+					}
+				}
+				save_scope_as = meritorious_parent
+				save_scope_value_as = { name = meritorious_parent_merit value = merit }
+				every_child = {
+					limit = {
+						trigger_if = {
+							limit = {
+								root.top_liege ?= {
+									OR = {
+										has_realm_law = male_only_law
+										has_realm_law = male_preference_law
+									}
+								}
+							}
+							is_female = no
+						}
+						trigger_else_if = {
+							limit = {
+								root.top_liege ?= {
+									OR = {
+										has_realm_law = female_only_law
+										has_realm_law = female_preference_law
+									}
+								}
+							}
+							is_female = yes
+						}
+						trigger_else = {
+							always = yes
+						}
+					}
+					# We fire the effect in a delayed event to enable a notification
+					trigger_event = { id = tgp_china_career.0020 delayed = yes }
+				}
+			}
+		}
+
+		## Concubine Management on Imperial Demise ##
+
+		if = {
+			limit = {
+				government_has_flag = government_has_merit
+				is_independent_ruler = yes
+				highest_held_title_tier >= tier_empire
+				any_concubine = {
+					NOT = {
+						has_trait = celibate
+					}
+				}
+			}
+			every_concubine = {
+				limit = {
+					NOT = {
+						has_trait = celibate
+					}
+				}
+				add_trait = celibate # Once an imperial concubine, always an imperial concubine
+			}
+		}
+
+		## Mandala ##
+		if = {
+			limit = {
+				government_has_flag = government_is_mandala
+				exists = player_heir
+			}
+			if = {
+				limit = { has_variable = has_picked_mandala_decree }
+				player_heir = {
+					set_variable = {
+						name = has_picked_mandala_decree
+						value = flag:yes
+					}
+				}
+			}
+			if = {
+				limit = { 
+					NOT = {
+						player_heir = { has_variable = not_subject_to_succession_trials }
+					}
+				}
+				#You're a kid Mandala who inherited a succession but then died before reaching adulthood
+				if = {
+					limit = { has_variable = mandala_succession_waiting_on_adulthood }
+					#The old adult
+					var:mandala_succession_waiting_on_adulthood = { save_scope_as = deceased_mandala_ruler }
+					#The dead kid
+					save_scope_as = deceased_kid_mandala_ruler
+					save_scope_value_as = {
+						name = deceased_kid_mandala_ruler_piety
+						value = piety
+					}
+					save_scope_value_as = {
+						name = deceased_kid_mandala_ruler_piety_level
+						value = piety_level
+					}
+					#You do _not_ get any progress towards Godlike
+					player_heir = { 
+						trigger_event = {
+							id = tgp_east_asia_mandala_events.0102
+							delayed = yes
+						}
+					}
+				}
+				else = {
+					save_scope_as = deceased_mandala_ruler
+					save_scope_value_as = {
+						name = deceased_mandala_ruler_piety_level
+						value = piety_level
+					}
+					#If you don't get any effective piety level
+					if = {
+						limit = { scope:deceased_mandala_ruler_piety_level <= player_heir.piety_level }
+						#Have some piety instead
+						save_scope_value_as = {
+							name = deceased_mandala_ruler_piety
+							value = {
+								add = piety
+								multiply = 0.3
+								min = minor_piety_value
+							}
+						}
+					}				
+					#Set up the scopes in case we should level up the heir's Piety Level cap
+					if = {
+						limit = {
+							#Bloodline
+							player_heir ?= {
+								house = prev.house
+								is_close_or_extended_family_of = prev
+							}
+							#Needs to be at least Religious Icon
+							piety_level >= max_piety_level
+						}
+						if = {
+							limit = { 
+								OR = {
+									has_character_modifier = budding_deity_modifier 
+									has_character_modifier = budding_godhood_modifier 
+								}
+							}
+							save_scope_as = apply_godlike
+						}
+						else_if = {
+							limit = { has_character_modifier = budding_divinity_modifier }
+							save_scope_as = apply_budding_deity
+						}
+						else = { save_scope_as = apply_budding_divinity }		
+					}
+					#Get some piety -- and maybe a Piety Level cap increase, depending on predecessor's Piety Level
+					player_heir = { 
+						trigger_event = {
+							id = tgp_east_asia_mandala_events.0100
+							delayed = yes
+						}
+					}
+				}
+			}
+			#Lose Mandala if you change to a monotheist faith
+			mandala_no_longer_polytheist_effect = yes
+		}
+		
+
+		# ACH Purge Pretenders Oath reward
+		
+		if = {
+			limit = {
+				has_variable = purge_oath_previous_law
+			}
+			switch = {
+				trigger = var:purge_oath_previous_law
+				flag:confederate_partition_succession_law = {
+					add_realm_law_skip_effects = confederate_partition_succession_law
+				}
+				flag:partition_succession_law = {
+					add_realm_law_skip_effects = partition_succession_law
+				}
+				flag:high_partition_succession_law = {
+					add_realm_law_skip_effects = high_partition_succession_law
+				}
+				flag:clan_antagonistic_partition_succession_law = {
+					add_realm_law_skip_effects = clan_antagonistic_partition_succession_law
+				}
+				flag:clan_competitive_partition_succession_law = {
+					add_realm_law_skip_effects = clan_competitive_partition_succession_law
+				}
+				flag:clan_impassive_partition_succession_law = {
+					add_realm_law_skip_effects = clan_impassive_partition_succession_law
+				}
+				flag:clan_friendly_partition_succession_law = {
+					add_realm_law_skip_effects = clan_friendly_partition_succession_law
+				}
+			}
+
+			if = {
+				limit = {
+					has_character_flag = ach_purge_oath_administrative
+				}
+				house ?= {
+					remove_house_modifier = oath_of_purge_pretenders_house
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_global_variable = the_maitreya_has_descended
+				has_character_modifier = claimed_mantle_of_maitreya_modifier
+			}
+			remove_global_variable = the_maitreya_has_descended
+		}
+		# Ceremonial liege family
+		if = {
+			limit = {
+				tgp_is_in_ceremonial_house_trigger = yes
+				any_held_title = { is_noble_family_title = yes }
+				player_heir = { is_ai = no }
+			}
+			if = {
+				limit = { is_playable_character = no }
+				set_player_character = top_liege.primary_title.var:administrative_ui_special_title.holder
+			}
+			create_title_and_vassal_change = {
+				type = appointment
+				save_scope_as = change
+			}
+			random_held_title = {
+				limit = { is_noble_family_title = yes }
+				change_title_holder = {
+					holder = top_liege.primary_title.var:administrative_ui_special_title.holder
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+		}
+	}
+
+	events = {
+		death_management.0096	# Updates marriage opinions of other spouses if relevant.
+		death_management.0097	# Sets a flag if the dead one was someone you loved (to make suicide available)
+		death_management.0098 	# Removes rejected_from_marriage_bed_modifier if spouse dies
+		death_management.0099 	# If spouse is pregnant, save as variable
+		death_management.0001 	# Finds characters which would care about death for notifications etc.
+		intrigue_dread.4012		# Interrupts this event chain for the imprisoner when their prisoner dies.
+		stewardship_duty.1065 	# Removes the patron buff from their employer when this character dies.
+		stewardship_duty.1067 	# When you die removes your clients fron your court.
+		great_holy_war.0024		# Replace recipient for ongoing GHW.
+		great_holy_war.0028 	# Beneficiary died, reset and replace.
+		great_holy_war.0080 	# ghw_sponsor died, replace.
+		great_holy_war.0083		# ghw fallback beneficiary dies.
+		religious_decision.0301 # ancestor died and needs to be buried.
+		religious_decision.0311 # Dynasty member has died and you can raise a runestone
+		game_rule.2				# Exclave Independence
+		martial_authority.2057	# Right-Hand Person Dies
+		martial_authority.2055  # Right-handed Person (person with right-hand) Died
+		fp1_yearly.0052			# FP1: Rumoured Draugr
+		fp1_yearly.1061			# FP1: Ship Burial
+		fp1_other_decisions.0062	# FP1: someone intending to HumSac you has died
+		fp1_other_decisions.0063	# FP1: designated HumSac has died
+		fp1_other_decisions.0064	# FP1: remove counties offended by HumSac modifier
+		bp1_house_feud.9000 	# BP1: save rivals on death and fire inheritance on action
+		ep3_frankokratia_events.0021 #EP3 keep frankokratia leaders in the plot
+		mpo_nomad_events.1090 #Nomad widow-marrying event
+		death_management.0123 # Hosue Relations
+	}
+}
+
+# Root = character
+# Triggered when someone is about to die from a natural death but is given a second chance by meeting
+# the has_natural_death_second_chance scripted rule
+on_natural_death_second_chance = {
+	effect = {
+		add_character_flag = {
+			flag = know_thyself_perk_delay_period
+			days = 390
+		}
+		add_character_flag = know_thyself_has_triggered_delay
+		trigger_event = death_management.9998
+		trigger_event = {
+			id = death_management.9999
+			days = { 340 380 }
+		}
+	}
+}

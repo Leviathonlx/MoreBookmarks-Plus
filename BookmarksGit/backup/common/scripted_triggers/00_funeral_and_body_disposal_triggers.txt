@@ -1,0 +1,42 @@
+﻿
+################################################################
+### Triggers related to funerals and general body-related things
+
+body_is_available = {
+	is_alive = no
+	time_since_death = {
+		years <= 5 # Usually it takes a body less time than this to decompose, but we can plausibly say the body is being preserved in some way
+	}
+	NOT = { has_dead_character_variable = body_has_been_disposed }
+}
+
+# NOTE: Keep this trigger in sync with `funeral_add_funeral_targets_to_list` effect
+has_available_funeral_target = {
+	OR = {
+		primary_title ?= { # Previous holders of your primary title
+			any_past_holder = {
+				body_is_available = yes
+			}
+		}
+		any_close_or_extended_family_member = {
+			even_if_dead = yes
+			body_is_available = yes
+		}
+		any_spouse = {
+            even_if_dead = yes
+            body_is_available = yes
+        }
+		any_memory = {
+			OR = {
+				has_memory_type = friend_died
+				has_memory_type = lover_died
+				has_memory_type = soulmate_died
+			}
+			trigger_if = {
+				limit = { exists = memory_participant:dead_relation }
+				memory_participant:dead_relation = { body_is_available = yes }
+			}
+			trigger_else = { always = no }
+		}
+	}
+}

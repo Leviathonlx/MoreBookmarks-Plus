@@ -1,0 +1,444 @@
+﻿namespace = tutorial
+
+# Someone shows up to warn you that another person has fabricated a claim on one of your titles!
+# We use this event to teach the player about some of the diplomatic options available in the game.
+tutorial.0001 = {
+	type = character_event
+	title = tutorial.0001.t
+	desc = tutorial.0001.desc
+	theme = diplomacy
+	override_background = { reference = relaxing_room }
+
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	right_portrait = {
+		character = scope:potential_ally
+		animation = worry
+	}
+	lower_center_portrait = {
+		character = scope:bad_guy
+	}
+	trigger = {
+		has_global_variable = tutorial_completed
+        any_neighboring_top_liege_realm_owner = {
+            count > 1
+        }
+	}
+
+	immediate = {
+        random_neighboring_top_liege_realm_owner = {
+            save_scope_as = bad_guy
+        }
+        random_neighboring_top_liege_realm_owner = {
+            limit = {
+                this != scope:bad_guy
+            }
+            save_scope_as = potential_ally
+        }
+        
+		scope:bad_guy = {
+            add_unpressed_claim = title:c_ennis
+		}
+
+        hidden_effect = {
+            scope:bad_guy = {
+                add_trait = drunkard
+                add_trait = irritable
+            }
+        }
+	}
+
+	option = { # Become friends with the guy plotting against you
+
+        trigger = {
+			OR = {
+				has_trait = education_diplomacy_1
+				has_trait = education_diplomacy_2 
+				has_trait = education_diplomacy_3 
+				has_trait = education_diplomacy_4
+				has_trait = education_diplomacy_5
+			}
+		}
+
+        add_internal_flag = special
+		name = tutorial.0001.a
+		flavor = tutorial.0001.a_flavor
+		
+		if = {
+			limit = {
+				NOT = {
+					any_scheme = {
+						type = befriend
+						scheme_target_character = scope:bad_guy
+					}
+				}
+			}
+			start_scheme = {
+				target_character = scope:bad_guy
+				type = befriend
+			}
+		}
+		custom_tooltip = diplomacy_family.2250.b.tt
+		hidden_effect = {
+			random_scheme = {
+				type = befriend
+				limit = {
+					scheme_target_character = scope:bad_guy
+				}
+				add_scheme_modifier = {
+					type = tutorial_extra_success_chance_modifier
+				}
+			}
+            start_tutorial_lesson = reactive_advice_tutorial_schemes
+		}
+	}
+
+	option = { # Try go get a 'donation' from the guy who warned you about the plotting
+		name = tutorial.0001.c
+		flavor = tutorial.0001.c_flavor
+
+        duel = {
+            skill = diplomacy
+            target = scope:potential_ally
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                min = 5
+                desc = tutorial.0001.c.tt.success
+                send_interface_toast = {
+                    title = tutorial.0001.c.tt.success
+                    left_icon = scope:potential_ally
+                    add_gold = major_gold_value
+                }
+                
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                min = 5
+                desc = tutorial.0001.c.tt.failure
+                send_interface_toast = {
+                    title = tutorial.0001.c.tt.failure
+                    left_icon = scope:potential_ally
+                    reverse_add_opinion = {
+                        target = scope:potential_ally
+                        modifier = insult_opinion
+                        opinion = -35
+                    }
+                }
+
+            }
+        }
+	}
+	option = { # Get some Prestige
+		name = tutorial.0001.b
+		flavor = tutorial.0001.b_flavor
+		add_prestige = medium_prestige_gain
+	}
+
+
+    after = {
+        trigger_event = {
+            id = health.1001
+            months = { 2 3 }
+        }
+        trigger_event = {
+            id = tutorial.0002
+            months = { 12 13 }
+        }
+	}
+}
+
+tutorial.0002 = {
+	type = character_event
+	title = tutorial.0002.t
+	desc = tutorial.0002.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = dismissal
+	}
+	right_portrait = {
+		character = scope:potential_ally
+		animation = shame
+	}
+    lower_center_portrait = {
+        character = scope:bad_guy
+    }
+	trigger = {
+		has_global_variable = tutorial_completed
+	}
+
+	option = { 
+		trigger = {
+			has_trait = impatient
+		}
+		start_war = {
+			casus_belli = "vassalization_cb"
+			target = scope:bad_guy
+		}
+
+        add_internal_flag = dangerous
+		name = tutorial.0002.c
+		flavor = tutorial.0002.c_flavor
+		hidden_effect = {
+			start_tutorial_lesson = reactive_advice_tutorial_war
+		}
+	}
+
+	option = { 
+		trigger = {
+			has_relation_friend = scope:bad_guy
+		}
+		add_internal_flag = special
+		reason = friend
+
+		add_prestige = major_prestige_value
+		scope:bad_guy = {
+				add_opinion = {
+					modifier = friendliness_opinion
+					target = root
+					opinion = 20
+				}
+			}
+
+		name = tutorial.0002.b
+		flavor = tutorial.0002.b_flavor
+	}
+
+	option = { 
+		name = tutorial.0002.a
+		flavor = tutorial.0002.a_flavor
+
+		duel = {
+			skill = diplomacy
+			target = scope:bad_guy
+
+			# Crit success.
+			10 = {
+				custom_tooltip = tutorial.0002.a.tt
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				desc = tutorial.0002.a.tt.crit_success
+				send_interface_toast = {
+                    title = tutorial.0002.a.tt.crit_success
+                    left_icon = scope:bad_guy
+					create_alliance = {
+						target = scope:bad_guy
+						allied_through_owner = root
+						allied_through_target = scope:bad_guy
+					}
+					scope:bad_guy = {
+						add_opinion = {
+							target = root
+							modifier = event_negotiated_alliance_opinion
+						}
+					}
+                }
+			}
+
+			# Success.
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				desc = tutorial.0002.a.tt.success
+				send_interface_toast = {
+                    title = tutorial.0002.a.tt.success
+                    left_icon = scope:bad_guy
+					add_truce_both_ways = {
+						character = scope:bad_guy
+						days = 1825
+						name = TRUCE_ENFORCE_TRUCE
+						result = white_peace
+					}
+                }
+
+			}
+
+			# Failure.
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				desc = tutorial.0002.a.tt.failure
+				send_interface_toast = {
+                    title = tutorial.0002.a.tt.failure
+                    left_icon = scope:bad_guy
+
+					scope:bad_guy = {
+						start_war = {
+							cb = claim_cb
+							target = root
+							claimant = scope:bad_guy
+							target_title = title:c_ennis
+						}
+					}
+					hidden_effect = {
+						start_tutorial_lesson = reactive_advice_tutorial_war
+					}
+                }
+
+			}
+		}
+
+	}
+}
+
+tutorial.1001 = {
+	type = character_event
+	title = tutorial.1001.t
+	desc = tutorial.1001.desc
+	theme = ruler_objectives
+	override_background = { reference = courtyard }
+
+	left_portrait = {
+		character = root
+		animation = eccentric
+	}
+	right_portrait = {
+		character = scope:councillor
+		animation = toast
+	}
+	cooldown = { years = 25 }
+	trigger = {
+	    always = no # TODO[Ruler Objectives]: Make generally available once ready for it
+		capital_province = {
+			geographical_region = custom_ireland
+		}
+		NOR = {
+			house = {
+				has_house_modifier = ruler_objective_region_conquered_modifier
+			}
+			has_variable = ruler_objective_councillor
+		}
+	}
+	immediate = {
+		random_councillor = {
+			save_scope_as = councillor
+		}
+		set_variable = {
+			name = ruler_objective_councillor
+			value = scope:councillor
+		}
+		#random_geographical_region = {
+		#	limit = {
+		#		save_temporary_scope_as = region_temp
+		#		any_county_in_region = {
+		#			region = scope:region_temp
+		#			this = root.capital_county
+		#		}
+		#	}
+		#	save_scope_as = region
+		#}
+		geographical_region:custom_ireland = {
+			save_scope_as = region
+		}
+	}
+	option = {
+		name = tutorial.1001.a
+		reason = ruler_objectives
+		flavor = opted_into_tutorial_objectives_tt
+		custom_tooltip = {
+			text = enable_unify_region_decision_tt
+			add_character_flag = opted_into_tutorial_objectives
+		}
+		set_ruler_objective_decision = unify_region_decision
+	}
+	option = {
+		name = tutorial.1001.b
+		add_prestige = minor_prestige_gain
+	}
+}
+
+tutorial.1002 = {
+	type = character_event
+	title = tutorial.1002.t
+	desc = {
+		desc = tutorial.1002.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:ruler_objective_councillor ?= { is_alive = yes } }
+				desc = tutorial.1002.desc_alive
+			}
+			desc = tutorial.1002.desc_dead
+		}
+	}
+	theme = ruler_objectives
+	override_background = { reference = throne_room }
+
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:councillor
+		animation = throne_room_applaud_1
+	}
+	immediate = {
+		var:ruler_objective_councillor ?= {
+			save_scope_as = councillor
+		}
+		#random_geographical_region = {
+		#	limit = {
+		#		save_temporary_scope_as = region_temp
+		#		any_county_in_region = {
+		#			region = scope:region_temp
+		#			this = root.capital_county
+		#		}
+		#	}
+		#	save_scope_as = region
+		#}
+		geographical_region:custom_ireland = {
+			save_scope_as = region
+		}
+	}
+	option = {
+		reason = ruler_objectives
+		name = {
+			trigger = {
+				var:ruler_objective_councillor ?= {
+					is_alive = yes
+				}
+			}
+			text = tutorial.1002.a_councillor
+		}
+		name = {
+			trigger = {
+				var:ruler_objective_councillor ?= {
+					is_alive = no
+				}
+			}
+			text = tutorial.1002.a
+		}
+		dynasty = {
+			add_dynasty_prestige = 500
+		}
+		house = {
+			add_house_modifier = {
+				modifier = ruler_objective_region_conquered_modifier
+				years = 100
+			}
+		}
+	}
+	after = {
+		remove_variable = ruler_objective_councillor
+	}
+}
+

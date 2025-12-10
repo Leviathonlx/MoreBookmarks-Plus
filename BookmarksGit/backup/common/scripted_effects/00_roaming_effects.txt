@@ -1,0 +1,145 @@
+﻿###################
+# Roaming Effects #
+###################
+
+roaming_fame_reward_APA_effect = {
+	if = {
+		limit = {
+			has_perk = roaming_perk
+		}
+		custom_tooltip = roaming_fame_$REWARD$_tt
+		add_prestige_experience = { value = roaming_reward_fame_$REWARD$ }
+		roaming_tally_variable_effect = { TYPE = fame VALUE = roaming_reward_fame_$REWARD$ }
+	}
+}
+
+roaming_stress_reward_APA_effect = {
+	add_stress = $REWARD$
+	roaming_tally_variable_effect = { TYPE = stress VALUE = $REWARD$ }
+}
+
+roaming_gold_reward_APA_effect = {
+	add_gold = $REWARD$
+	roaming_tally_variable_effect = { TYPE = gold VALUE = $REWARD$ }
+}
+
+roaming_mystic_xp_APA_effect = {
+	if = {
+		limit = {
+			has_trait = lifestyle_mystic
+		}
+		add_trait_xp = {
+			trait = lifestyle_mystic
+			value = $REWARD$
+		} 
+		roaming_tally_variable_effect = { TYPE = mystic_xp VALUE = $REWARD$ }
+	}
+}
+
+roaming_tally_variable_effect = {
+	if = {
+		limit = {
+			has_variable = roaming_tally_$TYPE$
+		}
+		change_variable = {
+			name = roaming_tally_$TYPE$
+			add = $VALUE$
+		}
+	}
+	else = {
+		set_variable = {
+			name = roaming_tally_$TYPE$
+			value = $VALUE$
+		}
+	}
+}
+
+roaming_pondering_stone_effect = {
+	involved_activity = {
+		add_activity_log_entry = {
+			key = roaming_pondering_stone_key
+			tags = { activity_log }
+			character = scope:host
+			root = {
+				send_interface_toast = {
+					title = bp3_roaming.0100.a.flavor
+					add_character_modifier = {
+						modifier = pondering_$TYPE$_modifier
+						years = 5
+					}
+				}
+			}
+		}
+	}
+}
+
+roaming_tally_stress_impact_effect = {
+	if = {
+		limit = {
+			has_trait = $TRAIT$
+		}
+		roaming_tally_variable_effect = { TYPE = stress VALUE = $VALUE$ }
+	}
+}
+
+roaming_fame_reward_event_effect = {
+	if = {
+		limit = {
+			has_perk = roaming_perk
+		}
+		save_scope_value_as = {
+			name = fame_value
+			value = $VALUE$
+		}
+		custom_tooltip = {
+			text = roaming_fame_reward_tt
+			add_prestige_experience = $VALUE$
+		}
+		roaming_tally_variable_effect = { TYPE = fame VALUE = $VALUE$ }
+	}
+}
+
+roaming_progress_events_reward_effect = {
+	involved_activity = {
+		add_activity_log_entry = {
+			key = $LOG_KEY$
+			tags = { activity_log }
+			character = root
+			root = {
+				if = {
+					limit = {
+						has_activity_intent = roaming_storyteller_intent
+					}
+					roaming_fame_reward_event_effect = { VALUE = roaming_reward_fame_small }
+				}
+				else_if = {
+					limit = {
+						exists = scope:special_guest
+						has_activity_intent = roaming_befriend_intent
+					}
+					scope:special_guest = {
+						reverse_add_opinion = {
+							modifier = friendliness_opinion
+							target = root
+							opinion = 15
+						}
+						roaming_tally_variable_effect = { TYPE = opinion VALUE = 10 }
+					}
+					root = {
+						reverse_add_opinion = {
+							modifier = friendliness_opinion
+							target = scope:special_guest
+							opinion = 15
+						}
+						roaming_tally_variable_effect = { TYPE = opinion VALUE = 10 }
+					}
+				}
+				else = {
+					stress_impact = { base = miniscule_stress_impact_loss }
+					roaming_tally_variable_effect = { TYPE = stress VALUE = miniscule_stress_impact_loss }
+				}
+			}
+		}
+	}
+}
+

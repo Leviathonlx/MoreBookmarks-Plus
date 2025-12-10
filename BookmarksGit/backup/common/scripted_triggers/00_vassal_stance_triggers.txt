@@ -1,0 +1,84 @@
+﻿
+### Vassal stance trigger list
+
+# has_same_vassal_stance_as_trigger
+
+has_same_vassal_stance_as_trigger = {
+	top_liege != this
+	save_temporary_scope_as = vassal_temp
+	$COMPARE$ = {
+		top_liege != this
+		save_temporary_scope_as = compare_temp
+	}
+	scope:compare_temp = {
+		switch = {
+			trigger = has_vassal_stance
+			courtly = { scope:vassal_temp = { has_vassal_stance = courtly } }
+			glory_hound = { scope:vassal_temp = { has_vassal_stance = glory_hound } }
+			parochial = { scope:vassal_temp = { has_vassal_stance = parochial } }
+			zealot = { scope:vassal_temp = { has_vassal_stance = zealot } }
+			minority = { scope:vassal_temp = { has_vassal_stance = minority } }
+			barons_and_minor_landholders = { scope:vassal_temp = { has_vassal_stance = barons_and_minor_landholders } }
+			belligerent = { scope:vassal_temp = { has_vassal_stance = belligerent } }
+		}
+	}
+}
+
+vassal_is_valid_and_follows_directive_trigger = {
+	top_liege != this
+	is_landed = yes
+	highest_held_title_tier >= tier_county
+	is_ai = yes
+	vassal_follows_directive_valid_trigger = { VASSAL = $VASSAL$ LIEGE = $LIEGE$ }
+	vassal_follows_directive_trigger = { VASSAL = $VASSAL$ LIEGE = $LIEGE$ }
+}
+
+vassal_follows_directive_valid_trigger = {
+	$VASSAL$ = { save_temporary_scope_as = directive_vassal }
+	$LIEGE$ = { save_temporary_scope_as = directive_liege }
+	scope:directive_vassal = {
+		trigger_if = {
+			limit = {
+				scope:directive_liege = { government_allows = administrative }
+			}
+			is_vassal_of = scope:directive_liege
+		}
+		trigger_else = {
+			is_vassal_of = scope:directive_liege
+		}
+		NOT = { has_relation_rival = scope:directive_liege }
+		NOT = { is_at_war_with = scope:directive_liege }
+		NOT = { has_trait = disloyal }
+	}
+}
+
+vassal_follows_directive_trigger = {
+	$VASSAL$ = { save_temporary_scope_as = directive_vassal }
+	$LIEGE$ = { save_temporary_scope_as = directive_liege }
+	scope:directive_vassal = {
+		OR = {
+			trigger_if = {
+				limit = {
+					has_dlc_feature = roads_to_power
+				}
+				custom_tooltip = {
+					text = has_admin_gov
+					government_allows = administrative
+				}
+			}
+			opinion = {
+				value >= 50
+				target = scope:directive_liege
+			}
+			has_trait = trusting
+			has_trait = loyal
+			scope:directive_liege = { has_relation_friend = scope:directive_vassal }
+			scope:directive_liege = { has_relation_lover = scope:directive_vassal }
+			scope:directive_liege = { has_strong_hook = scope:directive_vassal }
+			scope:directive_liege = { has_perk = absolute_control_perk }
+			scope:directive_liege = { has_perk = honored_to_serve_perk }
+			scope:directive_liege = { has_realm_law = crown_authority_3 }
+			scope:directive_liege = { legitimacy_level = 5 }
+		}
+	}
+}

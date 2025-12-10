@@ -1,0 +1,957 @@
+﻿### Hold Court ###
+hold_court_decision = {
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+	picture = {
+		trigger = {
+			NOR = {
+				government_has_flag = government_is_tribal
+				government_has_flag = government_is_theocracy
+				top_liege ?= { government_has_flag = government_is_tribal }
+				top_liege ?= { government_has_flag = government_is_theocracy }
+			}
+			OR = {
+				culture = { has_cultural_pillar = heritage_byzantine }
+				top_liege ?= {
+					OR = {
+						culture = { has_cultural_pillar = heritage_byzantine }
+						capital_barony ?= title:b_constantinople
+						is_roman_emperor_primary_title_trigger = yes
+					}
+				}
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/ep3_cerimonial_decision.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_knight_kneeling.dds"
+	}
+	decision_group_type = major
+	is_invisible = yes
+
+	cost = {
+		prestige = {
+			value = standard_activity_cost
+			multiply = 0.5
+		}
+	}
+
+	cooldown = {
+		days = standard_hold_court_cooldown_time
+	}
+
+	is_shown = {
+		is_landed = yes
+		has_royal_court = yes
+		has_dlc_feature = royal_court
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		court_grandeur_current_level >= 1
+		
+		custom_description = {
+			text = ENGAGED_IN_SINGLE_COMBAT
+			NOT = { exists = var:engaged_in_single_combat } 
+		}
+
+		trigger_if = {
+			limit = { is_ai = no }
+			has_pending_court_events = no # should only be used for human players
+			has_spawned_court_events = no # should only be used for human players
+		}
+	}
+
+	effect = {
+		custom_tooltip = hold_court_gain_grandeur_tooltip # Granted in conclusion event - hold_court.0021
+		custom_tooltip = hold_court_gain_legitimacy_tooltip # Granted in conclusion event - hold_court.0021
+		custom_tooltip = hold_court_decision_effects
+		hidden_effect = {
+			trigger_event = hold_court.0011
+		}
+	}
+	
+	ai_potential = {
+		is_at_war = no
+		gold >= minor_gold_value
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+### Petition the [ROOT.Char.GetTopLiege.GetTitleAsNameNoTooltip] ###
+petition_liege_decision = {
+	ai_check_interval = 0
+	sort_order = 200
+
+	selection_tooltip = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					liege = { tgp_is_ceremonial_regent_trigger = yes }
+				}
+				desc = petition_liege_decision_tooltip_non_royal
+			}
+			desc = petition_liege_decision_tooltip
+		}
+	}
+	desc = petition_liege_decision_desc
+	picture = {
+		trigger = { #This is not the ceremonial liege
+			tgp_is_ceremonial_petition_shown_trigger = yes
+			top_liege = {
+				culture ?= {
+					has_graphical_japanese_culture_group_trigger = yes
+					has_cultural_tradition = tradition_tgp_bushido # Shogunate
+				}
+				has_government = japan_feudal_government
+				tgp_has_ceremonial_liege_title_trigger = no
+			}
+		}
+		reference = "gfx/interface/illustrations/event_story/tgp_japanese_shogunate.dds"
+	}
+	picture = {
+		trigger = { #This is not the ceremonial liege
+			tgp_is_ceremonial_petition_shown_trigger = yes
+			top_liege.culture ?= { has_graphical_japanese_culture_group_trigger = yes }
+		}
+		reference = "gfx/interface/illustrations/decisions/tgp_house_fief.dds"
+	}
+	picture = { #This is not the ceremonial liege
+		trigger = {
+			tgp_is_ceremonial_petition_shown_trigger = yes
+			top_liege.culture = { has_graphical_east_asia_culture_group_trigger = yes }
+		}
+		reference = "gfx/interface/illustrations/decisions/tgp_retire.dds"
+	}
+	picture = { #This is the true top liege
+		trigger = {
+			tgp_is_ceremonial_petition_shown_trigger = no
+			top_liege ?= {
+				culture = { has_graphical_east_asia_culture_group_trigger = yes }
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/tgp_kowtow.dds"
+	}
+	picture = {
+		trigger = {
+			NOR = {
+				government_has_flag = government_is_tribal
+				government_has_flag = government_is_theocracy
+				top_liege ?= { government_has_flag = government_is_tribal }
+				top_liege ?= { government_has_flag = government_is_theocracy }
+			}
+			OR = {
+				culture = { has_cultural_pillar = heritage_byzantine }
+				top_liege ?= {
+					OR = {
+						culture = { has_cultural_pillar = heritage_byzantine }
+						capital_barony ?= title:b_constantinople
+						is_roman_emperor_primary_title_trigger = yes
+					}
+				}
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/ep3_cerimonial_decision.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_knight_kneeling.dds"
+	}
+
+	cost = {
+		prestige = {
+			value = 0
+			if = {
+				limit = { petition_liege_admin_valid_trigger = no }
+				add = standard_activity_cost
+			}
+		}
+		influence = {
+			value = 0
+			if = {
+				limit = { petition_liege_admin_valid_trigger = yes }
+				add = standard_activity_cost
+			}
+		}
+	}
+
+	cooldown = {
+		days = standard_petition_liege_cooldown_time
+	}
+
+	is_shown = {
+		is_playable_character = yes
+		top_liege != this
+		liege ?= { has_royal_court = yes }
+		has_dlc_feature = royal_court
+		tgp_is_ceremonial_liege_trigger = no
+	}
+
+	is_valid = {
+		exists = liege
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		liege ?= { is_available_adult = yes }
+		is_at_war_with_liege = no
+		trigger_if = {
+			limit = {
+				is_ai = no
+				has_royal_court = yes
+			}
+			has_spawned_court_events = no # should only be used for human players
+		}
+		trigger_if = {
+			limit = {
+				government_allows = merit
+			}
+			merit_level >= 3
+		}
+		trigger_if = { # Gold
+			limit = { scope:petition_liege_gold = yes }
+		}
+		trigger_if = { # Council
+			limit = {
+				AND = {
+					scope:petition_liege_council_seat = yes 
+					petition_liege_council_seat_trigger = { HOUSE = root.house LIEGE = root.liege }
+				}
+			}
+			custom_tooltip = {
+				text = petition_liege_council_seat_liege_tt
+				petition_liege_council_seat_liege_trigger = yes
+			}
+			custom_tooltip = {
+				text = petition_liege_council_seat_me_tt
+				petition_liege_council_seat_trigger = { HOUSE = root.house LIEGE = root.liege }
+			}
+		}
+		trigger_if = { # Family Council
+			limit = { scope:petition_liege_council_seat_family = yes }
+			custom_tooltip = {
+				text = petition_liege_council_seat_liege_tt
+				petition_liege_council_seat_liege_trigger = yes
+			}
+			custom_tooltip = {
+				text = petition_liege_council_seat_family_tt
+				petition_liege_council_seat_family_trigger = { HOUSE = root.house LIEGE = root.liege }
+			}
+		}
+		trigger_if = { # Court Position
+			limit = { scope:petition_liege_court_position = yes }
+			custom_tooltip = {
+				text = petition_liege_court_position_me_tt
+				petition_liege_court_position_trigger = { HOUSE = root.house }
+			}
+		}
+		trigger_if = { # Family Court Position
+			limit = { scope:petition_liege_court_position_family = yes }
+			custom_tooltip = {
+				text = petition_liege_court_position_family_tt
+				petition_liege_court_position_family_trigger = { HOUSE = root.house }
+			}
+		}
+		trigger_if = { # Family Governorship
+			limit = { scope:petition_liege_governorship_family = yes }
+			custom_tooltip = {
+				text = petition_liege_governorship_tt
+				petition_liege_governorship_trigger = yes
+			}
+			custom_tooltip = {
+				text = petition_liege_governorship_family_count_tt
+				petition_liege_governorship_family_count_trigger = yes
+			}
+			custom_tooltip = {
+				text = petition_liege_governorship_family_valid_tt
+				petition_liege_governorship_family_valid_trigger = yes
+			}
+		}
+		trigger_if = { # House Governorship Rights
+			limit = { scope:petition_liege_house_governorship_rights = yes }
+			petition_liege_house_governorship_rights_trigger = yes
+		}
+		trigger_if = { # Pay Debt
+			limit = { scope:petition_liege_pay_debt = yes }
+			custom_tooltip = {
+				text = petition_liege_pay_debt_me_tt
+				gold <= -100
+			}
+			custom_tooltip = {
+				text = petition_liege_pay_debt_liege_tt
+				liege.gold >= petitioner_debt_positivization_root_value
+			}
+		}
+		trigger_if = { # War Aid
+			limit = { scope:petition_liege_war_aid = yes }
+			custom_tooltip = { # Must not be in any war involving liege
+				text = petition_liege_war_aid_liege_tt
+				petition_liege_war_aid_share_trigger = yes
+			}
+			custom_tooltip = { # Losing an external war
+				text = petition_liege_war_aid_tt
+				petition_liege_war_aid_trigger = yes
+			}
+			custom_tooltip = { # Liege not at war themselves
+				text = petition_liege_internal_war_aid_tt
+				petition_war_aid_liege_ally_value >= petition_war_aid_rebels_value
+			}
+			custom_tooltip = { # Liege not at war themselves
+				text = petition_liege_external_war_aid_tt
+				petition_liege_war_liege_involvement_trigger = yes
+			}
+		}
+		trigger_if = { # Vassal War
+			limit = { scope:petition_liege_vassal_war = yes }
+			custom_tooltip = {
+				text = petition_liege_vassal_war_tt
+				petition_liege_vassal_war_trigger = yes
+			}
+		}
+		trigger_if = { # Faction War
+			limit = { scope:petition_liege_faction_war = yes }
+			custom_tooltip = {
+				text = petition_liege_faction_war_tt
+				any_targeting_faction = { target_of_powerful_faction_trigger = yes }
+			}
+		}
+		trigger_if = { # Bailiffs
+			limit = { scope:petition_liege_county_control = yes }
+			custom_tooltip = {
+				text = petition_liege_county_control_tt
+				any_held_title = { petition_liege_county_control_trigger = yes }
+			}
+		}
+		trigger_if = { # Convert
+			limit = { scope:petition_liege_county_convert = yes }
+			faith = liege.faith
+			custom_tooltip = {
+				text = petition_liege_county_convert_tt
+				any_held_title = { petition_liege_county_convert_trigger = yes }
+			}
+		}
+		trigger_if = { # Opinion
+			limit = { scope:petition_liege_county_opinion = yes }
+			custom_tooltip = {
+				text = petition_liege_county_opinion_tt
+				any_held_title = { petition_liege_county_opinion_trigger = yes }
+			}
+		}
+		trigger_if = { # Fortify
+			limit = { scope:petition_liege_fortify_border = yes }
+			custom_tooltip = {
+				text = petition_liege_fortify_border_tt
+				any_held_title = { petition_liege_fortify_border_trigger = yes }
+			}
+			custom_tooltip = {
+				text = petition_liege_debt_tt
+				NOT = { liege.gold < 0 }
+			}
+		}
+		trigger_if = { # Liege Title
+			limit = { scope:petition_liege_title_liege = yes }
+			custom_tooltip = {
+				text = petition_liege_title_liege_tt
+				any_claim = { petition_liege_title_liege_trigger = yes }
+			}
+		}
+		trigger_if = { # Vassal Title
+			limit = { scope:petition_liege_title_vassal = yes }
+			custom_tooltip = {
+				text = petition_liege_title_vassal_liege_tt
+				NOR = { # Only relevant if revocation is possible
+					liege = { has_realm_law = crown_authority_0 }
+					liege = { has_realm_law = tribal_authority_1 }
+					liege = { has_realm_law = tribal_authority_1 }
+				}
+			}
+			custom_tooltip = {
+				text = petition_liege_title_vassal_claim_tt
+				any_claim = { petition_liege_title_vassal_trigger = yes }
+			}
+		}
+		trigger_if = { # Construct City
+			limit = { scope:petition_liege_construct_city = yes }
+			custom_tooltip = {
+				text = petition_liege_construct_city_tt
+				any_held_title = { petition_liege_construct_city_trigger = yes }
+			}
+			custom_tooltip = {
+				text = petition_liege_construct_city_liege_tt
+				liege.gold > main_building_tier_1_cost
+			}
+		}
+		trigger_if = { # Construct Temple
+			limit = {
+				scope:petition_liege_construct_temple = yes
+				liege = { tgp_is_ceremonial_regent_trigger = no }
+			}
+			custom_tooltip = {
+				text = petition_liege_construct_temple_tt
+				any_held_title = { petition_liege_construct_temple_trigger = yes }
+			}
+			custom_tooltip = {
+				text = petition_liege_construct_city_liege_tt
+				liege.gold > main_building_tier_1_cost
+			}
+		}
+		trigger_if = { # Development
+			limit = { scope:petition_liege_development = yes }
+			custom_tooltip = {
+				text = petition_liege_development_tt
+				exists = liege
+				liege.capital_province.county.development_level >= petitioner_development_difference_decision_value
+			}
+		}
+		trigger_if = { # House Fief
+			limit = { scope:petition_liege_house_fief = yes }
+			custom_tooltip = {
+				text = petition_liege_house_fief_tt
+				has_tgp_dlc_trigger = yes
+				has_government = japan_administrative_government
+			}
+		}
+	}
+
+	widget = {
+		gui = "decision_view_widget_petition_liege"
+		controller = decision_option_list_controller
+		decision_to_second_step_button = "CHOOSE_PETITION_DECISION_NEXT_STEP_BUTTON"
+
+		### TGP
+		item = { # House Fief
+			value = petition_liege_house_fief
+			is_shown = {
+				has_tgp_dlc_trigger = yes
+				has_government = japan_administrative_government
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_house_fief_tt
+					has_tgp_dlc_trigger = yes
+					has_government = japan_administrative_government
+					top_liege = { has_government = japan_administrative_government }
+				}
+			}
+			current_description = petition_liege_house_fief_desc
+			localization = petition_liege_decision_option_house_fief
+			icon = "gfx/interface/icons/government_types/japan_feudal_government.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Gold
+			value = petition_liege_gold
+			is_shown = {
+				petition_liege_admin_valid_trigger = yes
+			}
+			is_valid = {}
+			current_description = petition_liege_gold_desc
+			localization = petition_liege_decision_option_gold
+			icon = "gfx/interface/icons/message_feed/money.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Family Governorship
+			value = petition_liege_governorship_family
+			is_shown = {
+				petition_liege_admin_valid_trigger = yes
+			}
+			is_valid = {
+				is_house_head = yes
+				custom_tooltip = {
+					text = petition_liege_governorship_tt
+					petition_liege_governorship_trigger = yes
+				}
+				custom_tooltip = {
+					text = petition_liege_governorship_family_count_tt
+					petition_liege_governorship_family_count_trigger = yes
+				}
+				custom_tooltip = {
+					text = petition_liege_governorship_family_valid_tt
+					petition_liege_governorship_family_valid_trigger = yes
+				}
+			}
+			current_description = petition_liege_governorship_family_desc
+			localization = petition_liege_decision_option_governorship_family
+			icon = "gfx/interface/icons/character_interactions/grant_governorship.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # House Governorship Rights
+			value = petition_liege_house_governorship_rights
+			is_shown = {
+				petition_liege_admin_valid_trigger = yes
+			}
+			is_valid = {
+				petition_liege_house_governorship_rights_trigger = yes
+			}
+			current_description = petition_liege_house_governorship_rights_desc
+			localization = petition_liege_decision_option_house_governorship_rights
+			icon = "gfx/interface/icons/character_interactions/request_appointment_support.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Council
+			value = petition_liege_council_seat
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				is_councillor = no
+				custom_tooltip = { # Liege can shuffle council
+					text = petition_liege_council_seat_liege_tt
+					petition_liege_council_seat_liege_trigger = yes
+				}
+			}
+			current_description = petition_liege_council_seat_desc
+			localization = petition_liege_decision_option_council_seat
+			icon = "gfx/interface/icons/message_feed/council.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Family Council Appointment
+			value = petition_liege_council_seat_family
+			is_shown = {
+				petition_liege_admin_valid_trigger = yes
+			}
+			is_valid = {
+				custom_tooltip = { # Liege can shuffle council
+					text = petition_liege_council_seat_liege_tt
+					petition_liege_council_seat_liege_trigger = yes
+				}
+				is_house_head = yes
+				custom_tooltip = {
+					text = petition_liege_council_seat_family_tt
+					petition_liege_council_seat_family_trigger = { HOUSE = root.house LIEGE = root.liege }
+				}
+			}
+			current_description = petition_liege_council_seat_family_desc
+			localization = petition_liege_decision_option_council_seat_family
+			icon = "gfx/interface/icons/message_feed/council.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		
+		item = { # Court Position
+			value = petition_liege_court_position
+			is_shown = {
+				petition_liege_admin_valid_trigger = yes
+			}
+			is_valid = {
+				petition_liege_court_position_trigger = { HOUSE = root.house }
+			}
+			current_description = petition_liege_court_position_desc
+			localization = petition_liege_decision_option_court_position
+			icon = "gfx/interface/icons/court_position_types/court_tutor_court_position.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Family Court Position
+			value = petition_liege_court_position_family
+			is_shown = {
+				petition_liege_admin_valid_trigger = yes
+			}
+			is_valid = {
+				is_house_head = yes
+				custom_tooltip = {
+					text = petition_liege_court_position_family_tt
+					petition_liege_court_position_family_trigger = { HOUSE = root.house }
+				}
+			}
+			current_description = petition_liege_court_position_family_desc
+			localization = petition_liege_decision_option_court_position_family
+			icon = "gfx/interface/icons/court_position_types/bodyguard_court_position.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Debt
+			value = petition_liege_pay_debt
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = { # In debt
+					text = petition_liege_pay_debt_me_tt
+					gold <= -100
+				}
+				custom_tooltip = { # Liege can afford your debt
+					text = petition_liege_pay_debt_liege_tt
+					liege.gold >= petitioner_debt_positivization_root_value
+				}
+			}
+			current_description = petition_liege_pay_debt_desc
+			localization = petition_liege_decision_option_pay_debt
+			icon = "gfx/interface/icons/message_feed/steward_job.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		### Titles
+		item = { # Title Liege
+			value = petition_liege_title_liege
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+				NOT = {
+					government_has_flag = government_is_japan_feudal
+				}
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_title_liege_tt
+					any_claim = { petition_liege_title_liege_trigger = yes }
+				}
+			}
+			current_description = petition_liege_title_liege_desc
+			localization = petition_liege_decision_option_title_liege
+			icon = "gfx/interface/icons/message_feed/titles.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Title Vassal
+			value = petition_liege_title_vassal
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+				NOT = {
+					government_has_flag = government_is_japan_feudal
+				}
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_title_vassal_liege_tt
+					liege ?= { 
+						NOR = { # Only relevant if revocation is possible
+							has_realm_law = crown_authority_0
+							has_realm_law = tribal_authority_1
+							has_realm_law = tribal_authority_1
+						}
+					}
+				}
+				custom_tooltip = {
+					text = petition_liege_title_vassal_claim_tt
+					any_claim = { petition_liege_title_vassal_trigger = yes }
+				}
+			}
+			current_description = petition_liege_title_vassal_desc
+			localization = petition_liege_decision_option_title_vassal
+			icon = "gfx/interface/icons/message_feed/generic_neutral_effect.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		### Wars
+		item = { # Faction War
+			value = petition_liege_faction_war
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_faction_war_tt
+					any_targeting_faction = { target_of_powerful_faction_trigger = yes }
+				}
+				NAND = {
+					government_has_flag = government_is_administrative
+					liege = { government_has_flag = government_is_administrative }
+				}
+			}
+			current_description = petition_liege_faction_war_desc
+			localization = petition_liege_decision_option_faction_war
+			icon = "gfx/interface/icons/message_feed/faction.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Vassal War
+			value = petition_liege_vassal_war
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip ={
+					text = petition_liege_vassal_war_tt
+					petition_liege_vassal_war_trigger = yes
+				}
+				NAND = {
+					government_has_flag = government_is_administrative
+					liege = { government_has_flag = government_is_administrative }
+				}
+			}
+			current_description = petition_liege_vassal_war_desc
+			localization = petition_liege_decision_option_vassal_war
+			icon = "gfx/interface/icons/message_feed/generic_good_effect.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # War Aid
+			value = petition_liege_war_aid
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = { # Must not be in any war involving liege
+					text = petition_liege_war_aid_liege_tt
+					petition_liege_war_aid_share_trigger = yes
+				}
+				custom_tooltip = { # Losing an external war
+					text = petition_liege_war_aid_tt
+					petition_liege_war_aid_trigger = yes
+				}
+				custom_tooltip = { # Liege not at war themselves
+					text = petition_liege_internal_war_aid_tt
+					petition_war_aid_liege_ally_value >= petition_war_aid_rebels_value
+				}
+				custom_tooltip = { # Liege not at war themselves
+					text = petition_liege_external_war_aid_tt
+					petition_liege_war_liege_involvement_trigger = yes
+				}
+				NAND = {
+					government_has_flag = government_is_administrative
+					liege = { government_has_flag = government_is_administrative }
+				}
+			}
+			current_description = petition_liege_war_aid_desc
+			localization = petition_liege_decision_option_war_aid
+			icon = "gfx/interface/icons/message_feed/war.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		### Counties
+		item = { # Control
+			value = petition_liege_county_control
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_county_control_tt
+					any_held_title = { petition_liege_county_control_trigger = yes }
+				}
+			}
+			current_description = petition_liege_county_control_desc
+			localization = petition_liege_decision_option_county_control
+			icon = "gfx/interface/icons/message_feed/control.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Convert
+			value = petition_liege_county_convert
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_faith_tt
+					faith = liege.faith
+				}
+				custom_tooltip = {
+					text = petition_liege_county_convert_tt
+					any_held_title = { petition_liege_county_convert_trigger = yes }
+				}
+			}
+			current_description = petition_liege_county_convert_desc
+			localization = petition_liege_decision_option_county_convert
+			icon = "gfx/interface/icons/message_feed/bishop.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Opinion
+			value = petition_liege_county_opinion
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_county_opinion_tt
+					any_held_title = { petition_liege_county_opinion_trigger = yes }
+				}
+			}
+			current_description = petition_liege_county_opinion_desc
+			localization = petition_liege_decision_option_county_opinion
+			icon = "gfx/interface/icons/message_feed/tier_up.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		### Construction/Development
+		item = { # Fortify
+			value = petition_liege_fortify_border
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = { # Royal
+					text = petition_liege_fortify_border_tt
+					any_held_title = { petition_liege_fortify_border_trigger = yes }
+				}
+			}
+			current_description = petition_liege_fortify_border_desc
+			localization = petition_liege_decision_option_fortify_border
+			icon = "gfx/interface/icons/icon_garrison.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Construct City
+			value = petition_liege_construct_city
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_city_planning_innovation_tt
+					culture = { has_innovation = innovation_city_planning }
+					liege.culture ?= { has_innovation = innovation_city_planning }
+				}
+				custom_tooltip = {
+					text = petition_liege_construct_city_tt
+					any_held_title = { petition_liege_construct_city_trigger = yes }
+				}
+				custom_tooltip = {
+					text = petition_liege_holding_tt
+					liege.gold > main_building_tier_1_cost
+				}
+			}
+			current_description = petition_liege_construct_city_desc
+			localization = petition_liege_decision_option_construct_city
+			icon = "gfx/interface/icons/message_feed/building.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Construct Temple
+			value = petition_liege_construct_temple
+			is_shown = {
+				petition_liege_admin_valid_trigger = no
+			}
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_city_planning_innovation_tt
+					culture = { has_innovation = innovation_city_planning }
+					liege.culture ?= { has_innovation = innovation_city_planning }
+				}
+				custom_tooltip = {
+					text = petition_liege_faith_tt
+					faith = liege.faith
+				}
+				custom_tooltip = {
+					text = petition_liege_construct_temple_tt
+					any_held_title = { petition_liege_construct_temple_trigger = yes }
+				}
+				custom_tooltip = {
+					text = petition_liege_holding_tt
+					liege.gold > main_building_tier_1_cost
+				}
+			}
+			current_description = petition_liege_construct_temple_desc
+			localization = petition_liege_decision_option_construct_temple
+			icon = "gfx/interface/icons/message_feed/religious.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+		item = { # Development
+			value = petition_liege_development
+			is_valid = {
+				custom_tooltip = {
+					text = petition_liege_development_tt
+					exists = liege
+					liege.capital_province.county.development_level >= petitioner_development_difference_decision_value
+				}
+			}
+			current_description = petition_liege_development_desc
+			localization = petition_liege_decision_option_development
+			icon = "gfx/interface/icons/message_feed/guest.dds"
+			ai_chance = { value = 0 } # Currently unused
+		}
+	}
+
+	effect = {
+		custom_tooltip = petition_liege_decision_effects
+		if = {
+			limit = {
+				liege = { is_ai = yes }
+			}
+			custom_description_no_bullet = { text = petition_liege_warning_effect }
+		}
+		show_as_tooltip = {
+			switch = {
+				trigger = has_trait 
+				shy = { add_stress = medium_stress_impact_gain }
+				arrogant = { add_stress = medium_stress_impact_gain }
+			}
+		}
+		switch = {
+			trigger = yes
+			scope:petition_liege_gold = { # Gold
+				set_variable = { name = petition_type value = flag:gold }
+			}
+			scope:petition_liege_council_seat = { # Council
+				set_variable = { name = petition_type value = flag:council_seat }
+			}
+			scope:petition_liege_council_seat_family = { # Family Council
+				set_variable = { name = petition_type value = flag:council_seat_family }
+			}
+			scope:petition_liege_court_position = { # Court Position
+				set_variable = { name = petition_type value = flag:court_position }
+			}
+			scope:petition_liege_court_position_family = { # Family Court Position
+				set_variable = { name = petition_type value = flag:court_position_family }
+			}
+			scope:petition_liege_governorship_family = { # Family Governorship
+				set_variable = { name = petition_type value = flag:governorship_family }
+			}
+			scope:petition_liege_house_governorship_rights = { # House Governorship Rights
+				set_variable = { name = petition_type value = flag:house_governorship_rights }
+			}
+			scope:petition_liege_pay_debt = { # Debt
+				set_variable = { name = petition_type value = flag:pay_debt }
+			}
+			scope:petition_liege_war_aid = { # War Aid
+				set_variable = { name = petition_type value = flag:war_aid }
+			}
+			scope:petition_liege_vassal_war = { # Vassal Aid
+				set_variable = { name = petition_type value = flag:vassal_war }
+			}
+			scope:petition_liege_faction_war = { # Faction War
+				set_variable = { name = petition_type value = flag:faction_war }
+			}
+			scope:petition_liege_county_control = { # County Control
+				set_variable = { name = petition_type value = flag:county_control }
+			}
+			scope:petition_liege_county_convert = { # Convert County
+				set_variable = { name = petition_type value = flag:county_convert }
+			}
+			scope:petition_liege_county_opinion = { # County Opinion
+				set_variable = { name = petition_type value = flag:county_opinion }
+			}
+			scope:petition_liege_fortify_border = { # Fortify Border
+				set_variable = { name = petition_type value = flag:fortify_border }
+			}
+			scope:petition_liege_title_liege = { # Title Liege
+				set_variable = { name = petition_type value = flag:title_liege }
+			}
+			scope:petition_liege_title_vassal = { # Title Vassal
+				set_variable = { name = petition_type value = flag:title_vassal }
+			}
+			scope:petition_liege_construct_city = { # Construct City
+				set_variable = { name = petition_type value = flag:construct_city }
+			}
+			scope:petition_liege_construct_temple = { # Construct Temple
+				set_variable = { name = petition_type value = flag:construct_temple }
+			}
+			scope:petition_liege_development = { # Development
+				set_variable = { name = petition_type value = flag:development }
+			}
+			scope:petition_liege_gold = { # Gold
+				set_variable = { name = petition_type value = flag:gold }
+			}
+			scope:petition_liege_house_fief = { # House Fief
+				set_variable = { name = petition_type value = flag:house_fief }
+			}
+		}
+		if = {
+			limit = {
+				location = liege.capital_province
+			}
+			trigger_event = {
+				on_action = petition_liege_start
+			}
+			
+			trigger_event = petition_liege.9000
+		}
+		else = {
+			start_travel_plan = {
+				destination = liege.capital_province
+				on_start_on_action = petition_liege_start
+				on_travel_planner_cancel_on_action = petition_liege_travel_planner_exit 
+				on_arrival_event = petition_liege.9000
+				on_arrival_destinations = all_but_last
+			}
+		}
+	}
+	
+	ai_potential = {
+		always = no # Only players can do this. AI vassals go through the normal court events/hold court activity.
+	}
+}

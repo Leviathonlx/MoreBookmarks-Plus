@@ -1,0 +1,169 @@
+﻿namespace = tgp_house_blocs
+
+# Message management
+
+tgp_house_blocs.0001 = {
+	type = character_event
+	hidden = yes
+
+	trigger = { has_character_flag = bloc_message_flag }
+
+	immediate = {
+		# Notify all members about them leaving.
+		send_interface_message = {
+			type = msg_left_house_bloc
+			title = msg_left_bloc_root
+			desc = msg_left_bloc_desc_root
+			left_icon = scope:leaver.house
+			right_icon = scope:bloc.leading_house
+			custom_description = {
+				text = leave_house_bloc_effect
+				subject = house.house_head
+			}
+		}
+		every_player = {
+			limit = {
+				confederation ?= scope:bloc
+				NOT = { this = root }
+			}
+			send_interface_message = {
+				type = msg_left_house_bloc
+				title = msg_left_bloc
+				desc = msg_left_bloc_desc
+				left_icon = scope:leaver.house
+				right_icon = scope:bloc.leading_house
+				custom_description = {
+					text = leave_house_bloc_effect
+					subject = scope:leaver.house_head
+				}
+			}
+		}
+		remove_character_flag = bloc_message_flag
+	}
+}
+
+tgp_house_blocs.0002 = {
+	type = character_event
+	hidden = yes
+
+	trigger = { has_character_flag = bloc_message_flag }
+
+	immediate = {
+		# Notify all members about them leaving.
+		send_interface_message = {
+			type = msg_joined_house_bloc
+			title = msg_joined_bloc_root
+			desc = msg_joined_bloc_desc_root
+			left_icon = scope:joiner.house
+			right_icon = scope:bloc.leading_house
+			custom_description = {
+				text = join_house_bloc_effect
+				subject = scope:joiner
+				object = scope:bloc.leading_house.house_head
+			}
+		}
+		every_player = {
+			limit = {
+				confederation ?= scope:bloc
+				NOT = { this = root }
+			}
+			send_interface_message = {
+				type = msg_joined_house_bloc
+				title = msg_joined_bloc
+				desc = msg_joined_bloc_desc
+				left_icon = scope:joiner.house
+				right_icon = scope:bloc.leading_house
+				custom_description = {
+					text = join_house_bloc_effect
+					subject = scope:joiner
+					object = scope:bloc.leading_house.house_head
+				}
+			}
+		}
+		remove_character_flag = bloc_message_flag
+	}
+}
+
+tgp_house_blocs.0010 = {
+	type = character_event
+	hidden = yes
+
+	immediate = {
+		bloc_leader_change_aspiration_cohesion_effect = yes
+	}
+}
+
+# Strength Unlock
+
+tgp_house_blocs.1001 = {
+	type = character_event
+	title = tgp_house_blocs.1001.t
+	desc = tgp_house_blocs.1001.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:bloc_leader
+		animation = japanese_war_fan
+	}
+	override_background = { reference = army_camp }
+
+	trigger = {
+		is_ruler = yes
+		exists = house.house_confederation
+		NOT = { is_at_war_with = house.house_confederation.leading_house.house_head }
+	}
+
+	immediate = {
+		house = {
+			house_confederation = {
+				leading_house.house_head = { save_scope_as = bloc_leader }
+			}
+			every_house_member = {
+				limit = {
+					is_landed = yes
+					top_liege = root.top_liege
+					OR = {
+						liege = scope:bloc_leader
+						liege = root
+					}
+					NOT = { is_at_war_with = house.house_confederation.leading_house.house_head }
+				}
+				add_to_list = war_joiners
+			}
+		}
+	}
+
+	option = {
+		name = tgp_house_blocs.1001.a
+		scope:war = { add_attacker = root }
+		every_in_list = {
+			list = war_joiners
+			save_temporary_scope_as = war_joiner_temp
+			scope:war = { add_attacker = scope:war_joiner_temp }
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		name = tgp_house_blocs.1001.b
+		house = {
+			set_variable = {
+				name = bloc_leaving_reason
+				value = flag:reason_events
+				days = 4
+			}
+			tgp_leave_house_bloc_effect = {
+				OPINION = flag:yes
+				TRUCE = flag:yes
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}

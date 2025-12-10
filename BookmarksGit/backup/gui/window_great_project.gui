@@ -1,0 +1,529 @@
+﻿window = {
+	name = "great_project"
+	widgetid = "great_project"
+	size = { 630 900 }
+	position = { 660 90 }
+	datacontext = "[GreatProjectWindow.GetProject]"
+
+	layoutpolicy_vertical = expanding
+
+	layer = middle
+	using = Window_Movable
+	using = Window_Background
+	using = Window_Decoration_Spike
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+	}
+
+	vbox = {
+		using = Window_Margins
+		layoutpolicy_vertical = expanding
+
+		# Name and close button
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = "[GreatProject.GetName]"
+			}
+
+			blockoverride "button_close"
+			{
+				shortcut = "close_window"
+				onclick = "[GreatProjectWindow.Close]"
+
+			}
+		}
+
+		# icon, progress bars
+		widget = {
+			size = { 550 220 }
+
+			# background
+			background = {
+				name = "illustration"
+				texture = "[GreatProject.GetIllustration]"
+				fittype = centercrop
+				using = Mask_Rough_Edges
+				alpha = 0.9
+			}
+
+			text_single = {
+				datacontext = "[GreatProject.GetLocation]"
+				parentanchor = top|left
+				position = { 10 5 }
+
+				text = "GREAT_PROJECT_ONGOING_LOCATION"
+				align = nobaseline
+
+				background = {
+					using = Background_Area_Dark
+					margin = { 10 5 }
+					margin_right = 70
+
+					modify_texture = {
+						texture = "gfx/interface/component_masks/mask_fade_horizontal_extended.dds"
+						blend_mode = alphamultiply
+					}
+				}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+
+				vbox = {
+					layoutpolicy_vertical = expanding
+
+					expand = {}
+
+					hbox_project_contribution_status = {
+						visible = "[Not( GreatProject.IsUnderConstruction )]"
+					}
+				}
+
+				expand = {}
+			}
+
+			vbox = {
+				expand = {}
+
+				# owner overtext
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					margin_right = 5
+
+					expand = {}
+
+					widget = {
+						datacontext = "[GreatProject.GetOwner]"
+						visible = "[And( Character.IsValid, Not( Character.IsLocalPlayer ) )]"
+						size = { 85 145 }
+
+						portrait_head = {
+							name = "portrait_project_owner"
+							datacontext = "[GreatProject.GetOwner]"
+							visible = "[And( And( Character.IsValid, GreatProject.GetType.ShouldShowOwnerPortrait ), Not( Character.IsLocalPlayer ) )]"
+							parentanchor = bottom|right
+							position = { 0 -5 }
+						}
+
+						text_label_right = {
+							text = "GREAT_PROJECT_OWNER_LABEL"
+							visible = "[GreatProject.GetType.ShouldShowOwnerPortrait]"
+							max_width = 220
+							align = right|nobaseline
+							position = { -10 0 }
+						}
+					}
+				}
+
+				# construction progress bar
+				vbox = {
+					visible = "[GreatProject.IsUnderConstruction]"
+					layoutpolicy_horizontal = expanding
+					allow_outside = yes
+
+					background = {
+						using = Background_Area_Dark
+
+						modify_texture = {
+							texture = "gfx/interface/component_masks/mask_fade_vertical.dds"
+							blend_mode = alphamultiply
+							mirror = vertical
+						}
+					}
+
+					expand = {}
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						margin_right = 10
+						margin_bottom = 3
+
+						expand = {}
+
+						text_single = {
+							text = "GREAT_PROJECT_CONSTRUCTION_TIME_UNTIL_COMPLETION"
+							visible = "[GreatProject.IsUnderConstruction]"
+							max_width = 220
+							align = right|nobaseline
+						}
+					}
+
+					widget = {
+						allow_outside = yes
+						size = { 550 15 }
+
+						progressbar_standard = {
+							name = "great_project_progressbar"
+							layoutpolicy_horizontal = expanding
+							alwaystransparent = yes
+
+							size = { 550 15 }
+							value = "[GreatProject.GetConstructionProgress]"
+							direction = horizontal
+
+							tooltip = "[GreatProject.GetConstructionEndDateDesc]"
+						}
+
+						hbox = {
+							visible = "[DataModelHasItems( GreatProjectWindow.AccessOptionalContributions )]"
+							allow_outside = yes
+							position = { 0 -50 }
+
+							hbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+								layoutstretchfactor_horizontal = "[FixedPointToInt( GreatProject.GetDeadlinePercentageForContributions )]"
+							}
+
+							widget = {
+								name = "deadline_marker"
+								visible = yes
+								allow_outside = yes
+								size = { 45 50 }
+								
+								tooltip = "GREAT_PROJECT_CONTRIBUTION_DEADLINE"
+
+								background = {
+									using = Background_Area_Dark
+									alpha = 0.4
+
+									margin = { 15 0 }
+									margin_top = 10
+
+									modify_texture = {
+										texture = "gfx/interface/component_masks/mask_glow.dds"
+										blend_mode = alphamultiply
+									}
+								}
+
+								background = {
+									texture = "gfx/interface/icons/map_icons/portrait_pin.dds"
+								}
+
+								icon = {
+									parentanchor = bottom|hcenter
+									position = { 0 14 }
+									size = { 6 13 }
+									texture = "gfx/interface/colors/white.dds"
+									alpha = 0.2
+									
+									using = Mask_Rough_Edges
+								}
+
+								icon_flat_standard = {
+									name = "deadline_icon"
+									parentanchor = center
+									position = { 0 -5 }
+									size = { 30 30 }
+									texture = "gfx/interface/icons/flat_icons/contribute.dds"
+								}
+							}
+
+							hbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+								layoutstretchfactor_horizontal = "[FixedPointToInt( Subtract_CFixedPoint( '(CFixedPoint)100', GreatProject.GetDeadlinePercentageForContributions ) )]"
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# CONTRIBUTIONS SECTION
+		vbox = {
+			name = "contribution_tab"
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			scrollbox = {
+				name = "contributions_scrollarea"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				blockoverride "scrollbox_content"
+				{
+					text_multi = {
+						layoutpolicy_horizontal = expanding
+						margin = { 5 5 }
+						margin_bottom = 15
+
+						text = "[GreatProject.GetProjectCompletedEffectsDescription]"
+						autoresize = yes
+						max_width = 520
+					}
+
+					vbox = {
+						datamodel = "[GreatProjectWindow.AccessMandatoryContributions]"
+						layoutpolicy_horizontal = expanding
+
+						margin_bottom = 15
+						spacing = 5
+
+						text_label_center = {
+							text = "great_project_list_mandatory_contributions"
+							default_format = "#bold"
+						}
+
+						text_single = {
+							visible = "[IsDataModelEmpty( GreatProjectWindow.AccessMandatoryContributions )]"
+							text = "GREAT_PROJECT_NO_CONTRIBUTION_MANDATORY"
+							default_format = "#weak"
+						}
+
+						item = {
+							widget_mandatory_project_contribution_item = {
+								visible = "[ContributionItem.IsShown]"
+								layoutpolicy_horizontal = expanding
+							}
+						}
+					}
+					
+					text_multi = {
+						text = "GREAT_PROJECT_CONTRIBUTION_MANDATORY_EXPLANATION"
+						default_format = "#weak"
+						align = center
+						max_width = 500
+						autoresize = yes
+
+						margin_bottom = 15
+					}
+
+					vbox = {
+						datamodel = "[GreatProjectWindow.AccessOptionalContributions]"
+						layoutpolicy_horizontal = expanding
+
+						margin_bottom = 15
+						spacing = 5
+
+						text_label_center = {
+							text = "great_project_list_optional_contributions"
+							default_format = "#bold"
+						}
+
+						text_single = {
+							visible = "[IsDataModelEmpty( GreatProjectWindow.AccessOptionalContributions )]"
+							text = "GREAT_PROJECT_NO_CONTRIBUTION_OPTIONAL"
+							default_format = "#weak"
+						}
+
+						item = {
+							widget_optional_project_contribution_item = {
+								visible = "[ContributionItem.IsShown]"
+								layoutpolicy_horizontal = expanding
+							}
+						}
+					}
+				}
+			}
+
+			vbox = {
+				visible = "[GreatProjectWindow.HasSelectedContributions]"
+
+				margin = { 0 15}
+				margin_top = 10
+				spacing = 10
+
+				text_single = {
+					text = "[GreatProjectWindow.GetSelectedContributionsCost( GetPlayer )]"
+					align = nobaseline
+				}
+
+				button_primary = {
+					name = "fund_contributions_button"
+					visible = "[GreatProjectWindow.CanContributeToGreatProject( GetPlayer )]"
+					size = { 320 33 }
+
+					text = "[SelectLocalization( GreatProjectWindow.CanStartProjectWithSelectedContributions, 'GREAT_PROJECT_FUND_CONTRIBUTIONS_START', 'GREAT_PROJECT_FUND_CONTRIBUTIONS' )]"
+
+					enabled = "[And( GreatProjectWindow.HasSelectedContributions, GreatProjectWindow.CanAffordSelectedContributions( GetPlayer ) )]"
+					onclick = "[GreatProjectWindow.FundContributions( GetPlayer )]"
+
+					tooltip = "[GreatProjectWindow.GetCannotAffordDescription( GetPlayer )]"
+					tooltip_visible = "[Not( GreatProjectWindow.CanAffordSelectedContributions( GetPlayer ) )]"
+				}
+			}
+		}
+
+		hbox = {
+			visible = "[GreatProjectWindow.CanCancelGreatProject( GetPlayer )]"
+			layoutpolicy_horizontal = expanding
+
+			margin = { 0 15 }
+
+			button_standard  = {
+				name = "abort_button"
+				text = "GREAT_PROJECT_CANCEL_LABEL"
+
+				onclick = "[GreatProjectWindow.ShowCancelGreatProjectConfirmation]"
+
+				tooltip = "GREAT_PROJECT_CANCEL_LABEL_TT"
+			}
+		}
+	}
+}
+
+types Project
+{
+	type contributor_list_button = button_standard {
+		name = "show_contributors_button"
+		# Only show this button when the project has been created and is not yet funded
+		visible = "[And( ObjectsEqual( ContributionItem.GetProject.GetOwner, GetPlayer ), And( GreatProjectWindow.CanShowPotentialContributorsList, Not( ContributionItem.IsFunded ) ) )]"
+		size = { 70 50 }
+
+		onclick = "[GreatProjectWindow.ShowPotentialContributors( ContributionItem.Self )]"
+
+		tooltip = "[ContributionItem.GetPotentialContributorsTooltip]"
+
+		hbox = {
+			expand = {}
+
+			icon = {
+				using = Master_Button_Modify_Texture
+				texture = "gfx/interface/icons/flat_icons/window_me.dds"
+				size = { 25 25 }
+				margin_left = 3				
+			}
+
+			expand = {}
+
+			text_single = {
+				text = "[ContributionItem.GetNumberOfValidContributors]"
+				align = right|nobaseline
+				margin_right = 3
+			}
+
+			expand = {}
+		}
+	}
+
+	type widget_mandatory_project_contribution_item = widget_project_plan_contribution_item {
+		size = { 300 45 }
+		datacontext = "[ContributionItem.GetContributor]"
+
+		blockoverride "contributor_slot"
+		{
+			# sigils for mandatory contributions
+			coa_character_sigil = {
+				name = "contributor_house_coa_player"
+				visible = "[And( Character.IsValid, Character.IsLocalPlayer )]"
+
+				blockoverride "size"
+				{
+					size = { 30 30 }
+				}
+				blockoverride "sigil_size"
+				{
+					size = { 34 34 }
+				}
+			}
+
+			coa_character_sigil = {
+				name = "contributor_house_coa_other"
+				visible = "[And( Character.IsValid, Not( Character.IsLocalPlayer ) )]"
+				alpha = 0.6
+
+				blockoverride "size"
+				{
+					size = { 30 30 }
+				}
+				blockoverride "sigil_size"
+				{
+					size = { 34 34 }
+				}
+			}
+		}
+
+		blockoverride "contribution_status"
+		{
+			button_checkbox = {
+				visible = "[Not( ContributionItem.GetContributor.IsValid )]"
+				enabled = "[ContributionItem.IsContributionFundable( GetPlayer )]"
+				size = { 30 30 }
+				checked = "[ContributionItem.IsSelected]"
+				onclick = "[ContributionItem.ToggleSelection]"
+
+				tooltip = "GREAT_PROJECT_CONTRIBUTION_UNAVAILABLE_TT"
+				tooltip_visible = "[Not( ContributionItem.IsContributionFundable( GetPlayer ) )]"
+			}
+		}
+
+		blockoverride "contributor_interaction"
+		{
+			contributor_list_button = {}
+		}
+	}
+
+	type widget_optional_project_contribution_item = widget_project_plan_contribution_item {
+		datacontext = "[ContributionItem.GetContributor]"
+
+		blockoverride "contributor_slot"
+		{
+			coa_character_sigil = {
+				name = "contributor_house_coa_player"
+				visible = "[And( Character.IsValid, Character.IsLocalPlayer )]"
+
+				blockoverride "size"
+				{
+					size = { 30 30 }
+				}
+				blockoverride "sigil_size"
+				{
+					size = { 34 34 }
+				}
+			}
+
+			coa_character_sigil = {
+				name = "contributor_house_coa_other"
+				visible = "[And( Character.IsValid, Not( Character.IsLocalPlayer ) )]"
+				alpha = 0.6
+
+				blockoverride "size"
+				{
+					size = { 30 30 }
+				}
+				blockoverride "sigil_size"
+				{
+					size = { 34 34 }
+				}
+			}
+
+			icon = {
+				visible = "[And( Not(Character.IsValid), And( Not( GreatProject.CanFundOptionalContributions ), GreatProject.IsUnderConstruction ) )]"
+				texture = "gfx/interface/icons/symbols/icon_cross.dds"
+				size = { 30 30 }
+				tooltip = "GREAT_PROJECT_CANNOT_FUND_TOO_LATE_TT"
+			}
+		}
+
+		blockoverride "contribution_status"
+		{
+			button_checkbox = {
+				visible = "[And( Not( ContributionItem.GetContributor.IsValid ), GreatProject.CanFundOptionalContributions )]"
+				enabled = "[ContributionItem.IsContributionFundable( GetPlayer )]"
+				size = { 30 30 }
+				checked = "[ContributionItem.IsSelected]"
+				onclick = "[ContributionItem.ToggleSelection]"
+
+				tooltip = "GREAT_PROJECT_CONTRIBUTION_UNAVAILABLE_TT"
+				tooltip_visible = "[Not( ContributionItem.IsContributionFundable( GetPlayer ) )]"
+			}
+		}
+
+		blockoverride "contributor_interaction"
+		{
+			contributor_list_button = {}
+		}
+
+	}
+}

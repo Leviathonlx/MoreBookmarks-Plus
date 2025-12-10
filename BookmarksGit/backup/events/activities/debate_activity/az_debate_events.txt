@@ -1,0 +1,2639 @@
+﻿namespace = az_debate
+
+scripted_trigger rival_elders_disciple_trigger = {
+	is_ai = yes
+	this != root
+    age >= 16
+    OR = {
+        learning >= decent_skill_rating
+        intrigue >= decent_skill_rating
+    }
+}
+
+az_debate.0001 = {
+    type = activity_event
+    title = az_debate.0001.t
+    desc = az_debate.0001.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = fanning_coyly
+    }
+
+    center_portrait = {
+        character = scope:rival_elder
+        animation = debating
+        camera = camera_event_center_pointing_right
+    }
+
+    right_portrait = {
+        character = scope:disciple_candidate
+        animation = admiration
+        camera = camera_event_right
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_disciples_intent
+        num_of_relation_disciple < disciples_limit_value
+        scope:activity = {
+            any_attending_character = {
+            	is_ai = yes
+				this != root
+				OR = {
+					has_relation_rival = root
+					can_set_relation_rival_trigger = { CHARACTER = root }
+				}
+                any_relation = {
+                	type = disciple
+					rival_elders_disciple_trigger = yes
+                }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        # Identify a rival elder with a disciple in attendance
+        scope:activity = {
+            random_attending_character = {
+                limit = {
+                	is_ai = yes
+					this != root
+                    has_relation_rival = root
+                    any_relation = {
+                    	type = disciple
+						rival_elders_disciple_trigger = yes
+                    }
+                }
+                alternative_limit = {
+                    is_ai = yes
+                	can_set_relation_rival_trigger = { CHARACTER = root }
+                	any_relation = { 
+                		type = disciple
+						rival_elders_disciple_trigger = yes
+                	}
+                }
+                save_scope_as = rival_elder
+            }
+
+            # Pick their most gifted disciple
+            scope:rival_elder = {
+                random_relation = {
+                    type = disciple
+                    limit = {
+						rival_elders_disciple_trigger = yes
+                    }
+                    save_scope_as = disciple_candidate
+                }
+            }
+        }
+    }
+
+    option = { # Publicly debate them in front of their elder
+        name = az_debate.0001.a
+        duel = {
+			skill = learning
+			target = scope:rival_elder
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				desc = az_debate.0001.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = az_debate.0001.a.success
+					left_icon = scope:disciple_candidate
+					set_elder_relation_effect = {
+	                    ELDER = root
+	                    DISCIPLE = scope:disciple_candidate
+	                    MERIT = minor_merit_gain
+	                }
+                    # Save them for rewards list.
+                    add_to_variable_list = {
+                        name = debate_disciples
+                        target = scope:disciple_candidate
+                    }
+	                if = {
+						limit = {
+							has_trait = confucian_education
+						}
+						add_trait_xp = {
+							trait = confucian_education
+							value = 10
+						}
+					}
+					else = {
+						add_trait = confucian_education
+					}
+	                scope:rival_elder = {
+	                    progress_towards_nemesis_effect = {
+							REASON = nemesis_poached_disciple
+							CHARACTER = root
+							OPINION = default_rival_opinion
+						}
+	                }
+				}
+				
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				desc = az_debate.0001.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = az_debate.0001.a.failure
+					left_icon = scope:disciple_candidate
+					add_prestige = medium_prestige_loss
+				}
+			}
+		}
+        
+        stress_impact = {
+	        arrogant = minor_stress_impact_loss
+	        brave = minor_stress_impact_loss
+	        shy = minor_stress_impact_gain
+	    }
+
+        ai_chance = {
+            base = 80
+            modifier = {
+                learning >= decent_skill_rating
+                add = 20
+            }
+            modifier = {
+                has_trait = arrogant
+                add = 20
+            }
+            modifier = {
+                has_trait = brave
+                add = 20
+            }
+            modifier = {
+                has_trait = shy
+                add = -20
+            }
+        }
+    }
+
+    option = { # Quietly offer mentorship afterwards
+        name = az_debate.0001.b
+        duel = {
+			skill = diplomacy
+			target = scope:disciple_candidate
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				desc = az_debate.0001.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = az_debate.0001.b.success
+					left_icon = scope:disciple_candidate
+					set_elder_relation_effect = {
+	                    ELDER = root
+	                    DISCIPLE = scope:disciple_candidate
+	                    MERIT = minor_merit_gain
+	                }
+                    # Save them for rewards list.
+                    add_to_variable_list = {
+                        name = debate_disciples
+                        target = scope:disciple_candidate
+                    }
+	                if = {
+						limit = {
+							has_trait = confucian_education
+						}
+						add_trait_xp = {
+							trait = confucian_education
+							value = 10
+						}
+					}
+					else = {
+						add_trait = confucian_education
+					}
+	                scope:rival_elder = {
+	                    progress_towards_nemesis_effect = {
+							REASON = nemesis_poached_disciple
+							CHARACTER = root
+							OPINION = default_rival_opinion
+						}
+	                }
+				}
+				
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				desc = az_debate.0001.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = az_debate.0001.b.failure
+					left_icon = scope:disciple_candidate
+					add_prestige = medium_prestige_loss
+				}
+			}
+		}
+
+		stress_impact = {
+	        shy = minor_stress_impact_loss
+	        compassionate = minor_stress_impact_loss
+	        arrogant = minor_stress_impact_gain
+	    }
+        
+        ai_chance = {
+            base = 60
+            modifier = {
+                diplomacy >= decent_skill_rating
+                add = 20
+            }
+            modifier = {
+                has_trait = shy
+                add = 20
+            }
+            modifier = {
+                has_trait = compassionate
+                add = 20
+            }
+            modifier = {
+                has_trait = arrogant
+                add = -20
+            }
+        }
+    }
+
+    option = { # Ignore the opportunity
+        name = az_debate.0001.d
+
+        if = {
+        	limit = {
+        		has_relation_rival = scope:rival_elder
+        	}
+        	remove_relation_rival = scope:rival_elder
+        }
+        else = {
+        	scope:rival_elder = {
+        		progress_towards_friend_effect = {
+	                REASON = friend_stepped_aside
+	                CHARACTER = root
+	                OPINION = default_friend_opinion
+	            }
+        	}
+        }
+       
+        stress_impact = {
+        	base = minor_stress_impact_loss
+        	content = minor_stress_impact_loss
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = {
+                stress >= higher_than_baseline_stress
+                factor = 2
+            }
+            modifier = {
+                has_trait = content
+                add = 20
+            }
+        }
+    }
+}
+
+az_debate.0002 = {
+    type = activity_event
+    title = az_debate.0002.t
+    desc  = az_debate.0002.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = interested
+    }
+
+    center_portrait = {
+        character = scope:elder_candidate
+        animation = storyteller
+        camera = camera_event_center_pointing_left
+    }
+
+    right_portrait = {
+        character = scope:audience_rep
+        animation = admiration
+        camera = camera_event_right_pointing_left
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_elder_intent
+        # We make sure that they do not have a player as their elder.
+        trigger_if = {
+            limit = {
+                any_relation = { type = elder }
+            }
+            any_relation = {
+                type = elder
+                is_ai = yes
+            }
+        }
+        scope:activity = {
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                # "Respected Elder": someone eligible as elder and strong skills
+                eligible_for_elder_trigger = {
+					DISCIPLE = root
+				}
+                OR = {
+                    learning >= decent_skill_rating
+                    diplomacy >= decent_skill_rating
+                    intrigue  >= decent_skill_rating
+                }
+            }
+            any_attending_character = {
+            	is_ai = yes
+            	is_in_same_movement_as = { TARGET = root }
+            	opinion = {
+					target = root
+					value >= 0
+				}
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        # Identify a respected Elder (briefly present)
+        scope:activity = {
+            random_attending_character = {
+                limit = {
+                    this != root
+                    is_ai = yes
+                    eligible_for_elder_trigger = {
+						DISCIPLE = root
+					}
+                    OR = {
+                        learning >= decent_skill_rating
+                        diplomacy >= decent_skill_rating
+                        intrigue  >= decent_skill_rating
+                    }
+                }
+                save_scope_as = elder_candidate
+            }
+
+            # Pick a visible onlooker for flavor (optional)
+            random_attending_character = {
+                limit = {
+                    this != root
+                    this != scope:elder_candidate
+                    is_ai = yes
+                    is_in_same_movement_as = { TARGET = root }
+	            	opinion = {
+						target = root
+						value >= 0
+					}
+                }
+                save_scope_as = audience_rep
+            }
+        }
+    }
+
+    # A — Impress with a single, perfect argument (Learning duel)
+    option = {
+        name = az_debate.0002.a
+        duel = {
+            skill = learning
+            target = scope:elder_candidate
+
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                desc = az_debate.0002.a.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = az_debate.0002.a.success
+                    left_icon = scope:elder_candidate
+
+                    set_elder_relation_effect = {
+                        ELDER = scope:elder_candidate
+                        DISCIPLE = root
+                        MERIT = minor_merit_gain
+                    }
+                    set_variable = {
+                        name = new_elder
+                        value = scope:elder_candidate
+                    }
+                    add_learning_lifestyle_xp = minor_lifestyle_xp
+                }
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                desc = az_debate.0002.a.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = az_debate.0002.a.failure
+                    left_icon = scope:elder_candidate
+                    add_prestige = minor_prestige_loss
+                }
+            }
+        }
+
+        stress_impact = {
+            diligent = minor_stress_impact_loss
+            arrogant = minor_stress_impact_loss
+            shy = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 55
+            modifier = { 
+            	learning >= decent_skill_rating 
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = diligent 
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = arrogant
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = shy
+            	add = -15 
+            }
+        }
+    }
+
+    # C — Secure them before anyone else notices (Intrigue duel)
+    option = {
+        name = az_debate.0002.c
+        duel = {
+            skill = intrigue
+            value = high_skill_rating
+
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                desc = az_debate.0002.c.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = az_debate.0002.c.success
+                    left_icon = scope:elder_candidate
+                    set_elder_relation_effect = {
+                        ELDER = scope:elder_candidate
+                        DISCIPLE = root
+                        MERIT = minor_merit_gain
+                    }
+                    set_variable = {
+                        name = new_elder
+                        value = scope:elder_candidate
+                    }
+                    add_intrigue_lifestyle_xp = minor_lifestyle_xp
+                }
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                desc = az_debate.0002.c.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = az_debate.0002.c.failure
+                    left_icon = scope:elder_candidate
+                    add_prestige = minor_prestige_loss
+                }
+            }
+        }
+
+        stress_impact = {
+            deceitful = minor_stress_impact_loss
+            honest = minor_stress_impact_gain
+            trusting = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = { 
+            	intrigue >= decent_skill_rating 
+            	add = 25 
+            }
+            modifier = { 
+            	has_trait = deceitful
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = honest
+            	add = -20 
+            }
+            modifier = { 
+            	has_trait = trusting
+            	add = -10 
+            }
+        }
+    }
+
+    # D — Let the moment pass
+    option = {
+        name = az_debate.0002.d
+
+        # Reflective learning: Confucian cultivation without grasping
+        if = {
+            limit = { has_trait = confucian_education }
+            add_trait_xp = {
+                trait = confucian_education
+                value = 10
+            }
+        }
+        else = { add_trait = confucian_education }
+
+        stress_impact = {
+            temperate = minor_stress_impact_loss
+            humble = minor_stress_impact_loss
+            ambitious = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = temperate 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = humble
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = ambitious
+            	add = -15 
+            }
+        }
+    }
+}
+
+az_debate.0003 = {
+    type = activity_event
+    title = az_debate.0003.t
+    desc  = az_debate.0003.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = pondering
+    }
+
+    center_portrait = {
+        character = scope:disciple_candidate
+        animation = storyteller
+        camera = camera_event_center_pointing_left
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_disciples_intent
+        num_of_relation_disciple < disciples_limit_value
+        scope:activity = {
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                has_activity_intent = debate_gain_elder_intent
+                merit_level < root.merit_level
+                trigger_if = {
+                    limit = {
+                        any_relation = { type = elder }
+                    }
+                    any_relation = {
+                        type = elder
+                        is_ai = yes
+                    }
+                }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        scope:activity = {
+            # Select the disciple who challenges you
+            random_attending_character = {
+                limit = {
+                    this != root
+                    is_ai = yes
+                    has_activity_intent = debate_gain_elder_intent
+                    merit_level < root.merit_level
+                    trigger_if = {
+                        limit = {
+                            any_relation = { type = elder }
+                        }
+                        any_relation = {
+                            type = elder
+                            is_ai = yes
+                        }
+                    }
+                }
+                save_scope_as = disciple_candidate
+            }
+        }
+        # Save your current movement (if any) for movement-power effects
+        top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+    }
+
+    # B — Frame it as a moral parable (Diplomacy duel)
+    option = {
+        name = az_debate.0003.b
+        duel = {
+            skill = diplomacy
+            target = scope:disciple_candidate
+
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                desc = az_debate.0003.b.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = az_debate.0003.b.success
+                    left_icon = scope:disciple_candidate
+                    set_elder_relation_effect = {
+                        DISCIPLE = scope:disciple_candidate
+                        ELDER = root
+                        MERIT = minor_merit_gain
+                    }
+                    # Save them for rewards list.
+                    add_to_variable_list = {
+                        name = debate_disciples
+                        target = scope:disciple_candidate
+                    }
+                    # Winning publicly sways onlookers toward your movement
+                    custom_tooltip = event_increase_movement_power_minor_effect_tooltip
+                    scope:my_movement ?= {
+                        event_change_movement_power_effect = {
+                            VALUE = event_increase_movement_power_minor_value
+                        }
+                    }
+
+                    change_influence = minor_influence_gain
+                    add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+                }
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                desc = az_debate.0003.b.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = az_debate.0003.b.failure
+                    left_icon = scope:disciple_candidate
+                    add_prestige = minor_prestige_loss
+                }
+            }
+        }
+
+        stress_impact = {
+            gregarious = minor_stress_impact_loss
+            generous = minor_stress_impact_loss
+            stubborn = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 55
+            modifier = { 
+            	diplomacy >= decent_skill_rating 
+            	add = 25 
+            }
+            modifier = { 
+            	has_trait = gregarious 
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = generous  
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = stubborn  
+            	add = -10 
+            }
+        }
+    }
+
+    # C — Turn the challenge into a public colloquium
+    option = {
+        name = az_debate.0003.c
+
+        # You don't take them, but you spin the moment to rally your side
+        custom_tooltip = event_increase_movement_power_medium_effect_tooltip
+        scope:my_movement ?= {
+            event_change_movement_power_effect = {
+                VALUE = event_increase_movement_power_medium_value
+            }
+        }
+        change_influence = medium_influence_gain
+
+        stress_impact = {
+            arrogant = minor_stress_impact_gain
+            humble = minor_stress_impact_loss
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = { 
+            	has_trait = ambitious 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = humble    
+            	add = -10 
+            }
+        }
+    }
+
+    # D — Refuse the challenge politely
+    option = {
+        name = az_debate.0003.d
+
+        add_piety = minor_piety_gain
+
+        # Optics aren't great for movement growth, but you keep your dignity
+        change_influence = minor_influence_gain
+
+        stress_impact = {
+            zealous = minor_stress_impact_loss
+            humble = minor_stress_impact_loss
+            ambitious = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = zealous   
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = humble    
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = ambitious 
+            	add = -15 
+            }
+        }
+    }
+}
+
+az_debate.0004 = {
+    type = activity_event
+    title = az_debate.0004.t
+    desc  = az_debate.0004.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = pondering
+    }
+
+    center_portrait = {
+        character = scope:freethinker_friend
+        animation = storyteller
+        camera = camera_event_center_pointing_left
+    }
+
+    trigger = {
+        scope:activity = {
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                opinion = {
+					target = root
+					value >= 0
+				}
+                situation:dynastic_cycle ?= {
+                    situation_participant_group:undecided_movement = {
+                        participant_group_has_character = this
+                    }
+                }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        scope:activity = {
+            # Select one free thinker as your "friend"
+            random_attending_character = {
+                limit = {
+                    this != root
+                    is_ai = yes
+                    opinion = {
+						target = root
+						value >= 0
+					}
+                    situation:dynastic_cycle ?= {
+                        situation_participant_group:undecided_movement = {
+                            participant_group_has_character = this
+                        }
+                    }
+                }
+                save_scope_as = freethinker_friend
+            }
+        }
+        # Save your current movement for movement-power & opinion effects
+        top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+    }
+
+    # A — Host an open salon with them
+    option = {
+        name = az_debate.0004.a
+
+        # Publicly platforming them reflects well on you
+        change_influence = medium_influence_gain
+
+        # Your movement benefits from the optics
+        custom_tooltip = event_increase_movement_power_medium_effect_tooltip
+        scope:my_movement ?= {
+            event_change_movement_power_effect = {
+                VALUE = event_increase_movement_power_medium_value
+            }
+        }
+
+        # The freethinker appreciates the spotlight
+        scope:freethinker_friend = {
+            add_opinion = { 
+            	target = root 
+            	modifier = pleased_opinion 
+            	opinion = 10
+            }
+        }
+
+        stress_impact = {
+            gregarious = minor_stress_impact_loss
+            arrogant = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = { 
+            	has_trait = gregarious 
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = arrogant   
+            	add = -10 
+            }
+        }
+    }
+
+    # B — Offer them a place under you (recruit; hook/merit tradeoff if they're weak)
+    option = {
+        name = az_debate.0004.b
+        add_internal_flag = special
+        trigger = { 
+            diplomacy >= high_skill_rating
+            scope:freethinker_friend = {
+                eligible_for_elder_trigger = {
+					DISCIPLE = root
+				}
+                any_relation = {
+                    type = elder
+                    NOT = { is_ai = no }
+                }
+            }
+        }
+        set_elder_relation_effect = {
+            DISCIPLE = scope:freethinker_friend
+            ELDER = root
+            MERIT = 0
+        }
+        # Save them for rewards list.
+        add_to_variable_list = {
+            name = debate_disciples
+            target = scope:freethinker_friend
+        }
+
+        # If they're not much of a thinker, you lose a bit of face but gain leverage
+        if = {
+            limit = {
+                scope:freethinker_friend = {
+                    learning < decent_skill_rating
+                    diplomacy < decent_skill_rating
+                }
+            }
+            change_merit = minor_merit_loss
+            if = {
+                limit = { 
+                	can_add_hook = { 
+                		type = favor_hook 
+                		target = scope:freethinker_friend 
+                	} 
+                }
+                add_hook = { 
+                	type = favor_hook 
+                	target = scope:freethinker_friend 
+                }
+            }
+        }
+        else = {
+            change_merit = minor_merit_gain
+        }
+
+        stress_impact = {
+            gregarious = minor_stress_impact_loss
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = { 
+            	diplomacy >= high_skill_rating 
+            	add = 25 
+            }
+            modifier = { 
+            	has_trait = gregarious       
+            	add = 10 
+            }
+        }
+    }
+
+    # C — Quiet persuasion over drinks (Intrigue check)
+    option = {
+        name = az_debate.0004.c
+        add_internal_flag = special
+        trigger = {
+        	diplomacy < high_skill_rating
+        }
+        duel = {
+            skill = intrigue
+            target = scope:freethinker_friend
+
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                desc = az_debate.0004.c.success
+                send_interface_toast = {
+                    type  = event_toast_effect_good
+                    title = az_debate.0004.c.success
+                    left_icon = scope:freethinker_friend
+
+                    set_elder_relation_effect = {
+			            DISCIPLE = scope:freethinker_friend
+			            ELDER = root
+			            MERIT = 0
+			        }
+                    # Save them for rewards list.
+                    add_to_variable_list = {
+                        name = debate_disciples
+                        target = scope:freethinker_friend
+                    }
+			        add_prestige = minor_prestige_gain
+                }
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                desc = az_debate.0004.c.failure
+                send_interface_toast = {
+                    type  = event_toast_effect_bad
+                    title = az_debate.0004.c.failure
+                    left_icon = scope:freethinker_friend
+
+                    # Awkward misstep hurts your standing a bit
+                    add_prestige = minor_prestige_loss
+                    scope:freethinker_friend = {
+                        add_opinion = { 
+                        	target = root 
+                        	modifier = bored_opinion 
+                        	opinion = -10
+                        }
+                    }
+                }
+            }
+        }
+
+        stress_impact = {
+            deceitful = minor_stress_impact_loss
+            trusting = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = { 
+            	intrigue >= decent_skill_rating 
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = deceitful
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = trusting
+            	add = -10 
+            }
+        }
+    }
+
+    # D — Respect their independence
+    option = {
+        name = az_debate.0004.d
+
+        change_influence = minor_influence_gain
+
+        scope:freethinker_friend = {
+            add_opinion = { 
+            	target = root 
+            	modifier = respect_opinion 
+            	opinion = 10 
+            }
+        }
+
+        stress_impact = {
+            base = minor_stress_impact_loss
+            content = minor_stress_impact_loss
+            ambitious = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = content
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = ambitious 
+            	add = -10 
+            }
+        }
+    }
+}
+
+az_debate.0005 = {
+    type = activity_event
+    title = az_debate.0005.t
+    desc  = az_debate.0005.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = personality_zealous
+    }
+
+    center_portrait = {
+        character = scope:elder_candidate
+        animation = pondering
+        camera = camera_event_center
+    }
+
+    right_portrait = {
+        character = scope:rival_candidate
+        animation = disapproval
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_elder_intent
+        # We make sure that they do not have a player as their elder.
+        trigger_if = {
+            limit = {
+                any_relation = { type = elder }
+            }
+            any_relation = {
+                type = elder
+                is_ai = yes
+            }
+        }
+        scope:activity = {
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                age >= 60
+                eligible_for_elder_trigger = {
+					DISCIPLE = root
+				}
+                save_temporary_scope_as = temp_elder
+            }
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                age < 60
+                has_activity_intent = debate_gain_elder_intent
+                NOT = { has_relation_elder = scope:temp_elder }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        scope:activity = {
+            # Elder seeking their last disciple
+            random_attending_character = {
+                limit = {
+                    this != root
+                    is_ai = yes
+                    age >= 60
+                    eligible_for_elder_trigger = {
+						DISCIPLE = root
+					}
+                }
+                save_scope_as = elder_candidate
+            }
+            # Rival candidate for that elder’s mentorship
+            random_attending_character = {
+                limit = {
+                     this != root
+                	is_ai = yes
+                	age < 60
+                	has_activity_intent = debate_gain_elder_intent
+                	NOT = { has_relation_elder = scope:elder_candidate }
+                }
+                save_scope_as = rival_candidate
+            }
+        }
+        top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+    }
+
+    # B — Offer to write and publish their final treatise
+    option = {
+        name = az_debate.0005.b
+        add_internal_flag = special
+        trigger = { learning >= high_skill_rating }
+        show_as_unavailable = {
+            always = yes
+        }
+        set_elder_relation_effect = {
+            ELDER = scope:elder_candidate
+            DISCIPLE = root
+            MERIT = minor_merit_gain
+        }
+        set_variable = {
+            name = new_elder
+            value = scope:elder_candidate
+        }
+        if = {
+            limit = { has_trait = confucian_education }
+            add_trait_xp = { trait = confucian_education value = 10 }
+        }
+        else = { add_trait = confucian_education }
+
+        # Treatise makes your movement look more sophisticated
+        custom_tooltip = event_increase_movement_power_minor_effect_tooltip
+        scope:my_movement ?= {
+            event_change_movement_power_effect = {
+                VALUE = event_increase_movement_power_minor_value
+            }
+        }
+
+        stress_impact = { diligent = minor_stress_impact_loss }
+
+        ai_chance = {
+            base = 40
+            modifier = { 
+                learning >= high_skill_rating 
+                add = 25 
+            }
+            modifier = { 
+                has_trait = confucian_education
+                add = 25 
+            }
+            modifier = { 
+                has_trait = diligent
+                add = 15 
+            }
+        }
+    }
+
+    # A — Debate to show your worth (Learning duel)
+    option = {
+        name = az_debate.0005.a
+        duel = {
+            skill = learning
+            target = scope:rival_candidate
+
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                desc = az_debate.0005.a.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = az_debate.0005.a.success
+                    left_icon = scope:elder_candidate
+
+                    set_elder_relation_effect = {
+                        ELDER = scope:elder_candidate
+                        DISCIPLE = root
+                        MERIT = 0
+                    }
+                    set_variable = {
+                        name = new_elder
+                        value = scope:elder_candidate
+                    }
+                    # Winning the duel also boosts your prestige as a thinker
+                    change_influence = medium_influence_gain
+                }
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                desc = az_debate.0005.a.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = az_debate.0005.a.failure
+                    left_icon = scope:elder_candidate
+
+                    change_influence = minor_influence_loss
+                }
+            }
+        }
+
+        stress_impact = {
+            humble = minor_stress_impact_gain
+            arrogant = minor_stress_impact_loss
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = { 
+            	learning >= high_skill_rating 
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = arrogant
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = humble
+            	add = -10 
+            }
+        }
+    }
+
+    # C — Step aside, let another take the spotlight
+    option = {
+        name = az_debate.0005.c
+
+        progress_towards_friend_effect = {
+            REASON = friend_stepped_aside
+            CHARACTER = scope:rival_candidate
+            OPINION = default_friend_opinion
+        }
+
+        if = {
+        	limit = {
+        		scope:elder_candidate = {
+        			eligible_for_elder_trigger = { DISCIPLE = scope:rival_candidate }	
+        		}        		
+        	}
+        	set_elder_relation_effect = {
+	            ELDER = scope:elder_candidate
+	            DISCIPLE = scope:rival_candidate
+	            MERIT = 0
+	        }
+        }
+
+        stress_impact = {
+            content = minor_stress_impact_loss
+            ambitious = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = content
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = ambitious 
+            	add = -15 
+            }
+        }
+    }
+}
+
+az_debate.0006 = {
+    type = activity_event
+    title = az_debate.0006.t
+    desc  = az_debate.0006.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = shock
+    }
+
+    center_portrait = {
+        character = scope:current_elder
+        animation = pondering
+        camera = camera_event_center
+    }
+
+    right_portrait = {
+        character = scope:new_elder
+        animation = interested_left
+    }
+
+    trigger = { 
+        has_activity_intent = debate_gain_elder_intent
+        # We make sure that they do not have a player as their elder.
+        trigger_if = {
+            limit = {
+                any_relation = { type = elder }
+            }
+            any_relation = {
+                type = elder
+                is_ai = yes
+            }
+        }
+        scope:activity = {
+            any_attending_character = {
+                is_ai = yes
+                age >= 70
+                has_relation_elder = root
+                save_temporary_scope_as = current_elder
+            }
+            any_attending_character = {
+                is_ai = yes
+                this != scope:current_elder
+                sum_of_all_skills_value > root.sum_of_all_skills_value
+                eligible_for_elder_trigger = {
+					DISCIPLE = root
+				}
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        scope:activity = {
+            random_attending_character = {
+            	limit = {
+            		is_ai = yes
+                    age >= 70
+	                has_relation_elder = root
+            	}
+                save_scope_as = current_elder
+            }
+            random_attending_character = {
+            	limit = {
+            		is_ai = yes
+	                this != scope:current_elder
+	                sum_of_all_skills_value > root.sum_of_all_skills_value
+	                eligible_for_elder_trigger = {
+						DISCIPLE = root
+					}	
+            	}
+            	save_scope_as = new_elder                
+            }
+        }
+    }
+
+    # C — Ask to keep both as advisors (Learning duel)
+    option = {
+        name = az_debate.0006.c
+        duel = {
+            skill = learning
+            target = scope:current_elder
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                desc = az_debate.0006.c.success
+                
+                set_elder_relation_effect = {
+                    ELDER = scope:new_elder
+                    DISCIPLE = root
+                    MERIT = minor_merit_gain
+                }
+                set_variable = {
+                    name = new_elder
+                    value = scope:new_elder
+                }
+                add_learning_lifestyle_xp = minor_lifestyle_xp
+                add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+                scope:current_elder = {
+		        	add_opinion = {
+			            target = root
+			            modifier = flattered_opinion 
+			            opinion = 15
+			        }
+		        }
+		       	
+		        if = {
+					limit = {
+						has_trait = confucian_education
+					}
+					add_trait_xp = {
+						trait = confucian_education
+						value = 10
+					}
+				}
+				else = {
+					add_trait = confucian_education
+				}
+				stress_impact = {
+		            ambitious = minor_stress_impact_loss
+		            diligent = minor_stress_impact_loss
+		        }
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                desc = az_debate.0006.c.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = az_debate.0006.c.failure
+                    left_icon = scope:current_elder
+                }
+                add_prestige = minor_prestige_loss
+            }
+        }
+        
+        ai_chance = {
+            base = 40
+            modifier = {
+                learning >= high_skill_rating
+                add = 20
+            }
+            modifier = {
+                has_trait = ambitious
+                add = 10
+            }
+            modifier = {
+                has_trait = diligent
+                add = 10
+            }
+        }
+    }
+
+    # A — Accept the introduction
+    option = {
+        name = az_debate.0006.a
+        set_elder_relation_effect = {
+            ELDER = scope:new_elder
+            DISCIPLE = root
+            MERIT = 0
+        }
+        set_variable = {
+            name = new_elder
+            value = scope:elder
+        }
+        stress_impact = {
+            ambitious = minor_stress_impact_loss
+            diligent = minor_stress_impact_loss
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                learning >= high_skill_rating
+                add = 15
+            }
+            modifier = {
+                has_trait = diligent
+                add = 10
+            }
+            modifier = {
+                has_trait = ambitious
+                add = 10
+            }
+        }
+    }
+
+    # B — Decline, stay loyal
+    option = {
+        name = az_debate.0006.b
+        scope:current_elder = {
+        	add_opinion = {
+	            target = scope:current_elder
+	            modifier = flattered_opinion 
+	            opinion = 30
+	        }
+        }
+       	
+        if = {
+			limit = {
+				has_trait = confucian_education
+			}
+			add_trait_xp = {
+				trait = confucian_education
+				value = 10
+			}
+		}
+		else = {
+			add_trait = confucian_education
+		}
+        stress_impact = {
+        	content = medium_stress_impact_loss
+            humble = minor_stress_impact_loss
+            ambitious = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                has_trait = content
+                add = 10
+            }
+            modifier = {
+                has_trait = humble
+                add = 15
+            }
+            modifier = {
+                has_trait = ambitious
+                add = -15
+            }
+        }
+    }
+}
+
+az_debate.0007 = {
+    type = activity_event
+    title = az_debate.0007.t
+    desc  = az_debate.0007.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = interested
+    }
+
+    center_portrait = {
+        character = scope:rival_elder
+        animation = debating
+        camera = camera_event_center_pointing_right
+    }
+
+    right_portrait = {
+        character = scope:disciple_candidate
+        animation = shock
+        camera = camera_event_right_pointing_right
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_disciples_intent
+        num_of_relation_disciple < disciples_limit_value
+        scope:activity = {
+            # Another elder with at least one disciple present
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                NOR = {
+					has_trait = compassionate
+					has_trait = calm
+				}
+                any_relation = {
+                    type = disciple
+                    is_ai = yes
+                    is_adult = yes
+                    sum_of_all_skills_value <= root.sum_of_all_skills_value
+                    trigger_if = {
+                        limit = {
+                            any_relation = { type = elder }
+                        }
+                        any_relation = {
+                            type = elder
+                            is_ai = yes
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        scope:activity = {
+            # Pick the berating elder
+            random_attending_character = {
+                limit = {
+                    this != root
+                    is_ai = yes
+                    NOR = {
+						has_trait = compassionate
+						has_trait = calm
+					}
+                    any_relation = {
+                        type = disciple
+                        is_ai = yes
+                    	is_adult = yes
+                    	sum_of_all_skills_value <= root.sum_of_all_skills_value
+                        trigger_if = {
+                            limit = {
+                                any_relation = { type = elder }
+                            }
+                            any_relation = {
+                                type = elder
+                                is_ai = yes
+                            }
+                        }
+                    }
+                }
+                save_scope_as = rival_elder
+            }
+
+            # Pick the humiliated disciple
+            scope:rival_elder = {
+                random_relation = {
+                    type = disciple
+                    limit = {
+                        is_ai = yes
+                        is_adult = yes
+                        sum_of_all_skills_value <= root.sum_of_all_skills_value
+                    }
+                    save_scope_as = disciple_candidate
+                }
+            }
+        }
+    }
+
+    # A — Offer genuine support to the humiliated disciple
+    option = {
+        name = az_debate.0007.a
+        set_elder_relation_effect = {
+            ELDER = root
+            DISCIPLE = scope:disciple_candidate
+            MERIT = minor_merit_gain
+        }
+        # Save them for rewards list.
+        add_to_variable_list = {
+            name = debate_disciples
+            target = scope:disciple_candidate
+        }
+        scope:disciple_candidate = {
+            add_opinion = {
+                target   = root
+                modifier = grateful_opinion
+                opinion  = 15
+            }
+        }
+
+        scope:rival_elder = {
+            progress_towards_nemesis_effect = {
+                REASON = nemesis_poached_disciple
+                CHARACTER = root
+                OPINION  = default_rival_opinion
+            }
+        }
+
+        stress_impact = {
+            compassionate = minor_stress_impact_loss
+            sadistic = minor_stress_impact_gain
+            arrogant = minor_stress_impact_gain
+            callous = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 55
+            modifier = { 
+            	has_trait = compassionate 
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = sadistic
+            	add = -20 
+            }
+            modifier = { 
+            	has_trait = arrogant
+            	add = -20 
+            }
+            modifier = { 
+            	has_trait = callous
+            	add = -20 
+            }
+        }
+    }
+
+    # B — Promise better treatment for information (Intrigue duel)
+    option = {
+        name = az_debate.0007.b
+        add_internal_flag = special
+        trigger = {
+        	can_add_hook = { type = manipulation_hook target = scope:rival_elder }
+        }
+
+        add_hook = { type = manipulation_hook target = scope:rival_elder }
+
+        add_intrigue_lifestyle_xp = medium_lifestyle_xp
+
+        stress_impact = {
+            deceitful = minor_stress_impact_loss
+            honest = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = { 
+            	has_trait = deceitful 
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = honest
+            	add = -20 
+            }
+        }
+    }
+
+    # C — Mend the rift
+    option = {
+    	name = az_debate.0007.c
+
+        scope:rival_elder = {
+            progress_towards_friend_effect = {
+                REASON = friend_fix_mentorship
+                CHARACTER = root
+                OPINION = default_friend_opinion
+            }
+        }
+
+        scope:disciple_candidate = {
+            progress_towards_friend_effect = {
+                REASON = friend_fix_discipleship
+                CHARACTER = root
+                OPINION = default_friend_opinion
+            }
+        }
+
+        stress_impact = {
+            gregarious = minor_stress_impact_loss
+            temperate = minor_stress_impact_loss
+            ambitious = minor_stress_impact_gain
+            calm = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = gregarious
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = temperate 
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = calm
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = ambitious 
+            	add = -15 
+            }
+        }
+    }
+}
+
+az_debate.0008 = {
+    type = activity_event
+    title = az_debate.0008.t
+    desc  = az_debate.0008.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = interested
+    }
+
+    center_portrait = {
+        character = scope:rival_leader
+        animation = debating
+        camera = camera_event_center_pointing_right
+    }
+
+    right_portrait = {
+        character = scope:neutral_scholar
+        animation = dismissal
+        camera = camera_event_right_pointing_right
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_disciples_intent
+        num_of_relation_disciple < disciples_limit_value
+        scope:activity = {
+            any_attending_character = {
+            	is_ai = yes
+				NOT = {
+					is_in_same_movement_as = { TARGET = root }
+				}
+            }
+            any_attending_character = {
+            	is_ai = yes
+            	situation:dynastic_cycle ?= {
+                    situation_participant_group:undecided_movement = { participant_group_has_character = this }
+                }
+                merit_level < root.merit_level
+                trigger_if = {
+                    limit = {
+                        any_relation = { type = elder }
+                    }
+                    any_relation = {
+                        type = elder
+                        is_ai = yes
+                    }
+                }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+    	top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+
+        scope:activity = {
+            # Pick the rival leader
+            random_attending_character = {
+                limit = {
+	            	is_ai = yes
+					NOT = {
+						is_in_same_movement_as = { TARGET = root }
+					}
+                }
+                save_scope_as = rival_leader
+            }
+
+            scope:rival_leader.top_participant_group:dynastic_cycle = { save_scope_as = rival_movement }
+
+            # Pick a neutral scholar (undecided movement)
+            random_attending_character = {
+                limit = {
+                    is_ai = yes
+	            	situation:dynastic_cycle ?= {
+	                    situation_participant_group:undecided_movement = { participant_group_has_character = this }
+	                }
+                    merit_level < root.merit_level
+                    trigger_if = {
+                        limit = {
+                            any_relation = { type = elder }
+                        }
+                        any_relation = {
+                            type = elder
+                            is_ai = yes
+                        }
+                    }
+                }
+                save_scope_as = neutral_scholar
+            }
+        }
+    }
+
+    # A — Make a persuasive argument
+    option = {
+        name = az_debate.0008.a
+        add_internal_flag = special
+        trigger = {
+        	diplomacy >= high_skill_rating
+
+        }
+        set_elder_relation_effect = {
+            ELDER = root
+            DISCIPLE = scope:neutral_scholar
+            MERIT = minor_merit_gain
+        }
+        # Save them for rewards list.
+        add_to_variable_list = {
+            name = debate_disciples
+            target = scope:neutral_scholar
+        }
+        custom_tooltip = event_increase_movement_power_minor_effect_tooltip
+        scope:my_movement ?= {
+            event_change_movement_power_effect = {
+                VALUE = event_increase_movement_power_minor_value
+            }
+        }
+
+        stress_impact = {
+            arrogant = minor_stress_impact_loss
+            shy = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 50
+            modifier = { 
+            	has_trait = arrogant 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = shy 
+            	add = -10 
+            }
+        }
+    }
+
+    # B — Impress with sheer erudition
+    option = {
+        name = az_debate.0008.b
+
+        duel = {
+            skill = learning
+            target = scope:neutral_scholar
+
+            70 = {
+                desc = az_debate.0008.b.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = az_debate.0008.b.success
+                    left_icon = root
+
+                    change_influence = minor_influence_gain
+                    tgp_dynastic_cycle_add_to_movement_effect = { CHAR = scope:neutral_scholar }
+                }
+            }
+
+            30 = {
+                desc = az_debate.0008.b.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = az_debate.0008.b.failure
+                    left_icon = scope:rival_leader
+                    add_prestige = minor_prestige_loss
+                    add_stress = medium_stress_gain
+                }
+            }
+        }
+
+        stress_impact = {
+            diligent = minor_stress_impact_loss
+            ambitious = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = { 
+            	learning >= decent_skill_rating 
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = diligent 
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = ambitious 
+            	add = -10 
+            }
+        }
+    }
+
+    # C — Get the neutral dude as a disciple
+    option = {
+        name = az_debate.0008.c
+        add_internal_flag = special
+        trigger = {
+        	intrigue >= high_skill_rating
+        	eligible_for_elder_trigger = {
+				DISCIPLE = scope:neutral_scholar
+			}
+        }
+
+        set_elder_relation_effect = {
+            ELDER = root
+            DISCIPLE = scope:neutral_scholar
+            MERIT = minor_merit_gain
+        }
+        # Save them for rewards list.
+        add_to_variable_list = {
+            name = debate_disciples
+            target = scope:neutral_scholar
+        }
+        scope:rival_elder = {
+	        progress_towards_nemesis_effect = {
+				REASON = nemesis_poached_disciple
+				CHARACTER = root
+				OPINION = default_rival_opinion
+			}
+        }
+
+        stress_impact = {
+            deceitful = minor_stress_impact_loss
+            honest = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 50
+            modifier = { 
+            	has_trait = deceitful 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = honest 
+            	add = -15 
+            }
+        }
+    }
+
+    # D — Let them be
+    option = {
+        name = az_debate.0008.d
+        flavor = az_debate.0008.d.flavor
+
+        stress_impact = {
+        	base = medium_stress_impact_loss
+            content = minor_stress_impact_loss
+            ambitious = medium_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = {
+                stress >= higher_than_baseline_stress
+                factor = 2
+            }
+            modifier = { 
+            	has_trait = content add = 20 
+            }
+            modifier = { 
+            	has_trait = ambitious add = -15 
+            }
+        }
+    }
+}
+
+az_debate.0009 = {
+    type = activity_event
+    title = az_debate.0009.t
+    desc  = az_debate.0009.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = stress
+        camera = camera_event_left
+    }
+
+    center_portrait = {
+        character = scope:errant_disciple
+        animation = debating
+        camera = camera_event_center
+    }
+
+    right_portrait = {
+        character = scope:stickler_scholar
+        animation = fanning_coyly
+        camera = camera_event_right_pointing_right
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_disciples_intent
+        scope:activity = {
+            # At least one of ROOT's disciples is attending
+            any_attending_character = {
+            	is_ai = yes
+                has_relation_elder = root
+                save_temporary_scope_as = errant_temp
+            }
+            # Some audience to react
+            any_attending_character = {
+                this != root
+                this != scope:errant_temp
+                is_ai = yes
+                OR = {
+                    has_trait = confucian_education
+                    learning >= decent_skill_rating
+                }
+                NOT = {
+                	has_relation_elder = root
+                }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+        # Save movement scope if active
+        top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+
+        scope:activity = {
+            # Pick the misquoting disciple
+            random_attending_character = {
+                limit = { 
+                	is_ai = yes
+                	has_relation_elder = root
+                }
+                save_scope_as = errant_disciple
+            }
+
+            # Some audience to react
+            random_attending_character ?= {
+                limit = {
+                    this != root
+		            this != scope:errant_disciple
+		            is_ai = yes
+		            OR = {
+		                has_trait = confucian_education
+		                learning >= decent_skill_rating
+		            }
+		            NOT = {
+		            	has_relation_elder = root
+		            }
+                }
+                save_scope_as = stickler_scholar
+            }
+        }
+    }
+
+    # A — Speak boldly in defence of your disciple
+    option = {
+        name = az_debate.0009.a
+
+        change_merit = minor_merit_gain
+        add_learning_lifestyle_xp = minor_lifestyle_xp
+
+        stress_impact = {
+            compassionate = minor_stress_impact_loss
+            arrogant = minor_stress_impact_loss
+            shy = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = { 
+            	has_trait = compassionate 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = arrogant
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = shy
+            	add = -10 
+            }
+        }
+    }
+
+    # B — Redirect with a courteous anecdote
+    option = {
+        name = az_debate.0009.b
+
+        custom_tooltip = event_increase_movement_power_minor_effect_tooltip
+        scope:my_movement ?= {
+            event_change_movement_power_effect = {
+                VALUE = event_increase_movement_power_minor_value
+            }
+        }
+
+        stress_impact = {
+            gregarious = minor_stress_impact_loss
+            deceitful = minor_stress_impact_loss
+            honest = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = gregarious 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = deceitful
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = honest
+            	add = -10 
+            }
+        }
+    }
+
+    # D — "Let's go somewhere else."
+    option = {
+        name   = az_debate.0009.d
+
+        scope:errant_disciple = {
+            add_opinion = {
+                target = root
+                modifier = grateful_opinion
+                opinion = 10
+            }
+        }
+
+        stress_impact = {
+            content = minor_stress_impact_loss
+            ambitious = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = { 
+            	has_trait = content
+            	add = 20 
+            }
+            modifier = { 
+            	has_trait = ambitious 
+            	add = -15 
+            }
+        }
+    }
+}
+
+az_debate.0010 = {
+    type = activity_event
+    title = az_debate.0010.t
+    desc  = az_debate.0010.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = eyeroll
+        camera = camera_event_left_to_the_left
+    }
+
+    center_portrait = {
+        character = scope:critic
+        animation = eavesdrop
+        camera = camera_event_right_pointing_very_right
+    }
+
+    right_portrait = {
+        character = scope:poet
+        animation = fanning
+        camera = camera_event_right_pointing_right
+    }
+
+    trigger = {
+        exists = top_participant_group:dynastic_cycle
+        scope:activity = {
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                top_participant_group:dynastic_cycle ?= {
+                    NOT = { participant_group_type = undecided_movement }
+                }
+                NOT = { top_participant_group:dynastic_cycle ?= root.top_participant_group:dynastic_cycle }
+            }
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                is_in_same_movement_as = { TARGET = root }
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+    	# Save a movement scope if available
+        top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }		
+        
+        scope:activity = {
+            # Pick a poet of another movement if possible
+            random_attending_character = {
+                limit = {
+                    this != root
+	                is_ai = yes
+	                top_participant_group:dynastic_cycle ?= {
+						NOT = { participant_group_type = undecided_movement }
+					}
+                    NOT = { top_participant_group:dynastic_cycle ?= root.top_participant_group:dynastic_cycle }
+                }
+                save_scope_as = poet
+            }
+
+            # Someone claims political subtext
+            random_attending_character = {
+                limit = {
+                    this != root
+	                is_ai = yes
+	                is_in_same_movement_as = { TARGET = root }
+                }
+                save_scope_as = critic
+            }
+        }
+    }
+
+    # A — Agree with the subtext and praise the poet
+    option = {
+        name = az_debate.0010.a
+        trigger = {
+        	situation:dynastic_cycle ?= {
+				situation_participant_group:conservative_movement = {
+					NOT = { participant_group_has_character = root }
+				}
+			}
+        }
+
+        change_influence = medium_influence_gain
+
+        stress_impact = {
+            deceitful = minor_stress_impact_loss
+            ambitious = minor_stress_impact_loss
+            honest = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = { 
+            	has_trait = deceitful 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = ambitious 
+            	add = 10 
+            }
+            modifier = {
+            	has_trait = honest 
+            	add = -10 
+            }
+        }
+    }
+
+    # B — Seek his counsel in private
+    option = {
+        name = az_debate.0010.b
+
+        add_character_modifier = {
+            modifier = tgp_subtle_counsel_modifier
+            years = 5
+        }
+
+        scope:poet = {
+            progress_towards_friend_effect = {
+                REASON = friend_praised_poetry
+                CHARACTER = root
+                OPINION = default_friend_opinion
+            }
+        }
+
+        stress_impact = {
+            just = minor_stress_impact_loss
+            arbitrary = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = just 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = arbitrary 
+            	add = -10 
+            }
+        }
+    }
+
+    # C — Laugh it off as harmless art
+    option = {
+        name = az_debate.0010.c
+
+        stress_impact = {
+        	base = minor_stress_impact_loss
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = { 
+            	has_trait = cynical 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = paranoid 
+            	add = -10 
+            }
+        }
+    }
+}
+
+az_debate.0011 = {
+    type = activity_event
+    title = az_debate.0011.t
+    desc  = az_debate.0011.desc
+
+    theme = debate
+
+    left_portrait = {
+        character = root
+        animation = interested
+        camera = camera_event_left
+    }
+
+    center_portrait = {
+        character = scope:observed_elder
+        animation = debating
+        camera = camera_event_center_pointing_right
+    }
+
+    right_portrait = {
+        character = scope:observer
+        animation = pondering
+        camera = camera_event_right_pointing_right
+    }
+
+    trigger = {
+        has_activity_intent = debate_gain_elder_intent
+        # We make sure that they do not have a player as their elder.
+        trigger_if = {
+            limit = {
+                any_relation = { type = elder }
+            }
+            any_relation = {
+                type = elder
+                is_ai = yes
+            }
+        }
+        scope:activity = {
+            # There must be at least one suitable elder to observe
+            any_attending_character = {
+                this != root
+                is_ai = yes
+                eligible_for_elder_trigger = {
+                    DISCIPLE = root
+                }
+            }
+            # Find someone who will make introductions.
+            any_attending_character = {
+            	this != root
+            	is_ai = yes
+            	NOT = {
+            		eligible_for_elder_trigger = {
+	                    DISCIPLE = root
+	                }	
+            	}
+            }
+        }
+    }
+
+    cooldown = { years = 5 }
+
+    immediate = {
+    	# Save your current movement (if any) for movement-power effects
+        top_participant_group:dynastic_cycle ?= { save_scope_as = my_movement }
+        # Pick an elder the player could plausibly study (and potentially take as elder)
+        scope:activity = {
+            random_attending_character = {
+                limit = {
+                    this != root
+                    is_ai = yes
+                    eligible_for_elder_trigger = {
+                        DISCIPLE = root
+                    }
+                }
+                save_scope_as = observed_elder
+            }
+            random_attending_character = {
+            	limit = {
+            		this != root
+	            	is_ai = yes
+	            	NOT = {
+	            		eligible_for_elder_trigger = {
+		                    DISCIPLE = root
+		                }	
+	            	}
+            	}
+            	save_scope_as = observer
+            }
+        }
+    }
+
+    # A — Approach with the intent of becoming their disciple
+    option = {
+        name = az_debate.0011.a
+        set_elder_relation_effect = {
+            ELDER = scope:observed_elder
+            DISCIPLE = root
+            MERIT = 0
+        }
+        add_learning_lifestyle_xp = medium_lifestyle_xp
+
+        stress_impact = {
+            diligent = minor_stress_impact_loss
+            arrogant = minor_stress_impact_loss
+            shy = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = { 
+            	has_trait = diligent 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = arrogant 
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = shy 
+            	add = -10 
+            }
+        }
+    }
+
+    # B — Ask thoughtful questions
+    option = {
+        name = az_debate.0011.b
+
+        if = {
+            limit = { government_allows = merit }
+            change_merit = minor_merit_gain
+        }
+        add_diplomacy_lifestyle_xp = minor_lifestyle_xp
+
+        stress_impact = {
+            humble = minor_stress_impact_loss
+            patient = minor_stress_impact_loss
+            wrathful = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = { 
+            	has_trait = humble 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = patient 
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = wrathful 
+            	add = -10 
+            }
+        }
+    }
+
+    # C — Use their wisdom to bolster your movement
+    option = {
+        name = az_debate.0011.c
+
+        # Winning publicly sways onlookers toward your movement
+        custom_tooltip = event_increase_movement_power_minor_effect_tooltip
+        scope:my_movement ?= {
+            event_change_movement_power_effect = {
+                VALUE = event_increase_movement_power_minor_value
+            }
+        }
+
+        stress_impact = {
+            temperate = minor_stress_impact_loss
+            content = minor_stress_impact_loss
+            impatient = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+            base = 20
+            modifier = { 
+            	has_trait = temperate 
+            	add = 15 
+            }
+            modifier = { 
+            	has_trait = content 
+            	add = 10 
+            }
+            modifier = { 
+            	has_trait = impatient 
+            	add = -10 
+            }
+        }
+    }
+}

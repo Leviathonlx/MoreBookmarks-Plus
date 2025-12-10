@@ -1,0 +1,765 @@
+﻿# On actions for army events, triggered automatically by the game
+
+# called for armies every 30 days; exact date dependent on army ID
+# root is the owner of the army
+# scope:army is the army
+
+on_army_monthly = {
+	events = {
+	}
+	effect = {
+		scope:army ?= {
+			if = {
+				limit = {
+					exists = army_commander
+					NOT = { has_variable = commander_death_events_pulse_cooldown }
+				}
+				set_variable = {
+					name = commander_death_events_pulse_cooldown
+					value = yes
+					days = 365
+				}
+				army_commander = {
+					trigger_event = { on_action = commander_death_events_pulse }
+				}
+			}
+		}
+	}
+}
+
+# called when a county is (fully) occupied. Does not fire on reoccupation by province owner
+# root is the occupant
+# scope:county is the county title
+# scope:barony is the barony title that got occupied
+# scope:previous_controller is the previous controller of the county
+# scope:war is the war causing the previous controller and the occupant to be hostile
+on_county_occupied = {
+	effect = {
+		scope:county = {
+			if = {
+				limit = {
+					holder = {
+						NOT = { has_perk = enduring_hardships_perk }
+					}
+				}
+				change_county_control = county_control_loss_value
+				random_list = {
+					25 = {
+						change_development_progress_with_overflow = -10
+					}
+					25 = {
+						change_development_progress_with_overflow = -15
+					}
+					25 = {
+						change_development_progress_with_overflow = -20
+					}
+					25 = {
+						change_development_progress_with_overflow = -25
+					}
+				}
+			}
+			if = {			#used by hold_court.6000
+				limit = {
+					holder.top_liege = {
+						is_ai = no
+					}
+				}
+				scope:barony.holder = {
+					add_character_flag = {
+						flag = recently_occupied_flag
+						days = 720
+					}
+				}
+			}
+		}
+		# Mongol Devastation
+		if = {
+			limit = {
+				# Check that it's relevant so we don't fire it *all* the time
+				OR = {
+					AND = {
+						exists = global_var:mongol_empire_has_spawned
+						NOT = { exists = global_var:mongol_story_has_ended }
+						any_owned_story = {
+							type = story_mongol_invasion
+						}
+					}
+					any_owned_story = {
+						type = story_greatest_of_khans
+					}
+				}
+				NOT = { exists = scope:county.var:looted_by_mongols }
+			}
+			# Each County should only be devastated once
+			scope:county = {
+				set_variable = {
+					name = looted_by_mongols
+					value = yes
+					years = 25
+				}
+			}
+			# Send a message (and gold!) to the Mongol Emperor
+			send_interface_message = {
+				type = event_war_good
+				title = mongols_sieged_county.t
+				left_icon = scope:previous_controller
+				right_icon = scope:county
+				#Herd from nomad counties if nomadic
+				if = {
+					limit = {
+						scope:county = {
+							any_county_province = {
+								OR = {
+									has_holding_type = nomad_holding
+									has_holding_type = herder_holding
+								}
+							}
+						}
+						government_has_flag = government_is_nomadic
+					}
+					domicile = {
+						change_herd = miniscule_herd_gain
+					}
+				}
+				else = {
+					if = {
+						limit = {
+							scope:county.development_level >= 1
+						}
+						add_gold = {
+							add = scope:county.development_level
+							multiply = 5
+						}
+					}
+				}
+				if = {
+					limit = {
+						dread < 150
+					}
+					add_dread = 2
+				}
+				show_as_tooltip = {
+					scope:county = {
+						mongols_devastate_county_effect = yes
+					}
+				}
+			}
+			save_scope_as = mongol_emperor
+			# Send a message to the County's owner
+			scope:county.holder = {
+				send_interface_message = {
+					type = event_war_bad
+					title = mongols_sieged_county.t
+					left_icon = scope:mongol_emperor
+					right_icon = scope:county
+					scope:county = {
+						mongols_devastate_county_effect = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+# called when a siege completes. Does *not* fire on reoccupation by province order
+# root is the occupant
+# scope:barony is the barony title that got occupied
+# scope:county is the county title for the barony
+# scope:previous_controller is the previous controller of the county
+# scope:war is the war causing the previous controller and the occupant to be hostile
+# occupied_baronies is a list of all baronies that the siege caused the occupier to control (I.E., can include baronies with no fort level)
+on_siege_completion = {
+	events = {
+		siege.0101 # Notify holders/lieges that the county was lost to siege
+		siege.0001 # Capture/kill prisoners
+		siege.0031 # Chance to steal an artifact
+		faction_demand.1010 #Reinforce populist rebels
+		faction_demand.1110 #Reinforce peasant rebels
+		siege.1001 #Someone I care about was immured here...
+		intrigue_scheming.1804 # I had genuine/fake info about the defenses. Follows up intrigue_scheming.1801 so this won't actually trigger after every siege
+	}
+	effect = {
+		save_scope_as = occupant
+		scope:barony = {
+			if = {
+				limit = { title_province = holder.capital_province }
+				holder = {
+					random = {
+						chance = 50
+						trigger_event = fp3_decision.0002 #FP3 Event to possibly lose your royal fire
+					}
+				}
+			}
+		}
+		# If you have the Sacred Destruction tenet get piety/destroy development
+		if = {
+			limit = {
+				faith = { has_doctrine_parameter = successful_sieges_give_piety }
+			}
+			send_interface_toast = {
+				title = successful_sieges_give_piety_toast
+				left_icon = root
+				add_piety = minor_piety_gain
+				scope:barony.county = { change_development_progress_with_overflow = -2 }
+			}
+		}
+		
+		# We change your legend to reflect this siege
+		if = {
+			limit = {
+				has_legend_chapter_trigger = { CHAPTER = extra_deed }		
+				scope:barony.county.development_level >= good_development_level
+				NOT = {
+					promoted_legend ?= {
+						has_legend_chapter = {
+							name = extra_deed
+							localization_key = legend_chapter_extra_deed_recent_siege
+						}
+					}
+				}
+			}
+			random = {
+				chance = 25
+				send_interface_toast = {
+					title = legend_chapter_change_toast
+					left_icon = root
+					promoted_legend = {
+						set_legend_chapter = {
+							name = extra_deed
+							localization_key = legend_chapter_extra_deed_recent_siege
+						}
+					}
+				}
+			}
+		}
+
+		# Commander trait leveling
+		scope:barony.title_province = {
+			every_army_in_location = {
+				army_commander ?= {
+					if = {  
+						limit = {
+							has_trait = military_engineer
+							is_commanding_army = yes
+							location.barony = scope:barony
+						}
+						add_trait_xp = {
+							trait = military_engineer
+							value = {
+								value = location.fort_level
+								divide = 2
+								min = 1
+								add = {
+									value = martial
+									divide = 20
+								}
+							}
+						}
+					}
+				}
+				army_commander ?= {
+					if = {
+						limit = {
+							has_trait = reaver
+							is_commanding_army = yes
+							location.barony = scope:barony
+						}
+						add_trait_xp = {
+							trait = reaver
+							value = {
+								value = 0.2
+								add = {
+									value = martial
+									divide = 20
+								}
+							}
+						}
+					}
+				}
+				army_commander ?= {
+					if = {  
+						limit = {
+							has_trait = peasant_leader
+							is_commanding_army = yes
+						}
+						add_trait_xp = {
+							trait = peasant_leader
+							value = {
+								value = 0.1
+								add = {
+									value = martial
+									divide = 20
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		#Mandalas be looting other Mandala's capital
+		if = {
+			limit = { 
+				has_realm_law_flag = piety_for_sieging_capital_temple_complexes
+				scope:previous_controller = { has_same_government = root }
+				scope:county = { has_building_with_flag = mandala_capital_building }
+			} 
+			send_interface_message = {
+				type = msg_siege_piety
+				if = {
+					limit = {
+						scope:county = { has_building_with_flag = final_tier_mandala_capital_building }
+					}
+					add_piety = monumental_piety_gain
+				}
+				else_if = {
+					limit = {
+						scope:county = { has_building_with_flag = fourth_tier_mandala_capital_building }
+					}
+					add_piety = massive_piety_gain
+				}
+				else_if = {
+					limit = {
+						scope:county = { has_building_with_flag = third_tier_mandala_capital_building }
+					}
+					add_piety = major_piety_gain
+				}
+				else_if = {
+					limit = {
+						scope:county = { has_building_with_flag = second_tier_mandala_capital_building }
+					}
+					add_piety = medium_piety_gain
+				}
+				else = { add_piety = minor_piety_gain }
+				scope:county = {
+					if = {
+						limit = { has_county_modifier = mandala_capital_sacked_modifier }
+						hidden_effect = { remove_county_modifier = mandala_capital_sacked_modifier }
+					}
+					if = {
+						limit = { has_county_modifier = mandala_capital_restored_modifier }
+						hidden_effect = { remove_county_modifier = mandala_capital_restored_modifier }
+					}
+					add_county_modifier = {
+						modifier = mandala_capital_sacked_modifier
+						years = 10
+					}
+				}
+			}
+		}
+	}
+}
+
+# Called when a siege loots a holding
+# root is sieging character
+# scope:barony is the barony title that got looted
+# scope:county is the county title for the barony
+# scope:previous_controller is the previous controller
+on_siege_looting = {
+	events = {
+
+	}
+
+	effect = {
+		scope:barony.title_province ?= {
+			# Adventurer Siege replenish
+			every_army_in_location = {
+				limit = {
+					OR = {
+						AND = {
+							root = { is_landless_adventurer = yes }
+							army_owner = root
+						}
+						army_owner = {
+							is_landless_adventurer = yes
+							is_at_war = yes
+							any_war_ally = { this = root }
+						}
+					}
+				}
+				every_army_maa_regiment = {
+					limit = {
+						maa_current_troops_count < maa_max_troops_count
+					}
+					change_maa_troops_count = adventurer_siege_replenish_amount
+				}
+			}
+			# Strict Organization
+			every_army_in_location = {
+				limit = {
+					OR = {
+						AND = {
+							root = {
+								is_landless_adventurer = yes
+								has_perk = strict_organization_perk
+							}
+							army_owner = root
+						}
+						army_owner = {
+							is_landless_adventurer = yes
+							has_perk = strict_organization_perk
+							is_at_war = yes
+							any_war_ally = { this = root }
+						}
+					}
+				}
+				army_owner = {
+					domicile ?= { change_provisions = adventurer_siege_provisions_amount }
+				}
+			}
+			add_province_modifier = {
+				modifier = recently_looted_modifier
+				years = 5
+			}
+		}
+
+		#Gain some gold on top of the siege loot from the Master of Spoils Camp Officer
+		if = {
+			limit = {
+				employs_court_position = master_of_spoils_camp_officer
+			}
+			add_gold = {
+				value = court_position:master_of_spoils_camp_officer.aptitude:master_of_spoils_camp_officer
+				add = 1
+				multiply = 5
+			}
+		}
+		tgp_treasury_raided_effect = yes
+
+	}
+}
+
+# called for armies whenever they enter a province
+# root is the owner of the army
+# scope:army is the army
+
+on_army_enter_province = {
+	events = {
+		great_holy_war.0060		# Give Crusaders their trait upon reaching the holy land.
+		ep3_emperor_yearly.3010	# Byzantine emperor sends fireships to defend the strait of Marmara
+		game_rule.1021			# Figure out whether we should fire a conclusion event during the Conquest.
+	}
+	random_events = {
+		chance_of_no_event = 97
+		100 = bp2_yearly.4030 # Winter province event
+		1 = epidemic_events.1120 # Corpse catapult event
+	}
+	effect = {
+		# Commander trait leveling
+		scope:army.army_commander ?= {
+			if = {
+				limit = {
+					has_trait = logistician
+				}
+				add_trait_xp = {
+					trait = logistician
+					value = {
+						value = 0.2
+						add = {
+							value = martial
+							divide = 20
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_trait = organizer
+				}
+				add_trait_xp = {
+					trait = organizer
+					value = {
+						value = 0.2
+						add = {
+							value = martial
+							divide = 20
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# Called when a raid action starts
+# root is the raid army
+# scope:raider is the person owning the raid army
+# scope:barony is the barony title that got raided
+# scope:county is the county title for the barony
+on_raid_action_start = {
+	events = {
+		fp1_trade_events.0001	# A fearsome target causes scope:raider to reconsider their intent.
+	}
+	effect = { # The target isn't too keen on the raider...
+		scope:barony.holder = {
+			if = {
+				limit = {
+					has_opinion_modifier = {
+						target = scope:raider
+						modifier = raided_me_opinion
+					}
+				}
+				remove_opinion = { # We reapply it so that the counter is reset
+					target = scope:raider
+					modifier = raided_me_opinion
+				}
+			}
+			add_opinion = {
+				target = scope:raider
+				modifier = raided_me_opinion
+			}
+			every_liege_or_above = {
+				if = {
+					limit = {
+						has_opinion_modifier = {
+							target = scope:raider
+							modifier = raided_me_opinion
+						}
+					}
+					remove_opinion = { # We reapply it so that the counter is reset
+						target = scope:raider
+						modifier = raided_me_opinion
+					}
+				}
+				add_opinion = {
+					target = scope:raider
+					modifier = raided_me_opinion
+				}
+			}
+		}
+	}
+	random_events = {
+		100 = fp1_yearly.0692	# FP1 - setup event for one of your knights converting to a reformed faith.
+	}
+}
+
+# Called when a raid action finishes
+# root is the raid army
+# scope:raider is the person owning the raid army
+# scope:barony is the barony title that got raided
+# scope:county is the county title for the barony
+on_raid_action_completion = {
+	events = {
+		raiding.0001 # An independent liege personally raids a county capital.
+		raiding.0021 # Adjust raider completion tally.
+		raiding.0022 # Chance to fire viking/raider acquisition event
+		raiding.0013 # Chance to kidnap prisoners
+		raiding.0014 # Chance to steal an artifact
+		bp2_yearly.8031 # Steal a doll
+		raiding.0031 # Hereward adds XP
+		raiding.0040 # Raid Intent Effects
+	}
+	effect = {
+		scope:raider = {
+			send_interface_message = {
+				type = msg_raid_completed
+				left_icon = scope:county.holder
+				right_icon = scope:barony
+			}
+			if = {
+				limit = { 
+					scope:county = {
+						any_county_province = { has_special_building = yes }
+					}
+					NOT = { has_character_flag = raider_legend }
+					has_dlc_feature = legends
+					NOT = { has_game_rule = historical_legends_only }
+				}
+				random = {
+					chance = legend_seed_chance_low
+					add_character_flag = raider_legend
+					create_legend_seed = {
+						type = heroic
+						quality = famed
+						chronicle = legendary_battle
+						properties = {
+							winner = scope:raider
+							loser = scope:county.holder
+							location = scope:barony.title_province
+						}
+					}
+				}
+			}
+			house ?= {
+				if = {
+					limit = {
+						exists = scope:county.holder.house
+					}
+					change_house_relation_effect = {
+						HOUSE = scope:county.holder.house
+						VALUE = house_relation_damage_minor_value
+						REASON = raid
+						CHAR = scope:raider
+						TARGET_CHAR = scope:county.holder
+						TITLE = scope:dummy_gender
+					}
+				}
+			}
+		}
+		scope:barony.title_province = {
+			add_province_modifier = {
+				modifier = recently_looted_modifier
+				years = 5
+			}
+			county = {
+				if = {
+					limit = {
+						holder = {
+							NOT = { has_perk = enduring_hardships_perk }
+						}
+					}
+					change_county_control = raid_county_control_loss_value
+					random_list = {
+						25 = {
+							change_development_progress_with_overflow = -2
+						}
+						25 = {
+							change_development_progress_with_overflow = -3
+						}
+						25 = {
+							change_development_progress_with_overflow = -4
+						}
+						25 = {
+							change_development_progress_with_overflow = -5
+						}
+					}
+				}
+				# Silk Road
+				tgp_silk_road_raid_effect = yes
+			}
+		}
+		scope:county.holder = { add_to_list = raid_targets }
+		scope:county.holder.liege ?= { add_to_list = raid_targets }
+		scope:county.holder.liege.liege ?= { add_to_list = raid_targets }
+		scope:county.holder.liege.liege.liege ?= { add_to_list = raid_targets }
+		every_in_list = {
+			list = raid_targets
+			send_interface_message = {
+				type = msg_raid_lost
+				left_icon = scope:raider
+				right_icon = scope:barony
+			}
+		}
+
+		## Struggles
+		if = {
+			limit = {
+				scope:raider = {
+					any_character_struggle = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_raided_involved
+							CHAR = scope:county.holder
+						}
+					}
+				}
+				scope:county.holder = { # Theoretical edge case where X is from one struggle, Y from another one and they trigger catalysts. But unlikely to be an issue.
+					any_character_struggle = {
+						involvement = involved
+						phase_has_catalyst = catalyst_raided_involved
+					}
+				}
+			}
+			scope:raider = {
+				every_character_struggle = {
+					limit = {
+						activate_struggle_catalyst_secondary_character_involvement_involved_trigger = {
+							CATALYST = catalyst_raided_involved
+							CHAR = scope:county.holder
+						}
+					}
+					activate_struggle_catalyst = {
+						catalyst = catalyst_raided_involved
+						character = scope:raider
+					}
+					log_debug_variable_for_persian_struggle_effect = { VAR = concession_catalyst_raided_involved }
+				}
+			}
+		}
+
+		# Commander trait leveling
+		root.army_commander ?= {
+			if = {
+				limit = {
+					has_trait = reaver
+					is_commanding_army = yes
+				}
+				add_trait_xp = {
+					trait = reaver
+					value = {
+						value = 0.5
+						add = {
+							value = martial
+							divide = 10
+						}
+					}
+				}
+			}
+		}
+
+		tgp_treasury_raided_effect = yes
+	}
+}
+
+# Called every 7 days during a raid action (except if the raid is stalled due to combat). First call might be anywhere from 1 to 7 days after the raid action begins
+# root is the raid army
+# scope:raider is the person owning the raid army
+# scope:barony is the barony title that got raided
+# scope:county is the county title for the barony
+on_raid_action_weekly = {
+}
+
+# Called when a raider returns to their own territory and deposits loot
+# Use root.raid_loot to see how much was deposited
+# root is the raid army
+# scope:raider is the person owning the raid army
+# scope:raid_loot is the loot that you gained from the raid
+on_raid_loot_delivered = {
+	effect = {
+		# If the ruler led their own army, flag that for events.
+		if = {
+			limit = { army_commander = scope:raider }
+			scope:raider = {
+				add_character_flag = {
+					flag = has_recently_performed_raid
+					years = 3
+				}
+			}
+		}
+	}
+	events = {
+		
+	}
+	random_events = {
+		chance_to_happen = 25
+		200 = 0
+
+		100 = fp1_yearly.0622	# FP1 - setup event for a child demanding some of your loot.
+		100 = fp1_yearly.0632	# FP1 - setup event for noticing a cynical knight refuse to sacrifice.
+	}
+}
+
+# Called when a raid army is defeated in battle and gets its loot (if any) stolen
+# Use root.raid_loot to see how they're carrying
+# root is the raid army
+# scope:raider is the person owning the raid army
+# scope:receiver is the person getting the raid loot
+on_defeat_raid_army = {
+	events = {
+		raiding.0012 # Defending army take raider loot notifications.
+	}
+}
+
+# Called when a raid intent is invalidated
+on_raid_intent_invalidated = {
+	effect = {
+		scope:raider = {
+			send_interface_message = {
+				type = msg_raid_intent_invalidated
+				left_icon = scope:raider
+				localization_values = {
+					raiding_army = root
+				}
+			}
+		}
+	}
+}

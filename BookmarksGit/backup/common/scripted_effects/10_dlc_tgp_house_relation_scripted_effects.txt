@@ -1,0 +1,561 @@
+﻿### HOUSE RELATION SCRIPTED EFFECTS
+
+set_house_relation_level_effect = {
+	save_scope_as = house
+	$HOUSE$ ?= { save_scope_as = other_house }
+	if = {
+		limit = {
+			exists = scope:house
+			exists = scope:other_house
+			scope:house != scope:other_house
+		}
+		set_house_relation = {
+			target = scope:other_house
+			level = $LEVEL$
+			description = house_relation_reason_$REASON$_desc
+			save_scope_as = house_relation
+		}
+	}
+}
+
+increase_house_relation_level_effect = {
+	save_scope_as = house
+	$HOUSE$ ?= { save_scope_as = other_house }
+	if = {
+		limit = {
+			exists = house
+			exists = scope:other_house
+			scope:house != scope:other_house
+		}
+		if = {
+			limit = { has_house_relation_with = scope:other_house }
+			random_house_relation = {
+				limit = {
+					any_relation_house = { scope:other_house = this }
+				}
+				save_scope_as = house_relation
+				if = {
+					limit = { has_house_relation_level = feud }
+					scope:house = {
+						set_house_relation_level_effect = {
+							HOUSE = scope:other_house
+							REASON = $REASON$
+							LEVEL = rivalry
+						}
+					}
+				}
+				else_if = {
+					limit = { has_house_relation_level = rivalry }
+					scope:house = {
+						set_house_relation_level_effect = {
+							HOUSE = scope:other_house
+							REASON = $REASON$
+							LEVEL = quarrel
+						}
+					}
+				}
+				else_if = {
+					limit = { has_house_relation_level = quarrel }
+					scope:house = {
+						set_house_relation_level_effect = {
+							HOUSE = scope:other_house
+							REASON = $REASON$
+							LEVEL = neutral
+						}
+					}
+				}
+				else_if = {
+					limit = { has_house_relation_level = neutral }
+					scope:house = {
+						set_house_relation_level_effect = {
+							HOUSE = scope:other_house
+							REASON = $REASON$
+							LEVEL = cordial
+						}
+					}
+				}
+				else_if = {
+					limit = { has_house_relation_level = cordial }
+					scope:house = {
+						set_house_relation_level_effect = {
+							HOUSE = scope:other_house
+							REASON = $REASON$
+							LEVEL = friendly
+						}
+					}
+				}
+				else_if = {
+					limit = { has_house_relation_level = friendly }
+					scope:house = {
+						set_house_relation_level_effect = {
+							HOUSE = scope:other_house
+							REASON = $REASON$
+							LEVEL = amity
+						}
+					}
+				}
+			}
+		}
+		else = {
+			set_house_relation_level_effect = {
+				HOUSE = scope:other_house
+				REASON = $REASON$
+				LEVEL = cordial
+			}
+			random_house_relation = {
+				limit = { any_relation_house = { this = scope:other_house } }
+				save_scope_as = house_relation
+			}
+		}
+	}
+}
+
+decrease_house_relation_level_effect = {
+	save_scope_as = house
+	$HOUSE$ ?= { save_scope_as = other_house }
+	scope:house ?= {
+		if = {
+			limit = {
+				exists = scope:other_house
+				scope:other_house != this
+			}
+			if = {
+				limit = { has_house_relation_with = scope:other_house }
+				random_house_relation = {
+					limit = {
+						any_relation_house = { scope:other_house = this }
+					}
+					save_scope_as = house_relation
+					if = {
+						limit = { has_house_relation_level = amity }
+						scope:house = {
+							set_house_relation_level_effect = {
+								HOUSE = scope:other_house
+								REASON = $REASON$
+								LEVEL = friendly
+							}
+						}
+					}
+					else_if = {
+						limit = { has_house_relation_level = friendly }
+						scope:house = {
+							set_house_relation_level_effect = {
+								HOUSE = scope:other_house
+								REASON = $REASON$
+								LEVEL = cordial
+							}
+						}
+					}
+					else_if = {
+						limit = { has_house_relation_level = cordial }
+						scope:house = {
+							set_house_relation_level_effect = {
+								HOUSE = scope:other_house
+								REASON = $REASON$
+								LEVEL = neutral
+							}
+						}
+					}
+					else_if = {
+						limit = { has_house_relation_level = neutral }
+						scope:house = {
+							set_house_relation_level_effect = {
+								HOUSE = scope:other_house
+								REASON = $REASON$
+								LEVEL = quarrel
+							}
+						}
+					}
+					else_if = {
+						limit = { has_house_relation_level = quarrel }
+						scope:house = {
+							set_house_relation_level_effect = {
+								HOUSE = scope:other_house
+								REASON = $REASON$
+								LEVEL = rivalry
+							}
+						}
+					}
+					else_if = {
+						limit = { has_house_relation_level = rivalry }
+						scope:house = {
+							set_house_relation_level_effect = {
+								HOUSE = scope:other_house
+								REASON = $REASON$
+								LEVEL = feud
+							}
+						}
+					}
+				}
+			}
+			else = {
+				set_house_relation_level_effect = {
+					HOUSE = scope:other_house
+					REASON = $REASON$
+					LEVEL = quarrel
+				}
+				random_house_relation = {
+					limit = { any_relation_house = { this = scope:other_house } }
+					save_scope_as = house_relation
+				}
+			}
+		}
+	}
+}
+
+# Effect for incrementing towards a level change - used actual gameplay effects, e.g. war declarations
+# Required parameters: HOUSE, CHAR, TARGET_CHAR, TITLE, VALUE, REASON
+change_house_relation_effect = {
+	# SAVE USEFUL SCOPES
+	save_scope_as = house
+	$HOUSE$ ?= { save_scope_as = other_house }
+	$CHAR$ ?= { save_scope_as = char }
+	$TARGET_CHAR$ ?= { save_scope_as = target_char }
+	$TITLE$ ?= { save_scope_as = title }
+	if = {
+		limit = {
+			exists = scope:house
+			exists = scope:other_house
+			scope:house != scope:other_house
+		}
+		save_scope_value_as = {
+			name = steps
+			value = $VALUE$
+		}
+		# IF A HOUSE RELATION ALREADY EXISTS, MODIFY IT
+		if = {
+			limit = {
+				scope:house = {
+					any_house_relation = {
+						any_relation_house = { scope:other_house = this }
+						# EASIER TO JUMP VIA TEMP SCOPE
+						save_temporary_scope_as = relation_temp
+					}
+				}
+			}
+			scope:relation_temp = { save_scope_as = house_relation }
+			if = {
+				limit = {
+					house_relation_is_valid_to_keep_trigger = {
+						HOUSE = scope:house
+						OTHER_HOUSE = scope:other_house
+					}
+				}
+				scope:relation_temp = {
+					if = {
+						limit = {
+							scope:steps < 0
+							NOT = { has_house_relation_level = feud } # already at min
+						}
+						change_house_relation_level = {
+							steps = scope:steps
+							description = house_relation_reason_$REASON$_desc
+						}
+					}
+					else_if = {
+						limit = {
+							NOT = { has_house_relation_level = amity } # already at max
+						}
+						change_house_relation_level = {
+							steps = scope:steps
+							description = house_relation_reason_$REASON$_desc
+						}
+					}
+				}
+				# INFORM PLAYERS OF CHANGE
+				every_player = {
+					limit = {
+						OR = {
+							house ?= scope:house
+							house ?= scope:other_house
+						}
+					}
+					house = { save_temporary_scope_as = house_temp }
+					scope:house_relation = {
+						random_relation_house = {
+							limit = { NOT = { this = scope:house_temp } }
+							save_temporary_scope_as = other_house_temp
+						}
+					}
+				}
+			}
+			else = {
+				scope:relation_temp = { save_scope_as = house_relation }
+				# INFORM PLAYERS OF CHANGE
+				every_player = {
+					limit = {
+						OR = {
+							house ?= scope:house
+							house ?= scope:other_house
+						}
+					}
+					house = { save_temporary_scope_as = house_temp }
+					scope:house_relation = {
+						random_relation_house = {
+							limit = { NOT = { this = scope:house_temp } }
+							save_temporary_scope_as = other_house_temp
+						}
+					}
+					send_interface_toast = {
+						type = msg_house_relation_cleared
+						title = house_relation_cleared_message_title
+						desc = house_relation_cleared_message_desc
+						left_icon = scope:house_temp
+						right_icon = scope:other_house_temp
+					}
+				}
+				scope:house_relation = { clear_house_relation = yes }
+			}
+		}
+		# OTHERWISE, SET STARTING
+		else_if = {
+			limit = {
+				house_relation_is_valid_to_start_trigger = {
+					HOUSE = scope:house
+					OTHER_HOUSE = scope:other_house
+				}
+			}
+			scope:house = {
+				if = {
+					limit = { scope:steps < 0 }
+					set_house_relation_level_effect = {
+						HOUSE = scope:other_house
+						REASON = $REASON$
+						LEVEL = quarrel
+					}
+				}
+				else = {
+					set_house_relation_level_effect = {
+						HOUSE = scope:other_house
+						REASON = $REASON$
+						LEVEL = cordial
+					}
+				}
+			}
+		}
+	}
+}
+
+change_house_relation_feud_score_effect = {
+	save_scope_as = house
+	$TARGET$ ?= { save_scope_as = other_house }
+	random_house_relation = {
+		limit = {
+			has_bp1_dlc_trigger = yes
+			has_house_relation_level = feud
+			any_relation_house = { scope:other_house ?= this }
+		}
+		save_scope_as = relation
+		if = {
+			limit = {
+				exists = var:house_feud_house_1
+				exists = var:house_feud_house_2
+				exists = var:house_feud_house_1_score
+				exists = var:house_feud_house_2_score
+			}
+			if = {
+				limit = { var:house_feud_house_1 = scope:house }
+				change_variable = { name = house_feud_house_1_score add = $VALUE$ }
+			}
+			else = {
+				change_variable = { name = house_feud_house_2_score add = $VALUE$ }
+			}
+		}
+		else = {
+			set_variable = { name = house_feud_house_1 value = scope:house }
+			set_variable = { name = house_feud_house_2 value = scope:other_house }
+			set_variable = { name = house_feud_house_1_score value = $VALUE$ }
+			set_variable = { name = house_feud_house_2_score value = 0 }
+		}
+		hidden_effect = {
+			scope:house ?= {
+				every_house_member = {
+					limit = { is_ai = no }
+					send_interface_message = {
+						type = house_feud_$REASON$_good_message
+						left_icon = scope:house.house_head
+						right_icon = scope:other_house.house_head
+						if = {
+							limit = { $VALUE$ >= house_feud_major_counter_value }
+							custom_tooltip = house_feud_tipped_scales_pos_big
+						}
+						else_if = {
+							limit = { $VALUE$ >= house_feud_medium_counter_value }
+							custom_tooltip = house_feud_tipped_scales_pos_medium
+						}
+						else = { custom_tooltip = house_feud_tipped_scales_pos_small }
+					}
+				}
+			}
+			scope:other_house ?= {
+				every_house_member = {
+					limit = { is_ai = no }
+					send_interface_message = {
+						type = house_feud_$REASON$_bad_message
+						left_icon = scope:house.house_head
+						right_icon = scope:other_house.house_head
+						if = {
+							limit = { $VALUE$ >= house_feud_major_counter_value }
+							custom_tooltip = house_feud_tipped_scales_neg_big
+						}
+						else_if = {
+							limit = { $VALUE$ >= house_feud_medium_counter_value }
+							custom_tooltip = house_feud_tipped_scales_neg_medium
+						}
+						else = { custom_tooltip = house_feud_tipped_scales_neg_small }
+					}
+				}
+			}
+		}
+	}
+}
+
+# Save targeting Feud scope for reference
+save_ongoing_house_relation_effect = {
+	house ?= {
+		random_house_relation = {
+			limit = {
+				any_relation_house = { $TARGET$.house ?= this }
+			}
+			save_scope_as = relation
+		}
+	}
+}
+
+# Promoting someone not of the same noble family as the current heir (with active investment)
+promote_appointment_house_relation_effect = {
+	$TITLE$ ?= { save_temporary_scope_as = title_temp }
+	$CANDIDATE$ ?= { save_temporary_scope_as = candidate_temp }
+	$INVESTOR$ ?= { save_temporary_scope_as = investor_temp }
+	if = { # DAMAGE WITH CURRENT HEIR
+		limit = {
+			scope:investor_temp.house.house_head = {
+				# Investor belongs to a noble family
+				any_held_title = { is_noble_family_title = yes }
+			}
+			scope:title_temp = {
+				current_heir ?= {
+					# Heir has been invested in
+					has_succession_appointment_investors = $TITLE$
+					# Candidate is not the heir
+					NOT = { scope:candidate_temp ?= this }
+					house ?= {
+						NOR = { # HEIR IS NOT FROM CANDIDATE OR INVESTOR HOUSES
+							scope:candidate_temp.house ?= this
+							scope:investor_temp.house ?= this
+						}
+						house_head ?= {
+							# HEIR HOUSE HEAD IN SAME REALM AS INVESTOR
+							scope:investor_temp.top_liege ?= top_liege
+							# HEIR HOUSE IS A NOBLE FAMILY
+							any_held_title = { is_noble_family_title = yes }
+							# SAME REALM AS HEIR
+							top_liege = scope:title_temp.current_heir.top_liege
+							# SAME REALM AS INVESTOR
+							top_liege = scope:investor_temp.top_liege
+						}
+					}
+				}
+				# CANDIDATE IS ACTUALLY MUSCLING IN
+				place_in_line_of_succession = {
+					target = scope:candidate_temp
+					value <= 5
+				}
+			}
+		}
+		scope:investor_temp.house = {
+			change_house_relation_effect = {
+				HOUSE = scope:title_temp.current_heir.house
+				VALUE = house_relation_damage_minor_value
+				REASON = appointment_competition
+				CHAR = scope:investor_temp
+				TARGET_CHAR = scope:title_temp.current_heir
+				TITLE = scope:title_temp
+			}
+		}
+	}
+	if = { # IMPROVE WITH CANDIDATE
+		limit = {
+			scope:investor_temp.house ?= {	
+				# Investor is of a different house than the candidate
+				NOT = { scope:candidate_temp.house ?= this }
+				house_head ?= {
+					# Investor in same realm as candidate
+					top_liege = scope:candidate_temp.house.house_head.top_liege
+					# Investor belongs to a noble family
+					any_held_title = { is_noble_family_title = yes }
+				}
+			}
+			scope:candidate_temp ?= {
+				# Candidate in same realm as their house head
+				top_liege = scope:candidate_temp.house.house_head.top_liege
+				# Candidate belongs to a noble family
+				house.house_head ?= {
+					any_held_title = { is_noble_family_title = yes }
+					# SAME REALM
+					top_liege = scope:investor_temp.top_liege
+				}
+				# Candidate has been invested in
+				has_succession_appointment_investors = scope:title_temp
+			}
+			scope:title_temp = {
+				# Not promoting another member of the house that is already winning the succession
+				NOT = { current_heir.house ?= scope:candidate_temp.house }
+				# Candidate has a good chance
+				place_in_line_of_succession = {
+					target = scope:candidate_temp
+					value <= 3
+				}
+			}
+		}
+		scope:investor_temp.house = {
+			change_house_relation_effect = {
+				HOUSE = scope:candidate_temp.house
+				VALUE = house_relation_improve_minor_value
+				REASON = appointment_support
+				CHAR = scope:investor_temp
+				TARGET_CHAR = scope:candidate_temp
+				TITLE = scope:title_temp
+			}
+		}
+	}
+}
+
+# Damaging an invested candidate of another noble family
+damage_appointment_house_relation_effect = {
+	$TITLE$ ?= { save_temporary_scope_as = title_temp }
+	$CANDIDATE$ ?= { save_temporary_scope_as = candidate_temp }
+	$INVESTOR$ ?= { save_temporary_scope_as = investor_temp }
+	if = {
+		limit = {
+			scope:candidate_temp ?= {
+				NOT = { this = scope:investor_temp }
+				house ?= {
+					house_head ?= {
+						top_liege = scope:investor_temp.top_liege
+						any_held_title = { is_noble_family_title = yes }
+					}
+					NOT = { scope:investor_temp.house ?= this }
+				}
+				has_succession_appointment_investors = scope:title_temp
+			}
+			# CANDIDATE IS ACTUALLY MUSCLING IN
+			scope:title_temp = {
+				place_in_line_of_succession = {
+					target = scope:candidate_temp
+					value <= 5
+				}
+			}
+		}
+		scope:investor_temp.house = {
+			change_house_relation_effect = {
+				HOUSE = scope:candidate_temp.house
+				VALUE = house_relation_damage_minor_value
+				REASON = appointment_competition
+				CHAR = scope:investor_temp
+				TARGET_CHAR = scope:candidate_temp
+				TITLE = scope:title_temp
+			}
+		}
+	}
+}

@@ -1,0 +1,4 @@
+﻿# Name of 'group', localization is selected by: "message_group_type" + <key>
+key = {
+	sort_order = integer			# The order message groups show up in the message settings window, higher number is sorted first, tie breaking is on definition order. Default = 0
+}

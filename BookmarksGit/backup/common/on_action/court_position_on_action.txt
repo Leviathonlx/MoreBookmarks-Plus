@@ -1,0 +1,82 @@
+﻿
+####################################################################
+# Court Position On Actions
+####################################################################
+
+caravan_master_prepare_travels_on_action = {
+	effect = {
+		if = {
+			limit = {
+				court_position:travel_leader_court_position ?= {
+					has_variable = performing_prepare_travels
+				}
+			}
+			if = {
+				limit = {
+					has_variable = prepare_travels_value
+				}
+				change_variable = {
+					name = prepare_travels_value
+					add = court_position:travel_leader_court_position.caravan_master_prepare_travels_change_value
+				}
+				if = {
+					limit = {
+						var:prepare_travels_value > court_position:travel_leader_court_position.caravan_master_prepare_travels_max_value
+					}
+					set_variable = {
+						name = prepare_travels_value
+						value = court_position:travel_leader_court_position.caravan_master_prepare_travels_max_value
+					}
+				}
+			}
+			else = {
+				set_variable = {
+					name = prepare_travels_value
+					value = court_position:travel_leader_court_position.caravan_master_prepare_travels_change_value
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					has_variable = prepare_travels_value
+				}
+				change_variable = {
+					name = prepare_travels_value
+					subtract = 0.5
+				}
+				if = {
+					limit = {
+						var:prepare_travels_value <= 0
+					}
+					set_variable = {
+						name = prepare_travels_value
+						value = 0
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_variable = prepare_travels_value
+				var:prepare_travels_value != 0
+			}
+			set_variable = {
+				name = prepare_travels_cooldown
+				days = 30
+			}
+			trigger_event = {
+				on_action = caravan_master_prepare_travels_on_action
+				days = 30
+			}
+		}
+		else_if = {
+			limit = {
+				has_variable = prepare_travels_value
+				var:prepare_travels_value = 0
+			}
+			remove_variable = prepare_travels_value
+			remove_variable = prepare_travels_cooldown
+		}
+	}
+}

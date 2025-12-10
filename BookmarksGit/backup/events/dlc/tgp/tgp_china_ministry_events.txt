@@ -1,0 +1,1400 @@
+﻿namespace = tgp_china_ministry
+
+### EVENT LIST ####################################################################
+## 0001 - 0020	Minister of Defense - Grand Campaign GP
+## XXXX - XXXX	Event Name Here by Author Name Here
+###################################################################################
+
+###################################
+# Minister of Defense - Grand Campaign GP
+# 0001 - War starts - Minister notification and script logic to start the war
+# 0002 - War won
+# 0003 - War lost or white peaced
+# 0004 - War joins
+# 0005 - Great Project ends - timer or all wars were won/lost
+# 0006 - Great Project canceled
+# 0007 - War starts - Others notification
+# By Arkadiusz Majewski
+###################################
+
+# War starts - Minister notification and script logic to start the war
+tgp_china_ministry.0001 = {
+	type = character_event
+	title = tgp_china_ministry.0001.t
+	desc = tgp_china_ministry.0001.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = war_attacker
+	}
+	right_portrait = {
+		trigger = {
+			scope:contributor != root
+		}
+		character = scope:contributor
+		animation = random_weapon_aggressive
+	}
+	lower_right_portrait = {
+		trigger = {
+			scope:war_leader != root
+		}
+		character = scope:war_leader
+	}
+	lower_center_portrait = scope:defender
+	lower_left_portrait = scope:owner
+
+	immediate = {
+		scope:target_title.holder.top_liege = {
+			save_scope_as = defender
+		}
+	}
+
+	option = {
+		name = tgp_china_ministry.0001.a
+		if = {
+			limit = {
+				NOT = {
+					exists = scope:grand_campaign_war
+				}
+			}
+			start_war = {
+				cb = grand_campaign_kingdom_invasion_cb
+				target = scope:defender
+				target_title = scope:great_project.var:grand_campaign_target
+			}
+		}
+		add_character_modifier = {
+			modifier = tgp_joined_grand_campaign_modifier
+		}
+	}
+	after = {
+		scope:war_leader = {
+			random_character_war = {
+				limit = {
+					using_cb = grand_campaign_kingdom_invasion_cb
+				}
+				save_scope_as = grand_campaign_war
+				set_variable = {
+					name = grand_campaign_project
+					value = scope:great_project
+				}
+			}
+		}
+		#bring in all relevant defenders
+		scope:target_title = {
+			every_in_de_jure_hierarchy = {
+				limit = {
+					holder ?= {
+						this = scope:defender
+						top_overlord != scope:owner
+						NOT = {
+							any_character_war = {
+								this != scope:grand_campaign_war
+							}
+						}
+					}
+				}
+				holder = {
+					add_to_list = holders_to_join
+				}
+			}
+		}
+		scope:great_project = {
+			set_variable = {
+				name = grand_campaign_war
+				value = scope:grand_campaign_war
+			}
+		}
+		every_in_list = {
+			list = holders_to_join
+				scope:grand_campaign_war ?= {
+					add_defender = prev
+				}
+
+		}
+		scope:owner = {
+			if = {
+				limit = {
+					this != root
+				}
+				trigger_event = tgp_china_ministry.0007
+			}
+		}
+		scope:contributor = {
+			scope:grand_campaign_war ?= {
+				if = {
+					limit = {
+						any_war_attacker = {
+							this != scope:contributor
+						}
+					}
+					add_attacker = prev
+				}
+			}
+			if = {
+				limit = {
+					this != root
+				}
+				trigger_event = tgp_china_ministry.0007
+			}
+		}
+	}
+}
+# War won
+tgp_china_ministry.0002 = {
+	type = character_event
+	title = tgp_china_ministry.0002.t
+	desc = tgp_china_ministry.0002.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:attacker
+		animation = random_weapon_celebrate
+	}
+	lower_center_portrait = scope:defender
+
+	immediate = {
+		save_scope_as = owner
+		show_as_tooltip = {
+			# If in the Advancement phase make the target a tributary to the Hegemon
+			if = {
+				limit = {
+					situation:dynastic_cycle ?= {
+						OR = {
+							situation_current_phase = situation_dynastic_cycle_phase_stability_advancement
+							situation_current_phase = situation_dynastic_cycle_phase_instability
+						}
+					}
+				}
+				custom_tooltip = invasion_title_tributary_tt
+					
+				hidden_effect = {
+					every_in_list = {
+						list = target_titles
+						create_title_and_vassal_change = {
+							type = conquest
+							save_scope_as = change
+							add_claim_on_loss = yes
+						}	
+						every_in_list = {
+							list = target_titles
+							holder = {
+								becomes_independent = {
+									change = scope:change
+								}
+							}
+						}
+						resolve_title_and_vassal_change = scope:change
+						if = { # This if/else exists for localization purposes, since it could be parsed before the war starts
+							limit = { exists = scope:war }
+							start_tributary_from_war_effect = {
+								TRIBUTARY = this.holder.top_liege
+								SUZERAIN = scope:hegemon
+								WAR = scope:war
+							}
+						}
+						else = {
+							start_tributary_interaction_effect = {
+								TRIBUTARY = this.holder
+								SUZERAIN = scope:hegemon
+							}
+						}
+					}
+				}
+			}
+			# Any other phase take the titles and hand them to the Hegemon
+			else = {
+				create_title_and_vassal_change = {
+					type = conquest
+					save_scope_as = change
+					add_claim_on_loss = yes
+				}
+
+				show_as_tooltip = {
+					every_in_list = {
+						list = target_titles
+						custom_tooltip = invasion_title_transfer_tt
+						every_in_de_jure_hierarchy = {
+							limit = { holder.top_liege = scope:defender }
+							change_title_holder = {
+								holder = scope:hegemon
+								change = scope:change
+							}
+						}
+					}
+				}
+
+				hidden_effect = {
+					setup_invasion_cb = {
+						titles = target_titles
+						attacker = scope:hegemon
+						defender = scope:defender
+						change = scope:change
+						take_occupied = no
+					}
+					resolve_title_and_vassal_change = scope:change
+				}
+			}
+		}
+	}
+
+	option = {
+		name = tgp_china_ministry.0002.a
+		if = {
+			limit = {
+				scope:great_project = {
+					any_in_list = {
+						variable = grand_campaign_targets
+						count = all
+						holder.top_overlord = scope:owner
+					}
+				}
+			}
+			scope:great_project = {
+				complete_great_project = scope:great_project
+			}
+		}
+		add_legitimacy = miniscule_legitimacy_gain
+		custom_tooltip = grand_campaign_won_tt
+		custom_tooltip = grand_campaign_lost_tt
+	}
+}
+# War lost or white peaced
+tgp_china_ministry.0003 = {
+	type = character_event
+	title = tgp_china_ministry.0003.t
+	desc = tgp_china_ministry.0003.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = disappointed
+	}
+	right_portrait = {
+		character = scope:attacker
+		animation = nervous
+	}
+	lower_center_portrait = scope:defender
+
+	immediate = {
+		save_scope_as = owner
+	}
+
+	option = {
+		name = tgp_china_ministry.0003.a
+		scope:attacker = {
+			tgp_activate_catalyst_against_hegemon_effect = {
+				HEGEMON = root
+				CATALYST = catalyst_hegemon_lost_war
+			}
+		}
+		add_legitimacy = miniscule_legitimacy_loss
+	}
+}
+# War joins
+tgp_china_ministry.0004 = {
+	type = character_event
+	title = tgp_china_ministry.0004.t
+	desc = tgp_china_ministry.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = war_attacker
+	}
+	right_portrait = {
+		character = scope:war_leader
+		animation = random_weapon_aggressive
+		trigger = {
+			scope:war_leader != root
+		}
+	}
+	lower_right_portrait = scope:owner
+	lower_center_portrait = scope:target_title.holder
+
+	immediate = {
+		scope:great_project.var:grand_campaign_war = {
+			save_scope_as = grand_campaign_war
+			if = {
+				limit = {
+					any_war_attacker = {
+						this != scope:contributor
+					}
+				}
+				add_attacker = scope:contributor
+			}
+		}
+		scope:target_title = {
+			every_in_de_jure_hierarchy = {
+				limit = {
+					holder ?= {
+						this = prev.holder.top_liege
+						top_overlord != scope:owner
+						NOT = {
+							any_character_war = {
+								this = scope:grand_campaign_war
+							}
+						}
+					}
+				}
+				holder = {
+					add_to_list = holders_to_join
+				}
+			}
+			if = {
+				limit = {
+					exists = holder
+				}
+				holder = {
+					save_scope_as = title_holder
+				}
+			}
+			else = {
+				de_jure_liege.holder = {
+					save_scope_as = title_holder
+				}
+			}
+		}
+		every_in_list = {
+			list = holders_to_join
+			scope:grand_campaign_war = {
+				add_defender = prev
+			}
+		}
+		add_character_modifier = {
+			modifier = tgp_joined_grand_campaign_modifier
+		}
+		custom_tooltip = grand_campaign_added_war_target_tt
+	}
+
+	option = {
+		name = tgp_china_ministry.0004.a
+	}
+}
+# Great Project ends - timer or all wars were won
+tgp_china_ministry.0005 = {
+	type = character_event
+	title = tgp_china_ministry.0005.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { list_size:titles_won >= list_size:titles_lost }
+				desc = tgp_china_ministry.0005.desc_won
+			}
+			desc = tgp_china_ministry.0005.desc_lost
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = { list_size:titles_won >= list_size:titles_lost }
+			animation = admiration
+		}
+		animation = dismissal
+	}
+	right_portrait = {
+		character = scope:war_leader
+		triggered_animation = {
+			trigger = { list_size:titles_won >= list_size:titles_lost }
+			animation = random_weapon_celebrate
+		}
+		animation = shame
+	}
+
+	immediate = {
+		scope:great_project.var:grand_campaign_target = {
+			save_scope_as = target_kingdom
+		}
+		every_in_list = {
+			list = all_contributors
+			if = {
+				limit = {
+					list_size:titles_won >= list_size:titles_lost
+				}
+				custom_tooltip = grand_campaign_movement_power_gain_tt
+				if = {
+					limit = {
+						exists = var:grand_campaign_won
+					}
+					change_variable = {
+						name = grand_campaign_won
+						add = 100
+					}
+				}
+				else = {
+					set_variable = {
+						name = grand_campaign_won
+						value = 100
+					}
+				}
+	 			add_merit_if_relevant_effect = {
+	 				MERIT = monumental_merit_value
+	 			}
+			}
+			else = {
+				custom_tooltip = grand_campaign_movement_power_loss_tt
+				if = {
+					limit = {
+						exists = var:grand_campaign_lost
+					}
+					change_variable = {
+						name = grand_campaign_lost
+						add = -100
+					}
+				}
+				else = {
+					set_variable = {
+						name = grand_campaign_lost
+						value = -100
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = tgp_china_ministry.0005.a_lost
+		name = {
+			trigger = { list_size:titles_won >= list_size:titles_lost }
+			text = tgp_china_ministry.0005.a_win
+		}
+		if = {
+			limit = {
+				list_size:titles_won >= list_size:titles_lost
+			}
+			add_legitimacy_effect = { LEGITIMACY = major_legitimacy_gain }
+			scope:war_leader = {
+				tgp_activate_catalyst_against_hegemon_effect = {
+					HEGEMON = scope:owner
+					CATALYST = catalyst_grand_campaign
+				}
+	 			add_merit_if_relevant_effect = {
+	 				MERIT = 1000
+	 			}
+			}
+		}
+		else = {
+			add_legitimacy_effect = { LEGITIMACY = major_legitimacy_loss }
+			scope:war_leader = {
+				tgp_activate_catalyst_against_hegemon_effect = {
+					HEGEMON = scope:owner
+					CATALYST = catalyst_grand_campaign_lost
+				}
+	 			change_influence = major_influence_loss
+			}
+		}
+	}
+}
+# Great Project canceled
+tgp_china_ministry.0006 = {
+	type = letter_event
+	opening = tgp_china_ministry.0006.opening
+	desc = tgp_china_ministry.0006.desc
+	sender = scope:founder
+
+	immediate = {
+		if = {
+			limit = {
+				this != scope:owner
+				this != scope:founder
+			}
+			add_opinion = {
+				modifier = wasted_our_efforts
+				target = scope:owner
+				opinion = -30
+			}
+		}
+	}
+
+	option = {
+		name = tgp_china_ministry.0006.a
+	}
+}
+# War starts - Others notification
+tgp_china_ministry.0007 = {
+	type = character_event
+	title = tgp_china_ministry.0007.t
+	desc = tgp_china_ministry.0007.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = war_attacker
+	}
+	right_portrait = {
+		character = scope:war_leader
+		animation = random_weapon_aggressive
+	}
+	lower_center_portrait = scope:defender
+
+	immediate = {
+		show_as_tooltip = {
+			scope:war_leader = {
+				start_war = {
+					cb = grand_campaign_kingdom_invasion_cb
+					target = scope:defender
+					target_title = scope:great_project.var:grand_campaign_target
+				}
+			}
+		}
+	}
+
+	option = {
+		name = tgp_china_ministry.0001.a
+	}
+}
+
+# Great Project ends - Others notification
+tgp_china_ministry.0008 = {
+	type = character_event
+	title = tgp_china_ministry.0005.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { list_size:titles_won >= list_size:titles_lost }
+				desc = tgp_china_ministry.0005.desc_won
+			}
+			desc = tgp_china_ministry.0005.desc_lost
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = { list_size:titles_won >= list_size:titles_lost }
+			animation = random_weapon_celebrate
+		}
+		animation = shame
+	}
+	right_portrait = {
+		character = scope:owner
+		triggered_animation = {
+			trigger = { list_size:titles_won >= list_size:titles_lost }
+			animation = admiration
+		}
+		animation = dismissal
+	}
+	cooldown = { days = 1 }
+
+	immediate = {
+		scope:great_project.var:grand_campaign_target = {
+			save_scope_as = target_kingdom
+		}
+		show_as_tooltip = {
+			every_in_list = {
+				list = all_contributors
+				if = {
+					limit = {
+						list_size:titles_won >= list_size:titles_lost
+					}
+					custom_tooltip = grand_campaign_movement_power_gain_tt
+					if = {
+						limit = {
+							exists = var:grand_campaign_won
+						}
+						change_variable = {
+							name = grand_campaign_won
+							add = 100
+						}
+					}
+					else = {
+						set_variable = {
+							name = grand_campaign_won
+							value = 100
+						}
+					}
+		 			add_merit_if_relevant_effect = {
+		 				MERIT = monumental_merit_value
+		 			}
+				}
+				else = {
+					custom_tooltip = grand_campaign_movement_power_loss_tt
+					if = {
+						limit = {
+							exists = var:grand_campaign_lost
+						}
+						change_variable = {
+							name = grand_campaign_lost
+							add = -100
+						}
+					}
+					else = {
+						set_variable = {
+							name = grand_campaign_lost
+							value = -100
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = tgp_china_ministry.0005.a_lost
+		name = {
+			trigger = { list_size:titles_won >= list_size:titles_lost }
+			text = tgp_china_ministry.0005.a_win
+		}
+		show_as_tooltip = {
+			scope:owner = {
+				if = {
+					limit = {
+						list_size:titles_won >= list_size:titles_lost
+					}
+					add_legitimacy_effect = { LEGITIMACY = major_legitimacy_gain }
+					scope:war_leader = {
+						tgp_activate_catalyst_against_hegemon_effect = {
+							HEGEMON = scope:owner
+							CATALYST = catalyst_grand_campaign
+						}
+			 			add_merit_if_relevant_effect = {
+			 				MERIT = 1000
+			 			}
+					}
+				}
+				else = {
+					add_legitimacy_effect = { LEGITIMACY = major_legitimacy_loss }
+					scope:war_leader = {
+						tgp_activate_catalyst_against_hegemon_effect = {
+							HEGEMON = scope:owner
+							CATALYST = catalyst_grand_campaign_lost
+						}
+	 					change_influence = major_influence_loss
+					}
+				}
+			}
+		}
+	}
+}
+# Minister of Revenue - Budget events
+# Top liege is enforced to enact a new budget
+tgp_china_ministry.0100 = {
+	type = character_event
+	title = tgp_china_ministry.0100.t
+	desc = {
+		desc = tgp_china_ministry.0100.intro
+		desc = newline.desc
+		# Desc depending on if you have someone to tell you about the budget or not
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					exists = scope:steward
+				}
+				desc = tgp_china_ministry.0100.steward_desc
+			}
+			desc = tgp_china_ministry.0100.solo_desc
+		}
+		# Reason for needing a new budget
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					monthly_character_treasury_balance < -50
+				}
+				desc = tgp_china_ministry.0100.deficit_desc
+			}
+			triggered_desc = {
+				trigger = {
+					character_treasury_new_budget_capacity >= { value = character_treasury_budget_capacity multiply = 1.3 }
+				}
+				desc = tgp_china_ministry.0100.income_desc
+			}
+			desc = tgp_china_ministry.0100.fallback_desc
+		}
+		triggered_desc = {
+			trigger = {
+				exists = scope:steward
+			}
+			desc = single_quotation_desc
+		}
+	}
+	theme = stewardship
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = { 
+				exists = scope:steward 
+				government_has_flag = government_is_celestial
+			}
+			animation = emperor
+		}
+		triggered_animation = {
+			trigger = { 
+				exists = scope:steward 
+				government_has_flag = government_is_administrative
+			}
+			animation = acknowledging
+		}
+		triggered_animation = {
+			trigger = { 
+				exists = scope:steward 
+				government_has_flag = government_is_japan_administrative
+			}
+			animation = fanning
+		}
+		animation = steward
+		camera = camera_event_center_pointing_right
+	}
+	right_portrait = {
+		character = scope:steward
+		animation = stressed_teacher
+	}
+	
+	trigger = {
+		this = top_liege
+		has_treasury = yes
+		OR = { # You are not travelling, but we don't mind if AI is
+			is_ai = yes
+			is_travelling = no
+		}
+		# You should enact a new budget if you fulfill ANY of these reasons
+		OR = {
+			# The AI hasn't set a new budget recently
+			AND = {
+				is_ai = yes
+				treasury_months_since_budget_enact_date >= 60
+			}
+			# The player hasn't set a new budget recently (time is more generous than for the AI)
+			treasury_months_since_budget_enact_date >= 96
+			# Left over treasury is more than 30% larger than the last budget
+			character_treasury_new_budget_capacity >= { value = character_treasury_budget_capacity multiply = 1.3 }
+			# You are running too big a deficit
+			monthly_character_treasury_balance < -50
+		}
+	}
+
+	immediate = {
+		save_scope_as = treasury_ruler
+		# Find and save a suitable character who wants to update the budget
+		if = {
+			limit = { exists = cp:councillor_steward }
+			cp:councillor_steward = {
+				save_scope_as = steward
+			}
+		}
+		else_if = {
+			limit = { exists = cp:councillor_chancellor }
+			cp:councillor_chancellor = {
+				save_scope_as = steward
+			}
+		}
+		else_if = {
+			limit = { exists = cp:minister_personnel }
+			cp:minister_personnel = {
+				save_scope_as = steward
+			}
+		}
+		else_if = {
+			limit = { any_vassal = { count > 0 } }
+			random_vassal = {
+				weight = {
+					base = 1
+					modifier = {
+						has_same_government = liege
+						add = 5
+					}
+					modifier = {
+						vassal_contract_has_flag = celestial_civil_appointment
+						add = 20
+					}
+				}
+				
+				save_scope_as = steward
+			}
+		}
+		
+		# If we have a character, let's find their preferred budget
+		if = {
+			limit = {
+				exists = scope:steward
+				government_has_flag = government_is_celestial
+			}
+			random_list = {
+				10 = {
+					trigger = {
+						prefers_salary_favored_budget_trigger = { CHARACTER = scope:steward }
+					}
+					save_scope_as = salary_budget
+				}
+				10 = {
+					trigger = {
+						prefers_ministry_favored_budget_trigger = { CHARACTER = scope:steward }
+					}
+					save_scope_as = ministry_budget
+				}
+				10 = {
+					trigger = {
+						prefers_military_favored_budget_trigger = { CHARACTER = scope:steward }
+					}
+					save_scope_as = military_budget
+				}
+				10 = {
+					trigger = {
+						prefers_hegemon_favored_budget_trigger = { CHARACTER = scope:steward }
+					}
+					save_scope_as = hegemon_budget
+				}
+			}
+		}
+		else_if = {
+			limit = { exists = scope:steward }
+			random_list = {
+				10 = {
+					trigger = {
+						prefers_salary_favored_budget_trigger = { CHARACTER = scope:steward }
+					}
+					save_scope_as = meritocratic_salary_budget
+				}
+				10 = {
+					trigger = {
+						prefers_military_favored_budget_trigger = { CHARACTER = scope:steward }
+					}
+					save_scope_as = meritocratic_military_budget
+				}
+			}
+		}
+	}
+
+	option = { # Set a budget
+		name = tgp_china_ministry.0100.a
+		
+		# You get to pick a specific budget suggestion
+		if = {
+			limit = { is_ai = no }
+			custom_tooltip =  tgp_china_ministry.0100.a_tooltip
+			trigger_event = tgp_china_ministry.0101
+		}
+		else = {
+			if = { # Salary favored budget
+				limit = {
+					government_has_flag = government_is_celestial
+					prefers_salary_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+				}
+				tgp_treasury_enact_salary_budget_effect = yes
+			}
+			else_if = { # Ministry favored budget
+				limit = {
+					government_has_flag = government_is_celestial
+					prefers_ministry_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+				}
+				tgp_treasury_enact_ministry_budget_effect = yes
+			}
+			else_if = { # Military favored budget
+				limit = {
+					government_has_flag = government_is_celestial
+					prefers_military_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+				}
+				tgp_treasury_enact_military_budget_effect = yes
+			}
+			else_if = { # Hegemon favored budget
+				limit = {
+					government_has_flag = government_is_celestial
+					prefers_hegemon_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+				}
+				tgp_treasury_enact_hegemon_budget_effect = yes
+			}
+			else_if = { # If no preference exists, pick a balanced budget
+				limit = {
+					government_has_flag = government_is_celestial
+				}
+				tgp_treasury_enact_balanced_budget_effect = yes
+			}
+			# Non-Celestial
+			else_if = { # Salary favored budget
+				limit = {
+					prefers_salary_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+				}
+				tgp_treasury_enact_meritocratic_salary_budget_effect = yes
+			}
+			else_if = { # Military favored budget
+				limit = {
+					prefers_military_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+				}
+				tgp_treasury_enact_meritocratic_military_budget_effect = yes
+			}
+			else = { # If no preference exists, pick a balanced budget
+				tgp_treasury_enact_meritocratic_balanced_budget_effect = yes
+			}
+		}
+		
+		ai_chance = {
+			base = 0
+		}
+	}
+
+	option = { # Keep the existing budget
+		name = tgp_china_ministry.0100.b
+		
+		enact_treasury_budgets_no_costs = yes
+		
+		ai_chance = {
+			base = 0
+		}
+	}
+
+	option = { # Let the minister handle the budget for you
+		trigger = {
+			exists = scope:steward
+		}
+		name = tgp_china_ministry.0100.c
+		
+		# The minister will pick a suitable budget
+		# Celestial
+		if = { # Salary favored budget
+			limit = {
+				exists = scope:salary_budget
+			}
+			tgp_treasury_enact_salary_budget_effect = yes
+		}
+		else_if = { # Ministry favored budget
+			limit = {
+				exists = scope:ministry_budget
+			}
+			tgp_treasury_enact_ministry_budget_effect = yes
+		}
+		else_if = { # Military favored budget
+			limit = {
+				exists = scope:military_budget
+			}
+			tgp_treasury_enact_military_budget_effect = yes
+		}
+		else_if = { # Hegemon favored budget
+			limit = {
+				exists = scope:hegemon_budget
+			}
+			tgp_treasury_enact_hegemon_budget_effect = yes
+		}
+		else_if = { # If no preference exists, pick a balanced budget
+			limit = {
+				government_has_flag = government_is_celestial
+			}
+			tgp_treasury_enact_balanced_budget_effect = yes
+		}
+		# Non-Celestial
+		else_if = { # Salary favored budget
+			limit = {
+				exists = scope:meritocratic_salary_budget
+			}
+			tgp_treasury_enact_meritocratic_salary_budget_effect = yes
+		}
+		else_if = { # Military favored budget
+			limit = {
+				exists = scope:meritocratic_military_budget
+			}
+			tgp_treasury_enact_meritocratic_military_budget_effect = yes
+		}
+		else = { # If no preference exists, pick a balanced budget
+			tgp_treasury_enact_meritocratic_balanced_budget_effect = yes
+		}
+		
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Pick which budget to enact
+tgp_china_ministry.0101 = {
+	type = character_event
+	title = tgp_china_ministry.0100.t
+	desc = tgp_china_ministry.0101.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = { 
+				exists = scope:steward 
+				government_has_flag = government_is_celestial
+			}
+			animation = emperor
+		}
+		triggered_animation = {
+			trigger = { 
+				exists = scope:steward 
+				government_has_flag = government_is_administrative
+			}
+			animation = acknowledging
+		}
+		triggered_animation = {
+			trigger = { 
+				exists = scope:steward 
+				government_has_flag = government_is_japan_administrative
+			}
+			animation = fanning
+		}
+		animation = steward
+	}
+	right_portrait = {
+		character = scope:steward
+		animation = stressed_teacher
+	}
+
+	option = { # Salary budget
+		trigger = {
+			government_has_flag = government_is_celestial
+		}
+		name = tgp_china_ministry.0101.a
+		
+		flavor = tgp_treasury_enact_salary_budget_info_desc
+		tgp_treasury_enact_salary_budget_effect = yes
+	}
+
+	option = { # Ministry budget
+		trigger = {
+			government_has_flag = government_is_celestial
+		}
+		name = tgp_china_ministry.0101.b
+		
+		flavor = tgp_treasury_enact_ministry_budget_info_desc
+		tgp_treasury_enact_ministry_budget_effect = yes
+	}
+
+	option = { # Military budget
+		trigger = {
+			government_has_flag = government_is_celestial
+		}
+		name = tgp_china_ministry.0101.c
+		
+		flavor = tgp_treasury_enact_military_budget_info_desc
+		tgp_treasury_enact_military_budget_effect = yes
+	}
+
+	option = { # Hegemon budget
+		trigger = {
+			government_has_flag = government_is_celestial
+		}
+		name = tgp_china_ministry.0101.d
+		
+		flavor = tgp_treasury_enact_hegemon_budget_info_desc
+		tgp_treasury_enact_hegemon_budget_effect = yes
+	}
+
+	option = { # Balanced budget
+		trigger = {
+			government_has_flag = government_is_celestial
+		}
+		name = tgp_china_ministry.0101.e
+		
+		flavor = tgp_treasury_enact_balanced_budget_info_desc
+		tgp_treasury_enact_balanced_budget_effect = yes
+	}
+
+	option = { # Meritocratic - Salary budget
+		trigger = {
+			NOT = { government_has_flag = government_is_celestial }
+		}
+		name = tgp_china_ministry.0101.a
+		
+		flavor = tgp_treasury_enact_salary_budget_info_desc
+		tgp_treasury_enact_meritocratic_salary_budget_effect = yes
+	}
+
+	option = { # Meritocratic - Military budget
+		trigger = {
+			NOT = { government_has_flag = government_is_celestial }
+		}
+		name = tgp_china_ministry.0101.c
+		
+		flavor = tgp_treasury_enact_military_budget_info_desc
+		tgp_treasury_enact_meritocratic_military_budget_effect = yes
+	}
+
+	option = { # Meritocratic - Balanced budget
+		trigger = {
+			NOT = { government_has_flag = government_is_celestial }
+		}
+		name = tgp_china_ministry.0101.e
+		
+		flavor = tgp_treasury_enact_balanced_budget_info_desc
+		tgp_treasury_enact_meritocratic_balanced_budget_effect = yes
+	}
+}
+
+# The minister of revenue brings a budget suggestion
+tgp_china_ministry.0200 = {
+	type = character_event
+	title = tgp_china_ministry.0200.t
+	desc = {
+		desc = tgp_china_ministry.0200.desc
+	}
+	
+	theme = stewardship
+	
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				stewardship >= 10
+			}
+  			animation = chancellor
+  		}
+		animation = boredom
+	}
+	right_portrait = {
+		character = scope:minister_of_revenue
+		animation = holding_scrolls
+	}
+	
+	immediate = {
+		# If we want to increase a single budget category, let's pick something to lower
+		if = {
+			limit = { exists = scope:budget_suggestion_salary_increase }
+			if = {
+				limit = {
+					NOT = { realm_law_group_at_minimum_level = budget_allocation_military_law }
+				}
+				save_scope_as = budget_increase_salary_decrease_military
+			}
+			else_if = {
+				limit = {
+					NOT = { realm_law_group_at_minimum_level = budget_allocation_ministry_law }
+				}
+				save_scope_as = budget_increase_salary_decrease_ministry
+			}
+			else = {
+				save_scope_as = budget_increase_salary_no_decrease
+			}
+		}
+		if = {
+			limit = { exists = scope:budget_suggestion_ministry_increase }
+			if = {
+				limit = {
+					NOT = { realm_law_group_at_minimum_level = budget_allocation_military_law }
+				}
+				save_scope_as = budget_increase_ministry_decrease_military
+			}
+			else_if = {
+				limit = {
+					NOT = { realm_law_group_at_minimum_level = budget_allocation_salary_law }
+				}
+				save_scope_as = budget_increase_ministry_decrease_salary
+			}
+			else = {
+				save_scope_as = budget_increase_ministry_no_decrease
+			}
+		}
+		if = {
+			limit = { exists = scope:budget_suggestion_military_increase }
+			if = {
+				limit = {
+					NOT = { realm_law_group_at_minimum_level = budget_allocation_ministry_law }
+				}
+				save_scope_as = budget_increase_military_decrease_ministry
+			}
+			else_if = {
+				limit = {
+					NOT = { realm_law_group_at_minimum_level = budget_allocation_salary_law }
+				}
+				save_scope_as = budget_increase_military_decrease_salary
+			}
+			else = {
+				save_scope_as = budget_increase_military_no_decrease
+			}
+		}
+	}
+	
+	option = { # Excellent. Let's put this budget into effect immediately.
+		name = tgp_china_ministry.0200.a
+		
+		switch = {
+			trigger = exists
+			# Suggested budget templates
+			scope:budget_suggestion_salary_template = {
+				tgp_treasury_enact_salary_budget_effect = yes
+			}
+			scope:budget_suggestion_ministry_template = {
+				tgp_treasury_enact_ministry_budget_effect = yes
+			}
+			scope:budget_suggestion_military_template = {
+				tgp_treasury_enact_military_budget_effect = yes
+			}
+			scope:budget_suggestion_hegemon_template = {
+				tgp_treasury_enact_hegemon_budget_effect = yes
+			}
+			scope:budget_suggestion_balanced_template = {
+				tgp_treasury_enact_balanced_budget_effect = yes
+			}
+			# Suggested minor edits
+			# Salary
+			scope:budget_increase_salary_decrease_military = {
+				change_realm_law_level = { law_group = budget_allocation_salary_law change = 1 }
+				change_realm_law_level = { law_group = budget_allocation_military_law change = -1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			scope:budget_increase_salary_decrease_ministry = {
+				change_realm_law_level = { law_group = budget_allocation_salary_law change = 1 }
+				change_realm_law_level = { law_group = budget_allocation_ministry_law change = -1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			scope:budget_increase_salary_no_decrease = {
+				change_realm_law_level = { law_group = budget_allocation_salary_law change = 1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			# Ministry
+			scope:budget_increase_ministry_decrease_military = {
+				change_realm_law_level = { law_group = budget_allocation_ministry_law change = 1 }
+				change_realm_law_level = { law_group = budget_allocation_military_law change = -1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			scope:budget_increase_ministry_decrease_salary = {
+				change_realm_law_level = { law_group = budget_allocation_ministry_law change = 1 }
+				change_realm_law_level = { law_group = budget_allocation_salary_law change = -1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			scope:budget_increase_ministry_no_decrease = {
+				change_realm_law_level = { law_group = budget_allocation_ministry_law change = 1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			# Military
+			scope:budget_increase_military_decrease_ministry = {
+				change_realm_law_level = { law_group = budget_allocation_military_law change = 1 }
+				change_realm_law_level = { law_group = budget_allocation_ministry_law change = -1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			scope:budget_increase_military_decrease_salary = {
+				change_realm_law_level = { law_group = budget_allocation_military_law change = 1 }
+				change_realm_law_level = { law_group = budget_allocation_salary_law change = -1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+			scope:budget_increase_military_no_decrease = {
+				change_realm_law_level = { law_group = budget_allocation_military_law change = 1 }
+				enact_treasury_budgets_no_costs = yes
+			}
+		}
+		
+		# Notify the minister
+		scope:minister_of_revenue = {
+			send_interface_toast = {
+				type = event_toast_text_and_effect_good
+				title = tgp_china_ministry.0200.toast_t_success
+				desc = tgp_china_ministry.0200.toast_desc_success
+				left_icon = root
+				
+				change_merit = major_merit_gain
+				add_prestige = major_prestige_gain
+			}
+		}
+
+		ai_chance = {
+			base = 75
+			
+			# General modifiers
+			opinion_modifier = {
+				opinion_target = scope:minister_of_revenue
+				multiplier = 0.5
+			}
+			modifier = {
+				add = 100
+				has_trait = lazy
+			}
+			modifier = {
+				add = 50
+				has_trait = content
+			}
+			modifier = {
+				add = 50
+				has_trait = fickle
+			}
+			modifier = {
+				add = 25
+				has_trait = humble
+			}
+			modifier = {
+				add = 50
+				stress_level > 0
+			}
+			
+			# Does the AI like the specific suggestion?
+			modifier = {
+				add = 50
+				OR = {
+					exists = scope:budget_suggestion_salary_template
+					exists = scope:budget_increase_salary_decrease_military
+					exists = scope:budget_increase_salary_decrease_ministry
+					exists = scope:budget_increase_salary_no_decrease
+				}
+				prefers_salary_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+			}
+			modifier = {
+				add = 50
+				exists = scope:budget_suggestion_ministry_template
+				OR = {
+					exists = scope:budget_suggestion_ministry_template
+					exists = scope:budget_increase_ministry_decrease_military
+					exists = scope:budget_increase_ministry_decrease_salary
+					exists = scope:budget_increase_ministry_no_decrease
+				}
+				prefers_ministry_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+			}
+			modifier = {
+				add = 50
+				exists = scope:budget_suggestion_military_template
+				OR = {
+					exists = scope:budget_suggestion_military_template
+					exists = scope:budget_increase_military_decrease_ministry
+					exists = scope:budget_increase_military_decrease_salary
+					exists = scope:budget_increase_military_no_decrease
+				}
+				prefers_military_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+			}
+			modifier = {
+				add = 50
+				exists = scope:budget_suggestion_hegemon_template
+				prefers_hegemon_favored_budget_trigger = { CHARACTER = scope:treasury_ruler }
+			}
+		}
+	}
+	
+	option = { # I'm afraid I have other plans for the treasury.
+		name = tgp_china_ministry.0200.b
+		
+		scope:minister_of_revenue = {
+			add_opinion = {
+				modifier = disappointed_opinion
+				target = root
+				opinion = -20
+			}
+			
+			# Notify the minister
+			send_interface_toast = {
+				type = event_toast_text_bad
+				title = tgp_china_ministry.0200.toast_t_failure
+				desc = tgp_china_ministry.0200.toast_desc_failure
+				left_icon = root
+			}
+		}
+		
+		ai_chance = {
+			base = 50
+			
+			opinion_modifier = {
+				opinion_target = scope:minister_of_revenue
+				multiplier = -0.5
+			}
+			modifier = {
+				add = 50
+				has_trait = paranoid
+			}
+			modifier = {
+				add = 50
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 25
+				has_trait = eccentric
+			}
+			modifier = {
+				add = 20
+				has_trait = diligent
+			}
+			modifier = {
+				factor = 0
+				stewardship < 5
+			}
+			modifier = {
+				factor = 0
+				has_trait = trusting
+			}
+		}
+	}
+}

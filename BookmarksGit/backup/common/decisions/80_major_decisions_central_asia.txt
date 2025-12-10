@@ -1,0 +1,530 @@
+﻿###DECISIONS LIST###
+
+##
+#Become Genghis Khan
+#Enforce Bactrian Supremacy
+##
+
+
+##########
+#Become Genghis Khan
+# by Petter Vilberg
+### Become Greatest of Khans ###
+become_greatest_of_khans_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_destiny_goal.dds"
+	}
+	decision_group_type = major
+	desc = become_greatest_of_khans_decision_desc
+
+	ai_check_interval = 0
+	sort_order = 200
+
+	is_shown = {
+		highest_held_title_tier >= tier_duchy
+		is_playable_character = yes
+		culture = { has_cultural_pillar = heritage_mongolic }
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:become_greatest_of_khans_decision
+			}
+		}
+		#TRUE DLC-OWNING NOMADS HAVE THEIR OWN PATH
+		has_mpo_dlc_trigger = no
+	}
+
+	is_valid = {
+		prestige_level >= 4
+		highest_held_title_tier = tier_empire
+		sub_realm_size >= greatest_of_khans_target_counties
+		capital_province = {
+			geographical_region = world_steppe
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_adult = yes
+		is_available = yes
+		top_liege = this
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = massive_gold_value
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = massive_gold_value
+			}
+		}
+		prestige = {
+			value = major_prestige_value
+		}
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		#Can only happen once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:become_greatest_of_khans_decision
+		}
+
+		show_as_tooltip = {
+			add_trait = greatest_of_khans
+			give_nickname = nick_genghis_khan
+			if = {
+				limit = {
+					prestige_level < 5
+				}
+				add_prestige_level = 1
+			}
+			custom_tooltip = become_greatest_of_khans_decision_enable_mongol_invasion_cb
+			custom_tooltip = become_greatest_of_khans_decision_gain_mongol_empire
+			add_realm_law_skip_effects = high_partition_succession_law
+			spawn_mongol_troops_condensed_effect = yes
+		}
+
+		save_scope_as = genghis_khan
+
+		trigger_event = central_asia.0001 #I became the Genghis Khan
+		add_to_temporary_list = received_notification
+
+		every_vassal_or_below = {
+			trigger_event = central_asia.0002 #My ruler became the Genghis Khan
+			add_to_temporary_list = received_notification
+		}
+
+		every_ruler = {
+			limit = {
+				NOT = {
+					is_in_list = received_notification
+				}
+			}
+
+			trigger_event = central_asia.0003 #Someone has become Genghis Khan
+		}
+	}
+}
+
+
+
+##########
+#Enforce Bactrian Supremacy
+# by Petter Vilberg
+### Establish Bactrian Supremacy ###
+establish_bactrian_supremacy_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/fp3/fp3_decision_sunder.dds"
+	}
+	decision_group_type = major
+	desc = establish_bactrian_supremacy_decision_desc
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		highest_held_title_tier >= tier_county
+		culture = {
+			OR = {
+				this = culture:afghan
+				this = culture:tajik
+				any_parent_culture_or_above = {
+					OR = {
+						this = culture:tajik
+						this = culture:afghan
+					}
+				}
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:establish_bactrian_supremacy_decision
+			}
+		}
+	}
+
+	is_valid = {
+		completely_controls_region = custom_bactria
+		custom_description = {
+			text = "is_king_or_emperor"
+			highest_held_title_tier >= tier_kingdom
+		}
+		OR = {
+			religion = religion:zoroastrianism_religion
+			religion = religion:buddhism_religion
+			faith = faith:manichean
+		}
+		prestige_level >= 3
+		OR = {
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_clan
+			government_allows = administrative
+			government_has_flag = government_is_landless_adventurer
+		}
+		capital_province = {
+			geographical_region = custom_bactria
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_adult = yes
+		is_available = yes
+		top_liege = this
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = massive_gold_value
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = massive_gold_value
+			}
+		}
+		prestige = {
+			value = major_prestige_value
+		}
+	}
+
+	effect = {
+		gain_heroic_legend_seed_tooltip_effect = yes
+		#Can only happen once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:establish_bactrian_supremacy_decision
+		}
+
+		save_scope_as = bactrian_emperor
+
+		show_as_tooltip = {
+			establish_bactrian_supremacy_effect = yes
+		}
+		trigger_event = central_asia.0011
+
+		add_to_list = notification_sent
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+##########
+#Establish the Yamagate in Samarkand
+# by James Beaumont
+### Establish the Yamagate in Samarkand ###
+establish_yamagate_in_samarkand_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	}
+	desc = establish_yamagate_in_samarkand_decision_desc
+	selection_tooltip = establish_yamagate_in_samarkand_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		faith = faith:manichean
+		NOT = {
+			has_title = title:d_manichean
+		}
+		NOT = { title:c_samarkand.holder = { has_title = title:d_manichean } }
+		NOT = { capital_county = { this = title:c_samarkand } }
+		OR = {
+			NOT = {
+				exists = title:d_manichean.holder
+			}
+			AND = {
+				exists = title:d_manichean.holder
+				title:d_manichean.holder = {
+					NOT = { 	
+						has_opinion_modifier = { #Not accepting it if you conquered it yourself.
+							target = root
+							modifier = declared_war
+						}
+					}
+					NOT = { 	
+						has_opinion_modifier = { #Not accepting it if you conquered it yourself.
+							target = root
+							modifier = revoked_title
+						}
+					}
+				}
+			}
+		}
+		NOT = { has_character_flag = flag_already_given_samarkand_once }
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		highest_held_title_tier > 3 #Only Kings and Emperors
+		custom_tooltip = {
+			text = hof_exists_tt
+			faith = { exists = religious_head }
+		}
+		custom_tooltip = {
+			text = samarkand_held_by_you_or_vassal_tt
+			OR = {
+				title:c_samarkand.holder = { 	
+					any_liege_or_above = { this = root }
+				}
+				title:c_samarkand.holder = { this = root }
+			}
+		}
+	}
+
+	effect = {
+		add_piety = 1000
+		add_character_flag = flag_already_given_samarkand_once
+		create_title_and_vassal_change = {
+			type = returned
+			save_scope_as = change
+			add_claim_on_loss = no
+		}
+		title:c_samarkand = {
+			change_title_holder = {
+				holder = title:d_manichean.holder
+				change = scope:change
+			}
+		}
+		#If you're a higher tier than the HoF, vassalise them
+		if = {
+			limit = {
+				tier_difference = {
+			        target = title:d_manichean.holder
+			        value >= 1
+			    }
+			}
+			title:d_manichean.holder = {
+				change_liege = {
+					liege = root
+					change = scope:change
+				}
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+
+		title:d_manichean.holder = {
+			set_realm_capital = title:c_samarkand
+			add_opinion = {
+				target = prev
+				modifier = established_samarkand_opinion
+			}
+		}
+	}
+	
+	ai_potential = {
+		faith = faith:manichean
+	}
+
+	ai_will_do = { #Do it always, for coherence.
+		base = 100
+		modifier = {
+			factor = 0
+			title:c_samarkand.holder = {
+				OR = {
+					is_ai = no
+					any_liege_or_above = { is_ai = no }  # AI will never take provinces away from a player.
+				}
+			}
+		}
+		modifier = {
+			factor = 0
+			has_trait = cynical
+		}
+	}
+}
+
+##########
+#End the Old Ways
+# by James Beaumont
+### Break With the Old Ways ###
+break_with_the_old_ways_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	}
+	desc = break_with_the_old_ways_decision_desc
+	selection_tooltip = break_with_the_old_ways_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_ruler = yes
+		is_playable_character = yes
+		faith = faith:kabarism
+		NOT = {
+			faith:kabarism = {
+				has_variable = old_ways_been_broken
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_capable_adult = yes
+		is_imprisoned = no
+		top_liege = this
+		highest_held_title_tier > 3 #Only Kings and Emperors
+		custom_tooltip = {
+			text = hof_exists_tt
+			faith = { exists = religious_head }
+		}
+		trigger_if = {
+			limit = {
+				faith = { exists = religious_head }
+			}
+			is_liege_or_above_of = root.faith.religious_head
+		}
+	}
+
+	widget = {
+		gui = "decision_view_widget_option_list_generic"
+		controller = decision_option_list_controller
+		decision_to_second_step_button = "CHOOSE_REFORMATION_TYPE"
+		show_from_start = yes
+
+		item = { # Pluralist
+			value = bwow_no_changes
+			current_description = bwow_no_changes_desc
+			localization = bwow_no_changes
+			icon = "gfx/interface/icons/faith/tengri.dds"
+			ai_chance = {
+				value = 10
+				add = ai_sociability
+				add = ai_compassion
+			}
+		}
+
+		item = { # Righteous: Chosen People
+			value = bwow_chosen_people
+			current_description = bwow_chosen_people_desc
+			localization = bwow_chosen_people
+			icon = "gfx/interface/icons/icon_culture.dds"
+			ai_chance = {
+				value = 100
+				add = ai_zeal
+			}
+		}
+
+		item = { # Righteous: Esotericism
+			value = bwow_esotericism
+			current_description = bwow_esotericism_desc
+			localization = bwow_esotericism
+			icon = "gfx/interface/icons/traits/mystic_base.dds"
+			ai_chance = {
+				value = 100
+				add = {
+					subtract = ai_rationality
+				}
+			}
+		}
+
+		item = { # Fundementalist
+			value = bwow_fundementalist
+			current_description = bwow_fundementalist_desc
+			localization = bwow_fundementalist
+			icon = "gfx/interface/icons/icon_skill_martial.dds"
+			ai_chance = {
+				value = 0
+				add = ai_zeal
+				add = ai_vengefulness
+				add = {
+					subtract = ai_sociability
+					subtract = ai_compassion
+				}
+			}
+		}
+	}
+
+	effect = {
+		trigger_event = religious_decision.0501
+		show_as_tooltip = {
+			root.faith = { remove_doctrine = unreformed_faith_doctrine }
+			if = {
+				limit = {
+					scope:bwow_chosen_people = yes
+				}
+				root.faith = { break_with_old_ways_become_chosen_people = yes }
+			}
+			if = {
+				limit = {
+					scope:bwow_esotericism = yes
+				}
+				root.faith = { break_with_old_ways_become_righteous = yes }
+			}
+			if = {
+				limit = {
+					scope:bwow_fundementalist = yes
+				}
+				root.faith = { break_with_old_ways_become_fundamentalist = yes }
+			}
+		}
+		hidden_effect = {
+			faith:kabarism = {
+				set_variable = old_ways_been_broken
+			}
+		}
+	}
+	
+	ai_potential = {
+		faith = faith:kabarism
+	}
+
+	ai_will_do = {
+		base = 100
+		modifier = {
+			factor = 0
+			has_trait = cynical
+		}
+	}
+}

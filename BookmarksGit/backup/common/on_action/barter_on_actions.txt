@@ -1,0 +1,119 @@
+﻿
+### Bartering On-Actions
+
+# Called when a barter action starts
+# root is the bartering army
+# scope:barterer is the person owning the bartering army
+# scope:barony is the barony title that was bartered with
+# scope:county is the county title for the barony
+on_barter_action_start = {
+	effect = {}
+}
+
+# Called weekly during a bartering action
+# root is the bartering army
+# scope:barterer is the person owning the bartering army
+# scope:barony is the barony title that was bartered with
+# scope:county is the county title for the barony
+on_barter_action_weekly = {
+	effect = {}
+}
+
+# Called when a barter action completes
+# root is the bartering army
+# scope:barterer is the person owning the bartering army
+# scope:barony is the barony title that was bartered with
+# scope:county is the county title for the barony
+# scope:value is the amount of loot the army gained
+on_barter_action_completion = {
+	effect = {
+		scope:barterer = {
+			send_interface_message = {
+				type = msg_barter_completed
+				title = msg_barter_completed_barterer_title
+				desc = msg_barter_completed_barterer_desc
+				left_icon = scope:county.holder
+				right_icon = scope:barony
+
+				show_as_tooltip = {
+					add_loot = scope:value
+					scope:barony.title_province = {
+						add_province_modifier = {
+							modifier = recently_bartered_modifier
+							years = 5
+						}
+					}
+				}
+				reverse_add_opinion = {
+					target = scope:barony.county.holder
+					modifier = bartered_in_my_lands_opinion
+				}
+			}
+		}
+
+		scope:county.holder = {
+			send_interface_message = {
+				type = msg_barter_completed
+				title = msg_barter_completed_holder_title
+				desc = msg_barter_completed_holder_desc
+				left_icon = scope:barterer
+				right_icon = scope:barony
+
+				scope:barony.title_province = {
+					add_province_modifier = {
+						modifier = recently_bartered_modifier
+						years = 5
+					}
+				}
+			}
+		}
+	}
+}
+
+# Called when a bartering army returns to their own territory and deposits loot
+# root is the bartering army
+# scope:barterer is the person owning the bartering army
+# scope:barter_loot is the loot that you gained from the bartering mission
+# Loot is applied to scope:barterer immediately before on-action is fired
+on_barter_loot_delivered = {
+	effect = {
+		scope:barterer = {
+			send_interface_message = {
+				type = msg_barter_loot_delivered
+				title = msg_barter_loot_delivered_title
+				desc = msg_barter_loot_delivered_desc
+				left_icon = scope:barterer
+				scope:barterer = { add_gold = scope:barter_loot }
+			}
+		}
+	}
+}
+
+# Called when a bartering army is defeated in battle and gets its loot (if any) stolen
+# Use root.barter_loot to see how much they're carrying
+# root is the bartering army
+# scope:barterer is the person owning the bartering army
+# scope:receiver is the person getting the barter loot
+# scope:barter_loot is how much loot they're carrying
+on_defeat_barter_army = {
+	effect = {
+		scope:barterer = {
+			send_interface_message = {
+				type = msg_barter_loot_lost
+				title = msg_barter_loot_lost_title 
+				desc = msg_barter_loot_lost_desc
+				left_icon = scope:barterer
+				right_icon = scope:receiver
+			}
+		}
+		scope:receiver ?= {
+			send_interface_message = {
+				type = msg_barter_loot_won
+				title = msg_barter_loot_won_title 
+				desc = msg_barter_loot_won_desc
+				left_icon = scope:receiver
+				right_icon = scope:barterer
+			}
+		}
+	}
+}

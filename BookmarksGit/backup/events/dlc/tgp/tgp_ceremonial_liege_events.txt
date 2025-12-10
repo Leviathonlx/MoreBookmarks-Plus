@@ -1,0 +1,1305 @@
+﻿namespace = tgp_ceremonial_liege_events
+
+##########################################################
+# Ceremonial Liege Events
+# tgp_ceremonial_liege_events - 0001-0999
+# by Ariana Tranumn
+##########################################################
+
+# A councillor sends out documents with both seals (Liege/Regent)
+tgp_ceremonial_liege_events.0001 = {
+    type = character_event
+	title = tgp_ceremonial_liege_events.0001.t
+	desc = tgp_ceremonial_liege_events.0001.desc
+
+    theme = court
+    cooldown = { years = 10 }
+
+    left_portrait = {
+		character = root
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:councillor
+        animation = worry 
+	}
+
+    lower_center_portrait = scope:opposing_power
+	
+	trigger = {
+		has_tgp_dlc_trigger = yes
+        is_available_adult = yes
+        OR = {
+            tgp_is_ceremonial_regent_trigger = yes 
+            tgp_is_ceremonial_liege_trigger = yes 
+        }
+        has_councillor_for_skill = general 
+    }
+
+    immediate = {
+        tgp_save_opposing_power_effect = yes 
+        random_councillor = { save_scope_as = councillor }
+    }
+
+    # Have the documents recalled and revise
+    option = {
+        name = {
+            text = {
+                first_valid = {
+                    triggered_desc = {
+                        trigger = { tgp_is_ceremonial_liege_trigger = yes  }
+                        desc = tgp_ceremonial_liege_events.0001.a_liege
+                    }
+                    desc = tgp_ceremonial_liege_events.0001.a_regent
+                }
+            }
+        }
+
+        if = { 
+			limit = {
+				has_legitimacy = yes
+			}
+			add_legitimacy = minor_legitimacy_gain
+		}
+		else = {
+			add_prestige = minor_prestige_gain
+		}
+        # If you are the liege, this should make the regent a bit upset, depending on their personality.
+        if = {
+            limit = {
+                tgp_is_ceremonial_liege_trigger = yes 
+            }
+            remove_short_term_gold = medium_gold_value
+            if = { # They're not upset
+                limit = {
+                    scope:opposing_power = {
+                        OR = { 
+                            ai_vengefulness <= low_positive_ai_value
+                            ai_honor >= medium_positive_ai_value
+                            ai_diplomacy_stance = {
+                                target = root
+                                stance = friend
+                            }
+                        }
+                    }
+                }
+                scope:opposing_power = {
+                    add_opinion = {
+                        target = root
+                        modifier = pleased_opinion
+                        opinion = 15
+                    }
+                }
+            }
+            else_if = { # Slightly upset
+                limit = {
+                    scope:opposing_power = {
+                        OR = { 
+                            ai_vengefulness >= medium_positive_ai_value
+                            ai_vengefulness <= low_positive_ai_value
+                            ai_diplomacy_stance = {
+                                target = root
+                                stance = neutral
+                            }
+                        }
+                    }
+                }
+                scope:opposing_power = {
+                    add_opinion = {
+                        target = root
+                        modifier = annoyed_opinion
+                        opinion = -15
+                    }
+                }
+            } 
+            else = {
+                scope:opposing_power = {
+                    add_opinion = {
+                        target = root
+                        modifier = angry_opinion
+                        opinion = -25
+                    }
+                }
+            }
+        }       
+        # Otherwise, this should please the liege regardless
+        else = {
+            remove_short_term_gold = minor_gold_value
+            scope:opposing_power = {
+                add_opinion = {
+                    target = root
+                    modifier = pleased_opinion
+                    opinion = 15
+                }
+            }
+            if = {
+                limit = { NOT = { has_trait = loyal } }
+                random = {
+                    chance = 20
+                    add_trait = loyal
+                }
+            }
+        }
+
+        stress_impact = {
+            greedy = minor_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+            just = minor_stress_impact_loss
+            humble = minor_stress_impact_loss
+            content = minor_stress_impact_loss
+            honest = minor_stress_impact_loss
+		}
+
+        ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_honor = 1
+                ai_greed = -1
+			}
+            modifier = {
+                add = 25
+
+                OR = {
+                    has_trait = content
+                    has_trait = honest
+                    has_trait = humble
+                    has_trait = just
+                }
+            }
+            modifier = {
+                add = -25
+
+                OR = {
+                    has_trait = greedy
+                    has_trait = arrogant
+                }
+            }
+		}
+    }
+
+    # Ignore it, as if it never happened
+    option = {
+        name = tgp_ceremonial_liege_events.0001.b
+
+        if = { # Regent might gain power for this at the cost of the opinion of the liege
+            limit = {
+                tgp_is_ceremonial_regent_trigger = yes 
+            }
+            random_list = {
+                50 = {
+                    desc = tgp_ceremonial_liege_events.0001.b_a
+                    show_chance = no
+                    add_prestige = medium_prestige_gain
+                    scope:opposing_power = {
+                        add_opinion = {
+                            target = root
+                            modifier = angry_opinion
+                            opinion = -30
+                        }
+                    }
+                }
+                50 = {
+                    desc = tgp_ceremonial_liege_events.0001.b_b
+                    show_chance = no
+                    add_stress = minor_stress_impact_loss
+                }
+            }
+        }
+        else = {
+            random_list = {
+                50 = {
+                    desc = tgp_ceremonial_liege_events.0001.b_c
+                    show_chance = no
+                    add_prestige = minor_prestige_loss
+                    scope:opposing_power = {
+                        add_prestige = medium_prestige_gain
+                    }
+                }
+                50 = {
+                    desc = tgp_ceremonial_liege_events.0001.b_b
+                    show_chance = no
+                    add_stress = minor_stress_impact_loss
+                }
+            }
+        }
+
+        stress_impact = {
+            lazy = minor_stress_impact_loss
+			diligent = minor_stress_impact_gain
+            honest = minor_stress_impact_gain
+		}
+
+        ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_honor = -1
+                ai_energy = -1
+			}
+            modifier = {
+                add = 25
+                has_trait = lazy
+            }
+            modifier = {
+                add = -25
+
+                OR = {
+                    has_trait = diligent
+                    has_trait = honest
+                }
+            }
+		}
+    }
+}
+
+# You are extremely stressed, a spouse mentions giving power to the regent (Liege)
+tgp_ceremonial_liege_events.0010 = {
+    type = character_event
+	title = tgp_ceremonial_liege_events.0010.t
+	desc = tgp_ceremonial_liege_events.0010.desc
+
+    theme = court
+    cooldown = { years = 10 }
+    override_background = {
+		reference = bedchamber
+	}
+
+    left_portrait = {
+		character = root
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:spouse
+        animation = stunned 
+	}
+
+    lower_center_portrait = scope:opposing_power
+	
+	trigger = {
+		has_tgp_dlc_trigger = yes
+        is_available_adult = yes
+        tgp_is_ceremonial_liege_trigger = yes 
+        any_spouse = { is_available_adult = yes }
+        stress_level >= 1
+    }
+
+    immediate = {
+        tgp_save_opposing_power_effect = yes 
+        ordered_spouse = {
+            limit = { is_available_adult = yes }
+            order_by = intrigue
+            save_scope_as = spouse
+        }
+    }
+
+    weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 50
+			stress_level >= 2
+		}
+		modifier = {
+			add = 100
+			stress_level >= 3
+		}
+	}
+
+    # Agree with your spouse, give them some power
+    option = {
+        name = tgp_ceremonial_liege_events.0010.a
+        trigger = {
+            NOT = { has_trait = paranoid }
+        }
+        show_as_unavailable = { always = yes }
+        
+        add_character_modifier = {
+            modifier = tgp_sharing_power_modifier
+            years = 5
+        }
+
+        progress_towards_friend_effect = {
+			CHARACTER = scope:spouse
+			OPINION = 25
+			REASON = friend_took_lessons_to_heart
+		}
+
+        stress_impact = {
+            humble = minor_stress_impact_loss
+            temperate = minor_stress_impact_loss
+            lazy = minor_stress_impact_loss
+			diligent = minor_stress_impact_gain
+            arrogant = minor_stress_impact_gain
+		}
+
+        ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = 1
+            }
+            opinion_modifier = {
+				opinion_target = scope:opposing_power
+				multiplier = 2
+			}
+            modifier = {
+                add = 25
+
+                OR = {
+                    has_trait = temperate
+                    has_trait = lazy
+                    has_trait = humble
+                }
+            }
+            modifier = {
+                add = -25
+
+                OR = {
+                    has_trait = diligent
+                    has_trait = arrogant
+                }
+            }
+        }
+    }
+
+    # Isolate yourself a bit to lose stress
+    option = {
+        name = tgp_ceremonial_liege_events.0010.b
+
+        change_current_court_grandeur = minor_court_grandeur_loss 
+        add_prestige = minor_prestige_loss
+
+        random_list = {
+            50 = {
+                show_chance = no
+                desc = tgp_ceremonial_liege_events.0010.b_a
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = tgp_ceremonial_liege_events.0010.b_a
+                    left_icon = root
+                    add_stress = massive_stress_loss
+                }
+            }
+            100 = {
+                show_chance = no
+                desc = tgp_ceremonial_liege_events.0010.b_b
+                send_interface_toast = {
+                    type = event_toast_effect_neutral
+                    title = tgp_ceremonial_liege_events.0010.b_b
+                    left_icon = root
+                    add_stress = minor_stress_loss
+                }
+            }
+        }
+
+        stress_impact = {
+            shy = minor_stress_impact_loss
+            gregarious = minor_stress_impact_gain
+		}
+
+        ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = 0.5
+                ai_sociability = -1
+            }
+            opinion_modifier = {
+				opinion_target = scope:opposing_power
+				multiplier = -2
+			}
+            modifier = {
+                add = 25
+                has_trait = shy
+            }
+            modifier = {
+                add = -25
+                has_trait = gregarious
+            }
+        }
+    }
+
+    # Absolutely not!
+    option = {
+        name = tgp_ceremonial_liege_events.0010.c
+
+        if = { 
+			limit = {
+				government_has_flag = government_is_administrative
+			}
+			change_influence = medium_influence_gain
+		}
+		else = {
+			add_prestige = medium_prestige_gain
+		}
+
+        stress_impact = {
+            base = major_stress_impact_gain
+            arrogant = minor_stress_impact_loss
+            humble = minor_stress_impact_gain
+		}
+
+        ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_honor = 1
+                ai_boldness = 0.5
+            }
+            opinion_modifier = {
+				opinion_target = scope:opposing_power
+				multiplier = -4
+			}
+            modifier = {
+                add = 25
+                has_trait = arrogant
+            }
+            modifier = {
+                add = -25
+                has_trait = humble
+            }
+        }
+    }
+
+    # You must be working with them...
+    option = {
+        name = tgp_ceremonial_liege_events.0010.d 
+        trigger = { 
+            OR = {
+                has_trait = paranoid 
+                has_trait = lunatic
+                learning <= low_skill_rating
+            }
+        }
+
+        duel = {
+            skill = intrigue
+            target = scope:spouse
+            desc = tgp_ceremonial_liege_events.0010.d_desc
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                }
+                desc = tgp_ceremonial_liege_events.0010.tt.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = tgp_ceremonial_liege_events.0010.tt.success
+                    left_icon = root
+                    right_icon = scope:spouse
+                    stress_impact = {
+                        base = major_stress_impact_loss
+                        paranoid = minor_stress_impact_loss
+                    }
+                    add_hook = {
+                        type = favor_hook
+                        target = scope:opposing_power
+                    }
+                    progress_towards_rival_effect = {
+						REASON = rival_betrayed_friendship
+						CHARACTER = scope:spouse
+						OPINION = default_rival_opinion
+					}
+                }
+            }
+            59 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                }
+                desc = tgp_ceremonial_liege_events.0010.tt.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = tgp_ceremonial_liege_events.0010.tt.failure
+                    left_icon = root
+                    right_icon = scope:spouse
+                    add_prestige = miniscule_prestige_loss
+                    scope:spouse = {
+                        add_opinion = {
+                            modifier = insulted_opinion
+                            target = root
+                            opinion = -15
+                        }
+                    }
+                    stress_impact = {
+                        base = miniscule_stress_impact_gain
+                    }
+                }
+            }
+        }
+
+        ai_chance = {
+			base = 150
+            opinion_modifier = {
+				opinion_target = scope:opposing_power
+				multiplier = -2
+			}
+            opinion_modifier = {
+				opinion_target = scope:spouse
+				multiplier = -2
+			}
+        }
+    }
+}
+
+scripted_trigger is_in_valid_activity_0020 = {
+    involved_activity ?= {
+        OR = {
+            has_activity_type = activity_feast
+            has_activity_type = activity_hunt
+            has_activity_type = activity_pilgrimage
+            has_activity_type = activity_festival
+        }
+    }
+    is_ai = yes 
+}
+
+# The liege/regent is in an activity which you were not invited to (Liege/Regent)
+tgp_ceremonial_liege_events.0020 = {
+    type = character_event
+	title = tgp_ceremonial_liege_events.0020.t
+	desc = {
+        desc = tgp_ceremonial_liege_events.0020.desc
+        first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:opposing_power.involved_activity = {
+                        has_activity_type = activity_feast
+                    }
+				}
+				desc = tgp_ceremonial_liege_events.0020.desc_feast
+			}
+            triggered_desc = {
+				trigger = {
+					scope:opposing_power.involved_activity = {
+                        has_activity_type = activity_hunt
+                    }
+				}
+				desc = tgp_ceremonial_liege_events.0020.desc_hunt
+			}
+            triggered_desc = {
+				trigger = {
+					scope:opposing_power.involved_activity = {
+                        has_activity_type = activity_pilgrimage
+                    }
+				}
+				desc = tgp_ceremonial_liege_events.0020.desc_pilgrimage
+			}
+            triggered_desc = {
+				trigger = {
+					scope:opposing_power.involved_activity = {
+                        has_activity_type = activity_festival
+                    }
+				}
+				desc = tgp_ceremonial_liege_events.0020.desc_festival
+			}
+        }
+        desc = tgp_ceremonial_liege_events.0020.desc_end
+    }
+
+    theme = realm
+    cooldown = { years = 20 }
+
+    right_portrait = {
+		character = root
+        animation = thinking 
+	}
+
+    lower_center_portrait = scope:opposing_power
+
+    trigger = {
+		has_tgp_dlc_trigger = yes
+        is_available_adult = yes
+        OR = {
+            AND = {
+                tgp_is_ceremonial_liege_trigger = yes 
+                top_liege = { is_in_valid_activity_0020 = yes }
+            }
+            AND = {
+                tgp_is_ceremonial_regent_trigger = yes 
+               primary_title.var:administrative_ui_special_title.holder = { is_in_valid_activity_0020 = yes }
+            }
+        }
+    }
+
+    immediate = {
+        tgp_save_opposing_power_effect = yes 
+    }
+
+    # Be inspired to hold one of your own
+    option = {
+        name = tgp_ceremonial_liege_events.0020.a
+        custom_tooltip = tgp_ceremonial_liege_events.0020.a_desc
+
+        if = {
+            limit = { scope:opposing_power.involved_activity = { has_activity_type = activity_feast } }
+            set_variable = { 
+                name = tgp_ceremonial_liege_events_0020_discount
+                value = flag:feast
+            }
+        }
+        else_if = {
+            limit = { scope:opposing_power.involved_activity = { has_activity_type = activity_hunt } }
+            set_variable = { 
+                name = tgp_ceremonial_liege_events_0020_discount
+                value = flag:hunt
+            }
+        }
+        else_if = {
+            limit = { scope:opposing_power.involved_activity = { has_activity_type = activity_pilgrimage } }
+            set_variable = { 
+                name = tgp_ceremonial_liege_events_0020_discount
+                value = flag:pilgrimage
+            }
+        }
+        else_if = {
+            limit = { scope:opposing_power.involved_activity = { has_activity_type = activity_festival } }
+            set_variable = { 
+                name = tgp_ceremonial_liege_events_0020_discount
+                value = flag:festival
+            }
+        }
+
+        scope:opposing_power = {
+            add_opinion = {
+                modifier = annoyed_opinion
+                target = root
+                opinion = -15
+            }
+        }
+
+        stress_impact = {
+            base = minor_stress_impact_gain
+            ambitious = minor_stress_impact_loss
+            arrogant = minor_stress_impact_loss
+            gregarious = minor_stress_impact_loss
+            shy = minor_stress_impact_gain
+		}
+
+        ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = 1
+            }
+            modifier = {
+                add = 25
+                OR = {
+                    has_trait = arrogant
+                    has_trait = ambitious
+                    has_trait = gregarious
+                }
+            }
+            modifier = {
+                add = -25
+                has_trait = shy
+            }
+        }
+    }
+
+    # Use the opportunity to shift power 
+    option = {
+        name = tgp_ceremonial_liege_events.0020.b
+
+        duel = {
+            skills = { diplomacy intrigue }
+            target = scope:opposing_power
+            desc = tgp_ceremonial_liege_events.0020.b.tt.desc
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                }
+                desc = tgp_ceremonial_liege_events.0020.b.tt.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = tgp_ceremonial_liege_events.0020.b.tt.success
+                    left_icon = root
+                    right_icon = scope:opposing_power
+                    if = {
+                        limit = {
+                            has_legitimacy = yes
+                        }
+                        add_legitimacy = medium_legitimacy_gain
+                    }
+                    else = {
+                        add_prestige = medium_prestige_gain
+                    }
+                    if = {
+                        limit = {
+                            government_has_flag = government_is_administrative
+                        }
+                        change_influence = minor_influence_gain
+                    }
+                }
+                scope:opposing_power = {
+                    add_character_modifier = {
+                        modifier = tgp_power_undermined_modifier
+                        years = 5
+                    }
+                }
+            }
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                }
+                desc = tgp_ceremonial_liege_events.0020.b.tt.failure
+                min = 20
+                max = 90
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = tgp_ceremonial_liege_events.0020.b.tt.failure
+                    left_icon = root
+                    right_icon = scope:opposing_power
+                    progress_towards_rival_effect = {
+                        REASON = rival_attempted_to_undermine
+                        CHARACTER = scope:opposing_power
+                        OPINION = -30
+                    }
+                    add_prestige = minor_prestige_loss
+                    add_stress = medium_stress_impact_gain
+                }
+            }
+        }
+
+        stress_impact = {
+            ambitious = minor_stress_impact_loss
+            deceitful = minor_stress_impact_loss
+            honest = minor_stress_impact_gain
+            just = minor_stress_impact_gain
+            loyal = minor_stress_impact_gain
+		}
+
+        ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_honor = -1
+            }
+            modifier = {
+                add = 25
+                OR = {
+                    has_trait = deceitful
+                    has_trait = ambitious
+                }
+            }
+            modifier = {
+                add = -25
+                OR = {
+                    has_trait = honest
+                    has_trait = just
+                    has_trait = loyal
+                }
+            }
+        }
+    }
+
+    # Do nothing 
+    option = {
+        name = tgp_ceremonial_liege_events.0020.c
+
+        scope:opposing_power = {
+            add_opinion = {
+                target = root
+                modifier = grateful_opinion
+                opinion = 15
+            }
+        }
+
+        stress_impact = {
+            base = minor_stress_impact_loss
+            lazy = minor_stress_impact_loss
+            loyal = minor_stress_impact_loss
+            craven = minor_stress_impact_loss
+            arrogant = minor_stress_impact_gain
+            ambitious = minor_stress_impact_gain
+		}
+        
+        ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_energy = -1
+            }
+            opinion_modifier = {
+				opinion_target = scope:opposing_power
+				multiplier = 2
+			}
+            modifier = {
+                add = 25
+                OR = {
+                    has_trait = lazy
+                    has_trait = loyal
+                    has_trait = craven
+                }
+            }
+            modifier = {
+                add = -25
+                OR = {
+                    has_trait = arrogant
+                    has_trait = ambitious
+                }
+            }
+        }
+    }
+}
+
+# A scholar writes down you and the liege is clearly favored (Liege/Regent)
+tgp_ceremonial_liege_events.0030 = {
+    type = character_event
+	title = tgp_ceremonial_liege_events.0030.t
+	desc = {
+        desc = tgp_ceremonial_liege_events.0030.desc
+        first_valid = {
+            triggered_desc = {
+                trigger = { tgp_is_ceremonial_liege_trigger = yes  }
+                desc = tgp_ceremonial_liege_events.0030.liege
+            }
+            triggered_desc = {
+                trigger = { tgp_is_ceremonial_regent_trigger = yes  }
+                desc = tgp_ceremonial_liege_events.0030.regent
+            }
+        }
+    }
+
+    theme = learning
+    cooldown = { years = 10 }
+
+    left_portrait = {
+		character = root
+		animation = reading
+	}
+	right_portrait = {
+		character = scope:scholar
+        animation = thinking 
+	}
+
+    lower_center_portrait = scope:opposing_power
+	
+	trigger = {
+		has_tgp_dlc_trigger = yes
+        is_available_adult = yes
+        OR = {
+            tgp_is_ceremonial_regent_trigger = yes 
+            tgp_is_ceremonial_liege_trigger = yes 
+        }
+    }
+
+    immediate = {
+        tgp_save_opposing_power_effect = yes 
+        ordered_courtier_or_guest = {
+            limit = { is_available_adult = yes }
+            order_by = learning
+            save_scope_as = scholar
+        }
+    }
+
+    # Yeah go ahead and run it 
+    option = {
+        name = tgp_ceremonial_liege_events.0030.a
+
+        if = {
+            limit = {
+                tgp_is_ceremonial_liege_trigger = yes
+            }
+            scope:opposing_power = {
+                add_prestige = minor_prestige_loss
+                add_opinion = {
+                    target = root
+                    modifier = annoyed_opinion
+                    opinion = -15
+                }
+            }
+        }
+        else = {
+            add_prestige = minor_prestige_loss
+            add_character_modifier = {
+                modifier = tgp_spreading_scholarly_work_modifier
+                years = 5
+            }
+        }
+
+        ai_chance = {
+			base = 100
+            modifier = {
+                tgp_is_ceremonial_liege_trigger = yes
+                factor = 2
+            }
+            modifier = {
+                tgp_is_ceremonial_regent_trigger = yes
+                factor = 0.1
+            }
+        }
+    }
+
+    # That's not fair! 
+    option = {
+        name = tgp_ceremonial_liege_events.0030.b
+
+        duel = {
+            skill = learning
+            target = scope:scholar
+            desc = tgp_ceremonial_liege_events.0030.b_desc
+            70 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                }
+                desc = tgp_ceremonial_liege_events.0030.tt.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = tgp_ceremonial_liege_events.0030.tt.success
+                    left_icon = root
+                    right_icon = scope:scholar
+                    scope:scholar = {
+                        add_learning_skill = 1
+                    }
+                    if = {
+                        limit = {
+                            tgp_is_ceremonial_liege_trigger = yes
+                        }
+                        scope:opposing_power = {
+                            add_opinion = {
+                                target = root
+                                modifier = grateful_opinion
+                                opinion = 15
+                            }
+                        }
+                    }
+                    add_learning_lifestyle_xp = minor_lifestyle_xp
+                    stress_impact = {
+                        patient = minor_stress_impact_loss
+                        forgiving = minor_stress_impact_loss
+                        calm = minor_stress_impact_loss
+                    }
+                }
+            }
+            30 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                }
+                desc = tgp_ceremonial_liege_events.0030.tt.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = tgp_ceremonial_liege_events.0030.tt.failure
+                    left_icon = root
+                    right_icon = scope:scholar
+                    stress_impact = {
+                        base = minor_stress_impact_gain
+                        wrathful = minor_stress_impact_gain
+                        vengeful = minor_stress_impact_gain
+                    }
+                    scope:scholar = {
+                        add_stress = minor_stress_gain
+                        add_opinion = {
+                            modifier = annoyed_opinion
+                            target = root
+                            opinion = -15
+                        }
+                    }
+                }
+            }
+        }
+
+        
+            
+
+        ai_chance = {
+			base = 100
+            ai_value_modifier = {
+				ai_rationality = 1
+            }
+            modifier = {
+                OR = {
+                    tgp_is_ceremonial_regent_trigger = yes 
+                    AND = {
+                        tgp_is_ceremonial_liege_trigger = yes 
+                        ai_honor >= medium_positive_ai_value
+                    }
+                }
+                factor = 2
+            }
+            modifier = {
+                learning < scope:scholar.learning
+                factor = 0.25
+            }
+            modifier = {
+                add = 25
+                OR = {
+                    has_trait = patient
+                    has_trait = forgiving
+                    has_trait = calm
+                }
+            }
+            modifier = {
+                add = -25
+                OR = {
+                    has_trait = vengeful
+                    has_trait = wrathful
+                }
+            }
+        }
+    }
+
+    # This is terrible 
+    option = {
+        name = {
+            text = {
+                first_valid = {
+                    triggered_desc = {
+                        trigger = { tgp_is_ceremonial_liege_trigger = yes }
+                        desc = tgp_ceremonial_liege_events.0030.c_liege
+                    }
+                    desc = tgp_ceremonial_liege_events.0030.c_regent
+                }
+            }
+        }
+        custom_tooltip = tgp_ceremonial_liege_events.0030.c_tt
+
+        scope:scholar = {
+            add_prestige = minor_prestige_loss
+            add_opinion = {
+				target = root
+				modifier = cruelty_opinion
+				opinion = -15
+			}
+        }
+
+        if = {
+            limit = {
+                tgp_is_ceremonial_liege_trigger = yes
+            }
+            scope:opposing_power = {
+                add_opinion = {
+                    target = root
+                    modifier = grateful_opinion
+                    opinion = 15
+                }
+            }
+        }
+
+        stress_impact = {
+            arrogant = minor_stress_impact_loss
+            paranoid = minor_stress_impact_loss
+            wrathful = minor_stress_impact_loss
+            vengeful = minor_stress_impact_loss
+            forgiving = minor_stress_impact_gain
+            compassionate = minor_stress_impact_gain
+            calm = minor_stress_impact_gain
+        }
+
+        ai_chance = {
+			base = 50
+            ai_value_modifier = {
+				ai_compassion = -1
+            }
+            modifier = {
+                AND = {
+                    tgp_is_ceremonial_liege_trigger = yes 
+                    ai_vengefulness >= medium_positive_ai_value
+                }
+                factor = 2
+            }
+            modifier = {
+                add = 25
+                OR = {
+                    has_trait = arrogant
+                    has_trait = paranoid
+                    has_trait = wrathful
+                    has_trait = vengeful
+                }
+            }
+            modifier = {
+                add = -25
+                OR = {
+                    has_trait = forgiving
+                    has_trait = compassionate
+                    has_trait = calm
+                }
+            }
+        }
+    }
+}
+
+# People are questioning why you are even ruled over by your vassal at all (Regent)
+tgp_ceremonial_liege_events.0040 = {
+    type = character_event
+	title = tgp_ceremonial_liege_events.0040.t
+	desc = tgp_ceremonial_liege_events.0040.desc
+
+    theme = realm
+    cooldown = { years = 30 }
+    override_background = { reference = council_chamber }
+
+    left_portrait = {
+		character = root
+		animation = interested_left
+	}
+	right_portrait = {
+		character = scope:inquirer
+        animation = storyteller 
+	}
+
+    lower_center_portrait = scope:opposing_power
+	
+	trigger = {
+		has_tgp_dlc_trigger = yes
+        is_available_adult = yes
+        tgp_is_ceremonial_regent_trigger = yes 
+        any_courtier = {
+            is_available_adult = yes 
+            opinion = {
+				target = root
+				value >= 15
+			}
+        }
+    }
+
+    immediate = {
+        tgp_save_opposing_power_effect = yes 
+        ordered_courtier = {
+            limit = { 
+                is_available_adult = yes 
+                opinion = {
+				    target = root
+				    value >= 15
+				}
+            }
+            order_by = diplomacy
+            save_scope_as = inquirer
+        }
+    }
+
+
+    # Convince them it's a facade
+    option = {
+        name = tgp_ceremonial_liege_events.0040.a
+
+        duel = {
+            skill = diplomacy
+            target = scope:inquirer
+            desc = tgp_ceremonial_liege_events.0040.a_desc
+            50 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                }
+                desc = tgp_ceremonial_liege_events.0040.tt.success
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = tgp_ceremonial_liege_events.0040.tt.success
+                    left_icon = root
+                    right_icon = scope:inquirer
+                    add_prestige = major_prestige_gain
+                    scope:inquirer = {
+                        add_opinion = {
+                            modifier = respect_opinion
+                            target = root
+                            opinion = 15
+                        }
+                    }
+                }
+            }
+            59 = {
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                }
+                desc = tgp_ceremonial_liege_events.0040.tt.failure
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = tgp_ceremonial_liege_events.0040.tt.failure
+                    left_icon = root
+                    right_icon = scope:inquirer
+                    scope:inquirer = {
+                        add_opinion = {
+                            modifier = suspicion_opinion
+                            target = root
+                            opinion = -15
+                        }
+                    }
+                    if = {
+                        limit = {
+                            faith = { trait_is_virtue = honest }
+                        }
+                        add_piety = minor_piety_loss
+                    }
+                    stress_impact = {
+                        base = medium_stress_impact_gain
+                    }
+                }
+            }
+        }
+
+        stress_impact = {
+            just = minor_stress_impact_gain
+            honest = minor_stress_impact_gain
+            deceitful = minor_stress_impact_loss
+			arrogant = minor_stress_impact_loss
+		}
+
+        ai_chance = {
+			base = 100
+            ai_value_modifier = {
+				ai_honor = -1
+                ai_rationality = -1
+            }
+            modifier = {
+                add = 25
+                OR = {
+                    has_trait = deceitful
+                    has_trait = arrogant
+                }
+            }
+            modifier = {
+                add = -25
+                OR = {
+                    has_trait = honest
+                    has_trait = just
+                }
+            }
+        }
+    }
+
+    # Give them a logical explanation 
+    option = {
+        name = tgp_ceremonial_liege_events.0040.b
+        custom_tooltip = tgp_ceremonial_liege_events.0040.b_desc
+
+        add_merit_if_relevant_effect = {
+			MERIT = minor_merit_value
+		}
+        add_prestige = minor_prestige_gain
+        if = {
+            limit = {
+                faith = { trait_is_virtue = honest }
+            }
+            add_piety = minor_piety_gain
+        }
+
+        stress_impact = {
+            just = minor_stress_impact_loss
+            humble = minor_stress_impact_loss
+            honest = minor_stress_impact_loss
+            deceitful = minor_stress_impact_gain
+			arrogant = medium_stress_impact_gain
+		}
+
+        ai_chance = {
+			base = 100
+            ai_value_modifier = {
+				ai_honor = 1
+            }
+            modifier = {
+                add = 25
+                OR = {
+                    has_trait = humble
+                    has_trait = honest
+                    has_trait = just
+                }
+            }
+            modifier = {
+                add = -25
+                has_trait = deceitful
+            }
+            modifier = {
+                add = 50
+                has_trait = arrogant
+            }
+        }
+    }
+}

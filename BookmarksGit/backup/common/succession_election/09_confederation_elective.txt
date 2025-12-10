@@ -1,0 +1,155 @@
+﻿# The entry should be named in the same way that the elective succession law is named to define it's voter's logic.
+# Root scope - Elector, the character voting in the election.
+# scope:candidate scope - Candidate, Character considered for the title.
+# scope:title scope - Title, The title the nomination is for.
+# scope:holder scope - Ruler, The ruler currently holding the title.
+# scope:holder_candidate scope - Favored Candidate, The title owner's candidate.
+# The voter will vote for the top score candidate calculated from this script.
+
+#Addition for MPO
+
+confederation_elective = {
+	elector_vote_strength = {
+		base = 0
+		modifier = { #Each voter represents their tribe and those under them
+			desc = tooltip_confederation_elective_vassals
+			add = {
+				every_vassal = {
+					limit = {
+						NOT = {
+							is_vassal_of = scope:holder
+						}
+						custom_tooltip = {
+							OR = {
+								government_has_flag = government_is_nomadic
+								government_has_flag = government_is_tribal
+							}
+							text = is_nomadic_or_tribal_tt
+						}
+						highest_held_title_tier >= tier_county
+					}
+					add = 1
+				}
+			}
+		}
+		modifier = { #Additional sway from prestige level
+			desc = tooltip_confederation_elective_prestige_levels
+			add = {
+				value = prestige_level
+			}
+		}
+		modifier = { #Additional sway from piety level
+			desc = tooltip_confederation_elective_piety_levels
+			add = {
+				value = piety_level
+			}
+		}
+		modifier = { #Regent Influence
+			desc = tooltip_feudal_vote_strength_is_diarch
+			add = 1
+			is_diarch_of_target = scope:holder
+		}
+		modifier = { #Coronation event
+			desc = tooltip_confederation_vote_strength_coronation
+			add = 1
+			has_character_flag = confederation_politicking_vote 
+		}
+		modifier = { #Coronation event
+			desc = tooltip_confederation_vote_strength_coronation
+			add = 2
+			has_character_flag = confederation_politicking_vote_2
+		}
+		min = 1
+	}
+	
+	electors = {
+		add = holder
+		add = {
+			type = holder_direct_vassals
+			limit = {
+				highest_held_title_tier >= tier_county
+				NOR = {
+					has_trait = incapable
+					is_at_war_with = scope:holder
+				}
+				custom_tooltip = {
+					OR = {
+						government_has_flag = government_is_nomadic
+						government_has_flag = government_is_tribal
+					}
+					text = is_nomadic_or_tribal_tt
+				}
+				NOT = {
+					government_has_flag = government_is_herder
+				}
+			}
+		}
+	}
+
+	candidate_score = {
+		base = 0
+		######################	Elector self-voting pattern	##########################
+		elector_self_voting_pattern_feudal_elective_modifier = yes
+
+		##########################	Holder voting pattern	##########################
+		holder_voting_pattern_feudal_elective_modifier = yes
+
+		##########################	Elector voting patterns (circumstances)	##########################
+		elector_voting_pattern_circumstances_feudal_elective_modifier = yes
+
+		##########################	Elector voting patterns (prestige/piety)	##########################
+		elector_voting_pattern_prestige_piety_feudal_elective_modifier = yes
+
+		##########################	Elector voting patterns (traits)	##########################
+		elector_voting_pattern_traits_feudal_elective_modifier = yes
+
+		##########################	Elector voting patterns (opinion)	##########################
+		elector_voting_pattern_opinion_feudal_elective_modifier = yes
+
+		##########################	Elector voting patterns (misc)	##########################
+		elector_voting_pattern_circumstances_misc_elective_modifier = yes
+		elector_voting_pattern_confederation_modifier = yes
+	}
+	
+	#scope:candidate = Candidate, scope:title = Title, scope:holder_candidate = Candidate currently selected by ruler.
+	candidates = {
+		add = {
+			type = holder_direct_vassals	
+			limit = {
+				feudal_elective_potential_landed_candidate_trigger = yes
+				highest_held_title_tier >= tier_county
+				custom_tooltip = {
+					custom_tooltip = {
+						OR = {
+							government_has_flag = government_is_nomadic
+							government_has_flag = government_is_tribal
+						}
+						text = is_nomadic_or_tribal_tt
+					}
+					text = is_nomadic_or_tribal_tt
+				}
+			}
+		}
+		add = {
+			type = holder_close_or_extended_family
+			limit = {
+				feudal_elective_potential_landless_dynastic_candidate_trigger = yes
+				OR = {
+					is_close_family_of = scope:holder
+					is_grandchild_of = scope:holder
+				}
+				OR = {
+					is_landed = no
+					custom_tooltip = {
+						OR = {
+							government_has_flag = government_is_nomadic
+							government_has_flag = government_is_tribal
+						}
+						text = is_nomadic_or_tribal_tt
+					}
+				}
+				
+			}
+		}
+	}
+}

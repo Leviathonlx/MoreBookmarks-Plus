@@ -1,0 +1,124 @@
+﻿################################
+# Imaginary Friend Story Cycle 
+# By Chad Uhl
+################################
+
+story_cycle_imaginary_friend = {
+	on_setup = {
+		set_variable = {
+			name = progress_to_eccentric_trait 
+			value = 1
+		}
+	}
+
+	on_end = {
+		debug_log = "Imaginary Friend story ended on: "
+		debug_log_date = yes 
+
+		story_owner = {
+			remove_variable ?= imaginary_friend_name
+			remove_variable ?= imaginary_friend_char
+			remove_variable ?= imaginary_friend_disposition
+		}
+	}
+
+	effect_group = { # Random Childhood Events
+		days = { 40 60 }
+		chance = 100 
+		trigger = {
+			story_owner = {
+				is_available_child = yes
+			}
+		}
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				story_owner = {
+					trigger_event = {
+						on_action = imaginary_friend_childhood_on_action
+					}
+				}
+			}
+		}
+	}
+
+	effect_group = { # Random Adult Events - Devil
+		days = { 40 60 }
+		chance = 100 
+		trigger = {
+			var:imaginary_friend_disposition ?= flag:devil
+			story_owner = {
+				is_available_adult = yes
+				age > 25
+			}
+		}
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				story_owner = {
+					trigger_event = {
+						on_action = imaginary_friend_adult_devil_on_action
+					}
+				}
+			}
+		}
+		triggered_effect = { 
+			trigger = { # Check if the story owner should be killing someone or not
+				story_owner = {
+					var:imaginary_friend_murder_target ?= { is_alive = yes }
+					NOT = {
+						any_scheme = {
+							type = murder 
+							scheme_target_character = prev.var:imaginary_friend_murder_target
+						}
+					}
+
+				}
+			}
+			effect = {
+				# If they should be a-murderin' get on them
+				story_owner = { trigger_event = bp2_yearly.2021 }
+			}
+		}
+	}
+
+	effect_group = { # Random Adult Events - Angel
+		days = { 40 60 }
+		chance = 100 
+		trigger = {
+			var:imaginary_friend_disposition ?= flag:angel
+			story_owner = {
+				is_available_adult = yes
+				age > 25
+			}
+		}
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				story_owner = {
+					trigger_event = {
+						on_action = imaginary_friend_adult_angel_on_action
+					}
+				}
+			}
+		}
+	}
+
+	#Maintenance group
+	effect_group = {
+		days = 1
+		trigger = {
+			story_owner = { is_landed = no }
+		}
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				#You became a landless adventurer/administrative! Ending story prematurely.
+				story_owner = { save_scope_as = story_owner }
+				debug_log = "Imaginary Friend invalidated"
+				debug_log_scopes = yes
+				end_story = yes
+			}
+		}
+	}
+}

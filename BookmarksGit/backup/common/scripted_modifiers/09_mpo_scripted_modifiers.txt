@@ -1,0 +1,763 @@
+﻿#Scripted Modifiers from MPO
+mpo_blood_brother_interactions_ai_accept_modifier = {
+	# Actual opinion gives our base.
+	opinion_modifier = {
+		who = scope:recipient
+		opinion_target = scope:actor
+		desc = AI_OPINION_REASON
+	}
+	# Weight up for personality values.
+	ai_value_modifier = {
+		who = scope:recipient
+		ai_sociability = {
+			if = {
+				limit = {
+					scope:recipient = {
+						NOT = { ai_sociability = 0 }
+					}
+				}
+				value = 0.2
+			}
+		}
+		ai_honor = {
+			if = {
+				limit = {
+					scope:recipient = {
+						NOT = { ai_honor = 0 }
+					}
+				}
+				value = 0.4
+			}
+		}
+	}
+	# Specific trait preferences.
+	## Shy mildly dislikes.
+	modifier = {
+		add = -5
+		scope:recipient = { has_trait = shy }
+		desc = BLOOD_BROTHERHOOD_OPINION_TRAIT_SHY
+	}
+	## Arbitrary *loathes*.
+	modifier = {
+		add = -20
+		scope:recipient = { has_trait = arbitrary }
+		desc = BLOOD_BROTHERHOOD_OPINION_TRAIT_ARBITRAY
+	}
+	## Likes.
+	modifier = {
+		add = 10
+		scope:recipient = { has_trait = gregarious }
+		desc = BLOOD_BROTHERHOOD_OPINION_TRAIT_GREGARIOUS
+	}
+	modifier = {
+		add = 10
+		scope:recipient = { has_trait = loyal }
+		desc = BLOOD_BROTHERHOOD_OPINION_TRAIT_LOYAL
+	}
+	## Loves this
+	modifier = {
+		add = 20
+		scope:recipient = { has_trait = just }
+		desc = BLOOD_BROTHERHOOD_OPINION_TRAIT_JUST
+	}
+	modifier = {
+		add = 20
+		scope:recipient = { has_trait = trusting }
+		desc = BLOOD_BROTHERHOOD_OPINION_TRAIT_TRUSTING
+	}
+	# Apply tier differences.
+	## King -> Baron.
+	modifier = {
+		desc = AI_REFUSAL_RANK_DIFFERENCE
+		scope:actor = {
+			tier_difference = {
+				target = scope:recipient
+				value >= 4
+			}
+		}
+		add = 75
+	}
+	## Duke -> Baron.
+	modifier = {
+		desc = AI_REFUSAL_RANK_DIFFERENCE
+		scope:actor = {
+			tier_difference = {
+				target = scope:recipient
+				value = 3
+			}
+		}
+		add = 50
+	}
+	## Count -> Baron.
+	modifier = {
+		desc = AI_REFUSAL_RANK_DIFFERENCE
+		scope:actor = {
+			tier_difference = {
+				target = scope:recipient
+				value = 2
+			}
+		}
+		add = 25
+	}
+	## King <- Baron.
+	modifier = {
+		desc = AI_REFUSAL_RANK_DIFFERENCE
+		scope:actor = {
+			tier_difference = {
+				target = scope:recipient
+				value = -2
+			}
+		}
+		add = -100
+	}
+	## Duke <- Baron.
+	modifier = {
+		desc = AI_REFUSAL_RANK_DIFFERENCE
+		scope:actor = {
+			tier_difference = {
+				target = scope:recipient
+				value = -3
+			}
+		}
+		add = -75
+	}
+	## Count <- Baron.
+	modifier = {
+		desc = AI_REFUSAL_RANK_DIFFERENCE
+		scope:actor = {
+			tier_difference = {
+				target = scope:recipient
+				value <= -4
+			}
+		}
+		add = -50
+	}
+	# And a bit of extra oomph if you're looking outwards anyway.
+	modifier = {
+		desc = AI_ACCEPTANCE_FOREIGN_AFFAIRS_FOCUS
+		scope:recipient = { has_focus = diplomacy_foreign_affairs_focus }
+		add = 25
+	}
+	
+	
+	modifier = { #Different faith, no pluralism.
+		desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+		trigger = {
+			scope:recipient = {
+				NOR = { #Of two different faiths AND the potential vassal's faith is not pluralistic.
+					faith = scope:actor.faith
+					faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+			}
+		}
+		add = {
+			value = -25
+			if = {
+					limit = {
+					scope:recipient.faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value >= faith_hostile_level
+						}
+					}
+				}
+				add = -25
+			}
+			if = {
+				limit = {
+					scope:recipient.faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value >= faith_evil_level
+						}
+					}
+				}
+				add = -25
+			}
+		}
+	}
+	modifier = { #Different faith, pluralism.
+		desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+		trigger = {
+			scope:recipient = {
+				NOT = {
+					faith = scope:actor.faith
+				}
+				NOT = {
+					scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				}
+				faith = { has_doctrine = doctrine_pluralism_pluralistic }
+			}
+		}
+		add = {
+			value = -10
+			if = {
+				limit = {
+					scope:recipient.faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value >= faith_hostile_level
+						}
+					}
+				}
+				add = -10
+			}
+			if = {
+				limit = {
+					scope:recipient.faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value >= faith_evil_level
+						}
+					}
+				}
+				add = -10
+			}
+		}
+	}
+	modifier = { #Different faith, both have pluralism.
+		desc = offer_vassalization_interaction_aibehavior_differentfaith_tt
+		trigger = {
+			scope:recipient = {
+				NOT = {
+					faith = scope:actor.faith
+				}
+				scope:actor.faith = { has_doctrine = doctrine_pluralism_pluralistic }
+				faith = { has_doctrine = doctrine_pluralism_pluralistic }
+			}
+		}
+		add = {
+			value = -5
+			if = {
+				limit = {
+					scope:recipient.faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value >= faith_hostile_level
+						}
+					}
+				}
+				add = -5
+			}
+			if = {
+				limit = {
+					scope:recipient.faith = {
+						faith_hostility_level = {
+							target = scope:actor.faith
+							value >= faith_evil_level
+						}
+					}
+				}
+				add = -5
+			}
+		}
+	}
+	modifier = { #We just fought against each other.
+		desc = offer_vassalization_interaction_aibehavior_recent_war_tt
+		trigger = {
+			scope:recipient = {
+				any_truce_holder = {
+					this = scope:actor
+				}
+			}
+			# Ensure the truce wasn't purchased and is indeed from a war
+			scope:actor = {
+				NOT = {
+					has_purchased_truce_with_char = { TARGET = scope:recipient }
+				}
+			}
+		}
+		add = -30
+	}
+	modifier = { # Isolationist tradition
+		desc = isolationist_reason
+		trigger = {
+			NOT = {
+				scope:actor.culture = scope:recipient.culture
+			}
+			scope:recipient.culture = {
+				has_cultural_tradition = tradition_isolationist
+			}
+		}
+		add = -50
+	}
+	modifier = { #Bankrupt
+		desc = bankrupt_reason
+		trigger = {
+			scope:actor.gold <= -1
+			scope:actor = {
+				is_independent_ruler = yes
+			}
+		}
+		add = -25
+	}
+	modifier = { # Allied
+		desc = offer_vassalization_interaction_aibehavior_allied_tt
+		trigger = {
+			scope:recipient = {
+				is_allied_to = scope:actor
+			}
+		}
+		add = 50
+	}
+	modifier = { # Encircled
+		desc = offer_vassalization_interaction_aibehavior_encircled_tt
+		trigger = {
+			scope:recipient = {
+				NOT = {
+					any_neighboring_top_liege_realm_owner = {
+						NOT = {
+							this = scope:actor
+						}
+					}
+				}
+				NOT = {
+					any_realm_county = {
+						is_coastal_county = yes
+					}
+				}
+			}
+		}
+		add = 40
+	}
+	modifier = { #Remote Realm.
+		desc = offer_vassalization_interaction_aibehavior_remoterealm_tt
+		trigger = {
+			exists = scope:recipient.capital_province
+			exists = scope:actor.top_liege.capital_province
+			scope:actor.top_liege = {
+				NOT = {
+					character_is_realm_neighbor = scope:recipient
+				}
+			}
+			scope:recipient.capital_province = { squared_distance = { target = scope:actor.top_liege.capital_province value >= 200000 } }
+		}
+		add = -10
+	}
+	# Relative power (taken from PT interaction)
+	modifier = { # recipient has a lot less levies than actor
+		add = -50
+		blood_brother_strength_ratio_value < 0.5
+		desc = BLOOD_BROTHER_ACTOR_MUCH_WEAKER_REASON
+	}
+	modifier = { # recipient has a lot less levies than actor
+		add = -25
+		blood_brother_strength_ratio_value < 0.75
+		blood_brother_strength_ratio_value >= 0.5
+		desc = BLOOD_BROTHER_ACTOR_SOMEWHAT_WEAKER_REASON
+	}
+	modifier = { # recipient has a lot less levies than actor
+		add = -10
+		blood_brother_strength_ratio_value < 1
+		blood_brother_strength_ratio_value >= 0.75
+		desc = BLOOD_BROTHER_ACTOR_SLIGHTLY_WEAKER_REASON
+	}
+	modifier = { # recipient has a lot less levies than actor
+		add = 10
+		blood_brother_strength_ratio_value > 1
+		blood_brother_strength_ratio_value <= 1.5
+		desc = BLOOD_BROTHER_RECIPIENT_SLIGHTLY_WEAKER_REASON
+	}
+	modifier = { # recipient has a lot less levies than actor
+		add = 25
+		blood_brother_strength_ratio_value > 1.5
+		blood_brother_strength_ratio_value <= 2
+		desc = BLOOD_BROTHER_RECIPIENT_SOMEWHAT_WEAKER_REASON
+	}
+	modifier = { # recipient has a lot less levies than actor
+		add = 50
+		blood_brother_strength_ratio_value > 2
+		desc = BLOOD_BROTHER_RECIPIENT_MUCH_WEAKER_REASON
+	}
+	modifier = { #Friend modifier.
+		desc = offer_vassalization_interaction_aibehavior_friend_tt
+		trigger = {
+			scope:recipient = {
+				has_relation_friend = scope:actor
+				NOT = { has_relation_best_friend = scope:actor }
+			}
+		}
+		add = 50
+	}
+	modifier = { #Best Friend modifier.
+		desc = offer_vassalization_interaction_aibehavior_best_friend_tt
+		trigger = {
+			scope:recipient = {
+				has_relation_best_friend = scope:actor
+			}
+		}
+		add = 100
+	}
+	modifier = { #Lover modifier.
+		desc = interaction_lover
+		trigger = {
+			scope:recipient = {
+				has_relation_lover = scope:actor
+				NOT = { has_relation_soulmate = scope:actor }
+			}
+		}
+		add = 25
+	}
+	modifier = { #Soulmate modifier.
+		desc = interaction_soulmate
+		trigger = {
+			scope:recipient = {
+				has_relation_soulmate = scope:actor
+			}
+		}
+		add = 75
+	}
+	modifier = { #Rivalry modifier.
+		desc = offer_vassalization_interaction_aibehavior_rival_tt
+		trigger = {
+			scope:recipient = {
+				has_relation_rival = scope:actor
+				NOT = { has_relation_nemesis = scope:actor }
+			}
+		}
+		add = -150
+	}
+	modifier = { #Nemesis modifier.
+		desc = offer_vassalization_interaction_aibehavior_nemesis_tt
+		trigger = {
+			scope:recipient = {
+				has_relation_nemesis = scope:actor
+			}
+		}
+		add = -500
+	}
+	modifier = { #Same Dynasty modifier.
+		desc = offer_vassalization_interaction_aibehavior_dynasty_tt
+		trigger = {
+			exists = scope:actor.dynasty
+			exists = scope:recipient.dynasty
+			scope:recipient = {
+				dynasty = scope:actor.dynasty
+			}
+		}
+		add = 30
+	}
+	modifier = { #Same House modifier.
+		desc = offer_vassalization_interaction_aibehavior_house_tt
+		trigger = {
+			exists = scope:actor.house
+			exists = scope:recipient.house
+			scope:recipient = {
+				house = scope:actor.house
+			}
+		}
+		add = 20
+	}
+	modifier = { # Same language
+		add = 25
+		desc = speaks_same_language_interaction_reason
+		trigger = {
+			scope:actor = {
+				knows_language_of_culture = scope:recipient.culture
+			}
+		}
+	}
+	modifier = {
+		add = intimidated_external_reason_value
+		scope:recipient = {
+			has_dread_level_towards = {
+				target = scope:actor
+				level = 1
+			}
+		}
+		desc = INTIMIDATED_REASON
+	}
+	modifier = {
+		add = cowed_external_reason_value
+		scope:recipient = {
+			has_dread_level_towards = {
+				target = scope:actor
+				level = 2
+			}
+		}
+		desc = COWED_REASON
+	}
+	# LOW LEGITIMACY
+	modifier = {
+		desc = "LOW_LEGITIMACY_REASON"
+		add = -5
+		scope:actor = {
+			is_independent_ruler = yes
+			has_legitimacy_flag = reduced_vassalization_acceptance
+		}
+	}
+	modifier = {
+		desc = "LOW_LEGITIMACY_REASON"
+		add = -10
+		scope:actor = {
+			is_independent_ruler = yes
+			has_legitimacy_flag = very_reduced_vassalization_acceptance
+		}
+	}
+	modifier = {
+		desc = "LOW_LEGITIMACY_REASON"
+		scope:actor = {
+			is_independent_ruler = yes
+			has_legitimacy_flag = massively_reduced_vassalization_acceptance
+		}
+	}
+	# HIGH LEGITIMACY
+	modifier = {
+		desc = "HIGH_LEGITIMACY_REASON"
+		add = 5
+		scope:actor = {
+			is_independent_ruler = yes
+			has_legitimacy_flag = increased_vassalization_acceptance
+		}
+	}
+	modifier = {
+		desc = "HIGH_LEGITIMACY_REASON"
+		add = 10
+		scope:actor = {
+			is_independent_ruler = yes
+			has_legitimacy_flag = very_increased_vassalization_acceptance
+		}
+	}
+	modifier = {
+		desc = "HIGH_LEGITIMACY_REASON"
+		add = 20
+		scope:actor = {
+			is_independent_ruler = yes
+			has_legitimacy_flag = extra_increased_vassalization_acceptance
+		}
+	}
+	#CULTURE
+	modifier = {
+		add = 5
+		scope:actor = {
+			culture = scope:recipient.culture
+		}
+		desc = "SAME_CULTURE_REASON"
+	}
+	#Forcing them to join war
+	modifier = {
+		add = -50
+		desc = IS_AT_WAR_REASON
+		scope:actor = {
+			is_at_war = yes
+			any_character_war = {
+				NOT = {
+					any_war_participant = {
+						this = scope:recipient
+					}
+				}
+			}
+		}
+	}
+	#You will be helping with their war
+	modifier = {
+		add = 50
+		desc = RECIPIENT_AT_WAR_REASON
+		scope:recipient = {
+			is_at_war = yes
+			any_character_war = {
+				OR = {
+					AND = {
+						primary_defender = scope:recipient
+						defender_war_score < 25
+					}
+					AND = {
+						primary_attacker = scope:recipient
+						attacker_war_score < 25
+					}
+				}
+				NOT = {
+					any_war_participant = {
+						this = scope:actor
+					}
+				}
+			}
+		}
+	}
+	#You will be helping with their defensive war
+	modifier = {
+		add = 100
+		desc = RECIPIENT_AT_DEFENSIVE_WAR_REASON
+		scope:recipient = {
+			is_at_war_as_defender = yes
+			any_character_war = {
+				primary_defender = scope:recipient
+				NOT = {
+					any_war_participant = {
+						this = scope:actor
+					}
+				}
+				defender_war_score < 25
+			}
+		}
+	}
+	#Culture is into blood brothers
+	modifier = {
+		add = 10
+		desc = BLOOD_BROTHER_ETHOS_REASON
+		scope:recipient.culture = {
+			OR = {
+				has_cultural_pillar = ethos_stoic
+				has_cultural_pillar = ethos_communal
+				has_cultural_pillar = ethos_courtly
+			}
+		}
+	}
+
+	#You have a truce
+	modifier = {
+		add = 20
+		desc = BLOOD_BROTHER_TRUCE_REASON
+		
+		trigger = {
+			scope:recipient = {
+				any_truce_holder = {
+					this = scope:actor
+				}
+			}
+			# Ensure the truce was purchase
+			scope:actor = {
+				has_purchased_truce_with_char = { TARGET = scope:recipient }
+			}
+		}
+	}
+
+	#FAMILY RELATIONS (in laws, etc)
+	#Is married to one of your close family
+	modifier = {
+		add = 20
+		desc = BLOOD_BROTHER_RECIPIENT_MARRIAGE_REASON
+		
+		trigger = {
+			scope:recipient = {
+				any_truce_holder = {
+					this = scope:actor
+				}
+			}
+			# Ensure the truce was purchase
+			scope:actor = {
+				has_purchased_truce_with_char = { TARGET = scope:recipient }
+			}
+		}
+	}
+	#You are married to their close family
+	modifier = {
+		add = 20
+		desc = BLOOD_BROTHER_ACTOR_MARRIAGE_REASON
+		
+		trigger = {
+			scope:recipient = {
+				any_truce_holder = {
+					this = scope:actor
+				}
+			}
+			# Ensure the truce was purchase
+			scope:actor = {
+				has_purchased_truce_with_char = { TARGET = scope:recipient }
+			}
+		}
+	}
+
+	#FELLOW CONFEDERATION MEMBER
+	modifier = {
+		add = 40
+		desc = CONFEDERATION_MEMBER_REASON
+		is_confederation_member = yes
+		scope:recipient = {
+			is_member_of_confederation = scope:actor.confederation
+		}
+	}
+
+	#DIFFERENT GENDER
+	#And faith doesn't see genders as equal
+	modifier = {
+		add = -75
+		desc = BLOOD_BROTHER_GENDER_REASON
+		scope:recipient = {
+			OR = {
+				AND = {
+					is_female = yes
+					scope:actor = {
+						is_female = no
+					}
+				}
+				AND = {
+					is_male = yes
+					scope:actor = {
+						is_male = no
+					}
+				}
+			}
+			NOT = {
+				faith = {
+					has_doctrine_parameter = gender_equal_law
+				}
+			}
+		}
+	}
+	#And faith sees genders as equal, but this is still kinda a fraternal/sororal thing
+	modifier = {
+		add = -25
+		desc = BLOOD_BROTHER_GENDER_REASON
+		scope:recipient = {
+			OR = {
+				AND = {
+					is_female = yes
+					scope:actor = {
+						is_female = no
+					}
+				}
+				AND = {
+					is_male = yes
+					scope:actor = {
+						is_male = no
+					}
+				}
+			}
+			faith = {
+				has_doctrine_parameter = gender_equal_law
+			}
+		}
+	}
+	#August blood brother modifier
+	modifier = {
+		add = 20
+		desc = BLOOD_BROTHER_AUGUST_REASON
+		scope:actor = {
+			mpo_blood_brother_august_trigger = { OTHER_BROTHER = scope:recipient }
+		}
+	}
+	#Warrior blood brother modifier
+	modifier = {
+		add = 25
+		desc = BLOOD_BROTHER_WARRIOR_REASON
+		scope:actor = {
+			mpo_blood_brother_warrior_trigger = { OTHER_BROTHER = scope:recipient }
+		}
+	}
+	#Clever blood brother modifier
+	modifier = {
+		add = 25
+		desc = BLOOD_BROTHER_CLEVER_REASON
+		scope:actor = {
+			mpo_blood_brother_clever_trigger = yes
+		}
+	}
+	#Loving blood brother modifier
+	modifier = {
+		add = 15
+		desc = BLOOD_BROTHER_LOVING_REASON
+		scope:actor = {
+			mpo_blood_brother_loving_trigger = yes
+		}
+	}
+
+	#Broke blood brotherhood
+	modifier = {
+		add = -100
+		desc = BROKE_BLOOD_BROTHERHOOD_REASON
+		scope:actor = {
+			has_character_modifier = broke_blood_brotherhood_modifier
+		}
+	}
+}

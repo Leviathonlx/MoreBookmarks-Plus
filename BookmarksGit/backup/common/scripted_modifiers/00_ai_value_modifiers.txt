@@ -1,0 +1,279 @@
+﻿###AI VALUE TARGET MODIFIERS###
+#Modifiers based on ai_values weighted by what we consider a high positive value is. If you give the modifier the VALUE argument X, the expected output at a high positive ai value is X. I.e. "ai_boldness_target_modifier = 80" would output 80 at a high positive boldness value.
+
+#Base
+ai_target_modifier = {
+	modifier = {
+		add = {
+			value = $CHARACTER$.$AI_VALUE$
+			divide = very_high_positive_ai_value
+			multiply = $VALUE$
+		}
+	}
+}
+
+#Ai-specific modifiers
+ai_boldness_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_boldness
+		VALUE = $VALUE$
+	}
+}
+
+ai_compassion_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_compassion
+		VALUE = $VALUE$
+	}
+}
+
+ai_greed_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_greed
+		VALUE = $VALUE$
+	}
+}
+
+ai_energy_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_energy
+		VALUE = $VALUE$
+	}
+}
+
+ai_honor_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_honor
+		VALUE = $VALUE$
+	}
+}
+
+ai_rationality_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_rationality
+		VALUE = $VALUE$
+	}
+}
+
+ai_sociability_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_sociability
+		VALUE = $VALUE$
+	}
+}
+
+ai_vengefulness_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_vengefulness
+		VALUE = $VALUE$
+	}
+}
+
+ai_zeal_target_modifier = {
+	ai_target_modifier = {
+		CHARACTER = this
+		AI_VALUE = ai_zeal
+		VALUE = $VALUE$
+	}
+}
+
+ai_military_threat_modifier_with_cbs = {
+	modifier = { # Casus bellis on target
+		$SENDER$ = { NOT = { has_government = herder_government } } # herders don't care
+		$RECEIVER$ = { NOT = { has_any_cb_on = $SENDER$ } }
+		add = {
+			add = dominant_negative_ai_value
+			multiply = $MULTIPLIER$
+		}
+		desc = NO_CASUS_BELLI_REASON
+	}
+	ai_military_threat_modifier = { RECEIVER = $RECEIVER$ SENDER = $SENDER$ MULTIPLIER = $MULTIPLIER$ }
+}
+
+ai_military_threat_modifier = {
+	modifier = { # Claims on target
+		$SENDER$ = {
+			any_held_title = {
+				tier >= tier_county 
+				save_temporary_scope_as = title_temp
+			}
+		}
+		$RECEIVER$ = { has_claim_on = scope:title_temp }
+		add = {
+			value = 0
+			$SENDER$ = {
+				every_held_title = {
+					limit = {
+						any_claimant = { this = $RECEIVER$ }
+						save_temporary_scope_as = title_temp
+					}
+					add = {
+						value = low_positive_ai_value
+						multiply = $MULTIPLIER$
+						if = { # Strong claims are worth more
+							limit = {
+								$RECEIVER$ = { has_strong_claim_on = scope:title_temp }
+							}
+							multiply = 2
+						}
+						multiply = { # Higher titles worth more
+							value = {
+								value = tier
+								add = -1
+							}
+						}
+						if = {
+							limit = {
+								$RECEIVER$ = { government_has_flag = government_is_mandala }
+							}
+							divide = 2
+						}
+					}
+				}
+			}
+		}
+		desc = CLAIMS_REASON
+	}
+
+	# similar current military power
+	modifier = {
+		$SENDER$.current_power_ninety_percent_value < $RECEIVER$.military_power
+		$SENDER$.military_power > $RECEIVER$.current_power_ninety_percent_value
+		add = {
+			add = 10
+			multiply = $MULTIPLIER$
+			if = {
+				limit = {
+					$RECEIVER$ = { government_has_flag = government_is_mandala }
+				}
+				divide = 2
+			}
+		}
+		desc = SIMILAR_CURRENT_MILITARY_POWER_REASON
+	}
+	modifier = {
+		# Sender is more powerful
+		$SENDER$.current_power_ninety_percent_value > $RECEIVER$.military_power
+		add = {
+			value = {
+				add = $RECEIVER$.military_power # 1828
+			}
+			divide = {
+				value = {
+					add = $SENDER$.military_power # 1382
+				}
+				min = 1
+			}
+			# 1828 / 1382 = 1.32
+			subtract = 1 # 1.32 - 1 = 0.32
+			multiply = 50 # 0.32 * 50 = 16
+			max = 50
+			multiply = $MULTIPLIER$
+			if = {
+				limit = {
+					$RECEIVER$ = { government_has_flag = government_is_mandala }
+				}
+				divide = 2
+			}
+		}
+		desc = RELATIVE_MILITARY_POWER_REASON
+	}
+	modifier = {
+		# Sender is less powerful
+		$SENDER$.current_power_ninety_percent_value < $RECEIVER$.military_power
+		add = {
+			value = {
+				add = $SENDER$.military_power # 1828
+			}
+			divide = {
+				value = {
+					add = $RECEIVER$.military_power # 1382
+				}
+				min = 1
+			}
+			# 1828 / 1382 = 1.32
+			subtract = 1 # 1.32 - 1 = 0.32
+			multiply = -50 # 0.32 * -50 = -16
+			min = -50
+			multiply = $MULTIPLIER$
+			if = {
+				limit = {
+					$RECEIVER$ = { government_has_flag = government_is_mandala }
+				}
+				divide = 2
+			}
+		}
+		desc = RELATIVE_MILITARY_POWER_REASON
+	}
+	modifier = {
+		# Sender's power is lower, but with allies it's stronger
+		$SENDER$ = { any_ally = { exists = this } }
+		$SENDER$.current_power_ninety_percent_value < $RECEIVER$.military_power
+		$SENDER$.current_power_with_allies_value > $RECEIVER$.current_power_with_allies_value
+		add = {
+			value = $SENDER$.current_power_with_allies_value
+			divide = {
+				value = $RECEIVER$.current_power_with_allies_value
+				min = 1
+			}
+			subtract = 1
+			multiply = -50
+			min = -50
+			multiply = $MULTIPLIER$
+			if = {
+				limit = {
+					$RECEIVER$ = { government_has_flag = government_is_mandala }
+				}
+				divide = 2
+			}
+		}
+		desc = ALLY_MILITARY_POWER_REASON
+	}
+	modifier = {
+		# Sender's power is higher, but with allies it's lower
+		$RECEIVER$ = { any_ally = { exists = this } }
+		$SENDER$.current_power_ninety_percent_value > $RECEIVER$.military_power
+		$SENDER$.current_power_with_allies_value < $RECEIVER$.current_power_with_allies_value
+		add = {
+			value = $RECEIVER$.current_power_with_allies_value
+			divide = {
+				value = $SENDER$.current_power_with_allies_value
+				min = 1
+			}
+			subtract = 1
+			multiply = 50
+			max = 50
+			multiply = $MULTIPLIER$
+			if = {
+				limit = {
+					$RECEIVER$ = { government_has_flag = government_is_mandala }
+				}
+				divide = 2
+			}
+		}
+		desc = ALLY_MILITARY_POWER_REASON
+	}
+
+	# commented out: ai_diplomacy_stance is unreliable
+	#modifier = {
+	#	$SENDER$ = { ai_diplomacy_stance = { target = $RECEIVER$ stance = neutral } }
+	#	add = -100
+	#	multiply = $MULTIPLIER$
+	#	desc = DIPLOMACY_NOT_A_THREAT_REASON
+	#}
+
+	#modifier = {
+	#	$SENDER$ = { ai_diplomacy_stance = { target = $RECEIVER$ stance = friend } }
+	#	add = -500
+	#	multiply = $MULTIPLIER$
+	#	desc = DIPLOMACY_FRIEND_REASON
+	#}
+}

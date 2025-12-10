@@ -1,0 +1,126 @@
+﻿story_cycle_martial_lifestyle_warhorse = {
+
+	on_setup = {
+		assign_horse_gender_effect = { GENDER = random }
+		story_owner = {
+			add_character_modifier = {
+				modifier = horse_story_modifier
+			}
+			add_character_flag = had_warhorse_story
+			set_variable = { # Set up the variable so we can check its value in the modifier event
+				name = warhorse_modifier_level
+				value = 0
+			}
+		}
+		if = {
+			limit = {
+				NOR = {
+					exists = var:story_cycle_horse_name
+					story_owner = {
+						has_character_flag = is_in_naming_event
+					}
+				}
+			}
+			story_owner = {
+				add_character_flag = is_in_naming_event
+				trigger_event = {
+					id = warhorse.0001
+					days = 2
+				}
+			}
+		}
+	}
+
+	on_end = {
+		story_owner = {
+			remove_horse_story_modifiers_effect = yes
+		}
+	}
+
+	on_owner_death = {
+		end_story = yes
+	}
+
+	effect_group = { # Something happens - random events
+		days = { 275 400 }
+		chance = 25
+
+		trigger = {
+			exists = var:story_cycle_horse_name
+			story_owner = {
+				is_available = yes
+				NOT = {
+					has_character_flag = is_breeding_warhorse
+				}
+			}
+		}
+
+		triggered_effect = {
+			trigger = { exists = var:story_cycle_horse_name }
+			effect = {
+				story_owner = {
+					trigger_event = {
+						on_action = ongoing_warhorse_events
+					}
+				}
+			}
+		}
+
+		triggered_effect = { # A fellow governor is jealous of your horse
+			trigger = {
+				story_owner = {
+					is_ai = yes
+					is_governor = yes 
+					liege = {
+						any_vassal = {
+							this != root.story_owner
+							is_available_adult = yes 
+							is_governor = yes
+						}
+					}
+				}
+			}
+			effect = {
+				story_owner = {
+					save_scope_as = horse_owner
+					liege = {
+						random_vassal = {
+							limit = {
+								this != root.story_owner
+								is_available_adult = yes
+								is_governor = yes
+							}
+							trigger_event = ep3_yearly.1010 
+						}
+					}
+				}
+			}
+		}
+	}
+
+	effect_group = { # You trusted steed is getting old, you should consider breeding!
+		days = { 5000 7000 }
+		chance = 100
+
+		trigger = {
+			story_owner = {
+				is_available = yes
+			}
+		}
+	
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				story_owner = {
+					add_character_flag = {
+						flag = is_breeding_warhorse
+						days = 200
+					}
+					trigger_event = {
+						on_action = breed_warhorse
+					}
+				}
+			}
+		}
+	}
+}

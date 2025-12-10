@@ -1,0 +1,1993 @@
+﻿
+#Tweak exam advantage variable
+imperial_examination_adjust_advantage_variable_effect = {
+	if = {
+		limit = {
+			NOT = { has_variable = has_exam_advantage }
+		}
+		set_variable = {
+			name = has_exam_advantage
+			value = 1
+		}
+	}
+	else = {
+		change_variable = {
+			name = has_exam_advantage
+			add = 1
+		}
+	}
+}
+
+imperial_examination_adjust_advantage_variable_neg_effect = {
+	if = {
+		limit = {
+			NOT = { has_variable = has_exam_advantage }
+		}
+		set_variable = {
+			name = has_exam_advantage
+			value = 0
+		}
+	}
+	else = {
+		change_variable = {
+			name = has_exam_advantage
+			add = -1
+		}
+	}
+}
+
+#Is run in the imperial_examination_cheat_washing_effect
+imperial_examination_update_cheat_washing_effect = {
+	if = {
+		limit = { has_variable = washed_cheater }
+		change_variable = {
+			name = washed_cheater
+			add = 1
+		}
+	}
+	else = {
+		set_variable = {
+			name = washed_cheater
+			value = 1
+		}
+	}
+}
+
+imperial_examination_cheat_washing_effect = {
+	#What a relief.
+	stress_impact = { base = major_stress_impact_loss }
+	#Gonzo!
+	custom_tooltip = imperial_examination.cheat_wash.tt
+	remove_variable ?= been_caught_cheating
+	remove_variable ?= been_caught_cheating_longterm
+	#How many times have we washed out cheat, exactly?
+	imperial_examination_update_cheat_washing_effect = yes
+}
+
+
+#Rewards
+imperial_examination_disburse_activity_host_rewards = {
+	involved_activity = {
+		add_activity_log_entry = {
+			key = imperial_examination_host_rewards
+			score = 100
+			tags = { completed }
+			show_in_conclusion = yes
+			character = scope:host
+			location = scope:host.location
+
+			scope:host = {
+				#Legend spread
+				if = {
+					limit = {
+						has_dlc_feature = legends
+						exists = promoted_legend
+						#Lots of entrants
+						scope:activity = { activity_has_imperial_exams_trigger = yes }
+					}
+					promoted_legend ?= {
+						change_legend_quality_effect = { VALUE = medium_legend_quality_increase }
+					}
+				}
+
+				#Influence based on your... setup
+				change_influence = {
+					value = imperial_examination_influence_base_reward_value
+					#Lots of entrants
+					if = {
+						limit = { scope:activity = { activity_has_imperial_exams_trigger = yes } }
+						multiply = 4
+					}
+					#Smaller amount of entrants
+					else_if = {
+						limit = { scope:activity = { activity_has_grand_exams_trigger = yes } }
+						multiply = 2
+					}
+				}
+
+				#Legitimacy
+				add_legitimacy = {
+					value = imperial_examination_legitimacy_base_reward_value
+					#Extreme Grade
+					if = {
+						limit = { scope:activity = { activity_has_extreme_grade_trigger = yes } }
+						multiply = 2
+					}
+					#High Grade is the default, as it were, so no post for that case
+					#Mediocre Grade
+					else_if = {
+						limit = { scope:activity = { activity_has_mediocre_grade_trigger = yes } }
+						multiply = 0.8
+					}
+					#Low Grade
+					else = {
+						limit = { scope:activity = { activity_has_low_grade_trigger = yes } }
+						multiply = 0.5
+					}
+				}
+
+				#Prestige
+				add_prestige = {
+					value = imperial_examination_prestige_base_reward_value
+					#Extreme Grade
+					if = {
+						limit = { scope:activity = { activity_has_extreme_grade_trigger = yes } }
+						multiply = 4
+					}
+					#High Grade
+					else_if = {
+						limit = { scope:activity = { activity_has_high_grade_trigger = yes } }
+						multiply = 2
+					}
+					#Mediocre Grade 
+					#Low Grade
+					else = {
+						limit = { scope:activity = { activity_has_low_grade_trigger = yes } }
+						multiply = 0.8
+					}
+				}
+			}
+		}
+	}
+}
+
+local_examination_disburse_activity_host_rewards = {
+	involved_activity = {
+		add_activity_log_entry = {
+			key = imperial_examination_host_rewards
+			score = 100
+			tags = { completed }
+			show_in_conclusion = yes
+			character = scope:host
+			location = scope:host.location
+
+			scope:host = {
+				#Influence based on your... setup
+				change_influence = {
+					value = local_examination_influence_base_reward_value
+					#Lots of entrants
+					if = {
+						limit = { scope:activity = { activity_has_imperial_exams_trigger = yes } }
+						multiply = 4
+					}
+					#Smaller amount of entrants
+					else_if = {
+						limit = { scope:activity = { activity_has_grand_exams_trigger = yes } }
+						multiply = 2
+					}
+				}
+
+				if = {
+					limit = { has_legitimacy = yes }
+					#Legitimacy (for those who have it)
+					add_legitimacy = {
+						value = local_examination_legitimacy_base_reward_value
+						#Extreme Grade
+						if = {
+							limit = { scope:activity = { activity_has_extreme_grade_trigger = yes } }
+							multiply = 2
+						}
+						#High Grade is the default, as it were, so no post for that case
+						#Mediocre Grade
+						else_if = {
+							limit = { scope:activity = { activity_has_mediocre_grade_trigger = yes } }
+							multiply = 0.8
+						}
+						#Low Grade
+						else = {
+							limit = { scope:activity = { activity_has_low_grade_trigger = yes } }
+							multiply = 0.5
+						}
+					}
+				}
+				else = {
+					# Merit for the rest
+					change_merit = {
+						value = local_examination_legitimacy_base_reward_value
+						#Extreme Grade
+						if = {
+							limit = { scope:activity = { activity_has_extreme_grade_trigger = yes } }
+							multiply = 2
+						}
+						#High Grade is the default, as it were, so no post for that case
+						#Mediocre Grade
+						else_if = {
+							limit = { scope:activity = { activity_has_mediocre_grade_trigger = yes } }
+							multiply = 0.8
+						}
+						#Low Grade
+						else = {
+							limit = { scope:activity = { activity_has_low_grade_trigger = yes } }
+							multiply = 0.5
+						}
+					}
+				}
+
+				#Prestige
+				add_prestige = {
+					value = local_examination_prestige_base_reward_value
+					#Extreme Grade
+					if = {
+						limit = { scope:activity = { activity_has_extreme_grade_trigger = yes } }
+						multiply = 4
+					}
+					#High Grade
+					else_if = {
+						limit = { scope:activity = { activity_has_high_grade_trigger = yes } }
+						multiply = 2
+					}
+					#Mediocre Grade 
+					#Low Grade
+					else = {
+						limit = { scope:activity = { activity_has_low_grade_trigger = yes } }
+						multiply = 0.8
+					}
+				}
+			}
+		}
+	}
+}
+
+imperial_examination_disburse_activity_examiner_rewards = {
+	#Add some influence & prestige
+	change_influence = imperial_examination_influence_base_reward_value
+	add_prestige = imperial_examination_prestige_base_reward_value
+	#Change some opinion
+	add_opinion = {
+		modifier = examiner_opinion
+		target = scope:host
+		opinion = 25
+	}
+}
+
+imperial_examination_disburse_activity_entrant_rewards = {
+	save_temporary_scope_as = entrant
+	#This variable is set to track the loc we show players when notifying them of their family's results.
+
+	#Cheaters
+	if = {
+		limit = { has_variable = been_caught_cheating_longterm }
+		#No influence for cheaters
+		change_merit = {
+			value = imperial_examination_merit_base_reward_value
+			multiply = 0.1
+		}
+	}
+	#Entrants
+	else_if = {
+		limit = {
+			OR = {
+				is_in_guest_subset = { name = entrants }
+				is_in_guest_subset = { name = palace_entrants }
+			}
+		}
+		#Influence based on your score
+		if = {
+			limit = { is_ai = no }
+			#Record it
+			involved_activity = {
+				add_activity_log_entry = {
+					key = imperial_examination_entrant_rewards
+					score = 80
+					tags = { completed }
+					show_in_conclusion = yes
+					character = scope:entrant
+					location = scope:entrant.location
+					scope:entrant = {
+						if = {
+							limit = {
+								NOT = { has_character_modifier = tgp_passed_provincial_exam_modifier }
+							}
+							add_character_flag = passed_provincial_exam
+							add_character_modifier = {
+								modifier = tgp_bypassed_provincial_exam_modifier
+							}
+						}
+						change_influence = imperial_examination_entrant_influence_reward_value
+						#Merit based on your score
+						change_merit = imperial_examination_entrant_merit_reward_value
+						# Gain Prestige if you have the relevant flag
+						if = {
+							limit = { has_character_flag = examination_prestige_reward }
+							remove_character_flag = examination_prestige_reward
+							add_prestige = major_prestige_gain
+						}
+					}
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					NOT = { has_character_modifier = tgp_passed_provincial_exam_modifier }
+				}
+				add_character_flag = passed_provincial_exam
+				add_character_modifier = {
+					modifier = tgp_bypassed_provincial_exam_modifier
+				}
+				if = {
+					limit = { is_lowborn = no }
+					change_merit = local_examination_merit_base_reward_value
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						is_lowborn = no
+						has_perfect_score_trigger = { SCORE_VAR = imperial_examination_score }
+					}
+					
+				}
+				change_influence = imperial_examination_entrant_influence_reward_value
+				#Merit based on your score
+				change_merit = imperial_examination_entrant_merit_reward_value
+				# Gain Prestige if you have the relevant flag
+				if = {
+					limit = { has_character_flag = examination_prestige_reward }
+					remove_character_flag = examination_prestige_reward
+					add_prestige = major_prestige_gain
+				}
+			}
+		}
+		if = {
+			limit = {
+				is_in_guest_subset = { name = palace_entrants }
+			}
+			if = {
+				limit = {
+					NOT = { has_character_flag = passed_metropolitan_exam }
+				}
+				add_character_flag = passed_metropolitan_exam
+				add_character_modifier = {
+					modifier = tgp_passed_metropolitan_exam_modifier
+				}
+			}
+			add_character_flag = passed_palace_exam
+			add_character_modifier = {
+				modifier = tgp_passed_palace_exam_modifier
+			}
+			create_character_memory = {
+				type = passed_metropolitan_exam_memory
+			}
+			create_character_memory = {
+				type = passed_palace_exam_memory
+			}
+			# Notify close family members
+			every_close_family_member = {
+				# House head is notified separately
+				limit = { is_house_head = no }
+				send_interface_message = {
+					type = event_msg_merit_effect_good
+					title = palace_exam_close_family_passed
+					right_icon = root
+					desc = msg_palace_exam_close_family_passed_desc
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				is_in_guest_subset = { name = entrants }
+			}
+			save_temporary_scope_as = temp_scope
+			add_character_flag = passed_metropolitan_exam
+			add_character_modifier = {
+				modifier = tgp_passed_metropolitan_exam_modifier
+			}
+			if = {
+				limit = {
+					# Let's give metropolitan entrants the chance to pass Palace as well.
+					is_ai = yes
+					is_lowborn = no
+					# We don't mess with any player families
+					NOT = {
+						any_close_or_extended_family_member = { is_ai = no }
+					}
+				}
+				random = {
+					chance = 20
+					add_character_flag = passed_palace_exam
+					add_character_modifier = {
+						modifier = tgp_passed_palace_exam_modifier
+					}
+					change_merit = empire_starting_merit_value
+				}
+			}
+			create_character_memory = {
+				type = passed_metropolitan_exam_memory
+			}
+			# Notify close family members
+			every_close_family_member = {
+				# House head is notified separately
+				limit = { is_house_head = no }
+				send_interface_message = {
+					type = event_msg_merit_effect_good
+					title = metropolitan_exam_close_family_passed
+					right_icon = root
+					desc = msg_metropolitan_exam_close_family_passed_desc
+				}
+			}
+		}
+		#Remove failed_imperial_examination flags for those who have it
+		if = {
+			limit = {
+				has_character_flag = failed_imperial_examination
+			}
+			remove_character_flag = failed_imperial_examination
+		}
+	}
+	#Failees
+	else = {
+		if = {
+			limit = { is_ai = no }
+			#Record it
+			involved_activity = {
+				add_activity_log_entry = {
+					key = imperial_examination_entrant_rewards
+					score = 80
+					tags = { completed }
+					show_in_conclusion = yes
+					character = scope:entrant
+					location = scope:entrant.location
+					scope:entrant = {
+						#Dwindling influence & merit for failees
+						change_influence = imperial_examination_failee_influence_reward_value
+						change_merit = imperial_examination_failee_merit_reward_value
+						# Gain Prestige if you have the relevant flag
+						if = {
+							limit = { has_character_flag = examination_prestige_reward }
+							remove_character_flag = examination_prestige_reward
+							add_prestige = major_prestige_loss
+						}
+					}
+					failee_chance_to_gain_elder_effect = yes
+				}
+			}
+		}
+		else = {
+			#Dwindling influence & merit for failees
+			change_influence = imperial_examination_failee_influence_reward_value
+			change_merit = imperial_examination_failee_merit_reward_value
+			involved_activity = {
+				failee_chance_to_gain_elder_effect = yes
+			}
+			# Gain Prestige if you have the relevant flag
+			if = {
+				limit = { has_character_flag = examination_prestige_reward }
+				remove_character_flag = examination_prestige_reward
+				add_prestige = major_prestige_loss
+			}
+		}
+		#Set "failed examination" flags
+		add_character_flag = failed_imperial_examination
+		create_character_memory = {
+			type = failed_metropolitan_exam_memory
+		}
+		# Notify close family members
+		every_close_family_member = {
+			# House head is notified separately
+			limit = { is_house_head = no }
+			send_interface_message = {
+				type = event_msg_merit_effect_bad
+				title = metropolitan_exam_close_family_failed
+				right_icon = root
+				desc = msg_metropolitan_exam_close_family_failed_desc
+			}
+		}
+	}
+	scope:entrant = { add_to_list = exam_entrants }
+}
+
+local_examination_disburse_activity_entrant_rewards = {
+	save_temporary_scope_as = entrant
+	#This variable is set to track the loc we show players when notifying them of their family's results.
+
+	#Cheaters
+	if = {
+		limit = { has_variable = been_caught_cheating_longterm }
+		#No influence for cheaters
+		change_merit = {
+			value = imperial_examination_merit_base_reward_value
+			multiply = 0.1
+		}
+	}
+	#Entrants
+	else_if = {
+		limit = {
+			is_in_guest_subset = { name = entrants }
+		}
+		#Influence based on your score
+		if = {
+			limit = { is_ai = no }
+			#Record it
+			involved_activity = {
+				add_activity_log_entry = {
+					key = imperial_examination_entrant_rewards
+					score = 80
+					tags = { completed }
+					show_in_conclusion = yes
+					character = scope:entrant
+					location = scope:entrant.location
+					scope:entrant = {
+						change_influence = local_examination_entrant_influence_reward_value
+						#Merit based on your score
+						change_merit = local_examination_merit_base_reward_value
+						# Gain Prestige if you have the relevant flag
+						if = {
+							limit = { has_character_flag = examination_prestige_reward }
+							remove_character_flag = examination_prestige_reward
+							add_prestige = major_prestige_gain
+						}
+					}
+				}
+			}
+		}
+		else = {
+			change_influence = local_examination_entrant_influence_reward_value
+			#Merit based on your score
+			change_merit = local_examination_merit_base_reward_value
+			# Gain Prestige if you have the relevant flag
+			if = {
+				limit = { has_character_flag = examination_prestige_reward }
+				remove_character_flag = examination_prestige_reward
+				add_prestige = major_prestige_gain
+			}
+		}
+
+		#Save flags
+		add_character_flag = passed_provincial_exam
+		add_character_modifier = {
+			modifier = tgp_passed_provincial_exam_modifier
+		}
+		#Create memory of passing the exam
+		create_character_memory = {
+			type = passed_provincial_exam_memory
+		}
+		ordered_memory = {
+			order_by = memory_creation_date
+			set_variable = { name = location value = memory_owner.location }
+		}
+		#Send interface_message to relevant chars to notify them
+		every_close_family_member = {
+			send_interface_message = {
+				type = event_msg_merit_effect_good
+				title = provincial_exam_close_family_passed
+				right_icon = root
+				desc = msg_provincial_exam_close_family_passed_desc
+			}
+		}
+	}
+	#Failees
+	else = {
+		if = {
+			limit = { is_ai = no }
+			#Record it
+			involved_activity = {
+				add_activity_log_entry = {
+					key = imperial_examination_entrant_rewards
+					score = 80
+					tags = { completed }
+					show_in_conclusion = yes
+					character = scope:entrant
+					location = scope:entrant.location
+					scope:entrant = {
+						#Dwindling influence & merit for failees
+						change_influence = imperial_examination_failee_influence_reward_value
+						change_merit = imperial_examination_failee_merit_reward_value
+						# Lose Prestige if you have the relevant flag
+						if = {
+							limit = { has_character_flag = examination_prestige_reward }
+							remove_character_flag = examination_prestige_reward
+							add_prestige = major_prestige_loss
+						}
+					}
+					failee_chance_to_gain_elder_effect = yes
+				}
+			}
+		}
+		else = {
+			#Dwindling influence & merit for failees
+			change_influence = imperial_examination_failee_influence_reward_value
+			change_merit = imperial_examination_failee_merit_reward_value
+			involved_activity = {
+				failee_chance_to_gain_elder_effect = yes
+			}
+			# Lose Prestige if you have the relevant flag
+			if = {
+				limit = { has_character_flag = examination_prestige_reward }
+				remove_character_flag = examination_prestige_reward
+				add_prestige = major_prestige_loss
+			}
+		}
+		create_character_memory = {
+			type = failed_provincial_exam_memory
+		}
+		ordered_memory = {
+			order_by = memory_creation_date
+			set_variable = { name = location value = memory_owner.location }
+		}
+		#Send interface_message to relevant chars to notify them
+		every_close_family_member = {
+			send_interface_message = {
+				type = event_msg_merit_effect_bad
+				title = provincial_exam_close_family_failed
+				right_icon = root
+				desc = msg_provincial_exam_close_family_failed_desc
+			}
+		}
+	}
+	# Everyone should get Confucian Education XP
+	if = {
+		limit = {
+			NOT = { has_trait = confucian_education }
+		}
+		add_trait = confucian_education
+	}
+	add_trait_xp = {
+		trait = confucian_education
+		value = {
+			value = lifestyle_confucian_education_xp_gain_minor_value
+			#High Score
+			if = {
+				limit = { has_perfect_score_trigger = { SCORE_VAR = imperial_examination_score } }
+				multiply = 3
+			}
+			#Good Score
+			else_if = {
+				limit = { has_good_score_trigger = { SCORE_VAR = imperial_examination_score } }
+				multiply = 1.5
+			}
+			#Poor Score
+			else_if = {
+				limit = { has_questionable_score_trigger = { SCORE_VAR = imperial_examination_score } }
+				multiply = 0.8
+			}			
+		}
+	}
+	scope:entrant = {
+		add_to_list = exam_entrants
+	}
+}
+
+#a chance to set an elder/disciple relation between examiners and failees
+failee_chance_to_gain_elder_effect = {
+	random = {
+		chance = {
+			value = 25
+			scope:entrant = {
+				every_held_title = {
+					add = 5
+				}
+				if = {
+					limit = {
+						# No Elders for known cheaters
+						has_character_flag = been_caught_cheating
+					}
+					add = -25
+				}
+			}
+		}
+		random_guest_subset = {
+			name = imperial_examiners
+			limit = {
+				merit > scope:entrant.merit
+			}
+			weight = {
+				base = 100
+				modifier = {
+					any_relation = {
+						type = disciple
+						count > 0
+					}
+					# even out the distribution of disciples
+					add = {
+						every_relation = {
+							type = disciple
+							add = -5
+						}
+					}
+				}
+			}
+			save_scope_as = elder
+			set_elder_relation_effect = {
+				ELDER = scope:elder
+				DISCIPLE = scope:entrant
+				MERIT = minor_merit_gain
+			}
+			scope:entrant = { add_character_flag = exam_got_elder }
+		}
+	}
+}
+
+imperial_examination_create_appropriate_examiner_effect = {
+	scope:activity.activity_location = { save_scope_as = location }
+	if = {
+		limit = {
+			scope:host = {
+				involved_activity = { has_activity_type = activity_imperial_examination }
+			}
+		}
+		if = {
+			limit = {
+				scope:activity = { activity_is_martial_focus_trigger = yes }
+			}
+			create_character = {
+				template = tgp_examiner_martial_template
+				location = scope:location
+				save_scope_as = new_examiner
+			}
+		}
+		else_if = {
+			limit = {
+				scope:activity = { activity_is_stewardship_focus_trigger = yes }
+			}
+			create_character = {
+				template = tgp_examiner_stewardship_template
+				location = scope:location
+				save_scope_as = new_examiner
+			}
+		}
+		else = {
+			create_character = {
+				template = tgp_examiner_learning_template
+				location = scope:location
+				save_scope_as = new_examiner
+			}
+		}
+	}
+	else = {
+		create_character = {
+			template = tgp_examiner_learning_template
+			location = scope:location
+			save_scope_as = new_examiner
+		}
+	}
+}
+
+#Grab any eligible examiners, pre-Activity
+imperial_examination_set_up_examiners_effect = {
+	scope:activity.activity_location = { save_scope_as = location }
+	#Got anyone else we can invite to be an examiner?
+	$HOST$ = {
+		ordered_courtier = {
+			limit = {
+				has_trait = confucian_education
+				trigger_if = {
+					limit = {
+						scope:activity = {
+							has_activity_type = activity_imperial_examination
+						}
+					}
+					has_character_flag = passed_metropolitan_exam
+				}
+				trigger_else = {
+					has_character_flag = passed_provincial_exam
+				}
+				is_available_imperial_examiner_trigger = { ATTENDING_CHAR = $HOST$ }
+				#It's not one of our dedicated examiners
+				save_temporary_scope_as = char_check
+				scope:activity = {
+					NOT = {
+						is_target_in_variable_list = {
+							name = imperial_examiners_list
+							target = scope:char_check
+						}
+					}
+				}
+			}
+			order_by = imperial_examination_entry_value
+			max = examiners_amount
+			check_range_bounds = no #Don't care if this is 0
+			save_temporary_scope_as = temp_char
+			#Yes we do it this way to pull in people who might not be interested in being Entrants	
+			scope:activity = {
+				add_to_variable_list = {
+					name = imperial_examiners_list
+					target = scope:temp_char
+				}
+			} 
+		}
+	}
+	#Check for available landed rulers visiting the event (AI only)
+	if = {
+		limit = {
+			scope:activity = {
+				OR = {
+					NOT = { has_variable_list = imperial_examiners_list }
+					variable_list_size = {
+						name = imperial_examiners_list
+						value < examiners_amount
+					}
+				}
+			}
+		}
+		#List exists
+		scope:activity = {
+			if = {
+				limit = {
+					has_variable_list = imperial_examiners_list
+					variable_list_size = {
+						name = imperial_examiners_list
+						value < examiners_amount
+					}
+				}
+				while = {
+					limit = {
+						variable_list_size = {
+							name = imperial_examiners_list
+							value < examiners_amount
+						}
+						any_attending_character = {
+							location = scope:activity_location
+							this != scope:host
+							is_ai = yes
+							tgp_gender_can_be_exam_entrant_trigger = yes
+							trigger_if = {
+								limit = {
+									scope:activity = {
+										has_activity_type = activity_imperial_examination
+									}
+								}
+								has_character_flag = passed_metropolitan_exam
+							}
+							trigger_else = {
+								has_character_flag = passed_provincial_exam
+							}
+						}
+					}
+					random_attending_character = {
+						limit = {
+							location = scope:activity_location
+							is_ai = yes
+							this != scope:host
+							tgp_gender_can_be_exam_entrant_trigger = yes
+							trigger_if = {
+								limit = {
+									scope:activity = {
+										has_activity_type = activity_imperial_examination
+									}
+								}
+								has_character_flag = passed_metropolitan_exam
+							}
+							trigger_else = {
+								has_character_flag = passed_provincial_exam
+							}
+						}
+						save_scope_as = new_examiner
+					}
+					#Yes we do it this way to pull in people who might not be interested in being Entrants
+					add_to_variable_list = {
+						name = imperial_examiners_list
+						target = scope:new_examiner
+					}
+				}
+			}
+			#List doesn't exist
+			else = {
+				while = {
+					count = examiners_amount
+					limit = {
+						any_attending_character = {
+							location = scope:activity.activity_location
+							is_ai = yes
+							#tgp_gender_can_be_exam_entrant_trigger = yes
+							trigger_if = {
+								limit = {
+									scope:activity = {
+										has_activity_type = activity_imperial_examination
+									}
+								}
+								has_character_flag = passed_metropolitan_exam
+							}
+							trigger_else = {
+								has_character_flag = passed_provincial_exam
+							}
+						}
+					}
+					random_attending_character = {
+						limit = {
+							location = scope:activity.activity_location
+							is_ai = yes
+							#tgp_gender_can_be_exam_entrant_trigger = yes
+							trigger_if = {
+								limit = {
+									scope:activity = {
+										has_activity_type = activity_imperial_examination
+									}
+								}
+								has_character_flag = passed_metropolitan_exam
+							}
+							trigger_else = {
+								has_character_flag = passed_provincial_exam
+							}
+						}
+						save_scope_as = new_examiner
+					}
+					#Yes we do it this way to pull in people who might not be interested in being Entrants
+					add_to_variable_list = {
+						name = imperial_examiners_list
+						target = scope:new_examiner
+					}
+				}
+			}
+		}
+	}
+
+	#Check for available pool examiners first
+	if = {
+		limit = {
+			scope:activity = {
+				OR = {
+					NOT = { has_variable_list = imperial_examiners_list }
+					variable_list_size = {
+						name = imperial_examiners_list
+						value < examiners_amount
+					}
+				}
+			}
+		}
+		#List exists
+		if = {
+			limit = {
+				scope:activity = { 
+					has_variable_list = imperial_examiners_list
+					variable_list_size = {
+						name = imperial_examiners_list
+						value < examiners_amount
+					}
+				}
+			}
+			while = {
+				limit = {
+					scope:activity = {
+						variable_list_size = {
+							name = imperial_examiners_list
+							value < examiners_amount
+						}
+					}
+					any_pool_character = {
+						province = scope:location
+						has_trait = confucian_education
+						trigger_if = {
+							limit = {
+								scope:activity = {
+									has_activity_type = activity_imperial_examination
+								}
+							}
+							has_character_flag = passed_metropolitan_exam
+						}
+						trigger_else = {
+							has_character_flag = passed_provincial_exam
+						}
+						is_available_imperial_examiner_trigger = { ATTENDING_CHAR = $HOST$ }
+					}
+				}
+				random_pool_character = {
+					province = scope:location
+					limit = {
+						has_trait = confucian_education
+						trigger_if = {
+							limit = {
+								scope:activity = {
+									has_activity_type = activity_imperial_examination
+								}
+							}
+							has_character_flag = passed_metropolitan_exam
+						}
+						trigger_else = {
+							has_character_flag = passed_provincial_exam
+						}
+						is_available_imperial_examiner_trigger = { ATTENDING_CHAR = $HOST$ }
+					}
+					save_scope_as = new_examiner
+					#Add as courtier, if possible
+					if = {
+						limit = {
+							NOT = { is_courtier_of = $HOST$ }
+						}
+						$HOST$ = { add_courtier = scope:new_examiner }
+					}
+				}	
+				#Yes we do it this way to pull in people who might not be interested in being Entrants
+				scope:activity = {
+					add_to_variable_list = {
+						name = imperial_examiners_list
+						target = scope:new_examiner
+					}
+				}
+			}
+		}
+		#List doesn't exist
+		else = {
+			while = {
+				count = examiners_amount
+				limit = {
+					any_pool_character = {
+						province = scope:location
+						has_trait = confucian_education
+						trigger_if = {
+							limit = {
+								scope:activity = {
+									has_activity_type = activity_imperial_examination
+								}
+							}
+							has_character_flag = passed_metropolitan_exam
+						}
+						trigger_else = {
+							has_character_flag = passed_provincial_exam
+						}
+						is_available_imperial_examiner_trigger = { ATTENDING_CHAR = $HOST$ }
+					}
+				}
+				random_pool_character = {
+					province = scope:location
+					limit = {
+						has_trait = confucian_education
+						trigger_if = {
+							limit = {
+								scope:activity = {
+									has_activity_type = activity_imperial_examination
+								}
+							}
+							has_character_flag = passed_metropolitan_exam
+						}
+						trigger_else = {
+							has_character_flag = passed_provincial_exam
+						}
+						is_available_imperial_examiner_trigger = { ATTENDING_CHAR = $HOST$ }
+					}
+					save_scope_as = new_examiner
+					#Add as courtier, if possible
+					if = {
+						limit = {
+							NOT = { is_courtier_of = $HOST$ }
+						}
+						$HOST$ = { add_courtier = scope:new_examiner }
+					}
+				}
+				#Yes we do it this way to pull in people who might not be interested in being Entrants
+				scope:activity = {
+					add_to_variable_list = {
+						name = imperial_examiners_list
+						target = scope:new_examiner
+					}
+				}
+			}
+		}
+	}
+	#Then start creating them
+	if = {
+		limit = {
+			scope:activity = {
+				OR = {
+					NOT = { has_variable_list = imperial_examiners_list }
+					variable_list_size = {
+						name = imperial_examiners_list
+						value < examiners_amount
+					}
+				}
+			}
+		}
+		#List exists
+		if = {
+			limit = {
+				scope:activity = {
+					has_variable_list = imperial_examiners_list
+					variable_list_size = {
+						name = imperial_examiners_list
+						value < examiners_amount
+					}
+				}
+			}
+			while = {
+				limit = {
+					scope:activity = {
+						variable_list_size = {
+							name = imperial_examiners_list
+							value < examiners_amount
+						}
+					}
+				}
+				imperial_examination_create_appropriate_examiner_effect = yes
+				scope:new_examiner = {
+					if = {
+						limit = {
+							scope:activity = {
+								has_activity_type = activity_imperial_examination
+							}
+						}
+						add_character_flag = passed_metropolitan_exam
+					}
+					else = {
+						add_character_flag = passed_provincial_exam
+					}				
+				}
+				$HOST$ = { add_courtier = scope:new_examiner }
+				scope:activity = {
+					add_to_variable_list = {
+						name = imperial_examiners_list
+						target = scope:new_examiner
+					}
+				}
+			}
+		}
+		#List doesn't exist
+		else = {
+			while = {
+				count = examiners_amount
+				imperial_examination_create_appropriate_examiner_effect = yes
+				scope:new_examiner = {
+					if = {
+						limit = {
+							scope:activity = {
+								has_activity_type = activity_imperial_examination
+							}
+						}
+						add_character_flag = passed_metropolitan_exam
+					}
+					else = {
+						add_character_flag = passed_provincial_exam
+					}				
+				}
+				$HOST$ = { add_courtier = scope:new_examiner }
+				scope:activity = {
+					add_to_variable_list = {
+						name = imperial_examiners_list
+						target = scope:new_examiner
+					}
+				}
+			}
+		}
+	}
+	#Add 'em to the activity
+	every_in_list = {
+		variable = imperial_examiners_list
+		limit = {
+			NOR = { 
+				exists = involved_activity
+				scope:activity = { 
+					any_attending_character = { this = scope:new_examiner }
+				}
+				any_invited_activity = { this = scope:activity }
+			}
+		}
+		add_to_activity = scope:activity
+	}
+}
+
+#When the Activity is concluded
+imperial_examination_clean_up_variables_effect = {
+	#Exams
+	remove_variable ?= had_essay_examination
+	remove_variable ?= had_classics_examination
+	remove_variable ?= had_poetry_examination
+	remove_variable ?= had_archery_examination
+	remove_variable ?= had_polearm_examination
+	remove_variable ?= had_riding_examination
+	remove_variable ?= been_caught_cheating
+	remove_variable ?= been_caught_cheating_longterm
+	remove_variable ?= imperial_examination_score
+	remove_variable ?= temporary_exam_score
+	remove_variable ?= discovering_examiner
+	remove_character_flag ?= exam_cheat_intent
+	remove_character_flag ?= exam_perform_intent
+	remove_character_flag ?= set_activity_intent
+	remove_variable ?= has_perfect_score
+	remove_variable ?= has_great_score
+	remove_variable ?= has_decent_score
+	remove_variable ?= has_questionable_score
+	remove_variable ?= your_exam_position
+	#Cheats
+	remove_variable ?= has_exam_taker
+	remove_variable ?= has_bribed_examiner
+	remove_variable ?= has_blackmailed_examiner
+	remove_variable ?= has_planted_answers
+	remove_variable ?= parent_has_bribed_examiner
+	#Advantages
+	remove_variable ?= has_exam_advantage
+	remove_variable ?= has_stayed_up_studying
+	remove_variable ?= has_studied_with_friend
+	#Palace Flags
+	remove_character_flag ?= palace_success
+	remove_character_flag ?= palace_great_success
+	remove_character_flag ?= palace_critical_success
+	remove_character_flag ?= safe_start
+}
+
+#Run at the beginning of the Activity
+imperial_examination_gather_examiners_effect = {
+	scope:activity = {
+		every_attending_character = {
+			limit = {
+				scope:activity = {
+					is_target_in_variable_list = {
+						name = imperial_examiners_list
+						target = prev
+					}
+				}
+			}
+			save_temporary_scope_as = temp_char
+			scope:temp_char = {
+				add_character_flag = imperial_examiner
+			}
+			scope:activity = {
+				add_to_guest_subset = {
+					name = imperial_examiners
+					target = scope:temp_char
+				}
+			}
+		}
+	}
+}
+
+imperial_examination_gather_guests_effect = {
+	scope:activity = {
+		every_attending_character = {
+			limit = {
+				# You should get as many shots at the Palace Exam as you want.
+				has_character_flag = passed_palace_exam
+				NOR = {
+					this = scope:host
+					is_in_guest_subset = { name = imperial_examiners }
+					is_in_guest_subset = { name = entrants }
+				}
+			}
+			save_temporary_scope_as = temp_character
+			scope:activity = {
+				add_to_guest_subset = {
+					name = guests
+					target = scope:temp_character
+				}
+			}
+		}
+	}
+}
+
+imperial_examination_gather_entrants_effect = {
+	scope:activity = {
+		set_variable = {
+			name = num_initial_entrants
+			value = 0
+		}
+		every_attending_character = {
+			limit = {
+				is_landed = no
+				tgp_gender_can_be_exam_entrant_trigger = yes
+				trigger_if = {
+					limit = {
+						exists = primary_title
+					}
+					primary_title = {
+						is_mercenary_company = no
+						is_holy_order = no
+					}
+				}
+				NOR = { 
+					this = scope:host
+					is_in_guest_subset = { name = imperial_examiners }
+					has_court_position = travel_leader_court_position
+					has_court_position = bodyguard_court_position
+					# If you are a player, you should get as many shots at the Palace Exam as you want.
+					has_character_flag = passed_palace_exam
+					has_trait = devoted
+					has_trait = eunuch
+				}
+				# Remove diarchs from the list.
+				bannable_serving_diarch_trigger = no
+				is_adult = yes
+			}
+			save_temporary_scope_as = temp_character
+			scope:activity = {
+				add_to_guest_subset = {
+					name = entrants
+					target = scope:temp_character
+				}
+			}
+			set_variable = {
+				name = imperial_examination_score
+				value = imperial_examination_score_value
+			}
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				set_activity_intent = imperial_exam_taker_intent
+			}
+		}
+		#Run seperately to make sure we include characters added to the entrants subset through edge cases.
+		every_guest_subset = {
+			name = entrants
+			#Record the initial amount of entrants
+			scope:activity = {
+				change_variable = {
+					name = num_initial_entrants
+					add = 1
+				}
+			}
+		}
+		#Set the base amount of failees we expect during the entire activity
+		set_variable = {
+			name = failee_quota
+			value = imperial_examination_failee_quota_value
+		}
+		if = { limit = { exists = var:failee_quota } }
+	}
+}
+
+local_examination_gather_entrants_effect = {
+	scope:activity = {
+		set_variable = {
+			name = num_initial_entrants
+			value = 0
+		}
+		every_attending_character = {
+			limit = {
+				is_landed = no
+				tgp_gender_can_be_exam_entrant_trigger = yes
+				trigger_if = {
+					limit = {
+						exists = primary_title
+					}
+					primary_title = {
+						is_mercenary_company = no
+						is_holy_order = no
+					}
+				}
+				NOR = { 
+					this = scope:host
+					is_in_guest_subset = { name = imperial_examiners }
+					has_court_position = travel_leader_court_position
+					has_court_position = bodyguard_court_position
+					# You have passed the any of the higher level exams
+					has_character_flag = passed_metropolitan_exam
+					# You have already passed the Provincial
+					has_character_flag = passed_provincial_exam
+					has_trait = devoted
+					has_trait = eunuch
+				}
+				# Remove diarchs from the list.
+				bannable_serving_diarch_trigger = no
+				is_adult = yes
+			}
+			save_temporary_scope_as = temp_character
+			scope:activity = {
+				add_to_guest_subset = {
+					name = entrants
+					target = scope:temp_character
+				}
+			}
+			set_variable = {
+				name = imperial_examination_score
+				value = imperial_examination_score_value
+			}
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				set_activity_intent = local_exam_taker_intent
+			}
+		}
+		#Run seperately to make sure we include characters added to the entrants subset through edge cases.
+		every_guest_subset = {
+			name = entrants
+			scope:activity = {
+				change_variable = {
+					name = num_initial_entrants
+					add = 1
+				}
+			}
+		}
+		#Set the base amount of failees we expect during the entire activity
+		set_variable = {
+			name = failee_quota
+			value = imperial_examination_failee_quota_value
+		}
+		if = { limit = { exists = var:failee_quota } }
+	}
+}
+
+imperial_examination_gather_stray_entrants_effect = {
+	if = {
+		# Before we add anyone to the activity, we have to make sure it is not already full.
+		limit = {
+			scope:activity = {
+				OR = {
+					AND = {
+						has_activity_option = {
+							category = imperial_examination_breadth
+							option = imperial_examination_breadth_exclusive
+						}
+						any_attending_character = {
+							count < exclusive_exam_guests_full_calc
+						}
+					}
+					AND = {
+						has_activity_option = {
+							category = imperial_examination_breadth
+							option = imperial_examination_breadth_restricted
+						}
+						any_attending_character = {
+							count < restricted_exam_guests_full_calc
+						}
+					}
+					AND = {
+						has_activity_option = {
+							category = imperial_examination_breadth
+							option = imperial_examination_breadth_open
+						}
+						any_attending_character = {
+							count < open_exam_guests_full_calc
+						}
+					}
+				}			
+			}
+		}
+		every_courtier = {
+			limit = {
+				involved_activity ?= scope:activity
+				this != root
+				is_landed = no
+				trigger_if = {
+					limit = {
+						scope:activity = {
+							has_activity_type = activity_imperial_examination
+						}
+					}
+					NOT = { has_character_flag = passed_palace_exam}
+				}
+				trigger_else = {
+					NOR = {
+						has_character_flag = passed_provincial_exam
+						has_character_flag = passed_metropolitan_exam
+					}
+				}
+				# To make sure no characters appear that shouldn't.
+				NOR = {
+					has_trait = devoted
+					has_trait = eunuch
+				}
+				trigger_if = {
+					limit = {
+						exists = primary_title
+					}
+					primary_title = {
+						is_mercenary_company = no
+						is_holy_order = no
+					}
+				}
+				# Remove diarchs from the list.
+				bannable_serving_diarch_trigger = no
+				tgp_gender_can_be_exam_entrant_trigger = yes
+			}
+			add_to_list = entourage_entrants
+		}
+		current_travel_plan ?= {
+			every_entourage_character = {
+				limit = {
+					this != root
+					is_landed = no
+					trigger_if = {
+						limit = {
+							scope:activity = {
+								has_activity_type = activity_imperial_examination
+							}
+						}
+						NOT = { has_character_flag = passed_palace_exam}
+					}
+					trigger_else = {
+						NOR = {
+							has_character_flag = passed_provincial_exam
+							has_character_flag = passed_metropolitan_exam
+						}
+					}
+					# To make sure no characters appear that shouldn't.
+					NOR = {
+						has_trait = devoted
+						has_trait = eunuch
+					}
+					trigger_if = {
+						limit = {
+							exists = primary_title
+						}
+						primary_title = {
+							is_mercenary_company = no
+							is_holy_order = no
+						}
+					}
+					# Remove diarchs from the list.
+					bannable_serving_diarch_trigger = no
+					tgp_gender_can_be_exam_entrant_trigger = yes
+				}
+				add_to_list = entourage_entrants
+			}
+		}
+		every_in_list = {
+			list = entourage_entrants
+			if = {
+				limit = {
+					can_join_activity = scope:activity
+					NOT = {
+						involved_activity ?= scope:activity
+					}
+					location = scope:activity.activity_location
+				}
+				add_to_activity_without_travel = scope:activity
+			}
+			if = {
+				limit = {
+					involved_activity ?= scope:activity
+				}
+				scope:activity = {
+					add_to_guest_subset = {
+						name = entrants
+						target = prev
+					}
+				}
+				set_variable = {
+					name = imperial_examination_score
+					value = imperial_examination_score_value
+				}
+			}
+		}
+	}
+}
+
+metropolitan_examination_scoreboard_setup_effect = {
+	#Do we actually have 10 entrants for the scoreboard?
+	set_variable = { 
+		name = scoreboard_size
+		value = 0
+	}
+	if = {
+		limit = {
+			any_guest_subset = {
+				name = entrants
+				count >= 10
+			} 
+		}
+		change_variable = {
+			name = scoreboard_size
+			add = 10
+		}
+	}
+	#Otherwise set the scoreboard size to the amount of entrants
+	else = {
+		every_guest_subset = {
+			name = entrants
+			scope:activity = {
+				change_variable = {
+					name = scoreboard_size
+					add = 1
+				}
+			}
+		}
+	}
+	#Add the fresh entrants to the scoreboard
+	while = {
+		count = 1
+		ordered_attending_character = {
+			limit = {
+				or = {
+					is_in_guest_subset = { name = entrants }
+				}
+				NOR = {
+					is_in_guest_subset = { name = scoreboard }
+					scope:activity = {
+						any_guest_subset = {
+							name = scoreboard
+							count = scope:activity.var:scoreboard_size
+						}
+					}
+				}
+			}
+			order_by = imperial_examination_score_value
+			save_temporary_scope_as = temp_character
+			scope:activity = {
+				add_to_guest_subset = {
+					name = scoreboard
+					target = scope:temp_character
+				}
+			}
+		}
+	}
+}
+
+palace_examination_scoreboard_setup_effect = {
+	#Do we actually have 10 entrants for the scoreboard?
+	set_variable = { 
+		name = scoreboard_size
+		value = 0
+	}
+	if = {
+		limit = {
+			any_guest_subset = {
+				name = palace_entrants
+				count >= 10
+			} 
+		}
+		change_variable = {
+			name = scoreboard_size
+			add = 10
+		}
+	}
+	#Otherwise set the scoreboard size to the amount of entrants
+	else = {
+		every_guest_subset = {
+			name = palace_entrants
+			scope:activity = {
+				change_variable = {
+					name = scoreboard_size
+					add = 1
+				}
+			}
+		}
+	}
+	#Add the fresh entrants to the scoreboard
+	while = {
+		count = 1
+		ordered_attending_character = {
+			limit = {
+				is_in_guest_subset = { name = palace_entrants }
+				NOR = {
+					is_in_guest_subset = { name = scoreboard }
+					scope:activity = {
+						any_guest_subset = {
+							name = scoreboard
+							count = scope:activity.var:scoreboard_size
+						}
+					}
+				}
+			}
+			order_by = imperial_examination_score_value
+			save_temporary_scope_as = temp_character
+			scope:activity = {
+				add_to_guest_subset = {
+					name = scoreboard
+					target = scope:temp_character
+				}
+			}
+		}
+	}
+}
+
+
+#Run at the end of each Phase
+imperial_examination_determine_exam_outcome_effect = {
+	#Get the people in the last place and fail them
+	scope:activity = {
+		#Account for the cheating AI entrants
+		every_guest_subset = {
+			name = entrants
+			limit = { has_variable = been_caught_cheating }
+			set_variable = failee_to_be_removed
+		}
+		#Otherwise run through the list and trim it from the bottom up
+		if = {
+			limit = { imperial_examination_failee_quota_value > 0 }
+			ordered_guest_subset = {
+				name = entrants
+				limit = {
+					NOT = { has_variable = failee_to_be_removed }
+				}
+				order_by = {
+					value = temporary_exam_score_value
+					multiply = -1
+				}
+				max = imperial_examination_failee_quota_value
+				check_range_bounds = no
+				set_variable = failee_to_be_removed
+			}
+		}
+		# Check how many successful entrants we have with a martial education.
+		if = {
+			limit = {
+				any_guest_subset = {
+					name = entrants
+					count < {
+						value = 20
+						if = {
+							limit = {
+								scope:activity = {
+									has_activity_type = activity_imperial_examination
+								}
+							}
+							add = 20
+						}
+					}
+					has_trait = education_martial
+					NOT = { has_variable = failee_to_be_removed }
+				}
+			}
+			# If we don't have enough, let some of the failees pass.
+			ordered_guest_subset = {
+				name = entrants
+				limit = {
+					has_trait = education_martial
+					has_variable = failee_to_be_removed
+					is_ai = yes
+				}
+				order_by = {
+					value = temporary_exam_score_value
+				}
+				max = {
+					if = {
+						limit = {
+							scope:activity = {
+								has_activity_type = activity_imperial_examination
+							}
+						}
+						value = 20
+					}
+					else = {
+						value = 3
+					}
+				}
+				remove_variable = failee_to_be_removed
+				change_merit = { 100 150 }
+			}
+		}
+	}
+}
+
+imperial_examination_prune_failees_effect = {
+	if = {
+		limit = { has_variable = failee_to_be_removed }
+		save_temporary_scope_as = temp_char
+		#Don't fail players
+		if = {
+			limit = { is_ai = yes }
+			scope:activity = {
+				remove_from_guest_subset = { 
+					name = entrants
+					target = scope:temp_char
+				}
+				add_to_guest_subset = { 
+					name = failees
+					target = scope:temp_char
+				}
+			}
+		}
+		remove_variable ?= failee_to_be_removed
+	}
+}
+
+#After each Phase
+imperial_examination_clean_up_phase_variables_effect = {
+	scope:activity = {
+		every_attending_character = {
+			#Exams
+			remove_variable ?= had_essay_examination
+			remove_variable ?= had_classics_examination
+			remove_variable ?= had_poetry_examination
+			remove_variable ?= been_caught_cheating
+			#Cheats
+			remove_variable ?= has_exam_taker
+			remove_variable ?= has_bribed_examiner
+			#Advantages
+			remove_variable ?= has_exam_advantage
+			remove_variable ?= has_stayed_up_studying
+			remove_variable ?= has_studied_with_friend
+			#Events
+			remove_variable ?= has_greeted_palace_entrants
+		}
+	}
+}
+
+imperial_examination_guest_sort_effect = {
+	save_scope_value_as = {
+		name = exam_invited_guests_amount
+		value = {
+			value = 0
+			add = exam_invited_guests_amount_calc
+		}
+	}
+	while = {
+		count = scope:exam_invited_guests_amount
+		random_in_list = {
+			list = potential_exam_guest_list
+			limit = {
+				NOT = { is_in_list = characters }
+			}
+			add_to_list = characters
+		}
+	}
+}
+
+imperial_examination_entrants_sort_effect = {
+	save_scope_value_as = {
+		name = exam_invited_guests_amount
+		value = {
+			value = 0
+			add = exam_invited_entrants_amount_calc
+		}
+	}
+	while = {
+		count = scope:exam_invited_guests_amount
+		random_in_list = {
+			list = potential_exam_entrants_list
+			limit = {
+				NOT = { is_in_list = characters }
+			}
+			add_to_list = characters
+		}
+	}
+}
+
+examination_clear_timeout_effect = {
+	if = { # If we still have a short duration remaining on our appointment timeout, clear it
+		limit = {
+			appointment_timeout_days > 0
+			appointment_timeout_days < 365
+		}
+		clear_appointment_timeout = yes
+	}
+}
+
+imperial_examination_grab_nr_of_family_entrants_effect = {
+	set_variable = {
+		name = num_exam_family_entrants
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		root = {
+			change_variable = {
+				name = num_exam_family_entrants
+				add = 1
+			}
+		}
+	}
+	# Then measure how many characters did pass the exam
+	set_variable = {
+		name = num_exam_family_entrants_passed
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		limit = {
+			OR = {
+				has_character_flag = passed_palace_exam
+				has_character_flag = passed_metropolitan_exam
+			}
+		}
+		root = {
+			change_variable = {
+				name = num_exam_family_entrants_passed
+				add = 1
+			}
+		}
+	}
+	# More specifically, how many passed the Metropolitan exam
+	set_variable = {
+		name = num_exam_family_passed_metropolitan
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		limit = {
+			has_character_flag = passed_metropolitan_exam
+			NOT = { has_character_flag = passed_palace_exam }
+		}
+		root = {
+			change_variable = {
+				name = num_exam_family_passed_metropolitan
+				add = 1
+			}
+		}
+	}
+	# And how many made it to the Palace exam
+	set_variable = {
+		name = num_exam_family_passed_palace
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		limit = {
+			has_character_flag = passed_palace_exam
+		}
+		root = {
+			change_variable = {
+				name = num_exam_family_passed_palace
+				add = 1
+			}
+		}
+	}
+	# Finally, how many did bitterly disappoint...
+	set_variable = {
+		name = num_exam_family_entrants_failed
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		limit = { has_character_flag = failed_imperial_examination }
+		root = {
+			change_variable = {
+				name = num_exam_family_entrants_failed
+				add = 1
+			}
+		}
+	}
+}
+
+local_examination_grab_nr_of_family_entrants_effect = {
+	set_variable = {
+		name = num_exam_family_entrants
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		root = {
+			change_variable = {
+				name = num_exam_family_entrants
+				add = 1
+			}
+		}
+	}
+	# Then measure how many characters did pass the exam
+	set_variable = {
+		name = num_exam_family_entrants_passed
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		limit = { has_character_flag = passed_provincial_exam }
+		root = {
+			change_variable = {
+				name = num_exam_family_entrants_passed
+				add = 1
+			}
+		}
+	}
+	# Finally, how many did bitterly disappoint...
+	set_variable = {
+		name = num_exam_family_entrants_failed
+		value = 0
+	}
+	every_in_list = {
+		list = parent_relevant_entrants
+		limit = {
+			NOT = { has_character_flag = passed_provincial_exam }
+		}
+		root = {
+			change_variable = {
+				name = num_exam_family_entrants_failed
+				add = 1
+			}
+		}
+	}
+}
+
+exam_grab_entrant_position_effect = {
+	scope:activity = {
+		every_attending_character = {
+			limit = {
+				exists = var:imperial_examination_score
+				var:imperial_examination_score >= root.var:imperial_examination_score
+			}
+			add_to_list = exam_position_list
+		}
+	}
+	set_variable = {
+		name = your_exam_position
+		value = list_size:exam_position_list
+	}
+}
