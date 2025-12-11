@@ -110,7 +110,7 @@ def apply_cleaning_logic(text):
     return text
 
 # --- CONFIGURATION ---
-input_filename = "00_EUROPE.txt" 
+input_filename = "00_ASIA_CHINA.txt" 
 output_filename = "title_history_cleaned.txt"
 
 if __name__ == "__main__":
