@@ -381,7 +381,10 @@ tgp_find_new_house_bloc_leader_effect = {
 tgp_set_house_bloc_leading_house_effect = {
 	save_scope_as = bloc
 	leading_house = { save_scope_as = old_leader }
-	$LEADER$ ?= { save_scope_as = leader }
+	$LEADER$ ?= {
+		save_scope_as = leader
+		save_scope_as = bloc_creator # for bloc name
+	}
 	if = {
 		limit = {
 			exists = scope:leader
@@ -396,20 +399,25 @@ tgp_set_house_bloc_leading_house_effect = {
 			subject = scope:leader.house_head
 			object = scope:old_leader.house_head
 			scope:bloc ?= {
+				set_leading_house = scope:leader
 				hidden_effect = {
-					tgp_bloc_set_leading_house_effect = { HOUSE = scope:leader }
-				}
-				if = {
-					limit = { exists = scope:old_leader }
-					set_variable = {
-						name = recent_leader_change
-						value = scope:old_leader
-						years = 5
+					set_coa = scope:leader
+					set_confederation_name = "CONFEDERATION_HOUSE_NAME"
+					if = {
+						limit = { exists = scope:old_leader }
+						set_variable = {
+							name = recent_leader_change
+							value = scope:old_leader
+							years = 5
+						}
 					}
-				}
-				hidden_effect = {
+	 
+					 
 					every_player = {
-						limit = { confederation ?= scope:bloc }
+						limit = {
+							top_liege ?= scope:leader.house_head.top_liege
+							tgp_uses_house_blocs_trigger = yes
+						}
 						send_interface_message = {
 							type = msg_house_bloc_leader
 							title = msg_bloc_new_leading_house
@@ -2941,10 +2949,13 @@ tgp_on_member_house_joined_shared_effect = {
 	}
 	# MESSAGES
 	every_player = {
-		limit = { house.house_confederation ?= scope:bloc }
+		limit = {
+			top_liege ?= scope:bloc.leading_house.house_head.top_liege
+			tgp_uses_house_blocs_trigger = yes
+		}
 		if = {
 			limit = {
-				house = scope:bloc.leading_house
+				NOT = { house = house.house_confederation.leading_house } # avoid double message when creating
 				scope:bloc = {
 					any_confederation_member_house = { count = 2 }
 				}
@@ -2961,7 +2972,8 @@ tgp_on_member_house_joined_shared_effect = {
 				}
 			}
 		}
-		else = {
+		else_if = {
+			limit = { house.house_confederation ?= scope:bloc }
 			send_interface_message = {
 				type = msg_house_joined_house_bloc 
 				title = msg_house_joined_bloc
@@ -3000,7 +3012,7 @@ tgp_on_member_house_joined_shared_effect = {
 		}
 		# Find Sub-Vassal houses of joining Vassal Houses
 		if = {
-			limit = { is_independent_ruler = no }
+			limit = { is_independent_ruler = no } # Kampaku is the only exception
 			every_vassal_or_below = {
 				limit = {
 					is_house_head = yes
@@ -3021,7 +3033,22 @@ tgp_on_member_house_joined_shared_effect = {
 	every_in_list = {
 		list = joining_vassal_houses
 		save_temporary_scope_as = vassal_house_temp
-		scope:bloc = { add_confederation_member_house = scope:vassal_house_temp }
+		if = {
+			limit = { exists = house_confederation }
+			set_variable = {
+				name = bloc_leaving_reason
+				value = flag:reason_followed_liege
+				days = 4
+			}
+			tgp_leave_house_bloc_effect = {
+				OPINION = flag:no
+				TRUCE = flag:yes
+			}
+		}
+		tgp_join_house_bloc_effect = {
+			INVITER = scope:joiner
+			OPINION = flag:no
+		}
 	}
 	if = {
 		limit = { debug_only = yes }
@@ -3038,9 +3065,9 @@ tgp_on_member_house_left_shared_effect = {
             limit = { has_variable = recently_joined_bloc }
             remove_variable = recently_joined_bloc
         }
-		house_head ?= {
-			save_scope_as = house_head
-		}
+				 
+		house_head ?= { save_scope_as = house_head }
+   
     }
     # MESSAGES
     every_player = {
@@ -3057,7 +3084,13 @@ tgp_on_member_house_left_shared_effect = {
             desc = msg_house_left_bloc_desc
             left_icon = scope:leaver
             right_icon = scope:bloc.leading_house
-			custom_tooltip = msg_house_left_bloc_desc
+			if = {
+				limit = { house = scope:leaver }
+				custom_tooltip = msg_house_left_bloc_desc_root
+			}
+			else = {
+				custom_tooltip = msg_house_left_bloc_desc
+			}
             # MEMBER LIST TOOLTIP
             #show_as_tooltip = {
             #   scope:bloc = {
@@ -3128,7 +3161,15 @@ tgp_on_member_house_left_shared_effect = {
     every_in_list = {
         list = leaving_vassal_houses
         save_temporary_scope_as = vassal_house_temp
-        scope:bloc = { remove_confederation_member_house = scope:vassal_house_temp }
+		set_variable = {
+			name = bloc_leaving_reason
+			value = flag:reason_followed_liege
+			days = 4
+		}
+		tgp_leave_house_bloc_effect = {
+			OPINION = flag:no
+			TRUCE = flag:yes
+		}
     }
     # Disband if necessary
     if = {
@@ -3138,22 +3179,22 @@ tgp_on_member_house_left_shared_effect = {
                 any_confederation_member_house = { count = 1 }
             }
         }
-        every_player = {
-            limit = {
-                house.house_confederation ?= scope:bloc
-                NOT = { house = scope:leaver }
-            }
-            send_interface_message = {
-                type = msg_house_bloc_disbanded
-                title = msg_house_bloc_disbanded
-                desc = msg_house_bloc_disbanded_desc
-                left_icon = scope:leaver.house_head
-                right_icon = scope:leaver
-                show_as_tooltip = {
-                    scope:bloc ?= { disband_confederation = yes }
-                }
-            }
-        }
+						
+					 
+													   
+											  
+			 
+									  
+											   
+												
+													
+												   
+										 
+								   
+																 
+				 
+			 
+		 
         hidden_effect = { disband_confederation = yes }
     }
     if = {
@@ -3311,12 +3352,12 @@ tgp_bloc_change_cohesion_effect = {
 	change_cohesion = scope:cohesion_change
 }
 
-tgp_bloc_set_leading_house_effect = {
-	$HOUSE$ = { save_scope_as = bloc_creator }
-	set_leading_house = scope:bloc_creator
-	set_coa = scope:bloc_creator
-	set_confederation_name = "CONFEDERATION_HOUSE_NAME"
-}
+									 
+										   
+									   
+							 
+													
+ 
 
 tgp_on_bloc_destroyed_shared_effect = {
 	save_scope_as = bloc
@@ -3337,8 +3378,10 @@ tgp_on_bloc_destroyed_shared_effect = {
 				house = { save_temporary_scope_as = player_house_temp }
 				show_as_tooltip = {
 					scope:bloc = {
-						remove_confederation_member_house = scope:player_house_temp
-						disband_confederation = yes
+						custom_description = {
+							text = disband_house_bloc_effect
+							subject = scope:bloc.leading_house.house_head
+						}
 					}
 				}
 			}
@@ -3351,7 +3394,10 @@ tgp_on_bloc_destroyed_shared_effect = {
 				left_icon = scope:bloc.leading_house.house_head
 				right_icon = scope:bloc.leading_house
 				show_as_tooltip = {
-					scope:bloc = { disband_confederation = yes }
+					custom_description = {
+						text = disband_house_bloc_effect
+						subject = scope:bloc.leading_house.house_head
+					}
 				}
 			}
 		}

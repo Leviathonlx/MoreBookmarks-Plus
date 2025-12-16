@@ -868,6 +868,67 @@ yearly_global_pulse = {
 				}
 			}
 		}
+
+
+		every_hegemony = {
+			holder ?= {
+				if = {
+					limit = {
+						has_title = title:h_china
+						exists = top_participant_group:dynastic_cycle
+					}
+					every_tributary = { # update tributary favor
+						limit = { subject_standing >= 1 } #We do not reduce it if it is below 1
+						add_subject_standing = {
+							value = {
+								situation:dynastic_cycle = {
+									switch = {
+										trigger = situation_current_phase
+										situation_dynastic_cycle_phase_stability = {
+											value = imperial_grace_loss_situation_dynastic_cycle_phase_stability
+										}
+										situation_dynastic_cycle_phase_stability_expansion = {
+											value = imperial_grace_loss_situation_dynastic_cycle_phase_stability_expansion
+										}
+										situation_dynastic_cycle_phase_stability_advancement = {
+											value = imperial_grace_loss_situation_dynastic_cycle_phase_stability_advancement
+										}
+										situation_dynastic_cycle_phase_instability = {
+											value = imperial_grace_loss_situation_dynastic_cycle_phase_instability
+										}
+										situation_dynastic_cycle_phase_instability_conquest = {
+											value = imperial_grace_loss_situation_dynastic_cycle_phase_instability_conquest
+										}
+										situation_dynastic_cycle_phase_chaos = {
+											value = imperial_grace_loss_situation_dynastic_cycle_phase_chaos
+										}
+									}
+								}
+								min = { #We don't reduce it below 0
+									value = subject_standing
+									multiply = -1
+								}
+							}
+						}
+					}
+				}
+				else = {
+					every_tributary = {
+						limit = { subject_standing > 0 }
+						add_subject_standing = -1
+					}
+				}
+			}
+		}
+		#Yearly Imperial Grace Reduction for Hegemonic Tributaries 
+		if = {
+			limit = {
+				exists = suzerain
+				suzerain = { highest_held_title_tier = tier_hegemony }
+				NOT = { exists = suzerain.top_participant_group:dynastic_cycle }
+			}
+			
+		}
 	}
 
 	on_actions = {
@@ -1281,7 +1342,7 @@ yearly_playable_pulse = {
 
 		if = { # Is Admin
 			limit = {
-				government_has_flag = government_is_administrative
+				government_allows = administrative
 				is_landed = yes
 			}
 			# Failsafe to ensure we don't get independent admin rulers of too low a rank (i.e. below king)
@@ -1306,7 +1367,7 @@ yearly_playable_pulse = {
 					}
 					# And no other high tier Titles
 					trigger_if = {
-						limit = { has_government = japan_administrative_government }
+						limit = { government_has_flag = government_has_county_tier_noble_families }
 						NOT = {
 							any_held_title = {
 								tier >= tier_county
@@ -1912,6 +1973,8 @@ three_year_playable_pulse = {
 		800 = 0
 		200 = global_culture.3011
 		600 = global_culture.3012
+		200 = global_culture.4011
+		600 = global_culture.4012
 	}
 	effect = {
 		if = { # Nomadic herd starves if you're landless
@@ -2068,8 +2131,7 @@ three_year_playable_pulse = {
 					save_scope_as = new_nomad_title
 				}
 				domicile ?= {
-					add_domicile_building = yurt_main_02
-					add_domicile_building = yurt_main_03
+					add_domicile_building = yurt_main_0
 					add_random_yurt_external_building_effect = yes
 					add_random_yurt_external_building_effect = yes
 					upgrade_random_yurt_external_building_effect = yes
