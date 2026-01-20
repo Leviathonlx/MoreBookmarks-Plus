@@ -3,8 +3,8 @@ import os
 
 # Configuration
 DEFINITION_FILE = 'definition.txt'
-TITLES_FILE = '05_goryeo.txt'
-OUTPUT_TITLES = '05_goryeo_updated.txt'
+TITLES_FILE = 'k_luzhen.txt'
+OUTPUT_TITLES = 'k_luzhen_updated.txt'
 
 def update_landed_titles():
     id_map = {}

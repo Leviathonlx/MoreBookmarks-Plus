@@ -6,8 +6,8 @@ import os
 
 # Configuration - Make sure these filenames match your files exactly
 DEFINITION_FILE = 'definition.txt'
-HISTORY_FILE = 'k_goryeo.txt'
-OUTPUT_HISTORY = 'k_goryeo_updated.txt'
+HISTORY_FILE = 'k_luzhen.txt'
+OUTPUT_HISTORY = 'k_luzhen_updated.txt'
 
 def update_history_ids():
     id_map = {}
