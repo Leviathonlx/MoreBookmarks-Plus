@@ -3,8 +3,8 @@ import os
 
 # Configuration
 DEFINITION_FILE = 'definition.txt'
-TITLES_FILE = 'k_khitan.txt'
-OUTPUT_TITLES = 'k_khitan_updated.txt'
+TITLES_FILE = 'k_zanj.txt'
+OUTPUT_TITLES = 'k_zanj_updated.txt'
 
 def update_landed_titles():
     id_map = {}

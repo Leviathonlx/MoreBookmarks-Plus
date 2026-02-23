@@ -6,8 +6,8 @@ import os
 
 # Configuration - Make sure these filenames match your files exactly
 DEFINITION_FILE = 'definition.txt'
-HISTORY_FILE = 'k_khitan.txt'
-OUTPUT_HISTORY = 'k_khitan_updated.txt'
+HISTORY_FILE = 'k_zanj.txt'
+OUTPUT_HISTORY = 'k_zanj_updated.txt'
 
 def update_history_ids():
     id_map = {}
