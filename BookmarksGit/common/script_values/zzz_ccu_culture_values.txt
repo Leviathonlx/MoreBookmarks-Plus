@@ -18,11 +18,21 @@ court_language_ai_score = {
 	add = {
 		value = scope:their_language_counties
 		multiply = 10
-		divide = scope:total_counties
+		divide = {
+			value = scope:total_counties
+			min = 1
+		}
 	}
 	if = {
 		limit = { scope:checking_native_language = no }
 		subtract = scope:my_language_counties
+		min = 1
+	}
+
+	#Increase from number of other courts using the Language (1.5 per court).
+	add = {
+		value = scope:courts_with_language
+		multiply = 1.5
 	}
 
 	#Adjust for Court Grandeur.
@@ -38,7 +48,7 @@ court_language_ai_score = {
 				value = scope:target.court_grandeur_current
 				if = { #Reduce further if not same faith
 					limit = {
-						NOT = { faith = scope:target.faith }
+						faith != scope:target.faith
 					}
 					divide = 2
 				}
@@ -53,7 +63,7 @@ court_language_ai_score = {
 				value = scope:target.court_grandeur_current
 				if = { #Reduce further if not same faith
 					limit = {
-						NOT = { faith = scope:target.faith }
+						faith != scope:target.faith
 					}
 					divide = 3
 				}
@@ -76,7 +86,7 @@ court_language_ai_score = {
 				value = scope:target.court_grandeur_current
 				if = { #Reduce further if not same Religion
 					limit = {
-						NOT = { faith.religion = scope:target.faith.religion }
+						faith.religion != scope:target.faith.religion
 					}
 					divide = 2
 				}
@@ -88,7 +98,16 @@ court_language_ai_score = {
 					faith.religion = religion:islam_religion
 					faith.religion = religion:christianity_religion
 				}
-				NOT = { faith.religion = scope:target.faith.religion }
+				faith.religion != scope:target.faith.religion
+			}
+			#Add nothing
+		}
+		else_if = { # Immaterial harmony wants immaterial harmony languages
+			limit = {
+				faith = { has_doctrine = special_doctrine_immaterial_harmony }
+				NOT = {
+					scope:target.faith = { has_doctrine = special_doctrine_immaterial_harmony }
+				}
 			}
 			#Add nothing
 		}
@@ -110,13 +129,30 @@ court_language_ai_score = {
 		else = { #Everyone else just cares about the Grandeur directly
 			add = scope:target.court_grandeur_current
 		}
-	}
+		if = { # Only care about checking rulers who speak the language that their court speaks
 
 
-	#Increase from number of other courts using the Language (1.5 per court).
-	add = {
-		value = scope:courts_with_language
-		multiply = 1.5
+																		  
+			limit = {
+				scope:target = {
+					NOT = {
+						knows_court_language_of = scope:target
+					}
+				}
+			}
+			multiply = 0
+		}
+		else_if = { # Reduce if the target does not have the court language of their own culture
+			limit = {
+				scope:target = {
+					is_ai = yes
+					NOT = {
+						has_court_language_of_culture = scope:target.culture
+					}
+				}
+			}
+			multiply = 0.5
+		}
 	}
 
 	#Arbitrary Geographical Bias - if our courts are not in the same region the score is divided by 2.
@@ -247,6 +283,11 @@ court_language_ai_score = {
 						capital_province = { geographical_region = world_tibet }
 						NOT = { scope:target.capital_province = { geographical_region = world_tibet } }
 					}
+					AND = {
+						capital_province = { geographical_region = world_asia_china }										 
+						NOT = { scope:target.capital_province = { geographical_region = world_asia_china } }
+					}
+	 
 					#Added Transoxiana
 					AND = {
 						capital_province = { geographical_region = world_transoxiana }
@@ -282,6 +323,10 @@ court_language_ai_score = {
 					AND = {
 						capital_province = { geographical_region = world_manchuria }
 						NOT = { scope:target.capital_province = { geographical_region = world_manchuria } }
+					}
+					AND = {
+						capital_province = { geographical_region = world_asia_southeast }
+						NOT = { scope:target.capital_province = { geographical_region = world_asia_southeast } }
 					}
 					
 				}
