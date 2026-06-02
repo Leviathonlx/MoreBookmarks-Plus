@@ -1,3 +1,5 @@
+# This script organizes character files to be based on dynasty and birth order and culture. This makes character files much more easily gone through
+
 import re
 import argparse
 from collections import defaultdict

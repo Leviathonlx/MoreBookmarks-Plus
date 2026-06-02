@@ -1,12 +1,14 @@
+# This file will look at a progenitor character and then update the dynasty for that character and all their descendants to have the same dynasty. Great for adding cadet branches in large families
+
 import re
 from collections import defaultdict
 
 ### --- CONFIGURATION --- ###
-PROGENITOR_ID = '1406899' # The founder character for the new dynasty
-ORIGINAL_PROPERTY_VALUE = 'chen_9673_101' # The original dynasty of the character
+PROGENITOR_ID = 'japanese_fujiwara_127' # The founder character for the new dynasty
+ORIGINAL_PROPERTY_VALUE = 'house_fujiwara_nakamikado' # The original dynasty of the character
 NEW_PROPERTY_KEY = 'dynasty_house' # What key should be used dynasty or dynasty_house
-NEW_PROPERTY_VALUE = 'house_nanchang_chen' # The new dynasty id
-INPUT_FILENAME = '00_SINOSPHERE.txt' # The input file
+NEW_PROPERTY_VALUE = 'house_fujiwara_jimyoin' # The new dynasty id
+INPUT_FILENAME = '00_JAPAN_1.txt' # The input file
 OUTPUT_FILENAME = 'Output.txt' # The output file
 ### ----------------------- ###
 
