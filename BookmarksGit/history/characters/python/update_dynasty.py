@@ -1,4 +1,4 @@
-# This file will look at a progenitor character and then update the dynasty for that character and all their descendants to have the same dynasty. Great for adding cadet branches in large families
+# This file will look at a progenitor character and then updates the dynasty for that character and all their descendants to have the same dynasty. Great for adding cadet branches in large families
 
 import re
 from collections import defaultdict
