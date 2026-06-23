@@ -4,11 +4,11 @@ import re
 from collections import defaultdict
 
 ### --- CONFIGURATION --- ###
-PROGENITOR_ID = 'japanese_fujiwara_691' # The founder character for the new dynasty
-ORIGINAL_PROPERTY_VALUE = 'house_fujiwara_kanin' # The original dynasty of the character
+PROGENITOR_ID = 'japanese_taira_kanmu_2' # The founder character for the new dynasty
+ORIGINAL_PROPERTY_VALUE = 'japanese_taira_kanmu' # The original dynasty of the character
 NEW_PROPERTY_KEY = 'dynasty_house' # What key should be used dynasty or dynasty_house
-NEW_PROPERTY_VALUE = 'house_fujiwara_tokudaiji' # The new dynasty id
-INPUT_FILENAME = '00_JAPAN_1.txt' # The input file
+NEW_PROPERTY_VALUE = 'house_taira_takamune' # The new dynasty id
+INPUT_FILENAME = '00_ASIA_JAPAN.txt' # The input file
 OUTPUT_FILENAME = 'Output.txt' # The output file
 ### ----------------------- ###
 
