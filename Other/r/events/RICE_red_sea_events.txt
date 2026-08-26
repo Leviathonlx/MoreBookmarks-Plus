@@ -1,0 +1,2148 @@
+﻿###############################################################################
+# 
+# AACHEN: Charlemagne's Capital
+# 
+# red_sea.0000-red_sea.0019	Misc Events (including Decisions)
+# red_sea.0020-red_sea.0029	al-'Umari Events
+# red_sea.0030-red_sea.0049	Red Sea Flavor Events
+# red_sea.0050-red_sea.0069	Najahid Events
+# 
+###############################################################################
+
+namespace = red_sea
+
+######################################################################################
+# 
+# MISCELLANEOUS EVENTS (including decisions)
+# 
+# red_sea.0000-red_sea.0019 reserved
+# 
+######################################################################################
+
+
+# Seek help from investors
+red_sea.0001 = {
+	type = character_event
+	title = red_sea.0001.t
+	desc = {
+		desc = red_sea.0001.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_title = title:k_egypt
+				}
+				desc = red_sea.0001.desc.egypt_ruler
+			}
+			triggered_desc = {
+				trigger = {
+					NOT = { has_title = title:k_egypt }
+				}
+				desc = red_sea.0001.desc.not_egypt_ruler
+			}
+		}
+	}
+	theme = realm
+	
+	left_portrait = scope:gold_miner
+	
+	immediate = {
+		title:c_allaqi = {
+			save_scope_as = wadi_allaqi_region
+			add_county_modifier = {
+				modifier = RICE_red_sea_aswan_investors
+				years = 10
+			}
+		}
+		title:c_aswan = { # for loc
+			save_scope_as = aswan_region
+		}
+		if = {
+			limit = {
+				exists = title:k_egypt.holder
+			}
+			title:k_egypt.holder = { # for loc
+				save_scope_as = egypt_ruler
+			}
+		}
+		root = { # for loc
+			save_scope_as = gold_miner
+		}
+	
+	}
+
+	option = {
+		name = red_sea.0001.a
+		if = {
+			limit = {
+				exists = title:k_egypt.holder
+				NOT = { has_title = title:k_egypt }
+			}
+			scope:egypt_ruler = {
+				add_opinion = {
+					target = root
+					modifier = RICE_red_sea_gold_rush_rivals
+				}
+				reverse_add_opinion = {
+					target = root
+					modifier = RICE_red_sea_gold_rush_rivals
+				}
+			}
+			title:k_egypt.holder = { # for loc
+				trigger_event = red_sea.0002
+			}
+		}
+	}
+}
+
+# King of Egypt reaction
+red_sea.0002 = {
+	type = character_event
+	title = red_sea.0002.t
+	desc = red_sea.0002.desc
+	theme = realm
+	
+	left_portrait = {
+		character = scope:gold_miner
+		animation = personality_greedy
+	}
+	right_portrait = {
+		character = root
+		animation = personality_callous
+	}
+	
+	immediate = {
+		show_as_tooltip = {
+			title:c_allaqi = {
+				add_county_modifier = {
+					modifier = RICE_red_sea_aswan_investors
+					years = 10
+				}
+			}
+			add_opinion = {
+				target = scope:gold_miner
+				modifier = RICE_red_sea_gold_rush_rivals
+			}
+			reverse_add_opinion = {
+				target = scope:gold_miner
+				modifier = RICE_red_sea_gold_rush_rivals
+			}	
+		}
+	}
+
+	option = {
+		name = red_sea.0002.a
+	}
+}
+
+
+
+
+# Red Sea ferries established
+red_sea.0003 = {
+	type = character_event
+	title = red_sea.0003.t
+	desc = red_sea.0003.desc
+	theme = faith
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	# right_portrait = {
+	# 	character = root
+	# 	animation = personality_zealous
+	# }
+	
+	immediate = {
+		play_music_cue = "mx_cue_sacredrite"
+		RICE_organize_red_sea_ferries_effect = yes
+	}
+
+	option = {
+		name = red_sea.0003.a
+		custom_tooltip = RICE_red_sea_organized_the_red_sea_ferries_effect_tooltip
+	}
+}
+
+# Ruler of Massawa notified about the mosque of the companions
+red_sea.0004 = {
+	type = character_event
+	title = red_sea.0004.t
+	desc = red_sea.0004.desc
+	theme = faith
+	override_background = { reference = RICE_background_red_sea_beach }
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	immediate = {
+		play_music_cue = "mx_cue_sacredrite"
+	}
+
+	option = {
+		name = red_sea.0004.a
+		show_as_tooltip = {
+			title:c_massawa = {
+				add_county_modifier = {
+					modifier = RICE_red_sea_massawa_mosque
+				}
+			}
+		}
+	}
+}
+
+
+
+
+# Consume Khat
+red_sea.0005 = {
+	type = character_event
+	title = red_sea.0005.t
+	desc = red_sea.0005.desc
+	theme = mental_break
+	override_background = { reference = tavern }
+	
+	left_portrait = {
+		character = root
+		animation = personality_irrational
+	}
+
+	option = {
+		name = red_sea.0005.a
+		RICE_red_sea_chew_khat_effect = yes
+	}
+}
+
+# Khat addiction event
+red_sea.0006 = {
+	type = character_event
+	title = red_sea.0006.t
+	desc = red_sea.0006.desc
+	theme = mental_break
+	override_background = { reference = tavern }
+	
+	left_portrait = {
+		character = root
+		animation = personality_irrational
+	}
+
+	immediate = {
+		add_trait = RICE_khat_addict
+		save_scope_as = addict
+	}
+
+	option = {
+		name = red_sea.0006.a
+	}
+
+	after = {
+		hidden_effect = {
+			if = {
+				limit = {
+					is_independent_ruler = no
+				}
+				liege = {
+					send_interface_message = {
+						type = event_generic_bad
+						left_icon = scope:addict
+						title = red_sea.0006.liege.message
+						show_as_tooltip = {							
+							scope:addict = {
+								add_trait_force_tooltip = RICE_khat_addict
+							}
+						}
+					}				
+				}
+			}
+		}
+	}
+
+}
+
+
+# Levy Extra taxes on Aydhab
+red_sea.0010 = {
+	type = character_event
+	title = red_sea.0010.t
+	desc = red_sea.0010.desc
+	theme = corruption
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+	
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_title = title:c_suakin }
+				title:c_aydhab = {
+					has_county_modifier = RICE_red_sea_suakin_increased_pilgrims
+				}			
+			}
+			title:c_suakin.holder = {
+				add_character_flag = RICE_red_sea_display_pilgrim_loser
+			}
+		}
+		RICE_red_sea_aydhab_extra_taxes_effect = yes
+		title:c_aydhab = { # for loc
+			save_scope_as = aydhab_region
+		}
+		title:c_suakin = { # for loc
+			save_scope_as = suakin_region
+		}
+	
+	}
+
+	option = {
+		name = red_sea.0010.a
+		if = {
+			limit = {
+				NOT = { has_title = title:c_suakin }
+			}
+			root = { # for loc
+				save_scope_as = extra_taxer
+			}
+			title:c_suakin.holder = {
+				add_character_flag = RICE_red_sea_dont_display_pilgrim_loser
+				trigger_event = red_sea.0011
+			}
+		}
+	}
+}
+
+# Levy Extra taxes on Aydhab - ruler of Suakin reacts
+red_sea.0011 = {
+	type = character_event
+	title = red_sea.0011.t
+	desc = {
+		desc = red_sea.0011.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					NOT = {
+						title:c_suakin = {
+							has_county_modifier = RICE_red_sea_suakin_extra_hajj_taxes
+						}					
+					}
+				}
+				desc = red_sea.0011.desc.no_tax
+			}
+			triggered_desc = {
+				trigger = {
+					title:c_suakin = {
+						has_county_modifier = RICE_red_sea_suakin_extra_hajj_taxes
+					}
+				}
+				desc = red_sea.0011.desc.tax
+			}
+		}	
+	}
+	theme = corruption
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	right_portrait = {
+		character = scope:extra_taxer
+		animation = personality_dishonorable
+	}
+	
+	immediate = {
+		show_as_tooltip = {
+			scope:extra_taxer = {
+				RICE_red_sea_aydhab_extra_taxes_effect = yes
+			}
+			if = {
+				limit = {
+					has_character_flag = RICE_red_sea_display_pilgrim_loser
+				}
+				title:c_aydhab = {
+					remove_county_modifier = RICE_red_sea_aydhab_increased_pilgrims
+				}
+			}
+		}	
+	}
+
+	option = {
+		name = red_sea.0011.a
+		remove_character_flag = RICE_red_sea_dont_display_pilgrim_loser
+	}
+}
+
+# Levy Extra taxes on Suakin
+red_sea.0012 = {
+	type = character_event
+	title = red_sea.0012.t
+	desc = red_sea.0012.desc
+	theme = corruption
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+	
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_title = title:c_aydhab }
+				title:c_suakin = {
+					has_county_modifier = RICE_red_sea_suakin_increased_pilgrims
+				}			
+			}
+			title:c_aydhab.holder = {
+				add_character_flag = RICE_red_sea_display_pilgrim_loser
+			}
+		}
+		RICE_red_sea_suakin_extra_taxes_effect = yes
+		title:c_aydhab = { # for loc
+			save_scope_as = aydhab_region
+		}
+		title:c_suakin = { # for loc
+			save_scope_as = suakin_region
+		}
+	
+	}
+
+	option = {
+		name = red_sea.0012.a
+		if = {
+			limit = {
+				NOT = { has_title = title:c_aydhab }
+			}
+			root = { # for loc
+				save_scope_as = extra_taxer
+			}
+			title:c_aydhab.holder = {
+				add_character_flag = RICE_red_sea_dont_display_pilgrim_loser
+				trigger_event = red_sea.0013
+			}
+		}
+	}
+}
+
+# Levy Extra taxes on Suakin - ruler of Aydhab reacts
+red_sea.0013 = {
+	type = character_event
+	title = red_sea.0013.t
+	desc = {
+		desc = red_sea.0013.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					NOT = {
+						title:c_aydhab = {
+							has_county_modifier = RICE_red_sea_aydhab_extra_hajj_taxes
+						}					
+					}
+				}
+				desc = red_sea.0013.desc.no_tax
+			}
+			triggered_desc = {
+				trigger = {
+					title:c_aydhab = {
+						has_county_modifier = RICE_red_sea_aydhab_extra_hajj_taxes
+					}
+				}
+				desc = red_sea.0013.desc.tax
+			}
+		}	
+	}
+	theme = corruption
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	right_portrait = {
+		character = scope:extra_taxer
+		animation = personality_dishonorable
+	}
+	
+	immediate = {
+		show_as_tooltip = {
+			scope:extra_taxer = {
+				RICE_red_sea_suakin_extra_taxes_effect = yes
+			}
+			if = {
+				limit = {
+					has_character_flag = RICE_red_sea_display_pilgrim_loser
+				}
+				title:c_suakin = {
+					remove_county_modifier = RICE_red_sea_suakin_increased_pilgrims
+				}
+			}
+		}	
+	}
+
+	option = {
+		name = red_sea.0013.a
+		remove_character_flag = RICE_red_sea_dont_display_pilgrim_loser
+	}
+}
+
+
+######################################################################################
+# 
+# AL-'UMARI EVENTS
+# 
+# red_sea.0020-red_sea.0029 reserved
+# 
+######################################################################################
+
+
+
+# Play as al-'Umari
+red_sea.0020 = {
+	type = character_event
+	title = red_sea.0020.t
+	desc = red_sea.0020.desc
+	theme = RICE_theme_egypt_desert
+	
+	left_portrait = root
+	
+	immediate = {
+		title:k_egypt.holder = {
+			save_scope_as = ibn_tulun
+		}	
+		title:c_allaqi = {
+			save_scope_as = wadi_allaqi_region
+		}
+		# al-Umari's troops
+		spawn_army = {
+			levies = 500
+			men_at_arms = {
+				type = mubarizun
+				stacks = 2
+			}
+			men_at_arms = {
+				type = light_footmen
+				stacks = 1
+			}
+			men_at_arms = {
+				type = camel_rider
+				stacks = 1
+			}
+			men_at_arms = {
+				type = light_horsemen
+				stacks = 1
+			}
+			location = title:c_allaqi.title_province
+			#inheritable = no
+			name = RICE_red_sea_al_umari_spawn_event_troops
+		}
+		# Nubian Courtiers to represent slaves/contacts with nubia
+		create_character = {
+			#location = root.location
+			gender = female
+			faith =faith:coptic
+			culture = culture:nubian
+			random_traits = yes
+			employer = root
+		}
+		create_character = {
+			#location = root.location
+			gender = female
+			faith =faith:coptic
+			culture = culture:nubian
+			random_traits = yes
+			employer = root
+		}
+		create_character = {
+			#location = root.location
+			gender = male
+			faith =faith:coptic
+			culture = culture:nubian
+			random_traits = yes
+			employer = root
+		}
+		create_character = {
+			#location = root.location
+			gender = male
+			faith =faith:coptic
+			culture = culture:nubian
+			random_traits = yes
+			employer = root
+		}
+		show_as_tooltip = {
+			add_character_modifier = {
+				modifier = RICE_red_sea_is_al_umari
+			}		
+		}
+	}
+	
+	option = {
+		name = red_sea.0020.a
+		trigger_event = red_sea.0021
+	}
+}
+
+# Background and pick an inspiration
+red_sea.0021 = {
+	type = character_event
+	title = red_sea.0021.t
+	desc = red_sea.0021.desc
+	theme = dynasty
+	
+	left_portrait = root
+	
+	option = {
+		name = red_sea.0021.a
+		add_prestige = 100
+		add_piety = 100
+		trigger_event = red_sea.0022
+	}	
+	option = {
+		name = red_sea.0021.b
+		add_piety = 200
+		trigger_event = red_sea.0022
+	}	
+	option = {
+		name = red_sea.0021.c
+		add_prestige = 200
+		trigger_event = red_sea.0022
+	}
+}
+
+# Pick a starting situation
+red_sea.0022 = {
+	type = character_event
+	title = red_sea.0022.t
+	desc = red_sea.0022.desc
+	theme = RICE_theme_egypt_desert
+	
+	left_portrait = root
+	
+	option = {
+		name = red_sea.0022.a
+		add_character_flag = RICE_red_sea_focus_tulun
+		add_unpressed_claim = title:c_qus
+		add_unpressed_claim = title:c_aswan
+		add_prestige = 200
+		trigger_event = red_sea.0023
+	}	
+	option = {
+		name = red_sea.0022.b
+		add_character_flag = RICE_red_sea_focus_nubia
+		#add_unpressed_claim = title:c_qasr_ibrim
+		add_unpressed_claim = title:c_qurta
+		add_unpressed_claim = title:c_naqis
+		add_piety = 200
+		trigger_event = red_sea.0023
+	}	
+	option = {
+		name = red_sea.0022.c
+		#trigger = {
+		#	is_ai = no
+		#}
+		add_character_flag = RICE_red_sea_focus_allies
+		# create_title_and_vassal_change = {
+		# 	type = swear_fealty
+		# 	save_scope_as = change
+		# }
+		# root = {
+		# 	change_liege = {
+		# 		liege = scope:ibn_tulun
+		# 		change = scope:change
+		# 	}
+		# }
+		# resolve_title_and_vassal_change = scope:change
+		start_tributary_interaction_effect = {
+			TRIBUTARY = root
+			SUZERAIN = scope:ibn_tulun
+		}
+		add_prestige = 100
+		add_piety = 100
+		trigger_event = red_sea.0023
+	}	
+	option = {
+		name = red_sea.0022.d
+		add_character_flag = RICE_red_sea_focus_build
+		add_character_modifier = {
+			modifier = RICE_red_sea_expanding_mining_operations
+			years = 10
+		}
+		title:c_allaqi = {
+			add_county_modifier = {
+				modifier = RICE_red_sea_expanding_eastern_desert_mining_infrastruture
+				years = 10
+			}
+		}
+		trigger_event = red_sea.0023
+	}
+}
+
+# Conclusion
+red_sea.0023 = {
+	type = character_event
+	title = red_sea.0023.t
+	desc = {
+		desc = red_sea.0023.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_character_flag = RICE_red_sea_focus_tulun
+				}
+				desc = red_sea.0023.desc.focus_tulun
+			}
+			triggered_desc = {
+				trigger = {
+					has_character_flag = RICE_red_sea_focus_nubia
+				}
+				desc = red_sea.0023.desc.focus_nubia
+			}
+			triggered_desc = {
+				trigger = {
+					has_character_flag = RICE_red_sea_focus_allies
+				}
+				desc = red_sea.0023.desc.focus_allies
+			}
+			triggered_desc = {
+				trigger = {
+					has_character_flag = RICE_red_sea_focus_build
+				}
+				desc = red_sea.0023.desc.focus_build
+			}
+		}
+	}
+	theme = RICE_theme_egypt_desert
+	
+	left_portrait = root
+	
+	option = {
+		name = red_sea.0023.a
+		show_as_tooltip = {
+			add_character_modifier = {
+				modifier = RICE_red_sea_aspiration_red_sea_riches
+			}
+		}
+		# custom_description_no_bullet = {
+		# 	text = red_sea.0023.al_umari.tooltip
+		# }
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_description_no_bullet = {
+				text = red_sea.0023.info
+			}
+		}
+	}
+}
+
+
+
+# Al-Umari's Aspiration fulfilled
+red_sea.0024 = {
+	type = character_event
+	title = red_sea.0024.t
+	desc = red_sea.0024.desc
+	theme = dread
+	override_background = { reference = RICE_background_egypt_desert }
+
+	right_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	immediate = {
+
+		play_music_cue = "mx_cue_epic_sacral_moment"
+
+		religion:christianity_religion = { save_scope_as = christian }
+		
+		RICE_historical_aspiration_fulfilled_effect = yes
+
+		hidden_effect = {
+			if = {
+				limit = {
+					has_character_modifier = RICE_red_sea_aspiration_red_sea_riches
+				}
+				remove_character_modifier = RICE_red_sea_aspiration_red_sea_riches
+			}
+		}
+
+		# Main Objective Reward
+
+		add_gold = RICE_aspiration_medium_resource_bonus
+		every_county_in_region = {
+			region = world_africa_east
+			limit = {
+				holder.top_liege = root
+			}
+			custom = every_county_RICE_east_africa
+			change_development_level = RICE_red_sea_al_umari_aspiration_dev_bonus
+		}
+
+		# Bonus Objective Reward(s)
+		# Have at least 80 dread
+		if = {
+			limit = {
+				dread >= 80
+			}
+			add_martial_lifestyle_perk_points = 1
+		}
+
+		# At least 2 rivals/nemeses
+		if = {
+			limit = {
+				OR = {
+					num_of_relation_rival >= 2
+					num_of_relation_nemesis >= 2
+					AND = {
+						num_of_relation_rival >= 1
+						num_of_relation_nemesis >= 1
+					}
+				}
+			}
+			add_intrigue_lifestyle_perk_points = 1
+		}
+
+	}
+
+	# Ok
+	option = {
+		name = red_sea.0024.a
+	}
+
+}
+
+
+
+######################################################################################
+# 
+# FLAVOR EVENTS
+# 
+# red_sea.0030-red_sea.0049 reserved
+# 
+######################################################################################
+
+# Mu'allim vs Rubban navigators
+red_sea.0030 = {
+	type = character_event
+	title = red_sea.0030.t
+	desc = red_sea.0030.desc
+	theme = realm
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		RICE_red_sea_event_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+	}
+
+	option = { # Ok
+		name = red_sea.0030.a
+		add_prestige = 25
+		stress_impact = {
+			humble = minor_stress_impact_gain
+		}
+	}
+	option = { # Ok
+		name = red_sea.0030.b
+		add_piety = 25
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+		}
+	}
+}
+
+# Traders get shipwrecked by the Red Sea - what to do with survivors?
+red_sea.0031 = {
+	type = character_event
+	title = red_sea.0031.t
+	desc = red_sea.0031.desc
+	theme = RICE_theme_red_sea_beach
+	
+	left_portrait = root
+	
+	trigger = {
+		RICE_red_sea_coastal_event_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = brave
+		}
+		modifier = {
+			add = -0.2
+			has_trait = craven
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = paranoid
+		}
+		modifier = {
+			add = -0.2
+			has_trait = trusting
+		}
+	}
+
+	option = { # Enslave
+		name = red_sea.0031.a
+		random_list = {
+			30 = { add_gold = 50 }
+			30 = { add_gold = 75 }
+			20 = { add_gold = 100 }
+			10 = { add_gold = 125 }
+		}
+		if = {
+			limit = {
+				faith = {
+					OR = {
+						trait_is_virtue = just
+						trait_is_virtue = compassionate
+						trait_is_virtue = generous
+					}
+				}
+			}
+			add_piety = -100
+		}
+		stress_impact = {
+			just = medium_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+			generous = medium_stress_impact_gain
+		}
+	}
+	option = { # Rob
+		name = red_sea.0031.b
+		random_list = {
+			10 = { add_gold = 10 }
+			10 = { add_gold = 20 }
+			10 = { add_gold = 30 }
+			10 = { add_gold = 40 }
+			10 = { add_gold = 50 }
+		}
+		if = {
+			limit = {
+				faith = {
+					OR = {
+						trait_is_virtue = just
+						trait_is_virtue = compassionate
+						trait_is_virtue = generous
+					}
+				}
+			}
+			add_piety = -50
+		}
+		stress_impact = {
+			just = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			generous = minor_stress_impact_gain
+		}
+	}
+	option = { # Help
+		name = red_sea.0031.c
+		add_prestige = 50
+		if = {
+			limit = {
+				faith = {
+					OR = {
+						trait_is_virtue = just
+						trait_is_virtue = compassionate
+						trait_is_virtue = generous
+					}
+				}
+			}
+			add_piety = 50
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+			sadistic = medium_stress_impact_gain
+			callous = medium_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+		}
+	}
+}
+
+
+# Buy Chinese ceramics for a courtier?
+red_sea.0032 = {
+	type = character_event
+	title = red_sea.0032.t
+	desc = red_sea.0032.desc
+	theme = realm
+	override_background = { reference = market }
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		RICE_red_sea_event_trigger = yes
+		any_courtier = {
+			is_available_ai_adult = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = generous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = greedy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = content
+		}
+		modifier = {
+			add = -0.2
+			has_trait = diligent
+		}
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				is_available_ai_adult = yes
+			}
+			save_scope_as = ceramic_lover
+		}
+	}
+
+	option = { # Buy
+		name = red_sea.0032.a
+		trigger = {
+			OR = {
+				gold >= 20
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 20
+		scope:ceramic_lover = {
+			add_character_modifier = {
+				modifier = RICE_red_sea_chinese_ceramics
+				years = 10
+			}
+			add_opinion = {
+				target = root
+				modifier = gift_opinion
+				opinion = 15
+			}		
+		}
+		stress_impact = {
+			compassionate = minor_stress_impact_loss
+			generous = minor_stress_impact_loss
+		}
+	}
+	option = { # Buy for self
+		name = red_sea.0032.b
+		trigger = {
+			OR = {
+				gold >= 20
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 20
+		add_character_modifier = {
+			modifier = RICE_red_sea_chinese_ceramics
+			years = 10
+		}
+		stress_impact = {
+			arrogant = minor_stress_impact_loss
+		}
+	}
+	option = { # No need
+		name = red_sea.0032.c
+	}
+}
+
+
+
+
+# Arrogant Hajj pilgrim in town
+red_sea.0033 = {
+	type = character_event
+	title = red_sea.0033.t
+	desc = red_sea.0033.desc
+	theme = diplomacy_foreign_affairs_focus
+	
+	left_portrait = root
+	
+	trigger = {
+		RICE_red_sea_event_trigger = yes
+		NOT = { has_global_variable = RICE_red_sea_hajj_ferries_not_established_yet }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = generous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = greedy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = content
+		}
+	}
+
+	option = { # ok
+		name = red_sea.0033.a
+		add_piety = 50
+	}
+	option = { # ok
+		name = red_sea.0033.b
+		add_prestige = 50
+	}
+}
+
+
+# Gazelles near residence?
+red_sea.0034 = {
+	type = character_event
+	title = red_sea.0034.t
+	desc = red_sea.0034.desc
+	theme = RICE_theme_egypt_desert
+	
+	left_portrait = root
+	
+	trigger = {
+		RICE_red_sea_event_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = zealous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.2
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -0.2
+			has_trait = callous
+		}
+		modifier = {
+			add = 0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = -0.2
+			has_trait = diligent
+		}
+	}
+
+	option = { # let them stay
+		name = red_sea.0034.a
+		add_character_modifier = {
+			modifier = RICE_red_sea_gazelles_nearby
+			years = 5
+		}
+		stress_impact = {
+			compassionate = miniscule_stress_impact_loss
+			content = miniscule_stress_impact_loss
+		}
+	}
+	option = { # hunt them
+		name = red_sea.0034.b
+		add_character_modifier = {
+			modifier = RICE_red_sea_gazelles_meat
+			years = 5
+		}
+		stress_impact = {
+			gluttonous = miniscule_stress_impact_loss
+		}
+	}
+	option = { # chase them away
+		name = red_sea.0034.c
+		add_prestige = 50
+	}
+}
+
+
+# Ostricht egg gift
+red_sea.0035 = {
+	type = character_event
+	title = red_sea.0035.t
+	desc = red_sea.0035.desc
+	theme = realm
+	
+	right_portrait = root
+	
+	trigger = {
+		RICE_red_sea_event_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = -0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = 0.2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = content
+		}
+	}
+
+	option = { # let them stay
+		name = red_sea.0035.a
+		add_character_modifier = {
+			modifier = RICE_red_sea_beautiful_ostrich_egg
+			years = 10
+		}
+	}
+}
+
+
+
+# Hyena attack on a merchant caravan
+red_sea.0036 = {
+	type = character_event
+	title = red_sea.0036.t
+	desc = red_sea.0036.desc
+	theme = stewardship_wealth_focus
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	right_portrait = root
+	
+	trigger = {
+		RICE_red_sea_eastern_desert_event_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = -0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = 0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = -0.2
+			has_trait = just
+		}
+		modifier = {
+			add = 0.2
+			has_trait = craven
+		}
+		modifier = {
+			add = -0.2
+			has_trait = brave
+		}
+	}
+
+	option = { # don't help
+		name = red_sea.0036.a
+		stress_impact = {
+			generous = medium_stress_impact_gain
+			just = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+		}
+	}
+	option = { # help him
+		name = red_sea.0036.b
+		trigger = {
+			OR = {
+				gold >= 50
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 50
+		if = {
+			limit = {
+				faith = {
+					OR = {
+						trait_is_virtue = just
+						trait_is_virtue = compassionate
+						trait_is_virtue = generous
+					}
+				}
+			}
+			add_piety = 100
+		}
+		else = {
+			add_piety = 50
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+			callous = minor_stress_impact_gain
+		}
+	}
+}
+
+
+
+# Pilgrim recounts seasickness on the Red Sea
+red_sea.0037 = {
+	type = character_event
+	title = red_sea.0037.t
+	desc = red_sea.0037.desc
+	theme = realm
+	
+	left_portrait = root
+	
+	trigger = {
+		RICE_red_sea_event_trigger = yes
+		NOT = { has_global_variable = RICE_red_sea_hajj_ferries_not_established_yet }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = generous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = greedy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gluttonous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = temperate
+		}
+	}
+
+	option = { # not easy!
+		name = red_sea.0037.a
+		add_piety = 25
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			sadistic = minor_stress_impact_gain
+		}
+	}
+	option = { # loyal slave
+		name = red_sea.0037.b
+		add_prestige = 25
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			sadistic = minor_stress_impact_gain
+		}
+	}
+	option = { # hahaha
+		name = red_sea.0037.c
+		add_dread = 10
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			humble = minor_stress_impact_gain
+		}
+	}
+}
+
+
+
+# Walk along the Red Sea
+red_sea.0038 = {
+	type = character_event
+	title = red_sea.0038.t
+	desc = red_sea.0038.desc
+	theme = RICE_theme_red_sea_beach
+	
+	left_portrait = {
+		character = root
+		animation = personality_content
+	}
+	
+	trigger = {
+		RICE_red_sea_coastal_event_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = generous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = greedy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gluttonous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = temperate
+		}
+	}
+
+	option = { # not easy!
+		name = red_sea.0038.a
+		stress_impact = {
+			base = minor_stress_impact_loss
+			content = minor_stress_impact_loss
+			calm = minor_stress_impact_loss
+		}		
+	}
+}
+
+
+
+
+# Meet some herdsmen by the Red Sea
+red_sea.0039 = {
+	type = character_event
+	title = red_sea.0039.t
+	desc = red_sea.0039.desc
+	theme = RICE_theme_red_sea_beach
+	
+	left_portrait = {
+		character = root
+		animation = personality_forgiving
+	}
+	
+	trigger = {
+		RICE_red_sea_coastal_event_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = brave
+		}
+		modifier = {
+			add = -0.2
+			has_trait = craven
+		}
+		modifier = {
+			add = 0.2
+			has_trait = trusting
+		}
+		modifier = {
+			add = -0.2
+			has_trait = paranoid
+		}
+	}
+
+	option = { # buy goats, milk, butter
+		name = red_sea.0039.a
+		trigger = {
+			OR = {
+				gold >= 20
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 20
+		add_character_modifier = {
+			modifier = RICE_red_sea_bought_dairy
+			years = 5
+		}		
+	}
+	option = { # buy ostrich egg
+		name = red_sea.0039.b
+		trigger = {
+			OR = {
+				gold >= 35
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 35
+		add_character_modifier = {
+			modifier = RICE_red_sea_bought_ostrich_egg
+			years = 10
+		}		
+	}
+	option = { # buy slave
+		name = red_sea.0039.c
+		trigger = {
+			OR = {
+				gold >= 50
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 50
+		add_character_modifier = {
+			modifier = RICE_red_sea_bought_slave
+			years = 10
+		}		
+	}
+	option = { # buy camels
+		name = red_sea.0039.d
+		trigger = {
+			OR = {
+				gold >= 20
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 20
+		add_character_modifier = {
+			modifier = RICE_red_sea_bought_camels
+			years = 5
+		}		
+	}
+	option = { # no thanks
+		name = red_sea.0039.e
+	}
+}
+
+
+
+
+######################################################################################
+# 
+# NAJAHID EVENTS
+# 
+# red_sea.0050-red_sea.0069 reserved
+# 
+######################################################################################
+
+
+# Introduce the Najahid Siblings
+red_sea.0050 = {
+	type = character_event
+	title = red_sea.0050.t
+	desc = red_sea.0050.desc
+	window = big_event_window
+	theme = intrigue
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = scope:said
+		animation = aggressive_unarmed
+	}
+	right_portrait = {
+		character = scope:sulayhid
+		animation = personality_callous
+	}
+
+	lower_left_portrait = scope:jayyash
+	lower_center_portrait = scope:adh_dhakhirah
+	lower_right_portrait = scope:najah
+
+	immediate = {
+		character:45035 = {
+			save_scope_as = sulayhid
+		}
+		character:najahid001 = {
+			save_scope_as = najah
+		}
+		character:me_najahid_001 = {
+			save_scope_as = mu_arik
+		}
+		character:najahid002 = {
+			save_scope_as = said
+			show_as_tooltip = {
+				add_character_modifier = {
+					modifier = RICE_red_sea_aspiration_avenge_najah
+				}
+			}
+		}
+		character:najahid003 = {
+			save_scope_as = jayyash
+			show_as_tooltip = {
+				add_character_modifier = {
+					modifier = RICE_red_sea_aspiration_avenge_najah
+				}
+			}
+		}
+		character:me_najahid_002 = {
+			save_scope_as = adh_dhakhirah
+			show_as_tooltip = {
+				add_character_modifier = {
+					modifier = RICE_red_sea_aspiration_avenge_najah
+				}
+			}
+		}		
+	}
+	
+	option = { # Ok
+		name = red_sea.0050.a
+		flavor = {
+			triggered_desc = {
+				trigger = {
+					has_game_rule = RICE_historical_context_on
+				}
+				desc = red_sea.0050.info
+			}
+		}
+	}
+
+	after = {
+		# Following event only makes sense if none of the siblings rule the Sultanate of Dahlak
+		if = {
+			limit = {
+				NOT = { scope:said = { has_title = title:c_dahlak } }
+				NOT = { scope:jayyash = { has_title = title:c_dahlak } }
+				NOT = { scope:adh_dhakhirah = { has_title = title:c_dahlak } }
+			}
+		}
+		scope:said = {
+			trigger_event = red_sea.0051
+		}
+	}
+
+}
+
+
+# Sa'id tries to betray the ruler of Dahlak - does Jayyash succeed in stopping him or not?
+red_sea.0051 = {
+	type = character_event
+	title = red_sea.0051.t
+	desc = red_sea.0051.desc
+	window = big_event_window
+	theme = intrigue
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = scope:said
+		animation = aggressive_sword
+	}
+	right_portrait = {
+		character = scope:jayyash
+		animation = disapproval
+	}
+	lower_center_portrait = scope:dahlak_ruler
+
+	immediate = {
+		title:c_dahlak.holder = {
+			save_scope_as = dahlak_ruler
+		}
+	}
+	
+	option = { # Jayyash stops his brother
+		name = red_sea.0051.a
+		flavor = {
+			triggered_desc = {
+				trigger = {
+					has_game_rule = RICE_historical_context_on
+				}
+				desc = red_sea.0051.info
+			}
+		}
+		scope:dahlak_ruler = {
+			add_opinion = {
+				target = scope:said
+				modifier = RICE_opinion_aborted_coup
+			}
+		}
+		scope:dahlak_ruler = {
+			add_opinion = {
+				target = scope:jayyash
+				modifier = RICE_opinion_prevented_coup
+			}
+		}
+		scope:jayyash = {
+			add_piety = major_piety_gain
+			add_opinion = {
+				target = scope:said
+				modifier = disappointed_opinion
+				opinion = -15
+			}
+			reverse_add_opinion = {
+				target = scope:said
+				modifier = opposed_me
+				opinion = -30
+			}
+		}
+		trigger_event = red_sea.0052
+		hidden_effect = {
+			scope:dahlak_ruler = {
+				trigger_event = red_sea.0054
+			}
+		}
+	}
+	
+	option = { # Jayyash doesn't stop his brother
+		name = red_sea.0051.b
+		# Only allow this if the ruler of Dahlak is an AI, or if both Sa'id and Dahlak's ruler is not AI
+		trigger = {
+			OR = {
+				scope:dahlak_ruler = { is_ai = yes }
+				AND = {
+					scope:said = { is_ai = no }
+					scope:dahlak_ruler = { is_ai = no }
+				}
+			}
+		}
+		flavor = {
+			triggered_desc = {
+				trigger = {
+					has_game_rule = RICE_historical_context_on
+				}
+				desc = red_sea.0051.info
+			}
+		}
+		add_piety = major_piety_loss
+		get_title = title:c_dahlak
+		scope:dahlak_ruler = {
+			add_opinion = {
+				target = scope:said
+				modifier = RICE_opinion_successful_coup
+			}
+		}
+		scope:jayyash = {
+			add_opinion = {
+				target = scope:said
+				modifier = disappointed_opinion
+				opinion = -15
+			}
+			reverse_add_opinion = {
+				target = scope:said
+				modifier = pleased_opinion
+				opinion = 15
+			}
+		}
+		trigger_event = red_sea.0053
+		hidden_effect = {
+			scope:dahlak_ruler = {
+				trigger_event = red_sea.0055
+			}
+		}
+	}
+
+}
+
+
+# Sa'id fails to betray the Sultan of Dahlak
+red_sea.0052 = {
+	type = character_event
+	title = red_sea.0052.t
+	desc = red_sea.0052.desc
+	theme = intrigue
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = scope:said
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:jayyash
+		animation = disappointed
+	}
+	lower_center_portrait = scope:dahlak_ruler
+	
+	option = {
+		name = red_sea.0052.a
+	}
+
+}
+
+# Sa'id betrays the Sultan of Dahlak
+red_sea.0053 = {
+	type = character_event
+	title = red_sea.0053.t
+	desc = red_sea.0053.desc
+	theme = intrigue
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = scope:said
+		animation = personality_callous
+	}
+	right_portrait = {
+		character = scope:jayyash
+		animation = disappointed
+	}
+	lower_center_portrait = scope:dahlak_ruler
+	
+	option = {
+		name = red_sea.0053.a
+	}
+
+}
+
+# Sa'id fails to betray the Sultan of Dahlak - notify the Sultan of Dahlak
+red_sea.0054 = {
+	type = character_event
+	title = red_sea.0054.t
+	desc = red_sea.0054.desc
+	theme = intrigue
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = scope:said
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:jayyash
+		animation = disappointed
+	}
+	
+	option = {
+		name = red_sea.0054.a
+	}
+
+}
+
+# Sa'id betrays the Sultan of Dahlak - notify the Sultan of Dahlak
+red_sea.0055 = {
+	type = character_event
+	title = red_sea.0055.t
+	desc = red_sea.0055.desc
+	theme = intrigue
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = scope:said
+		animation = personality_callous
+	}
+	right_portrait = {
+		character = scope:dahlak_ruler
+		animation = rage
+	}
+	lower_center_portrait = scope:jayyash
+	
+	option = {
+		name = red_sea.0055.a
+	}
+
+}
+
+
+# Najah's children/siblings aspiration fulfilled
+red_sea.0060 = {
+	type = character_event
+	title = red_sea.0060.t
+	desc = red_sea.0060.desc
+	theme = dynasty
+	override_background = { reference = RICE_background_red_sea_beach }
+	
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:najah
+		animation = dead
+	}
+	lower_left_portrait = {
+		character = scope:said
+		trigger = {
+			root != scope:said
+		}
+	}
+	lower_center_portrait = {
+		character = scope:jayyash
+		trigger = {
+			root != scope:jayyash
+		}
+	}
+	lower_right_portrait = {
+		character = scope:adh_dhakhirah
+		trigger = {
+			root != scope:adh_dhakhirah
+		}
+	}
+
+	immediate = {
+		character:45035 = {
+			save_scope_as = sulayhid
+		}
+		character:najahid001 = {
+			save_scope_as = najah	
+		}
+		character:najahid002 = {
+			save_scope_as = said		
+			show_as_tooltip = {
+				if = {
+					limit = { has_character_modifier = RICE_red_sea_aspiration_avenge_najah }
+					remove_character_modifier = RICE_red_sea_aspiration_avenge_najah
+				}
+			}
+		}
+		character:najahid003 = {
+			save_scope_as = jayyash		
+			show_as_tooltip = {
+				if = {
+					limit = { has_character_modifier = RICE_red_sea_aspiration_avenge_najah }
+					remove_character_modifier = RICE_red_sea_aspiration_avenge_najah
+				}
+			}
+		}
+		character:me_najahid_002 = {
+			save_scope_as = adh_dhakhirah		
+			show_as_tooltip = {
+				if = {
+					limit = { has_character_modifier = RICE_red_sea_aspiration_avenge_najah }
+					remove_character_modifier = RICE_red_sea_aspiration_avenge_najah
+				}
+			}
+		}		
+
+		play_music_cue = "mx_cue_positive_effect"
+
+		RICE_historical_aspiration_fulfilled_effect = yes
+
+		# Main Objective Reward
+		show_as_tooltip = {
+			if = {
+				limit = {
+					scope:said = { is_alive = yes }
+					scope:jayyash = { is_alive = yes }
+					scope:adh_dhakhirah = { is_alive = yes }
+				}
+				dynasty ?= {
+					add_dynasty_prestige = RICE_aspiration_medium_resource_bonus_times_3
+				}		
+			}
+			else_if = {
+				limit = {
+					OR = {
+						scope:said = { is_alive = yes }
+						scope:jayyash = { is_alive = yes }
+					}
+					OR = {
+						scope:jayyash = { is_alive = yes }
+						scope:adh_dhakhirah = { is_alive = yes }
+					}
+					OR = {
+						scope:said = { is_alive = yes }
+						scope:adh_dhakhirah = { is_alive = yes }
+					}
+				}
+				dynasty ?= {
+					add_dynasty_prestige = RICE_aspiration_medium_resource_bonus_times_2
+				}	
+			}
+			else = {
+				dynasty ?= {
+					add_dynasty_prestige = RICE_aspiration_medium_resource_bonus
+				}
+			}
+		}
+		# This event will happen to every surviving sibling, so we're just displaying it as a tooltip above
+		hidden_effect = {
+			dynasty ?= {
+				add_dynasty_prestige = RICE_aspiration_medium_resource_bonus
+			}			
+		}
+
+		if = {
+			limit = {
+				is_landed = yes
+			}
+			add_legitimacy = medium_legitimacy_gain
+		}
+
+		show_as_tooltip = {
+			scope:said = {
+				add_character_modifier = {
+					modifier = RICE_red_sea_heirs_of_najah_modifier
+				}
+			}
+			scope:jayyash = {
+				add_character_modifier = {
+					modifier = RICE_red_sea_heirs_of_najah_modifier
+				}
+			}
+			scope:adh_dhakhirah = {
+				add_character_modifier = {
+					modifier = RICE_red_sea_heirs_of_najah_modifier
+				}
+			}			
+		}
+
+		# This event will happen to every surviving sibling, so we're just displaying it as a tooltip above
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = RICE_red_sea_heirs_of_najah_modifier
+			}		
+		}
+
+		spawn_army = {
+			levies = 400
+			men_at_arms = {
+				type = abudrar
+				stacks = 2
+			}
+			men_at_arms = {
+				type = light_horsemen
+				stacks = 1
+			}
+			men_at_arms = {
+				type = camel_rider
+				stacks = 1
+			}
+			men_at_arms = {
+				type = horn_warrior
+				stacks = 1
+			}
+			men_at_arms = {
+				type = sarawit
+				stacks = 1
+			}
+			location = capital_province
+			uses_supply = yes
+			inheritable = yes
+			name = event_troop_default_name
+		}
+
+		# Bonus Objective Reward(s)
+		if = {
+			limit = {
+				has_title = title:c_dahlak
+			}
+			add_gold = RICE_aspiration_medium_resource_bonus
+		}
+		if = {
+			limit = {
+				NOT = { has_title = title:c_dahlak }
+				OR = {
+					any_vassal_or_below = {
+						has_title = title:c_dahlak
+					}
+					title:c_dahlak.holder = { is_tributary_of = root }
+				}
+			}
+			every_held_title = {
+				limit = {
+					tier = tier_county
+					OR = {
+						duchy = title:d_taizz
+						duchy = title:d_sanaa
+					}
+				}
+				change_development_level = RICE_red_sea_al_umari_aspiration_dev_bonus
+			}
+		}
+		if = {
+			limit = {
+				scope:sulayhid = {
+					is_alive = no
+					NOT = { any_child = { is_alive = yes } }
+				}
+			}
+			add_intrigue_lifestyle_perk_points = 1
+			add_prestige = RICE_aspiration_large_resource_bonus
+		}
+		if = {
+			limit = {
+				scope:sulayhid = {
+					is_alive = yes
+					NOT = { any_child = { is_alive = yes } }
+				}
+			}
+			add_prestige = RICE_nubian_agriculture_decision_aspiration_prestige_bonus_value
+		}
+
+	}
+
+	option = { # Ok
+		name = red_sea.0060.a
+	}
+
+	after = {	
+		hidden_effect = {
+			if = {
+				limit = { has_character_modifier = RICE_red_sea_aspiration_avenge_najah }
+				remove_character_modifier = RICE_red_sea_aspiration_avenge_najah
+			}
+		}	
+	}
+
+}

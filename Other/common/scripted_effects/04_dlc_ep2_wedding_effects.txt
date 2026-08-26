@@ -1,0 +1,275 @@
+﻿# Create the grand wedding variables between the two characters, they must already have been betrothed by the code hook in the marry
+# interaction or by manually setting a betrothal. For manual betrothal setting prefer using create_grand_wedding_betrothal.
+# SPOUSE_1 = First spouse character
+# SPOUSE_2 = Second spouse character
+# HOST = Character promising to host the grand wedding
+set_grand_wedding_betrothal_variables = {
+	$SPOUSE_1$ = {
+		set_variable = { name = promised_grand_wedding_by value = $HOST$ }
+		save_scope_as = spouse_1
+	}
+	$SPOUSE_2$ = {
+		set_variable = { name = promised_grand_wedding_by value = $HOST$ }
+		save_scope_as = spouse_2
+	}
+	$HOST$ = {
+		set_variable = {
+			name = promised_grand_wedding_marriage_countdown
+			value = $SPOUSE_1$
+			years = grand_wedding_timeout
+		}
+		set_variable = {
+			name = promised_grand_wedding_to
+			value = $PROMISEE$
+		}
+		# Notification that the countdown has expired (one day before, to avoid getting the variable deleted before we have used it)
+		trigger_event = {
+			id = ep2_wedding.0001
+			days = grand_wedding_timeout_notification
+		}
+	}
+}
+
+clean_grand_wedding_betrothal_variables = {
+	var:promised_grand_wedding_marriage_countdown = {
+		remove_variable = promised_grand_wedding_by
+		betrothed = { remove_variable = promised_grand_wedding_by }
+	}
+	remove_variable = promised_grand_wedding_marriage_countdown
+	remove_variable = promised_grand_wedding_to
+}
+
+# Recreate the variables setup if the host dies and is replaced
+wedding_update_hosting_variable_effect = {
+	set_grand_wedding_betrothal_variables = {
+		HOST = scope:new_host
+		SPOUSE_1 = scope:spouse_1
+		SPOUSE_2 = scope:spouse_2
+		PROMISEE = scope:host.var:promised_grand_wedding_to
+	}
+	# copy bloody variable to keep it works.
+	if = {
+		limit = {
+			scope:activity = {
+				has_activity_option = { 
+					category = special_type 
+					option = wedding_type_bloody
+				}
+			}
+		}
+		scope:host = {
+			if = {
+				limit = { has_variable = bloody_wedding_backed_down_var }
+				scope:new_host = {
+					set_variable = {
+						name = bloody_wedding_backed_down_var
+						years = 1
+					}
+				}
+			}
+			else_if = {
+				limit = { has_variable = bloody_murder_fail }
+				scope:new_host = {
+					set_variable = {
+						name = bloody_murder_fail
+						years = 1
+					}
+				}
+			}
+			if = {
+				limit = { has_variable = bloody_wedding_murder }
+				scope:new_host = {
+					set_variable = {
+						name = bloody_wedding_murder
+						value = prev.var:bloody_wedding_murder
+						years = 1
+					}
+				}
+			}
+		}
+	}
+}
+
+# Crease a betrothal between SPOUSE_1 and SPOUSE_2 with HOST promising to host a grand wedding
+# SPOUSE_1 = First spouse character
+# SPOUSE_2 = Second spouse character
+# HOST = Character promising to host the grand wedding
+create_grand_wedding_betrothal = {
+	if =  {
+		limit = {
+			$SPOUSE_1$ = {
+				is_female = yes
+			}
+		}
+		$SPOUSE_1$ = {
+			create_betrothal_matrilineal = $SPOUSE_2$
+		}
+	}
+	else = {
+		$SPOUSE_1$ = {
+			create_betrothal = $SPOUSE_2$
+		}
+	}
+	
+	set_grand_wedding_betrothal_variables = {
+		SPOUSE_1 = $SPOUSE_1$
+		SPOUSE_2 = $SPOUSE_2$
+		HOST = $HOST$
+		PROMISEE = $PROMISEE$
+	}
+}
+
+# Wedding Options on_start
+wedding_normal_option_effect = {
+	scope:host = {
+		if = {
+			limit = {
+				any_vassal = {
+					OR = {
+						has_vassal_stance = parochial
+						has_vassal_stance = zealot
+					}
+				}
+			}
+			every_vassal = {
+				limit = {
+					OR = {
+						has_vassal_stance = parochial
+						has_vassal_stance = zealot
+					}
+				}
+				add_opinion = {
+					target = scope:host
+					modifier = wedding_balanced_option_opinion
+				}
+			}
+		}
+	}
+}
+
+wedding_good_option_effect = {
+	scope:host = {
+		if = {
+			limit = {
+				any_vassal = {
+					OR = {
+						has_vassal_stance = courtly
+						has_vassal_stance = glory_hound
+					}
+				}
+			}
+			every_vassal = {
+				limit = {
+					OR = {
+						has_vassal_stance = courtly
+						has_vassal_stance = glory_hound
+					}
+				}
+				add_opinion = {
+					target = scope:host
+					modifier = wedding_good_option_opinion
+				}
+			}
+		}
+	}
+}
+
+wedding_assign_officiant_effect = {
+	scope:host = {
+		if = {
+			limit = {
+				scope:host.faith.religious_head ?= {
+					NOR = {
+						this = scope:activity.special_guest:spouse_1
+						this = scope:activity.special_guest:spouse_2
+					}
+				}
+				scope:activity = {
+					any_attending_character = {
+						this = scope:host.faith.religious_head
+					}
+				}
+			}
+			scope:host.faith.religious_head = { save_scope_as = officiant }
+		}
+		else_if = {
+			limit = {
+				scope:host != scope:activity.special_guest:spouse_1
+			}
+			scope:host = { save_scope_as = officiant }
+		}
+		else_if = {
+			limit = {
+				scope:host.cp:councillor_court_chaplain ?= {
+					NOR = {
+						this = scope:activity.special_guest:spouse_1
+						this = scope:activity.special_guest:spouse_2
+					}
+				}
+				scope:activity = {
+					any_attending_character = {
+						this = scope:host.cp:councillor_court_chaplain
+					}
+				}
+			}
+			scope:host.cp:councillor_court_chaplain = { save_scope_as = officiant }
+		}
+		else_if = {
+			limit = {
+				NOT = { scope:host.faith = { has_doctrine = doctrine_theocracy_lay_clergy } }
+			}
+			if = {
+				limit = {
+					NOT = {
+						scope:activity = {
+							any_attending_character = {
+								is_ai = no
+							}
+						}
+					}
+					any_pool_character = {
+						province = scope:activity.activity_location
+						is_physically_able_ai_adult = yes
+						faith = scope:host.faith
+						can_be_clergy_due_to_gender_trigger = yes
+					}
+				}
+				random_pool_character = {
+					province = scope:activity.activity_location
+					limit = {
+						is_physically_able_ai_adult = yes
+						faith = scope:host.faith
+						can_be_clergy_due_to_gender_trigger = yes
+					}
+					save_scope_as = officiant
+				}
+			}
+			else = {
+				create_character = {
+					template = priest_character_template
+					dynasty = none
+					location = scope:host.location
+					save_scope_as = officiant
+				}
+			}
+		}
+	}
+	scope:officiant ?= {
+		add_character_flag = officiant
+		scope:activity = {
+			set_variable = {
+				name = officiant
+				value = scope:officiant
+			}
+		}
+	}
+}
+
+check_officiant_effect = {
+	if = {
+		limit = {
+			scope:activity.var:officiant ?= { is_alive = no }
+		}
+		wedding_assign_officiant_effect = yes
+	}
+}

@@ -1,0 +1,6108 @@
+﻿###############################################################################
+# 
+# Sri Lanka
+# 
+# sri_lanka.0000-sri_lanka.0019			Setup events, history events, miscellaneous events and decisions
+# sri_lanka.0020-sri_lanka.0039			Sri Lanka Monasteries basic decisions and events
+# sri_lanka.0040-sri_lanka.0049			Sri Lanka minor flavor decisions
+# sri_lanka.0050-sri_lanka.0069			Pilgrimage to Ramasetu
+# sri_lanka.0070-sri_lanka.0089			Pilgrimage to Sri Pada
+# sri_lanka.0090-sri_lanka.0099			Indian Ocean rework
+# sri_lanka.0100-sri_lanka.0119			Sri Lanka Relic Veneration
+# sri_lanka.0150-sri_lanka.0199			Generic Flavor Events
+# 
+# 
+###############################################################################
+
+namespace = sri_lanka
+
+######################################################################################
+# 
+# SETUP EVENTS, HISTORY EVENTS, MISC DECISIONS
+# 
+# sri_lanka.0000-sri_lanka.0019
+# 
+######################################################################################
+
+
+
+# SRI LANKA INTRO 
+sri_lanka.0001 = { # Fullscreen Intro Event
+	type = character_event
+	window = fullscreen_event
+	title = sri_lanka.0001.t
+	desc = {
+		desc = sri_lanka.0001.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					religion = religion:buddhism_religion
+				}
+				desc = sri_lanka.0001.desc.buddhist
+			}
+			triggered_desc = {
+				trigger = {
+					NOT = { religion = religion:buddhism_religion }
+				}
+				desc = sri_lanka.0001.desc.non_buddhist
+			}
+		}
+	}
+	theme = diplomacy_foreign_affairs_focus
+	trigger = { # we need to prevent this from firing for all players when a new player joins in MP
+		is_ai = no
+		NOT = { has_character_flag = RICE_sri_lanka_struggle_intro_event_flag }
+		OR = {
+			any_character_struggle = {
+				involvement = involved
+				is_struggle_type = RICE_sri_lanka_struggle
+			}
+			any_character_struggle = {
+				involvement = interloper
+				is_struggle_type = RICE_sri_lanka_struggle
+			}
+		}
+ 	}
+	override_background = { reference = RICE_sri_lanka_struggle_start }
+	override_sound = { reference = "event:/DLC/FP2/SFX/UI/fp2_struggle_ui_intro_animate" }
+
+	widgets = {
+		widget = {
+ 			gui = "event_window_widget_struggle_info"
+ 			container = "dynamic_content_widget"
+ 			controller = struggle_info
+ 			setup_scope = { struggle:RICE_sri_lanka_struggle ?= { save_scope_as = struggle } }
+		}
+		# widget = {
+		# 	gui = "event_window_widget_RICE_sri_lanka_struggle_resources_info"
+		# 	container = "dynamic_content_widget"
+		# }
+	}
+	immediate = {
+		play_music_cue = "mx_abhayagiri_monastery"
+		add_character_flag = RICE_sri_lanka_struggle_intro_event_flag
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		if = {
+			limit = {
+				this = character:189029
+			}
+			show_as_tooltip = {
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_aspiration_rule_sri_lanka
+				}
+			}
+			custom_description_no_bullet = {
+				text = sri_lanka.0001.vijayabahu.tooltip
+			}
+		}
+	}
+
+	option = {
+		name = sri_lanka.0001.a
+		trigger = {
+			OR = {
+				religion = religion:buddhism_religion
+				religion = religion:jainism_religion
+				religion = religion:hinduism_religion
+			}
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+
+	option = {
+		name = sri_lanka.0001.b
+		trigger = {
+			NOR = {
+				religion = religion:buddhism_religion
+				religion = religion:jainism_religion
+				religion = religion:hinduism_religion
+			}			
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+
+	after = {
+		play_music_cue = "mx_abhayagiri_monastery"
+	}
+
+}
+
+
+
+# Give the yearly resources since it doesn't work in effects for some reason
+sri_lanka.0002 = {
+	type = character_event
+	hidden = yes
+
+	immediate = {
+
+		# If you qualify for receiving piety and/or prestige
+		if = {
+			limit = {
+				RICE_sri_lanka_can_access_most_sangha_mechanics_trigger = yes
+				OR = {
+					has_trait = RICE_mahavihara_trait
+					has_trait = RICE_abhayagiri_trait
+					has_trait = RICE_jetavana_trait
+				}
+			}
+			# Need to preset the values, or else the interface message won't display correctly for whatever reason
+			set_variable = {
+				name = RICE_sri_lanka_add_prestige_value
+				value = {
+					value = 0
+					add = {
+						integer_range = {
+							min = 0
+							max = RICE_sri_lanka_annual_prestige_max_value
+						}
+					}
+				}
+			}
+			set_variable = {
+				name = RICE_sri_lanka_add_piety_value
+				value = {
+					value = 0
+					add = {
+						integer_range = {
+							min = 0
+							max = RICE_sri_lanka_annual_piety_max_value
+						}
+					}
+				}
+			}
+		}
+
+		send_interface_message = {
+			type = sri_lanka_struggle_event
+			title = RICE_sri_lanka_values_notification.title
+			custom_tooltip = RICE_sri_lanka_values_notification.mahavihara_tooltip
+			custom_tooltip = RICE_sri_lanka_values_notification.abhayagiri_tooltip
+			custom_tooltip = RICE_sri_lanka_values_notification.jetavana_tooltip
+			if = {
+				limit = {
+					RICE_sri_lanka_can_access_most_sangha_mechanics_trigger = yes		
+					OR = {
+						has_trait = RICE_mahavihara_trait
+						has_trait = RICE_abhayagiri_trait
+						has_trait = RICE_jetavana_trait
+					}			
+				}
+				add_prestige = var:RICE_sri_lanka_add_prestige_value
+				add_piety = var:RICE_sri_lanka_add_piety_value
+			}
+		}
+		
+		if = {
+			limit = { has_variable = RICE_sri_lanka_add_prestige_value }
+			remove_variable = RICE_sri_lanka_add_prestige_value
+		}
+		
+		if = {
+			limit = { has_variable = RICE_sri_lanka_add_piety_value }
+			remove_variable = RICE_sri_lanka_add_piety_value
+		}
+
+	}
+}
+
+# Activate passing of time and other yearly shenanigans
+sri_lanka.0003 = {
+	hidden = yes
+	scope = none
+	scope = struggle
+
+	
+	trigger = {
+		exists = struggle:RICE_sri_lanka_struggle
+	}
+
+	immediate = {
+		# Activate the catalyst.
+		activate_struggle_catalyst = catalyst_passing_of_time
+
+		if = {
+			limit = {
+				NOT = { has_global_variable = RICE_sri_lanka_initial_start_catalyst_timer }
+			}
+
+			# Low Prominence
+			if = {
+				limit = {
+					exists = global_var:RICE_mahavihara_prominence
+					global_var:RICE_mahavihara_prominence < RICE_sri_lanka_prominence_low_amount
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = catalyst_RICE_sri_lanka_low_mahavihara_prominence
+				}
+			}
+			if = {
+				limit = {
+					exists = global_var:RICE_abhayagiri_prominence
+					global_var:RICE_abhayagiri_prominence < RICE_sri_lanka_prominence_low_amount
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = catalyst_RICE_sri_lanka_low_abhayagiri_prominence
+				}
+			}
+			if = {
+				limit = {
+					exists = global_var:RICE_jetavana_prominence
+					global_var:RICE_jetavana_prominence < RICE_sri_lanka_prominence_low_amount
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = catalyst_RICE_sri_lanka_low_jetavana_prominence
+				}
+			}
+
+			# High Prominence
+			if = {
+				limit = {
+					exists = global_var:RICE_mahavihara_prominence
+					global_var:RICE_mahavihara_prominence > RICE_sri_lanka_prominence_high_amount
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = catalyst_RICE_sri_lanka_high_mahavihara_prominence
+				}
+			}
+			if = {
+				limit = {
+					exists = global_var:RICE_abhayagiri_prominence
+					global_var:RICE_abhayagiri_prominence > RICE_sri_lanka_prominence_high_amount
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = catalyst_RICE_sri_lanka_high_abhayagiri_prominence
+				}
+			}
+			if = {
+				limit = {
+					exists = global_var:RICE_jetavana_prominence
+					global_var:RICE_jetavana_prominence > RICE_sri_lanka_prominence_high_amount
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = catalyst_RICE_sri_lanka_high_jetavana_prominence
+				}
+			}
+
+			# Buddhist rulers who don't patronize any monastery
+			every_involved_ruler = {
+				limit = {
+					religion = religion:buddhism_religion
+					highest_held_title_tier > tier_barony
+					NOR = {
+						has_trait = RICE_mahavihara_trait
+						has_trait = RICE_abhayagiri_trait
+						has_trait = RICE_jetavana_trait
+					}
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = catalyst_RICE_sri_lanka_non_supporting_buddhist_ruler
+				}
+			}
+
+			# Sinful Buddhist rulers
+			every_involved_ruler = {
+				limit = {
+					religion = religion:buddhism_religion
+					highest_held_title_tier > tier_barony
+				}
+				if = {
+					limit = {
+						num_sinful_traits >= 3
+					}
+					struggle:RICE_sri_lanka_struggle ?= {
+						activate_struggle_catalyst = catalyst_RICE_sri_lanka_buddhist_ruler_three_sins
+					}
+				}
+				else_if = {
+					limit = {
+						num_sinful_traits = 2
+					}
+					struggle:RICE_sri_lanka_struggle ?= {
+						activate_struggle_catalyst = catalyst_RICE_sri_lanka_buddhist_ruler_two_sins
+					}
+				}
+				else_if = {
+					limit = {
+						num_sinful_traits = 1
+					}
+					struggle:RICE_sri_lanka_struggle ?= {
+						activate_struggle_catalyst = catalyst_RICE_sri_lanka_buddhist_ruler_one_sin
+					}
+				}
+			}
+
+			# Virtuous Buddhist rulers
+			every_involved_ruler = {
+				limit = {
+					religion = religion:buddhism_religion
+					highest_held_title_tier > tier_barony
+				}
+				if = {
+					limit = {
+						num_virtuous_traits >= 3
+					}
+					struggle:RICE_sri_lanka_struggle ?= {
+						activate_struggle_catalyst = catalyst_RICE_sri_lanka_buddhist_ruler_three_virtues
+					}
+				}
+				else_if = {
+					limit = {
+						num_virtuous_traits = 2
+					}
+					struggle:RICE_sri_lanka_struggle ?= {
+						activate_struggle_catalyst = catalyst_RICE_sri_lanka_buddhist_ruler_two_virtues
+					}
+				}
+				else_if = {
+					limit = {
+						num_virtuous_traits = 1
+					}
+					struggle:RICE_sri_lanka_struggle ?= {
+						activate_struggle_catalyst = catalyst_RICE_sri_lanka_buddhist_ruler_one_virtue
+					}
+				}
+			}
+
+		}
+
+
+
+		# Then queue the event up against for a year hence.
+		trigger_event = {
+			id = sri_lanka.0003
+			years = 1
+		}
+	}
+}
+
+
+# Catalysts for activities from traveling
+sri_lanka.0004 = {
+	hidden = yes
+
+	trigger = {
+		is_available_travelling = yes
+		is_landed = yes		
+		highest_held_title_tier >= tier_county
+		exists = struggle:RICE_sri_lanka_struggle
+		any_character_struggle = {
+			involvement = involved
+			is_struggle_type = RICE_sri_lanka_struggle
+		}	
+		exists = involved_activity	
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				involved_activity = {
+					has_activity_type = activity_hunt
+				}
+			}
+			struggle:RICE_sri_lanka_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_sri_lanka_hunt
+					character = root
+				}
+			}
+		}
+	}
+
+}
+
+# Sangha unified ending
+sri_lanka.0005 = { 
+	type = character_event
+	window = fullscreen_event
+	title = sri_lanka.0005.t
+	desc = {
+		desc = sri_lanka.0005.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:sri_lanka_struggle_ender = {
+						religion = religion:buddhism_religion
+					}
+				}
+				desc = sri_lanka.0005.desc.buddhist
+			}
+			desc = sri_lanka.0005.desc.non_buddhist
+		}
+		desc = sri_lanka.0005.desc.conclusion
+	}
+	theme = faith
+	override_background = { reference = RICE_indian_holy_site }
+	override_sound = { reference = "event:/DLC/FP2/SFX/UI/fp2_struggle_ui_intro_end_animate" }
+
+	immediate = {
+		play_music_cue = "mx_india_cue_1"
+		if = {
+			limit = {
+				root = scope:sri_lanka_struggle_ender
+			}
+			RICE_sri_lanka_struggle_ending_uniter_effect = yes
+			struggle:RICE_sri_lanka_struggle ?= {
+				end_struggle = RICE_sri_lanka_struggle_ending_unite_sangha_decision
+			}
+		}
+		else = {
+			show_as_tooltip = {		
+				scope:sri_lanka_struggle_ender = {
+					RICE_sri_lanka_struggle_ending_uniter_effect = yes
+				}	
+			}
+		}
+	}
+
+	# Ok
+	option = {
+		name = sri_lanka.0005.a
+		clicksound = "event:/DLC/FP3/SFX/UI/Notifications/Toasts/struggle_end_positive"
+	}
+
+	#after = {
+	#}
+}
+
+
+
+# Choose a relic to enshrine as the cool relic
+sri_lanka.0006 = {
+	type = character_event
+	title = sri_lanka.0006.t
+	desc = sri_lanka.0006.desc
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith:theravada = {
+			save_scope_as = theravada
+		}	
+	}
+
+	option = { # Bodhi
+		name = sri_lanka.0006.a
+		if = {
+			limit = {
+				has_trait = RICE_mahavihara_trait
+			}
+			add_piety = 200
+		}
+		title:c_phiti = {
+			add_county_modifier = {
+				modifier = RICE_sri_lanka_relic_bodhi_shrine_modifier
+			}
+		}
+		custom_tooltip = sri_lanka.0006.a.tooltip
+		set_global_variable = {
+			name = RICE_sri_lanka_ending_united_sangha_bodhi
+			value = yes
+		}
+	}
+
+	option = { # Tooth
+		name = sri_lanka.0006.b
+		if = {
+			limit = {
+				has_trait = RICE_abhayagiri_trait
+			}
+			add_piety = 200
+		}
+		if = {
+			limit = {
+				capital_county = {
+					title_province = { geographical_region = RICE_sri_lanka_struggle_region }
+				}
+			}
+			capital_county = {
+				add_county_modifier = {
+					modifier = RICE_sri_lanka_relic_tooth_shrine_modifier
+				}
+			}
+		}
+		else = {
+			title:c_phiti = {
+				add_county_modifier = {
+					modifier = RICE_sri_lanka_relic_tooth_shrine_modifier
+				}
+			}
+		}
+		custom_tooltip = sri_lanka.0006.b.tooltip
+		set_global_variable = {
+			name = RICE_sri_lanka_ending_united_sangha_tooth
+			value = yes
+		}
+	}
+
+	option = { # Dharmadhatu
+		name = sri_lanka.0006.c
+		if = {
+			limit = {
+				has_trait = RICE_jetavana_trait
+			}
+			add_piety = 200
+		}
+		if = {
+			limit = {
+				capital_county = {
+					title_province = { geographical_region = RICE_sri_lanka_struggle_region }
+				}
+			}
+			capital_county = {
+				add_county_modifier = {
+					modifier = RICE_sri_lanka_relic_dharmadhatu_shrine_modifier
+				}
+			}
+		}
+		else = {
+			title:c_phiti = {
+				add_county_modifier = {
+					modifier = RICE_sri_lanka_relic_dharmadhatu_shrine_modifier
+				}
+			}
+		}
+		custom_tooltip = sri_lanka.0006.c.tooltip
+		set_global_variable = {
+			name = RICE_sri_lanka_ending_united_sangha_dharmadhatu
+			value = yes
+		}
+	}
+
+	after = {
+		custom_tooltip = sri_lanka.0006.enshrine_decision_tooltip
+		hidden_effect = {
+			RICE_sri_lanka_struggle_ending_uniter_effect = yes	
+		}
+		every_ruler = {
+			limit = {
+				is_ai = no
+				OR = {
+					any_held_title = {
+						tier = tier_county
+						any_county_province = {
+							OR = {
+								geographical_region = world_india
+								geographical_region = world_burma
+								geographical_region = world_tibet
+							}
+						}
+					}
+					faith = {
+						has_doctrine = rice_theravada_canon_doctrine
+					}				
+				}
+			}
+			trigger_event = sri_lanka.0005
+		}
+	}
+
+}
+
+
+# Sangha destroyed ending
+sri_lanka.0007 = { 
+	type = character_event
+	window = fullscreen_event
+	title = sri_lanka.0007.t
+	desc = sri_lanka.0007.desc
+	theme = faith
+	override_background = { reference = RICE_bonfire }
+	override_sound = { reference = "event:/DLC/FP2/SFX/UI/fp2_struggle_ui_intro_end_animate" }
+
+	immediate = {
+		play_music_cue = "mx_india_cue_1"
+		if = {
+			limit = {
+				root = scope:sri_lanka_struggle_ender
+			}
+			RICE_sri_lanka_struggle_ending_destroyer_effect = yes
+			struggle:RICE_sri_lanka_struggle ?= {
+				end_struggle = RICE_sri_lanka_struggle_ending_destroy_sangha_decision
+			}
+		}
+		else = {
+			show_as_tooltip = {		
+				scope:sri_lanka_struggle_ender = {
+					RICE_sri_lanka_struggle_ending_destroyer_effect = yes
+				}	
+			}
+		}
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith:theravada = {
+			save_scope_as = theravada
+		}	
+	}
+
+	# Ok
+	option = {
+		name = sri_lanka.0007.a
+		clicksound = "event:/DLC/FP3/SFX/UI/Notifications/Toasts/struggle_end_negative"
+	}
+
+	#after = {
+	#}
+}
+
+# Sangha foreign/revive ending
+sri_lanka.0008 = { 
+	type = character_event
+	window = fullscreen_event
+	title = sri_lanka.0008.t
+	desc = sri_lanka.0008.desc
+	theme = faith
+	override_background = { reference = RICE_indian_holy_site }
+	override_sound = { reference = "event:/DLC/FP2/SFX/UI/fp2_struggle_ui_intro_end_animate" }
+
+	immediate = {
+		play_music_cue = "mx_india_cue_1"
+		if = {
+			limit = {
+				root = scope:sri_lanka_struggle_ender
+			}
+			RICE_sri_lanka_struggle_ending_foreigner_effect = yes
+			capital_county = {
+				save_temporary_scope_as = current_title
+				duchy = {
+					every_in_de_jure_hierarchy = {
+						limit = {
+							tier = tier_county
+							holder = {
+								this = scope:current_title.holder
+							}
+						}
+						custom = RICE_every_county_in_capital_duchy
+						add_county_modifier = {
+							modifier = RICE_sri_lanka_new_center_of_buddhism
+							#years = 10
+						}
+					}
+				}
+			}
+			struggle:RICE_sri_lanka_struggle ?= {
+				end_struggle = RICE_sri_lanka_struggle_ending_foreign_sangha_decision
+			}
+		}
+		else = {
+			show_as_tooltip = {		
+				scope:sri_lanka_struggle_ender = {
+					RICE_sri_lanka_struggle_ending_foreigner_effect = yes
+				}	
+			}
+		}
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith:theravada = {
+			save_scope_as = theravada
+		}	
+	}
+
+	# Ok
+	option = {
+		name = sri_lanka.0008.a
+		clicksound = "event:/DLC/FP3/SFX/UI/Notifications/Toasts/struggle_end_positive"
+	}
+
+
+}
+
+
+# Vijayabahu's Aspiration fulfilled
+sri_lanka.0009 = {
+	type = character_event
+	title = sri_lanka.0009.t
+	desc = sri_lanka.0009.desc
+	theme = RICE_theme_sri_lanka_stupa
+
+	right_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	immediate = {
+
+		play_music_cue = "mx_cue_epic_sacral_moment"
+
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		
+		RICE_historical_aspiration_fulfilled_effect = yes
+
+		hidden_effect = {
+			if = {
+				limit = {
+					has_character_modifier = RICE_sri_lanka_aspiration_rule_sri_lanka
+				}
+				remove_character_modifier = RICE_sri_lanka_aspiration_rule_sri_lanka
+			}
+		}
+
+		# Main Objective Reward
+		add_prestige = RICE_aspiration_medium_resource_bonus
+		spawn_army = {
+			name = RICE_vijayabahu_velakkara_guards
+			men_at_arms = {
+				type = RICE_velakkara
+				stacks = 5
+			}
+			location = capital_province
+			uses_supply = yes
+			inheritable = yes
+		}
+		every_held_title = {
+			custom = RICE_every_sri_lanka_county
+			limit = {
+				tier = tier_county
+				any_county_province = {
+					geographical_region = RICE_sri_lanka_struggle_region
+				}
+			}	
+			change_county_control = RICE_red_sea_al_umari_aspiration_dev_bonus
+		}
+
+		# Bonus Objective Reward(s)
+		# Irrigation tank at least once
+		if = {
+			limit = {
+				has_character_flag = RICE_sri_lanka_vijayabahu_built_irrigation_tank
+			}
+			add_prestige = RICE_aspiration_medium_resource_bonus
+		}
+		# Support a monastery at least once
+		if = {
+			limit = {
+				has_character_flag = RICE_sri_lanka_vijayabahu_supported_monastery
+			}
+			add_piety = RICE_aspiration_medium_resource_bonus
+		}
+	}
+
+	# Ok
+	option = {
+		name = sri_lanka.0009.a
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_character_flag = RICE_sri_lanka_vijayabahu_built_irrigation_tank
+			}
+			remove_character_flag = RICE_sri_lanka_vijayabahu_built_irrigation_tank
+		}		
+		if = {
+			limit = {
+				has_character_flag = RICE_sri_lanka_vijayabahu_supported_monastery
+			}
+			remove_character_flag = RICE_sri_lanka_vijayabahu_supported_monastery
+		}		
+		if = {
+			limit = {
+				has_character_flag = RICE_sri_lanka_vijayabahu_polonnaruwa_capital_done
+			}
+			remove_character_flag = RICE_sri_lanka_vijayabahu_polonnaruwa_capital_done
+		}		
+	}
+
+}
+
+
+# Land granted to Buddhist/Hindu/Jain monasteries/temples
+sri_lanka.0010 = {
+	type = character_event
+	title = sri_lanka.0010.t
+	desc = sri_lanka.0010.desc
+	theme = faith
+	override_background = { reference = ep2_holy_site_indian }
+	
+	right_portrait = root
+
+	immediate = {
+
+
+		hidden_effect = {
+			every_held_title = {
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = world_india
+					}
+				}
+				random_list = {
+					# Nothing happens
+					95 = {
+	
+					}
+					# Conversion
+					5 = {
+						add_to_list = RICE_land_grant_counties_conversion
+					}
+					# Small minority
+					# 10 = {
+					#	add_to_list = RICE_land_grant_counties_small_minority
+					# }
+					# # Large minority
+					# 10 = {
+					#	add_to_list = RICE_land_grant_counties_large_minority
+					# }
+				}				
+			}				
+		}	
+
+		if = {
+			limit = {
+				var:RICE_india_land_grant_type ?= flag:buddhism
+			}
+			religion:buddhism_religion = {
+				save_scope_as = religion
+			}
+			if = {
+				limit = {					
+					any_county_in_region = {
+						region = world_india
+						religion = religion:buddhism_religion
+					}
+				}
+				random_county_in_region = {
+					region = world_india
+					limit = {
+						religion = religion:buddhism_religion
+					}
+					save_scope_as = indian_county
+				}
+				scope:indian_county.faith = {
+					save_scope_as = indian_faith
+				}
+			}
+			else = {
+				random_list = {
+					10 = {
+						faith:mahayana = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:theravada = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:vajrayana = {
+							save_scope_as = indian_faith
+						}
+					}
+				}
+			}
+			add_character_modifier = {
+				modifier = RICE_india_land_grant_buddhist_character_modifier
+				years = 10
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_no_church
+					limit = {
+						tier = tier_county
+						NOT = {
+							any_county_province = {
+								has_holding_type = church_holding
+							}
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_buddhist_county_same_modifier
+						years = 10
+					}				
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_church
+					limit = {
+						tier = tier_county
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}	
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_buddhist_county_strong_same_modifier
+						years = 10
+					}				
+				}
+			}
+			else = {
+				every_held_title = {
+					custom = RICE_all_held_counties_india_no_church
+					limit = {
+						tier = tier_county
+						NOT = {
+							any_county_province = {
+								has_holding_type = church_holding
+							}
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_buddhist_county_different_modifier
+						years = 10
+					}				
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_church
+					limit = {
+						tier = tier_county
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}	
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_buddhist_county_strong_different_modifier
+						years = 10
+					}				
+				}
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+				}
+				add_prestige = RICE_india_grant_prestige_same_religion_value
+				add_piety = RICE_india_grant_piety_same_religion_value
+				stress_impact = {
+					zealous = minor_stress_impact_loss
+				}
+			}
+			else = {
+				add_prestige = RICE_india_grant_prestige_different_religion_value
+				add_piety = RICE_india_grant_piety_different_religion_value
+				stress_impact = {
+					zealous = minor_stress_impact_gain
+				}
+			}
+			every_in_list = {
+				list = RICE_land_grant_counties_conversion
+				limit = {
+					NOT = { religion = religion:buddhism_religion }
+				}
+				set_county_faith = scope:indian_faith
+			}
+			# DO NOT REMOVE, THIS IS FOR COMPATIBILITY WITH RICE!!!
+			RICE_sri_lanka_struggle_land_grant_buddhist_effect = yes
+			RICE_TFE_struggle_land_grant_buddhist_effect = yes
+		}
+
+		else_if = {
+			limit = {
+				var:RICE_india_land_grant_type ?= flag:hinduism
+			}
+			religion:hinduism_religion = {
+				save_scope_as = religion
+			}
+			if = {
+				limit = {					
+					any_county_in_region = {
+						region = world_india
+						religion = religion:hinduism_religion
+					}
+				}
+				random_county_in_region = {
+					region = world_india
+					limit = {
+						religion = religion:hinduism_religion
+					}
+					save_scope_as = indian_county
+				}
+				scope:indian_county.faith = {
+					save_scope_as = indian_faith
+				}
+			}
+			else = {
+				random_list = {
+					10 = {
+						faith:vaishnavism = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:advaitism = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:shaivism = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:srikula_shaktism = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:kalikula_shaktism = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:smartism = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:krishnaism = {
+							save_scope_as = indian_faith
+						}
+					}
+				}
+			}
+			add_character_modifier = {
+				modifier = RICE_india_land_grant_hindu_character_modifier
+				years = 10
+			}
+			if = {
+				limit = {
+					religion = religion:hinduism_religion
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_no_church
+					limit = {
+						tier = tier_county
+						NOT = {
+							any_county_province = {
+								has_holding_type = church_holding
+							}
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_hindu_county_same_modifier
+						years = 10
+					}				
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_church
+					limit = {
+						tier = tier_county
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}	
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_hindu_county_strong_same_modifier
+						years = 10
+					}				
+				}
+			}
+			else = {
+				every_held_title = {
+					custom = RICE_all_held_counties_india_no_church
+					limit = {
+						tier = tier_county
+						NOT = {
+							any_county_province = {
+								has_holding_type = church_holding
+							}
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_hindu_county_different_modifier
+						years = 10
+					}				
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_church
+					limit = {
+						tier = tier_county
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}	
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_hindu_county_strong_different_modifier
+						years = 10
+					}				
+				}
+			}
+			if = {
+				limit = {
+					religion = religion:hinduism_religion
+				}
+				add_prestige = RICE_india_grant_prestige_same_religion_value
+				add_piety = RICE_india_grant_piety_same_religion_value
+				stress_impact = {
+					zealous = minor_stress_impact_loss
+				}
+			}
+			else = {
+				add_prestige = RICE_india_grant_prestige_different_religion_value
+				add_piety = RICE_india_grant_piety_different_religion_value
+				stress_impact = {
+					zealous = minor_stress_impact_gain
+				}
+			}
+			every_in_list = {
+				list = RICE_land_grant_counties_conversion
+				limit = {
+					NOT = { religion = religion:hinduism_religion }
+				}
+				set_county_faith = scope:indian_faith
+			}
+			# DO NOT REMOVE, THIS IS FOR COMPATIBILITY WITH RICE!!!
+			RICE_sri_lanka_struggle_land_grant_non_buddhist_effect = yes
+			RICE_TFE_struggle_land_grant_hindu_effect = yes
+		}
+
+		else_if = {
+			limit = {
+				var:RICE_india_land_grant_type ?= flag:jainism
+			}
+			religion:jainism_religion = {
+				save_scope_as = religion
+			}
+			add_character_modifier = {
+				modifier = RICE_india_land_grant_jain_character_modifier
+				years = 10
+			}
+			if = {
+				limit = {					
+					any_county_in_region = {
+						region = world_india
+						religion = religion:jainism_religion
+					}
+				}
+				random_county_in_region = {
+					region = world_india
+					limit = {
+						religion = religion:jainism_religion
+					}
+					save_scope_as = indian_county
+				}
+				scope:indian_county.faith = {
+					save_scope_as = indian_faith
+				}
+			}
+			else = {
+				random_list = {
+					10 = {
+						faith:yapaniya = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:svetambara = {
+							save_scope_as = indian_faith
+						}
+					}
+					10 = {
+						faith:digambara = {
+							save_scope_as = indian_faith
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					religion = religion:jainism_religion
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_no_church
+					limit = {
+						tier = tier_county
+						NOT = {
+							any_county_province = {
+								has_holding_type = church_holding
+							}
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_jain_county_same_modifier
+						years = 10
+					}				
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_church
+					limit = {
+						tier = tier_county
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}	
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_jain_county_strong_same_modifier
+						years = 10
+					}				
+				}
+			}
+			else = {
+				every_held_title = {
+					custom = RICE_all_held_counties_india_no_church
+					limit = {
+						tier = tier_county
+						NOT = {
+							any_county_province = {
+								has_holding_type = church_holding
+							}
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_jain_county_different_modifier
+						years = 10
+					}				
+				}
+				every_held_title = {
+					custom = RICE_all_held_counties_india_church
+					limit = {
+						tier = tier_county
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+						any_county_province = {
+							geographical_region = world_india
+						}
+					}	
+					add_county_modifier = {
+						modifier = RICE_india_land_grant_jain_county_strong_different_modifier
+						years = 10
+					}				
+				}
+			}
+			if = {
+				limit = {
+					religion = religion:jainism_religion
+				}
+				add_prestige = RICE_india_grant_prestige_same_religion_value
+				add_piety = RICE_india_grant_piety_same_religion_value
+				stress_impact = {
+					zealous = minor_stress_impact_loss
+				}
+			}
+			else = {
+				add_prestige = RICE_india_grant_prestige_different_religion_value
+				add_piety = RICE_india_grant_piety_different_religion_value
+				stress_impact = {
+					zealous = minor_stress_impact_gain
+				}
+			}
+			every_in_list = {
+				list = RICE_land_grant_counties_conversion
+				limit = {
+					NOT = { religion = religion:jainism_religion }
+				}
+				set_county_faith = scope:indian_faith
+			}
+			# DO NOT REMOVE, THIS IS FOR COMPATIBILITY WITH RICE!!!
+			RICE_sri_lanka_struggle_land_grant_buddhist_effect = yes
+			RICE_TFE_struggle_land_grant_jain_effect = yes
+		}
+
+
+
+		stress_impact = {
+			cynical = minor_stress_impact_gain
+			greedy = minor_stress_impact_gain
+		}
+
+	}
+
+	option = { # OK
+		name = sri_lanka.0010.a
+	}
+
+	after = {	
+		if = {
+			limit = { has_variable = RICE_india_land_grant_type }
+			remove_variable = RICE_india_land_grant_type
+		}
+	}
+
+}
+
+
+
+
+# # Mahavihara disappears
+# sri_lanka.0011 = {
+# 	type = character_event
+# 	title = sri_lanka.0011.t
+# 	desc = sri_lanka.0011.desc
+# 	theme = RICE_theme_sri_lanka_stupa
+	
+# 	right_portrait = {
+# 		character = root
+# 		triggered_animation = {
+# 			trigger = {
+# 				has_trait = RICE_mahavihara_trait
+# 			}
+# 			animation = sadness
+# 		}
+# 		animation = thinking
+# 	}
+
+# 	immediate = {
+# 		set_global_variable = {
+# 			name = RICE_sri_lanka_mahavira_extinct
+# 			value = yes
+# 		}
+# 		every_ruler = {
+# 			limit = {
+# 				has_trait = RICE_mahavihara_trait
+# 			}
+# 			custom = RICE_every_mahavihara_ruler
+# 			remove_trait = RICE_mahavihara_trait
+# 		}
+# 	}
+
+# 	option = { # Ok
+# 		name = sri_lanka.0011.a
+# 		custom_tooltip = sri_lanka.0011.a.tooltip
+# 	}
+
+# }
+
+
+# # Abhayagiri disappears
+# sri_lanka.0012 = {
+# 	type = character_event
+# 	title = sri_lanka.0012.t
+# 	desc = sri_lanka.0012.desc
+# 	theme = RICE_theme_sri_lanka_stupa
+	
+# 	right_portrait = {
+# 		character = root
+# 		triggered_animation = {
+# 			trigger = {
+# 				has_trait = RICE_abhayagiri_trait
+# 			}
+# 			animation = sadness
+# 		}
+# 		animation = thinking
+# 	}
+
+# 	immediate = {
+# 		set_global_variable = {
+# 			name = RICE_sri_lanka_abhayagiri_extinct
+# 			value = yes
+# 		}
+# 		every_ruler = {
+# 			limit = {
+# 				has_trait = RICE_abhayagiri_trait
+# 			}
+# 			custom = RICE_every_abhayagiri_ruler
+# 			remove_trait = RICE_abhayagiri_trait
+# 		}
+# 	}
+
+# 	option = { # Ok
+# 		name = sri_lanka.0012.a
+# 		custom_tooltip = sri_lanka.0012.a.tooltip
+# 	}
+
+# }
+
+# # Jetavana disappears
+# sri_lanka.0013 = {
+# 	type = character_event
+# 	title = sri_lanka.0013.t
+# 	desc = sri_lanka.0013.desc
+# 	theme = RICE_theme_sri_lanka_stupa
+	
+# 	right_portrait = {
+# 		character = root
+# 		triggered_animation = {
+# 			trigger = {
+# 				has_trait = RICE_jetavana_trait
+# 			}
+# 			animation = sadness
+# 		}
+# 		animation = thinking
+# 	}
+
+# 	immediate = {
+# 		set_global_variable = {
+# 			name = RICE_sri_lanka_jetavana_extinct
+# 			value = yes
+# 		}
+# 		every_ruler = {
+# 			limit = {
+# 				has_trait = RICE_jetavana_trait
+# 			}
+# 			custom = RICE_every_jetavana_ruler
+# 			remove_trait = RICE_jetavana_trait
+# 		}
+# 	}
+
+# 	option = { # Ok
+# 		name = sri_lanka.0013.a
+# 		custom_tooltip = sri_lanka.0013.a.tooltip
+# 	}
+
+# }
+
+
+
+# Give Budal privileges as Vijayabahu
+sri_lanka.0014 = {
+	type = character_event
+	title = sri_lanka.0014.t
+	desc = {
+		first_valid = {
+			# Is giving out privileges and is Vijayabahu
+			triggered_desc = {
+				trigger = {
+					character:189029 = {
+						root = this
+					}
+				}
+				desc = sri_lanka.0014.desc.vijayabahu
+			}
+			# Is giving out privileges but is not Vijayabahu
+			triggered_desc = {
+				trigger = {
+					scope:vijayabahu = {
+						root = this
+					}
+				}
+				desc = sri_lanka.0014.desc.vijayabahu_equivalent
+			}
+			# Budal
+			triggered_desc = {
+				trigger = {
+					scope:budal = {
+						root = this
+					}
+				}
+				desc = sri_lanka.0014.desc.budal
+			}
+			# Other
+			desc = sri_lanka.0014.desc.other
+		}
+	}
+	theme = vassal
+	
+	left_portrait = {
+		character = scope:vijayabahu
+		animation = personality_compassionate
+	}
+	
+	right_portrait = {
+		character = scope:budal
+		animation = throne_room_bow_3
+	}
+
+	artifact = { # To display the artifact in the event-window
+		target = scope:copper_plate
+		position = lower_center_portrait
+	}
+
+	immediate = {
+		character:189029 = {
+			save_scope_as = vijayabahu
+		}
+		character:RICE_sri_lanka_002 = {
+			save_scope_as = budal
+		}
+		# Effect should only apply once
+		if = {
+			limit = {
+				completely_controls = title:k_lanka
+			}
+			RICE_sri_lanka_vijayabahu_reward_budal_effect = yes
+			if = {
+				limit = {
+					character:RICE_sri_lanka_002 = {
+						can_add_hook = {
+							target = scope:vijayabahu_equivalent
+							type = RICE_sri_lanka_vijayabahu_budal_hook
+						}
+					}
+				}
+				character:RICE_sri_lanka_002 = {
+					add_hook = {
+						target = scope:vijayabahu_equivalent
+						type = RICE_sri_lanka_vijayabahu_budal_hook
+					}
+				}
+			}
+			hidden_effect_new_object = {
+				create_artifact = {
+					name = RICE_sri_lanka_panakaduwa_copper_plate_name
+					description = RICE_sri_lanka_panakaduwa_copper_plate_desc
+					type = miscellaneous
+					visuals = RICE_copper_plate_artifact					
+					quality = 75
+					wealth = 75
+					modifier = RICE_panakaduwa_copper_plate_modifier
+					save_scope_as = copper_plate
+					decaying = no
+				}
+			}
+		}
+		else = {
+			show_as_tooltip = {
+				RICE_sri_lanka_vijayabahu_reward_budal_effect = yes
+				if = {
+					limit = {
+						character:RICE_sri_lanka_002 = {
+							can_add_hook = {
+								target = scope:vijayabahu_equivalent
+								type = RICE_sri_lanka_vijayabahu_budal_hook
+							}
+						}
+					}
+					character:RICE_sri_lanka_002 = {
+						add_hook = {
+							target = scope:vijayabahu_equivalent
+							type = RICE_sri_lanka_vijayabahu_budal_hook
+						}
+					}
+				}
+			}
+		}
+		
+	}
+
+	option = { # Ok
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = {
+							character:RICE_sri_lanka_002 = {
+								root = this
+							}
+						}
+						desc = sri_lanka.0014.a.budal
+					}
+					desc = sri_lanka.0014.a.not_budal
+				}
+			}
+		}
+		if = {
+			limit = {
+				completely_controls = title:k_lanka
+			}
+			scope:copper_plate = {
+				set_owner = {
+					target = scope:budal
+				}
+			}
+		}
+		else = {
+			show_as_tooltip = {
+				scope:copper_plate = {
+					set_owner = {
+						target = scope:budal
+					}
+				}
+			}
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				completely_controls = title:k_lanka
+			}		
+			every_ruler = {
+				limit = {
+					is_ai = no
+					NOT = { completely_controls = title:k_lanka }
+					OR = {
+						any_held_title = {
+							tier = tier_county
+							any_county_province = {
+								geographical_region = RICE_sri_lanka_struggle_region
+							}
+						}
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							OR = {
+								any_character_struggle = {
+									involvement = involved
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+								any_character_struggle = {
+									involvement = interloper
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+							}
+						}
+					}
+				}
+				trigger_event = sri_lanka.0014
+			}
+		}
+	}
+
+}
+
+
+
+
+# What irrigation tank to build?
+sri_lanka.0015 = {
+	type = character_event
+	title = sri_lanka.0015.t
+	desc = sri_lanka.0015.desc
+	theme = RICE_theme_irrigation_tank
+	
+	left_portrait = root
+	
+	immediate = {
+		capital_county = {
+			save_scope_as = irrigation_tank_county
+		}
+	}
+	
+	option = { # Small
+		name = sri_lanka.0015.a
+		remove_short_term_gold = RICE_irrigation_tank_small_cost
+		if = {
+			limit = {
+				culture = { has_cultural_parameter = unlock_rice_stepwell_irrigation_tank_effects }
+			}
+			add_prestige = 50
+			add_piety = 75
+		}
+		else = {
+			add_prestige = 25
+			add_piety = 50
+		}
+		add_character_modifier = {
+			modifier = RICE_funded_irrigation_tank_small
+			years = 10
+		}
+		scope:irrigation_tank_county = {
+			add_county_modifier = {
+				modifier = RICE_irrigation_tank_constructed_small
+				years = 10
+			}
+		}
+		RICE_sri_lanka_struggle_irrigation_tank_small_effect = yes
+		# DO NOT REMOVE, THIS IS FOR COMPATIBILITY WITH TFE!!!
+		RICE_TFE_struggle_irrigation_tank_small_effect = yes
+	}	
+	option = { # Medium
+		name = sri_lanka.0015.b
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= RICE_irrigation_tank_medium_cost
+			}
+		}
+		remove_short_term_gold = RICE_irrigation_tank_medium_cost
+		if = {
+			limit = {
+				culture = { has_cultural_parameter = unlock_rice_stepwell_irrigation_tank_effects }
+			}
+			add_prestige = 100
+			add_piety = 150
+		}
+		else = {
+			add_prestige = 50
+			add_piety = 100
+		}
+		add_character_modifier = {
+			modifier = RICE_funded_irrigation_tank_medium
+			years = 10
+		}
+		scope:irrigation_tank_county = {
+			add_county_modifier = {
+				modifier = RICE_irrigation_tank_constructed_medium
+				years = 10
+			}
+		}
+		RICE_sri_lanka_struggle_irrigation_tank_medium_effect = yes
+		# DO NOT REMOVE, THIS IS FOR COMPATIBILITY WITH TFE!!!
+		RICE_TFE_struggle_irrigation_tank_medium_effect = yes
+	}	
+	option = { # Large
+		name = sri_lanka.0015.c
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= RICE_irrigation_tank_large_cost
+			}
+		}
+		remove_short_term_gold = RICE_irrigation_tank_large_cost
+		if = {
+			limit = {
+				culture = { has_cultural_parameter = unlock_rice_stepwell_irrigation_tank_effects }
+			}
+			add_prestige = 150
+			add_piety = 200
+		}
+		else = {
+			add_prestige = 75
+			add_piety = 150
+		}
+		add_character_modifier = {
+			modifier = RICE_funded_irrigation_tank_large
+			years = 10
+		}
+		scope:irrigation_tank_county = {
+			add_county_modifier = {
+				modifier = RICE_irrigation_tank_constructed_large
+				years = 10
+			}
+		}
+		RICE_sri_lanka_struggle_irrigation_tank_large_effect = yes
+		# DO NOT REMOVE, THIS IS FOR COMPATIBILITY WITH TFE!!!
+		RICE_TFE_struggle_irrigation_tank_large_effect = yes
+	}	
+	option = { # Grand
+		name = sri_lanka.0015.d
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= RICE_irrigation_tank_huge_cost
+			}
+		}
+		remove_short_term_gold = RICE_irrigation_tank_huge_cost
+		if = {
+			limit = {
+				culture = { has_cultural_parameter = unlock_rice_stepwell_irrigation_tank_effects }
+			}
+			add_prestige = 200
+			add_piety = 250
+		}
+		else = {
+			add_prestige = 100
+			add_piety = 200
+		}
+		add_character_modifier = {
+			modifier = RICE_funded_irrigation_tank_grand
+			years = 10
+		}
+		scope:irrigation_tank_county = {
+			add_county_modifier = {
+				modifier = RICE_irrigation_tank_constructed_grand
+				years = 10
+			}
+		}
+		RICE_sri_lanka_struggle_irrigation_tank_huge_effect = yes
+		# DO NOT REMOVE, THIS IS FOR COMPATIBILITY WITH TFE!!!
+		RICE_TFE_struggle_irrigation_tank_huge_effect = yes
+	}
+}
+
+
+# Move capital to Polonnaruwa - change name or not?
+sri_lanka.0016 = {
+	type = character_event
+	title = sri_lanka.0016.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					character:189029 = {
+						root = this
+					}
+				}
+				desc = sri_lanka.0016.desc.vijayabahu
+			}
+			desc = sri_lanka.0016.desc.not_vijayabahu
+		}
+		desc = sri_lanka.0016.desc
+	}
+	theme = new_royal_court
+	override_background = { reference = RICE_background_sri_lanka_stupa }
+	
+	
+	left_portrait = scope:polonnaruwa_ruler
+	
+	immediate = {
+		#pan_camera_to_title = title:c_trincomalee
+		play_music_cue = "mx_cue_epic_sacral_moment"
+		title:c_trincomalee.holder = {
+			save_scope_as = polonnaruwa_ruler
+		}
+		character:189029 = {
+			save_scope_as = vijayabahu
+		}
+		if = {
+			limit = {
+				has_title = title:c_trincomalee
+			}
+			RICE_sri_lanka_polonnaruwa_capital_effect = yes
+		}
+		else = {
+			show_as_tooltip = {
+				title:c_trincomalee.holder = {
+					RICE_sri_lanka_polonnaruwa_capital_effect = yes
+				}
+				if = {
+					limit = {
+						exists = global_var:RICE_sri_lanka_polonnaruwa_changed_name
+					}
+					title:c_trincomalee.holder = {
+						add_prestige = 500
+					}
+				}
+				else_if = {
+					limit = {
+						exists = global_var:RICE_sri_lanka_polonnaruwa_kept_name
+					}
+					title:c_trincomalee.holder = {
+						add_piety = 500
+					}
+				}
+				else = {
+					title:c_trincomalee.holder = {
+						add_prestige = 250
+						add_piety = 250
+					}
+				}
+			}
+		}
+	}
+	
+	option = { # Change
+		name = sri_lanka.0016.a
+		trigger = {
+			has_title = title:c_trincomalee
+			OR = {
+				character:189029 = {
+					root = this
+				}
+				root.dynasty = {
+					this = dynasty:1029172
+				}
+			}
+		}
+		add_prestige = 500
+		title:c_trincomalee = {
+			set_title_name = Vijayarajapura
+		}
+		title:b_polonnaruwa = {
+			set_title_name = Vijayarajapura
+		}
+		set_global_variable = {
+			name = RICE_sri_lanka_polonnaruwa_changed_name
+			value = yes
+			days = 1
+		}
+	}
+	
+	option = { # No change
+		name = sri_lanka.0016.b
+		trigger = {
+			has_title = title:c_trincomalee
+			OR = {
+				character:189029 = {
+					root = this
+				}
+				root.dynasty = {
+					this = dynasty:1029172
+				}
+			}
+		}
+		add_piety = 500
+		set_global_variable = {
+			name = RICE_sri_lanka_polonnaruwa_kept_name
+			value = yes
+			days = 1
+		}
+	}
+	
+	option = { # No change
+		name = sri_lanka.0016.c
+		trigger = {
+			has_title = title:c_trincomalee
+			NOR = {
+				character:189029 = {
+					root = this
+				}
+				root.dynasty = {
+					this = dynasty:1029172
+				}
+			}
+		}
+		add_prestige = 250
+		add_piety = 250
+	}
+	
+	option = { # No change
+		name = sri_lanka.0016.d
+		trigger = {
+			NOT = { has_title = title:c_trincomalee }
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_title = title:c_trincomalee
+			}		
+			every_ruler = {
+				limit = {
+					is_ai = no
+					NOT = { has_title = title:c_trincomalee }
+					OR = {
+						any_held_title = {
+							tier = tier_county
+							any_county_province = {
+								geographical_region = world_india_deccan # RICE_sri_lanka_struggle_region
+							}
+						}
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							OR = {
+								any_character_struggle = {
+									involvement = involved
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+								any_character_struggle = {
+									involvement = interloper
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+							}
+						}
+					}
+				}
+				trigger_event = sri_lanka.0016
+			}
+		}
+	}
+
+}
+
+
+
+# Vedda courtier spawn
+sri_lanka.0017 = {
+	type = character_event
+	title = sri_lanka.0017.t
+	desc = sri_lanka.0017.desc
+	theme = diplomacy_foreign_affairs_focus
+	override_background = { reference = RICE_background_sri_lanka_village }
+
+	left_portrait = root
+	right_portrait = {
+		character = scope:courtier
+		animation = throne_room_bow_1
+	}
+
+	trigger = {
+		any_held_county = {
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+		NOT = { culture = culture:vedda }
+		NOT = { faith = faith:vedda_pagan }
+	}
+
+	immediate = {
+		create_character = {
+			location = root.capital_province
+			template = RICE_vedda_generic_template
+			save_scope_as = courtier			
+		}
+		culture:vedda = {
+			save_scope_as = vedda
+		}
+		random_held_county = {
+			limit = {
+				any_county_province = {
+					geographical_region = RICE_sri_lanka_struggle_region
+				}
+			}
+			save_scope_as = county
+		}
+	}
+
+	# Work with them
+	option = {
+		name = sri_lanka.0017.a
+		trigger = {
+			OR = {
+				gold >= 50
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 50
+		scope:county = {
+			add_county_modifier = {
+				modifier = RICE_vedda_county_modifier
+				years = 10
+			}
+		}
+		if = {
+			limit = {
+				exists = struggle:RICE_sri_lanka_struggle
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_sri_lanka_struggle
+				}
+			}
+			struggle:RICE_sri_lanka_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_sri_lanka_vedda_cooperation
+					character = root
+				}
+			}
+		}
+		hidden_effect = {
+			random = {
+				chance = 90
+				scope:courtier = {
+					death = {
+						death_reason = death_vanished
+					}
+				}
+			}
+		}
+	}
+
+	# Invite them to your court
+	option = {
+		name = sri_lanka.0017.b
+		trigger = {
+			OR = {
+				gold >= 100
+				is_ai = no
+			}
+		}
+		remove_short_term_gold = 100
+		add_courtier = scope:courtier
+		add_prestige = -100
+		custom_tooltip = sri_lanka.0017.b.tooltip
+		scope:county = {
+			add_county_modifier = {
+				modifier = RICE_vedda_county_modifier
+				years = 20
+			}
+		}
+		if = {
+			limit = {
+				exists = struggle:RICE_sri_lanka_struggle
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_sri_lanka_struggle
+				}
+			}
+			struggle:RICE_sri_lanka_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_sri_lanka_vedda_cooperation
+					character = root
+				}
+			}
+		}
+	}
+	# Don't work with them
+	option = {
+		name = sri_lanka.0017.c
+		hidden_effect = {
+			random = {
+				chance = 90
+				scope:courtier = {
+					death = {
+						death_reason = death_vanished
+					}
+				}
+			}
+		}
+	}
+
+}
+
+# Vedda courtier spawn at game start
+sri_lanka.0018 = {
+	type = character_event
+	hidden = yes
+
+	immediate = {
+		create_character = {
+			employer = root
+			template = RICE_vedda_generic_template		
+		}
+	}
+
+}
+
+
+
+
+# Make culture/faith involved in Sri Lanka
+sri_lanka.0019 = {
+	type = character_event
+	title = sri_lanka.0019.t
+	desc = sri_lanka.0019.desc
+	theme = RICE_theme_sri_lanka_stupa
+
+	right_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	immediate = {
+		RICE_sri_lanka_new_culture_or_faith_involvement_effect = yes
+	}
+
+	# Ok
+	option = {
+		name = sri_lanka.0019.a
+		if = {
+			limit = {
+				has_trait = RICE_mahavihara_trait
+			}
+			custom_tooltip = RICE_sri_lanka_mahavihara_prominence_increase_major_short_tooltip
+		}
+		else_if = {
+			limit = {
+				has_trait = RICE_abhayagiri_trait
+			}
+			custom_tooltip = RICE_sri_lanka_abhayagiri_prominence_increase_major_short_tooltip
+		}
+		else_if = {
+			limit = {
+				has_trait = RICE_jetavana_trait
+			}
+			custom_tooltip = RICE_sri_lanka_jetavana_prominence_increase_major_short_tooltip
+		}
+	}
+}
+
+
+
+######################################################################################
+# 
+# SRI LANKA MONASTERIES BASIC DECISIONS AND EVENTS
+# 
+# sri_lanka.0020-sri_lanka.0039
+# 
+######################################################################################
+
+
+# Choose a school
+sri_lanka.0020 = {
+	type = character_event
+	title = sri_lanka.0020.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							OR = {
+								any_character_struggle = {
+									involvement = involved
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+								any_character_struggle = {
+									involvement = interloper
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+							}
+						}
+						any_held_county = {
+							any_county_province = {
+								geographical_region = RICE_sri_lanka_struggle_region
+							}
+						}	
+					}
+				}
+				desc = sri_lanka.0020.desc.sri_lankan
+			}
+			desc = sri_lanka.0020.desc.non_sri_lankan
+		}
+		desc = sri_lanka.0020.desc
+	}
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith:theravada = {
+			save_scope_as = theravada
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_RICE_sri_lanka_progressbars_all"
+		container = "custom_widgets_container"
+	}
+
+	option = { # Ok
+		name = sri_lanka.0020.a
+		add_trait = RICE_mahavihara_trait
+		# create_character_memory = {
+		# 	type = RICE_sri_lanka_start_patronizing_mahavihara_memory
+		# }
+		custom_tooltip = sri_lanka.0020.a.tooltip
+	}
+
+	option = { # Ok
+		name = sri_lanka.0020.b
+		add_trait = RICE_abhayagiri_trait
+		# create_character_memory = {
+		# 	type = RICE_sri_lanka_start_patronizing_abhayagiri_memory
+		# }
+		custom_tooltip = sri_lanka.0020.b.tooltip
+	}
+
+	option = { # Ok
+		name = sri_lanka.0020.c
+		add_trait = RICE_jetavana_trait
+		# create_character_memory = {
+		# 	type = RICE_sri_lanka_start_patronizing_jetavana_memory
+		# }
+		custom_tooltip = sri_lanka.0020.c.tooltip
+	}
+
+	after = {
+		if = {
+			limit = {
+				exists = struggle:RICE_sri_lanka_struggle
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_sri_lanka_struggle
+				}
+			}
+			struggle:RICE_sri_lanka_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_sri_lanka_align_with_monastery
+					character = root
+				}
+			}
+		}
+		else = {
+			custom_tooltip = sri_lanka.0020.non_sri_lankan.tooltip
+		}
+	}
+
+}
+
+
+# Choose a new school
+sri_lanka.0021 = {
+	type = character_event
+	title = sri_lanka.0021.t
+	desc = sri_lanka.0021.desc
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith:theravada = {
+			save_scope_as = theravada
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_RICE_sri_lanka_progressbars_all"
+		container = "custom_widgets_container"
+	}
+
+	option = { # Ok
+		name = sri_lanka.0021.a
+		trigger = {
+			NOT = { has_trait = RICE_mahavihara_trait }
+		}
+		if = {
+			limit = {
+				has_trait = RICE_abhayagiri_trait
+			}
+			remove_trait = RICE_abhayagiri_trait
+			custom_tooltip = sri_lanka.0021.abhayagiri.tooltip
+		}
+		else_if = {
+			limit = {
+				has_trait = RICE_jetavana_trait
+			}
+			remove_trait = RICE_jetavana_trait
+			custom_tooltip = sri_lanka.0021.jetavana.tooltip
+		}
+		add_trait_force_tooltip = RICE_mahavihara_trait
+		# create_character_memory = {
+		# 	type = RICE_sri_lanka_start_patronizing_mahavihara_memory
+		# }
+		custom_tooltip = sri_lanka.0020.a.tooltip
+	}
+
+	option = { # Ok
+		name = sri_lanka.0021.b
+		trigger = {
+			NOT = { has_trait = RICE_abhayagiri_trait }
+		}
+		if = {
+			limit = {
+				has_trait = RICE_mahavihara_trait
+			}
+			remove_trait = RICE_mahavihara_trait
+			custom_tooltip = sri_lanka.0021.mahavihara.tooltip
+		}
+		else_if = {
+			limit = {
+				has_trait = RICE_jetavana_trait
+			}
+			remove_trait = RICE_jetavana_trait
+			custom_tooltip = sri_lanka.0021.jetavana.tooltip
+		}
+		add_trait_force_tooltip = RICE_abhayagiri_trait
+		# create_character_memory = {
+		# 	type = RICE_sri_lanka_start_patronizing_abhayagiri_memory
+		# }
+		custom_tooltip = sri_lanka.0020.b.tooltip
+	}
+
+	option = { # Ok
+		name = sri_lanka.0021.c
+		trigger = {
+			NOT = { has_trait = RICE_jetavana_trait }
+		}
+		if = {
+			limit = {
+				has_trait = RICE_abhayagiri_trait
+			}
+			remove_trait = RICE_abhayagiri_trait
+			custom_tooltip = sri_lanka.0021.abhayagiri.tooltip
+		}
+		else_if = {
+			limit = {
+				has_trait = RICE_mahavihara_trait
+			}
+			remove_trait = RICE_mahavihara_trait
+			custom_tooltip = sri_lanka.0021.mahavihara.tooltip
+		}
+		add_trait_force_tooltip = RICE_jetavana_trait
+		# create_character_memory = {
+		# 	type = RICE_sri_lanka_start_patronizing_jetavana_memory
+		# }
+		custom_tooltip = sri_lanka.0020.c.tooltip
+	}
+
+	after = {
+		if = {
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_sri_lanka_struggle
+				}
+			}
+			struggle:RICE_sri_lanka_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_sri_lanka_change_monastery
+					character = root
+				}
+			}
+		}
+		else = {
+			custom_tooltip = sri_lanka.0020.non_sri_lankan.tooltip
+		}
+	}
+
+
+}
+
+
+
+
+# Support
+sri_lanka.0030 = {
+	type = character_event
+	title = sri_lanka.0030.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					religion = religion:buddhism_religion
+
+					OR = {
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							OR = {
+								any_character_struggle = {
+									involvement = involved
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+								any_character_struggle = {
+									involvement = interloper
+									is_struggle_type = RICE_sri_lanka_struggle
+								}
+							}
+						}
+						any_held_county = {
+							any_county_province = {
+								geographical_region = RICE_sri_lanka_struggle_region
+							}
+						}
+						has_global_variable = RICE_sri_lanka_ending_revived_sangha
+					}
+				}
+				desc = sri_lanka.0030.desc.buddhist
+			}
+			triggered_desc = {
+				trigger = {
+					NOT = { religion = religion:buddhism_religion }
+					OR = {
+						any_character_struggle = {
+							involvement = involved
+							is_struggle_type = RICE_sri_lanka_struggle
+						}
+						any_character_struggle = {
+							involvement = interloper
+							is_struggle_type = RICE_sri_lanka_struggle
+						}
+					}
+				}
+				desc = sri_lanka.0030.desc.non_buddhist
+			}
+			desc = sri_lanka.0030.desc.foreign
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:almsgiving
+				}
+				desc = sri_lanka.0030.desc.almsgiving
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:gavu_pillars
+				}
+				desc = sri_lanka.0030.desc.gavu_pillars
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:ritual_deposits
+				}
+				desc = sri_lanka.0030.desc.ritual_deposits
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:ambalamas
+				}
+				desc = sri_lanka.0030.desc.ambalamas
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:ordination_ceremonies
+				}
+				desc = sri_lanka.0030.desc.ordination_ceremonies
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:pali_literature
+				}
+				desc = sri_lanka.0030.desc.pali_literature
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:frontier_monks
+				}
+				desc = sri_lanka.0030.desc.frontier_monks
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:parivena_schools
+				}
+				desc = sri_lanka.0030.desc.parivena_schools
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_support_monastery_type = flag:senior_guides
+				}
+				desc = sri_lanka.0030.desc.senior_guides
+			}
+		}
+	}
+	theme = RICE_theme_sri_lanka_stupa
+	override_background = {
+		trigger = {
+			OR = {
+				var:RICE_sri_lanka_support_monastery_type = flag:gavu_pillars
+				var:RICE_sri_lanka_support_monastery_type = flag:ambalamas
+			}
+		}
+		reference = RICE_background_sri_lanka_village
+	}
+	override_background = {
+		trigger = {
+			#OR = {				
+				var:RICE_sri_lanka_support_monastery_type = flag:frontier_monks
+			#}
+		}
+		reference = RICE_background_sri_lanka_landscape
+	}
+	
+	right_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	immediate = {
+
+		if = {
+			limit = {
+				has_character_modifier = RICE_sri_lanka_aspiration_rule_sri_lanka
+			}
+			add_character_flag = RICE_sri_lanka_vijayabahu_supported_monastery
+		}
+
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith:theravada = {
+			save_scope_as = theravada
+		}
+		if = {
+			limit = {
+				OR = {
+					var:RICE_sri_lanka_support_monastery_type = flag:almsgiving
+					var:RICE_sri_lanka_support_monastery_type = flag:gavu_pillars
+					var:RICE_sri_lanka_support_monastery_type = flag:ritual_deposits
+				}
+			}
+			remove_short_term_gold = RICE_sri_lanka_support_small_cost
+			RICE_sri_lanka_monastery_prominence_gain_minor_effect = yes
+		}
+		else_if = {
+			limit = {
+				OR = {
+					var:RICE_sri_lanka_support_monastery_type = flag:ambalamas
+					var:RICE_sri_lanka_support_monastery_type = flag:ordination_ceremonies
+					var:RICE_sri_lanka_support_monastery_type = flag:pali_literature
+				}
+			}
+			remove_short_term_gold = RICE_sri_lanka_support_medium_cost
+			RICE_sri_lanka_monastery_prominence_gain_medium_effect = yes
+		}
+		else_if = {
+			limit = {
+				OR = {
+					var:RICE_sri_lanka_support_monastery_type = flag:frontier_monks
+					var:RICE_sri_lanka_support_monastery_type = flag:parivena_schools
+					var:RICE_sri_lanka_support_monastery_type = flag:senior_guides
+				}
+			}
+			remove_short_term_gold = RICE_sri_lanka_support_large_cost
+			RICE_sri_lanka_monastery_prominence_gain_major_effect = yes
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_RICE_sri_lanka_progressbars_all"
+		container = "custom_widgets_container"
+	}
+
+	option = { # Ok
+		name = {
+			text = {
+				first_valid = {
+					triggered_desc = {
+						trigger = { religion = religion:buddhism_religion }
+						desc = sri_lanka.0030.a.buddhist
+					}
+					desc = sri_lanka.0030.a.non_buddhist
+				}
+			}
+		}
+		if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:almsgiving
+			}
+			add_piety = 75
+			add_prestige = 25
+			if = {
+				limit = {
+					piety_level >= 1
+				}
+				add_prestige = RICE_sri_lanka_almsgiving_prestige_bonus
+			}
+			custom_tooltip = RICE_sri_lanka_prominence_increase_minor_tooltip
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_almsgiving
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:gavu_pillars
+			}
+			add_prestige = 75
+			add_piety = 25
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}	
+				change_county_control = RICE_sri_lanka_gavu_pillars_control_boost
+				add_county_modifier = {
+					modifier = RICE_sri_lanka_gavu_pillars
+					years = 10
+				}				
+			}
+			custom_tooltip = RICE_sri_lanka_prominence_increase_minor_tooltip
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_gavu_pillars
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:ritual_deposits
+			}
+			add_piety = 50
+			add_prestige = 50
+			if = {
+				limit = {
+					capital_county = {
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+					}
+				}
+				if = {
+					limit = {
+						capital_county = {
+							any_county_province = {
+								has_building = temple_04
+							}
+						}
+					}
+					add_piety = 100
+				}
+				else_if = {
+					limit = {
+						capital_county = {
+							any_county_province = {
+								has_building = temple_03
+							}
+						}
+					}
+					add_piety = 75
+				}
+				else_if = {
+					limit = {
+						capital_county = {
+							any_county_province = {
+								has_building = temple_02
+							}
+						}
+					}
+					add_piety = 50
+				}
+				else_if = {
+					limit = {
+						capital_county = {
+							any_county_province = {
+								has_building = temple_01
+							}
+						}
+					}
+					add_piety = 25
+				}
+			}
+			custom_tooltip = RICE_sri_lanka_prominence_increase_minor_tooltip
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_ritual_deposits
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:ordination_ceremonies
+			}
+			add_piety = 150
+			add_prestige = 50
+			if = {
+				limit = {
+					any_held_title = {
+						tier = tier_county
+						any_county_province = {
+							has_holding_type = church_holding
+						}
+					}
+				}
+				add_piety = RICE_sri_lanka_ordination_ceremonies_piety_bonus
+			}
+			custom_tooltip = RICE_sri_lanka_prominence_increase_medium_tooltip
+			every_held_title = {
+				custom = RICE_every_county
+				limit = {
+					tier = tier_county			
+				}
+				change_county_control = RICE_sri_lanka_ordination_ceremonies_control_boost
+			}
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_ordination_ceremonies
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:ambalamas
+			}
+			add_piety = 50
+			add_prestige = 150
+			custom_tooltip = RICE_sri_lanka_prominence_increase_medium_tooltip
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}	
+				add_county_modifier = {
+					modifier = RICE_sri_lanka_ambalamas
+					years = 10
+				}				
+			}
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_ambalamas
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:pali_literature
+			}
+			add_piety = 75
+			add_prestige = 75
+			dynasty ?= { add_dynasty_prestige = 20 }
+			custom_tooltip = RICE_sri_lanka_prominence_increase_medium_tooltip
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_pali_literature
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:frontier_monks
+			}
+			add_piety = 200
+			add_prestige = 100
+			custom_tooltip = RICE_sri_lanka_prominence_increase_major_tooltip
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}	
+				random_list = {
+					10 = {
+						add_county_modifier = {
+							modifier = RICE_sri_lanka_frontier_monks_wilderness
+							years = 10
+						}	
+					}
+					10 = {
+						add_county_modifier = {
+							modifier = RICE_sri_lanka_frontier_monks_non_wilderness
+							years = 10
+						}	
+					}
+				}			
+			}			
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_frontier_monks
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:parivena_schools
+			}
+			add_prestige = 200
+			add_piety = 100
+			RICE_major_lifestyle_experience_gain_effect = yes
+			custom_tooltip = RICE_sri_lanka_prominence_increase_major_tooltip
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county			
+				}
+				change_county_control = RICE_sri_lanka_parivena_schools_control_boost
+			}
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_parivena_schools
+						character = root
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:senior_guides
+			}
+			add_piety = 150
+			add_prestige = 150
+			add_character_modifier = {
+				modifier = RICE_sri_lanka_sri_lankan_monk_advisors
+				years = 10
+			}
+			custom_tooltip = RICE_sri_lanka_prominence_increase_major_tooltip
+			every_held_title = {
+				custom = RICE_every_county
+				limit = {
+					tier = tier_county			
+				}
+				random = {
+					chance = RICE_sri_lanka_support_county_chance
+					add_county_modifier = {
+						modifier = RICE_sri_lanka_sri_lankan_monks
+						years = 10
+					}
+				}
+			}
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}	
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_senior_guides
+						character = root
+					}
+				}
+			}
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				var:RICE_sri_lanka_support_monastery_type = flag:pali_literature
+			}
+			random = {
+				chance = RICE_sri_lanka_pali_literature_chance
+				custom_tooltip = sri_lanka.0032.tooltip.pali_literature
+				trigger_event = {
+					id = sri_lanka.0032
+					days = { 30 180 }
+				}
+			}
+		}	
+		if = {
+			limit = { has_variable = RICE_sri_lanka_support_monastery_type }
+			remove_variable = RICE_sri_lanka_support_monastery_type
+		}
+	}
+
+}
+
+
+# Persecute/Purify
+sri_lanka.0031 = {
+	type = character_event
+	title = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					religion = religion:buddhism_religion
+				}
+				desc = sri_lanka.0031.t.buddhist
+			}
+			desc = sri_lanka.0031.t.non_buddhist
+		}
+	}
+	desc = {
+		desc = sri_lanka.0031.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_persecute_monastery_type = flag:burn_books
+				}
+				desc = sri_lanka.0031.desc.burn_books
+			}
+			triggered_desc = {
+				trigger = {
+					religion = religion:buddhism_religion
+					var:RICE_sri_lanka_persecute_monastery_type = flag:defrock_heretics
+				}
+				desc = sri_lanka.0031.desc.defrock_heretics_buddhist
+			}
+			triggered_desc = {
+				trigger = {
+					NOT = { religion = religion:buddhism_religion }
+					var:RICE_sri_lanka_persecute_monastery_type = flag:defrock_heretics
+				}
+				desc = sri_lanka.0031.desc.defrock_heretics_non_buddhist
+			}
+			triggered_desc = {
+				trigger = {
+					religion = religion:buddhism_religion
+					var:RICE_sri_lanka_persecute_monastery_type = flag:plunder_wealth
+				}
+				desc = sri_lanka.0031.desc.plunder_wealth_buddhist
+			}
+			triggered_desc = {
+				trigger = {
+					NOT = { religion = religion:buddhism_religion }
+					var:RICE_sri_lanka_persecute_monastery_type = flag:plunder_wealth
+				}
+				desc = sri_lanka.0031.desc.plunder_wealth_non_buddhist
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_persecute_monastery_type = flag:seize_land
+				}
+				desc = sri_lanka.0031.desc.seize_land
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_persecute_monastery_type = flag:ransack_monastery
+				}
+				desc = sri_lanka.0031.desc.ransack_monastery
+			}
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					religion = religion:buddhism_religion
+				}
+				desc = sri_lanka.0031.desc.buddhist
+			}
+			triggered_desc = {
+				trigger = {
+					NOT = { religion = religion:buddhism_religion }
+				}
+				desc = sri_lanka.0031.desc.non_buddhist
+			}
+		}
+	}
+	theme = dread
+	override_background = { reference = burning_building }
+	
+	right_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith:theravada = {
+			save_scope_as = theravada
+		}
+		if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:burn_books
+			}
+			RICE_sri_lanka_monastery_prominence_all_loss_minor_effect = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:defrock_heretics
+			}
+			RICE_sri_lanka_monastery_prominence_all_loss_medium_effect = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:plunder_wealth
+			}
+			RICE_sri_lanka_monastery_prominence_all_loss_major_effect = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:seize_land
+			}
+			RICE_sri_lanka_monastery_prominence_all_loss_massive_effect = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:ransack_monastery
+			}
+			RICE_sri_lanka_monastery_prominence_all_loss_monumental_effect = yes
+		}
+	}
+
+	widget = {
+		gui = "event_window_widget_RICE_sri_lanka_progressbars_all"
+		container = "custom_widgets_container"
+	}
+
+	option = { # Ok
+		name = sri_lanka.0031.a
+		if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:burn_books
+			}
+			add_prestige = -100
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+					NOT = {
+						struggle:RICE_sri_lanka_struggle ?= {
+							is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+						}
+					}
+					religion = religion:buddhism_religion
+				}
+				add_piety = -200
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					OR = {
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							struggle:RICE_sri_lanka_struggle ?= {
+								is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+							}
+						}
+						faith = { has_doctrine = rice_theravada_purification_doctrine }
+					}
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_book_burnings_buddhist_purification
+					years = 10
+				}
+			}
+			else_if = {
+				limit = {
+					religion = religion:buddhism_religion
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_book_burnings_buddhist
+					years = 10
+				}
+			}
+			else = {
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_book_burnings_non_buddhist
+					years = 10
+				}
+			}
+			add_gold = { RICE_sri_lanka_minor_persecute_gold_gain_min RICE_sri_lanka_minor_persecute_gold_gain_max }
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}
+				change_county_control = RICE_sri_lanka_persecute_control_gain_minor
+				change_development_progress_with_overflow = RICE_sri_lanka_persecute_development_loss_minor
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_burn_books_buddhist
+						character = root
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_burn_books_non_buddhist
+						character = root
+					}
+				}
+			}
+			RICE_sri_lanka_all_monasteries_prominence_all_loss_minor_effect_tooltip = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:defrock_heretics
+			}
+			add_prestige = -200
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+					NOT = {
+						struggle:RICE_sri_lanka_struggle ?= {
+							is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+						}
+					}
+					religion = religion:buddhism_religion
+				}
+				add_piety = -400
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					OR = {
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							struggle:RICE_sri_lanka_struggle ?= {
+								is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+							}
+						}
+						faith = { has_doctrine = rice_theravada_purification_doctrine }
+					}
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_defrock_heretics_buddhist_purification
+					years = 10
+				}
+			}
+			else_if = {
+				limit = {
+					religion = religion:buddhism_religion
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_defrock_heretics_buddhist
+					years = 10
+				}
+			}
+			else = {
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_defrock_heretics_non_buddhist
+					years = 10
+				}
+			}
+			add_gold = { RICE_sri_lanka_medium_persecute_gold_gain_min RICE_sri_lanka_medium_persecute_gold_gain_max }
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}
+				change_county_control = RICE_sri_lanka_persecute_control_gain_medium
+				change_development_progress_with_overflow = RICE_sri_lanka_persecute_development_loss_medium
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_defrock_heretics_buddhist
+						character = root
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_defrock_heretics_non_buddhist
+						character = root
+					}
+				}
+			}
+			RICE_sri_lanka_all_monasteries_prominence_all_loss_medium_effect_tooltip = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:plunder_wealth
+			}
+			add_prestige = -300
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+					NOT = {
+						struggle:RICE_sri_lanka_struggle ?= {
+							is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+						}
+					}
+					religion = religion:buddhism_religion
+				}
+				add_piety = -600
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					OR = {
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							struggle:RICE_sri_lanka_struggle ?= {
+								is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+							}
+						}
+						faith = { has_doctrine = rice_theravada_purification_doctrine }
+					}
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_plunder_wealth_buddhist_purification
+					years = 10
+				}
+			}
+			else_if = {
+				limit = {
+					religion = religion:buddhism_religion
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_plunder_wealth_buddhist
+					years = 10
+				}
+			}
+			else = {
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_plunder_wealth_non_buddhist
+					years = 10
+				}
+			}
+			add_gold = { RICE_sri_lanka_major_persecute_gold_gain_min RICE_sri_lanka_major_persecute_gold_gain_max }
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}
+				change_county_control = RICE_sri_lanka_persecute_control_gain_major
+				change_development_progress_with_overflow = RICE_sri_lanka_persecute_development_loss_major
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_plunder_wealth_buddhist
+						character = root
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_plunder_wealth_non_buddhist
+						character = root
+					}
+				}
+			}
+			RICE_sri_lanka_all_monasteries_prominence_all_loss_major_effect_tooltip = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:seize_land
+			}
+			add_prestige = -400
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+					NOT = {
+						struggle:RICE_sri_lanka_struggle ?= {
+							is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+						}
+					}
+					religion = religion:buddhism_religion
+				}
+				add_piety = -800
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					OR = {
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							struggle:RICE_sri_lanka_struggle ?= {
+								is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+							}
+						}
+						faith = { has_doctrine = rice_theravada_purification_doctrine }
+					}
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_seize_land_buddhist_purification
+					years = 10
+				}
+			}
+			else_if = {
+				limit = {
+					religion = religion:buddhism_religion
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_seize_land_buddhist
+					years = 10
+				}
+			}
+			else = {
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_seize_land_non_buddhist
+					years = 10
+				}
+			}
+			add_gold = { RICE_sri_lanka_massive_persecute_gold_gain_min RICE_sri_lanka_massive_persecute_gold_gain_max }
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}
+				change_county_control = RICE_sri_lanka_persecute_control_gain_massive
+				change_development_progress_with_overflow = RICE_sri_lanka_persecute_development_loss_massive
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_seize_land_buddhist
+						character = root
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_seize_land_non_buddhist
+						character = root
+					}
+				}
+			}
+			RICE_sri_lanka_all_monasteries_prominence_all_loss_massive_effect_tooltip = yes
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_persecute_monastery_type = flag:ransack_monastery
+			}
+			add_prestige = -500
+			if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+					NOT = {
+						struggle:RICE_sri_lanka_struggle ?= {
+							is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+						}
+					}
+					religion = religion:buddhism_religion
+				}
+				add_piety = -1000
+			}
+			# Shouldn't happen with Buddhists, but put here just in case it happens somehow
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					OR = {
+						AND = {
+							exists = struggle:RICE_sri_lanka_struggle
+							struggle:RICE_sri_lanka_struggle ?= {
+								is_struggle_phase = struggle_RICE_sri_lanka_phase_purification
+							}
+						}
+						faith = { has_doctrine = rice_theravada_purification_doctrine }
+					}
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_ransack_monasteries_buddhist_purification
+					years = 10
+				}
+			}
+			else_if = {
+				limit = {
+					religion = religion:buddhism_religion
+				}
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_ransack_monasteries_buddhist
+					years = 10
+				}
+			}
+			else = {
+				add_character_modifier = {
+					modifier = RICE_sri_lanka_ransack_monasteries_non_buddhist
+					years = 10
+				}
+			}
+			add_gold = { RICE_sri_lanka_monumental_persecute_gold_gain_min RICE_sri_lanka_monumental_persecute_gold_gain_max }
+			every_held_title = {
+				custom = RICE_every_sri_lanka_county
+				limit = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_sri_lanka_struggle_region
+					}
+				}
+				change_county_control = RICE_sri_lanka_persecute_control_gain_monumental
+				change_development_progress_with_overflow = RICE_sri_lanka_persecute_development_loss_monumental
+			}
+			if = {
+				limit = {
+					religion = religion:buddhism_religion
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_ransack_monasteries_buddhist
+						character = root
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					exists = struggle:RICE_sri_lanka_struggle
+				}
+				struggle:RICE_sri_lanka_struggle ?= {
+					activate_struggle_catalyst = {
+						catalyst = catalyst_RICE_sri_lanka_ransack_monasteries_non_buddhist
+						character = root
+					}
+				}
+			}
+			RICE_sri_lanka_all_monasteries_prominence_all_loss_monumental_effect_tooltip = yes
+		}
+	}
+
+	after = {		
+		if = {
+			limit = { has_variable = RICE_sri_lanka_persecute_monastery_type }
+			remove_variable = RICE_sri_lanka_persecute_monastery_type
+		}
+	}
+
+}
+
+
+
+
+# Receive Pali literature
+
+# Kavya about devotion/enlightenment/religious
+# Pali grammatical aids
+# Doctrinal Manual
+# Histories
+# Tika/Tikas - sub-commentaries
+
+sri_lanka.0032 = {
+	type = character_event
+	title = sri_lanka.0032.t
+	desc = {
+		desc = sri_lanka.0032.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_pali_literature_type = flag:kavya_legends
+				}
+				desc = sri_lanka.0032.desc.kavya_legends
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_pali_literature_type = flag:grammatical_aid
+				}
+				desc = sri_lanka.0032.desc.grammatical_aid
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_pali_literature_type = flag:doctrinal_manual
+				}
+				desc = sri_lanka.0032.desc.doctrinal_manual
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_pali_literature_type = flag:historical_chronicle
+				}
+				desc = sri_lanka.0032.desc.historical_chronicle
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_pali_literature_type = flag:sub_commentaries
+				}
+				desc = sri_lanka.0032.desc.sub_commentaries
+			}
+		}
+	}
+	theme = culture_change
+	
+	right_portrait = {
+		character = root
+		animation = personality_content
+	}
+
+	artifact = { # To display the artifact in the event-window
+		target = scope:pali_literature
+		position = lower_center_portrait
+	}
+
+	trigger = {
+		is_ruler = yes
+		religion = religion:buddhism_religion
+		OR = {
+			has_trait = RICE_mahavihara_trait
+			has_trait = RICE_abhayagiri_trait
+			has_trait = RICE_jetavana_trait
+		}
+	}
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		random_list = {
+			10 = {
+				set_variable = {
+					name = RICE_sri_lanka_pali_literature_type
+					value = flag:kavya_legends
+				}
+				hidden_effect_new_object = {
+					create_artifact = {
+						name = RICE_sri_lanka_pali_literature_kavya_legends_name
+						description = RICE_sri_lanka_pali_literature_kavya_legends_desc
+						type = journal
+						visuals = RICE_leaf_booklet_placeholder					
+						quality = 50
+						wealth = 50
+						modifier = artifact_monthly_minor_prestige_8_modifier
+						save_scope_as = pali_literature
+					}
+					scope:pali_literature = {
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_piety_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_learning_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_learning_lifestyle_xp_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_diplomacy_lifestyle_xp_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_stress_gain_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_personal_scheme_phase_duration_add_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_zealot_vassal_opinion_2_modifier
+						}
+					}
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_sri_lanka_pali_literature_type
+					value = flag:grammatical_aid
+				}
+				hidden_effect_new_object = {
+					create_artifact = {
+						name = RICE_sri_lanka_pali_literature_grammatical_aid_name
+						description = RICE_sri_lanka_pali_literature_grammatical_aid_desc
+						type = journal
+						visuals = RICE_leaf_booklet_placeholder					
+						quality = 50
+						wealth = 50
+						modifier = artifact_learn_language_scheme_phase_duration_add_2_modifier
+						save_scope_as = pali_literature
+					}
+					scope:pali_literature = {
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_minor_prestige_5_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_learning_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_learning_lifestyle_xp_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_diplomacy_lifestyle_xp_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_piety_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_personal_scheme_phase_duration_add_3_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_diplomacy_1_modifier
+						}
+					}
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_sri_lanka_pali_literature_type
+					value = flag:doctrinal_manual
+				}
+				hidden_effect_new_object = {
+					create_artifact = {
+						name = RICE_sri_lanka_pali_literature_doctrinal_manual_name
+						description = RICE_sri_lanka_pali_literature_doctrinal_manual_desc
+						type = journal
+						visuals = RICE_leaf_booklet_placeholder					
+						quality = 50
+						wealth = 50
+						modifier = artifact_learning_2_modifier
+						save_scope_as = pali_literature
+					}
+					scope:pali_literature = {
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_minor_prestige_5_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_church_holding_build_speed_add_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_learning_lifestyle_xp_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_piety_from_buildings_mult_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_piety_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_clergy_opinion_4_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_stress_gain_2_modifier
+						}
+					}
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_sri_lanka_pali_literature_type
+					value = flag:historical_chronicle
+				}
+				hidden_effect_new_object = {
+					create_artifact = {
+						name = RICE_sri_lanka_pali_literature_historical_chronicle_name
+						description = RICE_sri_lanka_pali_literature_historical_chronicle_desc
+						type = journal
+						visuals = RICE_leaf_booklet_placeholder					
+						quality = 50
+						wealth = 50
+						modifier = artifact_monthly_minor_prestige_8_modifier
+						save_scope_as = pali_literature
+					}
+					scope:pali_literature = {
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_prestige_add_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_learning_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_learning_lifestyle_xp_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_vassal_limit_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_martial_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_short_reign_duration_mult_3_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_stewardship_1_modifier
+						}
+					}
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_sri_lanka_pali_literature_type
+					value = flag:sub_commentaries
+				}
+				hidden_effect_new_object = {
+					create_artifact = {
+						name = RICE_sri_lanka_pali_literature_sub_commentaries_name
+						description = RICE_sri_lanka_pali_literature_sub_commentaries_desc
+						type = journal
+						visuals = RICE_leaf_booklet_placeholder					
+						quality = 50
+						wealth = 50
+						modifier = artifact_monthly_learning_lifestyle_xp_2_modifier
+						save_scope_as = pali_literature
+					}
+					scope:pali_literature = {
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_minor_prestige_5_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_learning_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_stewardship_1_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_piety_from_buildings_mult_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_monthly_piety_2_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_clergy_opinion_4_modifier
+						}
+						random = {
+							chance = 30
+							add_artifact_modifier = artifact_learn_language_scheme_phase_duration_add_1_modifier
+						}
+					}
+				}
+			}
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0032.a
+		show_as_tooltip = {
+			scope:pali_literature = {
+				set_owner = {
+					target = root
+				}
+			}
+		}
+	}
+
+	after = {		
+		if = {
+			limit = { has_variable = RICE_sri_lanka_pali_literature_type }
+			remove_variable = RICE_sri_lanka_pali_literature_type
+		}
+	}
+
+}
+
+
+
+######################################################################################
+# 
+# MISC FLAVOR DECISIONS
+# 
+# sri_lanka.0040-sri_lanka.0049
+# 
+######################################################################################
+
+
+
+# Sri Lanka guardian deity decision event
+sri_lanka.0040 = {
+	type = character_event
+	title = sri_lanka.0040.t
+	desc = {
+		desc = sri_lanka.0040.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_deity_type = flag:upulvan
+				}
+				desc = sri_lanka.0040.desc.upulvan
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_deity_type = flag:kataragama
+				}
+				desc = sri_lanka.0040.desc.kataragama
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_deity_type = flag:saman
+				}
+				desc = sri_lanka.0040.desc.saman
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_deity_type = flag:pattini
+				}
+				desc = sri_lanka.0040.desc.pattini
+			}
+			triggered_desc = {
+				trigger = {
+					var:RICE_sri_lanka_deity_type = flag:natha
+				}
+				desc = sri_lanka.0040.desc.natha
+			}
+		}
+	}
+
+	theme = faith
+	override_background = { reference = ep2_holy_site_indian }
+	
+	right_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	immediate = {
+
+		change_global_variable = {
+			name = RICE_mahavihara_prominence
+			add = RICE_sri_lanka_prominence_loss_minor
+		}
+
+		change_global_variable = {
+			name = RICE_abhayagiri_prominence
+			add = RICE_sri_lanka_prominence_loss_minor
+		}
+	
+
+		change_global_variable = {
+			name = RICE_jetavana_prominence
+			add = RICE_sri_lanka_prominence_loss_minor
+		}
+
+
+
+
+
+	}
+
+	option = { # OK
+		name = sri_lanka.0040.a
+		RICE_sri_lanka_local_deities_misc_effect = yes
+		custom_tooltip = RICE_sri_lanka_mahavihara_prominence_decrease_minor_tooltip
+		custom_tooltip = RICE_sri_lanka_abhayagiri_prominence_decrease_minor_tooltip
+		custom_tooltip = RICE_sri_lanka_jetavana_prominence_decrease_minor_tooltip
+		if = {
+			limit = {
+				var:RICE_sri_lanka_deity_type = flag:upulvan
+			}
+			add_character_modifier = {
+				modifier = RICE_sri_lanka_upulvan
+				years = 10
+			}
+			if = {
+				limit = {
+					has_game_rule = RICE_historical_context_on
+				}
+				custom_description_no_bullet = {
+					text = sri_lanka.0040.upulvan.tooltip
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_deity_type = flag:kataragama
+			}
+			add_character_modifier = {
+				modifier = RICE_sri_lanka_kataragama
+				years = 10
+			}
+			if = {
+				limit = {
+					has_game_rule = RICE_historical_context_on
+				}
+				custom_description_no_bullet = {
+					text = sri_lanka.0040.kataragama.tooltip
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_deity_type = flag:saman
+			}
+			add_character_modifier = {
+				modifier = RICE_sri_lanka_saman
+				years = 10
+			}
+			if = {
+				limit = {
+					has_game_rule = RICE_historical_context_on
+				}
+				custom_description_no_bullet = {
+					text = sri_lanka.0040.saman.tooltip
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_deity_type = flag:pattini
+			}
+			add_character_modifier = {
+				modifier = RICE_sri_lanka_pattini
+				years = 10
+			}
+			if = {
+				limit = {
+					has_game_rule = RICE_historical_context_on
+				}
+				custom_description_no_bullet = {
+					text = sri_lanka.0040.pattini.tooltip
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				var:RICE_sri_lanka_deity_type = flag:natha
+			}
+			add_character_modifier = {
+				modifier = RICE_sri_lanka_natha
+				years = 10
+			}
+			if = {
+				limit = {
+					has_game_rule = RICE_historical_context_on
+				}
+				custom_description_no_bullet = {
+					text = sri_lanka.0040.natha.tooltip
+				}
+			}
+		}
+	}
+
+	after = {		
+		if = {
+			limit = { has_variable = RICE_sri_lanka_deity_type }
+			remove_variable = RICE_sri_lanka_deity_type
+		}
+	}
+
+}
+
+
+
+######################################################################################
+# 
+# RAMASETU PILGRIMAGE
+# 
+# sri_lanka.0050-sri_lanka.0069
+# 
+######################################################################################
+
+
+
+# Arrive in Ramasetu
+sri_lanka.0050 = {
+	type = activity_event
+	title = sri_lanka.0050.t
+	desc = sri_lanka.0050.desc
+	theme = RICE_theme_sri_lanka_beach
+	
+	right_portrait = root
+
+	immediate = {
+		title:b_rameshvaram = {
+			save_scope_as = ramasetu
+		}
+		# faith = {
+		# 	save_scope_as = faith
+		# }
+		# religion:hinduism_religion = { save_scope_as = hindu }
+	}
+	
+	option = { # Ok
+		name = sri_lanka.0050.a
+		trigger_event = {
+			id = sri_lanka.0051
+			days = { 4 12 }
+		}
+	}
+}
+
+
+
+# Pray at the Lingams
+sri_lanka.0051 = {
+	type = activity_event
+	title = sri_lanka.0051.t
+	desc = sri_lanka.0051.desc
+	theme = RICE_theme_sri_lanka_beach
+	
+	right_portrait = root
+	
+	option = { # Ok
+		name = sri_lanka.0051.a
+		trigger_event = {
+			id = sri_lanka.0052
+			days = { 3 9 }
+		}
+	}
+
+}
+
+# Pray at the Tirthas
+sri_lanka.0052 = {
+	type = activity_event
+	title = sri_lanka.0052.t
+	desc = sri_lanka.0052.desc
+	theme = RICE_theme_sri_lanka_beach
+	
+	right_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	
+	option = { # Ok
+		name = sri_lanka.0052.a
+		random = {
+			chance = RICE_normandy_mont_saint_michel_chance
+			custom_tooltip = sri_lanka.0051.a.tooltip
+			hidden_effect = {
+				random_list = {
+					10 = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							left_icon = ROOT
+							title = sri_lanka.0051.a.tooltip
+							add_character_modifier = {
+								modifier = RICE_sri_lanka_ramasetu_inspiration_rama
+								years = 10
+							}
+						}
+					}
+					10 = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							left_icon = ROOT
+							title = sri_lanka.0051.a.tooltip
+							add_character_modifier = {
+								modifier = RICE_sri_lanka_ramasetu_inspiration_ravana_war
+								years = 10
+							}
+						}
+					}
+					10 = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							left_icon = ROOT
+							title = sri_lanka.0051.a.tooltip
+							add_character_modifier = {
+								modifier = RICE_sri_lanka_ramasetu_inspiration_nala_nila
+								years = 10
+							}
+						}
+					}
+					10 = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							left_icon = ROOT
+							title = sri_lanka.0051.a.tooltip
+							add_character_modifier = {
+								modifier = RICE_sri_lanka_ramasetu_inspiration_vibhishana
+								years = 10
+							}
+						}
+					}
+					10 = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							left_icon = ROOT
+							title = sri_lanka.0051.a.tooltip
+							add_character_modifier = {
+								modifier = RICE_sri_lanka_ramasetu_inspiration_sita
+								years = 10
+							}
+						}
+					}
+					10 = {
+						send_interface_toast = {
+							type = event_toast_effect_good
+							left_icon = ROOT
+							title = sri_lanka.0051.a.tooltip
+							add_character_modifier = {
+								modifier = RICE_sri_lanka_ramasetu_inspiration_hanuman
+								years = 10
+							}
+						}
+					}
+				}
+			}
+		}
+		trigger_event = {
+			id = sri_lanka.0053
+			days = { 4 12 }
+		}
+	}
+}
+
+
+# Leave Ramasetu
+sri_lanka.0053 = {
+	type = activity_event
+	title = sri_lanka.0053.t
+	desc = sri_lanka.0053.desc
+	theme = RICE_theme_sri_lanka_beach
+	
+	right_portrait = root
+	
+	option = { # Ok
+		name = sri_lanka.0053.a
+		RICE_sri_lanka_ramasetu_pilgrimage_completed_log_entry_effect = yes
+	}
+
+	after = {
+		hidden_effect = {
+			scope:activity = {
+				hidden_effect = { skip_activity_phase = yes }
+			}
+		}
+	}
+
+}
+
+
+
+
+
+######################################################################################
+# 
+# SRI PADA PILGRIMAGE
+# 
+# sri_lanka.0070-sri_lanka.0089
+# 
+######################################################################################
+
+
+
+# Set off for Sri Pada
+sri_lanka.0070 = {
+	type = character_event
+	title = sri_lanka.0070.t
+	desc = sri_lanka.0070.desc
+	theme = travel_pilgrimage
+	override_background = { reference = RICE_background_sri_lanka_landscape }
+	
+	right_portrait = root
+
+	trigger = {
+		is_available_travelling = yes
+		is_landed = yes
+		exists = involved_activity
+		involved_activity = {
+			has_activity_type = activity_RICE_sri_lanka_sri_pada_pilgrimage
+		}
+	}
+
+	immediate = {
+		faith = {
+			save_scope_as = faith
+		}
+		play_music_cue = "mx_cue_epic_sacral_moment"
+	}
+	
+	option = { # Ok
+		name = sri_lanka.0070.a
+	}
+}
+
+
+# Arrive in Sri Pada
+sri_lanka.0071 = {
+	type = activity_event
+	title = sri_lanka.0071.t
+	desc = sri_lanka.0071.desc
+	theme = RICE_theme_sri_lanka_sri_pada
+	
+	right_portrait = root
+	
+	option = { # Ok
+		name = sri_lanka.0071.a
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_description_no_bullet = {
+				text = sri_lanka.0071.info
+			}
+		}
+		trigger_event = {
+			id = sri_lanka.0072
+			days = { 7 10 }
+		}
+		hidden_effect = {
+			# Event about eating vegetarian
+			random = {
+				chance = 25
+				trigger_event = {
+					id = sri_lanka.0081
+					days = { 3 5 }
+				}				
+			}
+		}	
+	}
+
+
+}
+
+# Hiking up Sri Pada
+sri_lanka.0072 = {
+	type = activity_event
+	title = sri_lanka.0072.t
+	desc = sri_lanka.0072.desc
+	theme = RICE_theme_sri_lanka_sri_pada_stairs
+	
+	right_portrait = root
+	
+	# Take it easy
+	option = { # Ok
+		name = sri_lanka.0072.a
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_sri_pada_easy_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host
+				scope:host = {
+					stress_impact = {
+						# base = miniscule_stress_impact_loss
+						lazy = miniscule_stress_impact_loss
+						patient = miniscule_stress_impact_loss
+					}
+				}
+			}
+		}
+	}
+	
+	# Don't take it easy
+	option = { # Ok
+		name = sri_lanka.0072.b
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_sri_pada_hard_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host
+				scope:host = {
+					add_prestige = 50
+					stress_impact = {
+						base = minor_stress_impact_gain
+						lazy = minor_stress_impact_gain
+						cynical = miniscule_stress_impact_gain
+					}
+				}
+			}
+		}
+	}
+
+	after = {	
+		hidden_effect = {
+			# Event about diversity
+			random = {
+				chance = 25
+				trigger_event = {
+					id = sri_lanka.0080
+					days = { 3 6 }
+				}				
+			}
+		}	
+		trigger_event = {
+			id = sri_lanka.0073
+			days = { 8 12 }
+		}
+	}
+
+}
+
+# Reaching the summit
+sri_lanka.0073 = {
+	type = activity_event
+	title = sri_lanka.0073.t
+	desc = {
+		desc = sri_lanka.0073.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					religion = { is_in_family = rf_abrahamic }
+				}
+				desc = sri_lanka.0073.desc.abrahamic
+			}
+			desc = sri_lanka.0073.desc.non_abrahamic
+		}
+	}
+	theme = RICE_theme_sri_lanka_sri_pada_stairs
+	
+	right_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	
+	option = { # Spent no money
+		name = sri_lanka.0073.a
+	}	
+	
+	option = { # Spend some money
+		name = sri_lanka.0073.b
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= 25
+			}
+		}
+		if = {
+			limit = {
+				religion = { is_in_family = rf_abrahamic }
+			}
+			scope:activity = {
+				add_activity_log_entry = {
+					key = RICE_sri_pada_donation_abrahamic_log
+					tags = { good }
+					# this line below adds the entry to the Effects section of the conclusion UI
+					show_in_conclusion = yes
+					character = scope:host
+					scope:host = {
+						add_prestige = 50
+						remove_short_term_gold = 25
+						stress_impact = {
+							cynical = miniscule_stress_impact_gain
+							greedy = minor_stress_impact_gain
+						}
+					}
+				}
+			}
+		}
+		else = {
+			scope:activity = {
+				add_activity_log_entry = {
+					key = RICE_sri_pada_donation_non_abrahamic_log
+					tags = { good }
+					# this line below adds the entry to the Effects section of the conclusion UI
+					show_in_conclusion = yes
+					character = scope:host
+					scope:host = {
+						add_piety = 50
+						remove_short_term_gold = 25
+						stress_impact = {
+							cynical = miniscule_stress_impact_gain
+							greedy = minor_stress_impact_gain
+						}
+					}
+				}
+			}
+		}
+	}
+
+	after = {		
+		trigger_event = {
+			id = sri_lanka.0074
+			days = { 6 10 }
+		}
+	}
+
+}
+
+# Going down to the summit and seeing the special tree
+sri_lanka.0074 = {
+	type = activity_event
+	title = sri_lanka.0074.t
+	desc = sri_lanka.0074.desc
+	theme = RICE_theme_sri_lanka_sri_pada
+	
+	right_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	
+	option = { # Ok
+		name = sri_lanka.0074.a
+		RICE_sri_lanka_sri_pada_pilgrimage_completed_log_entry_effect = yes
+	}
+
+	after = {
+		hidden_effect = {
+			scope:activity = {
+				hidden_effect = { skip_activity_phase = yes }
+			}
+		}
+	}
+
+}
+
+
+# Seeing people of other faiths around
+sri_lanka.0080 = {
+	type = activity_event
+	title = sri_lanka.0080.t
+	desc = sri_lanka.0080.desc
+	theme = RICE_theme_sri_lanka_sri_pada_stairs
+	
+	right_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	
+	option = { # Ok
+		name = sri_lanka.0080.a
+		add_character_modifier = {
+			modifier = RICE_sri_pada_different_faiths_respect
+			years = 10
+		}
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+		}
+	}
+
+}
+
+# Vegetarian
+sri_lanka.0081 = {
+	type = activity_event
+	title = sri_lanka.0081.t
+	desc = sri_lanka.0081.desc
+	theme = RICE_theme_sri_lanka_sri_pada_stairs
+	
+	right_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}	
+		religion:hinduism_religion = {
+			save_scope_as = hinduism
+		}	
+	}
+	
+	
+	option = { # Don't eat meat
+		name = sri_lanka.0081.a
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_sri_pada_avoided_meat_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host
+				scope:host = {
+					add_piety = 50
+					add_character_modifier = {
+						modifier = RICE_sri_pada_avoided_meat
+						years = 10
+					}
+					stress_impact = {
+						base = miniscule_stress_impact_gain
+					}
+				}
+			}
+		}
+
+	}
+	
+	option = { # Eat meat
+		name = sri_lanka.0081.b
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_sri_pada_didnt_avoid_meat_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host
+				scope:host = {
+					if = {
+						limit = {
+							religion = { is_in_family = rf_eastern }
+						}
+						add_piety = -50
+						stress_impact = {
+							zealous = minor_stress_impact_gain
+						}
+					}
+					add_prestige = 100
+				}
+			}
+		}
+
+	}
+
+}
+
+
+
+
+######################################################################################
+# 
+# SRI LANKA RELIC VENERATION
+# 
+# sri_lanka.0100-sri_lanka.0119
+# 
+######################################################################################
+
+
+# Relic veneration travel event
+sri_lanka.0100 = {
+	type = character_event
+	title = sri_lanka.0100.t
+	desc = {
+		desc = sri_lanka.0100.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+					}
+				}
+				desc = sri_lanka.0100.desc.bodhi
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+					}
+				}
+				desc = sri_lanka.0100.desc.tooth
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+					}
+				}
+				desc = sri_lanka.0100.desc.dharmadhatu
+			}
+		}
+		desc = sri_lanka.0100.desc.conclusion
+	}
+	theme = travel_pilgrimage
+	override_background = { reference = RICE_background_sri_lanka_landscape }
+	
+	right_portrait = root
+
+	trigger = {
+		is_available_travelling = yes
+		is_landed = yes
+		exists = involved_activity
+		involved_activity = {
+			has_activity_type = activity_RICE_sri_lanka_relic_veneration
+		}
+	}
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith = {
+			save_scope_as = faith
+		}
+		play_music_cue = "mx_cue_epic_sacral_moment"
+	}
+
+	option = { # Ok
+		name = sri_lanka.0100.a
+	}
+
+}
+
+
+
+# Relic veneration begins
+sri_lanka.0101 = {
+	type = activity_event
+	title = sri_lanka.0101.t
+	desc = {
+		desc = sri_lanka.0101.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+					}
+				}
+				desc = sri_lanka.0101.desc.bodhi
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+					}
+				}
+				desc = sri_lanka.0101.desc.tooth
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+					}
+				}
+				desc = sri_lanka.0101.desc.dharmadhatu
+			}
+		}
+	}
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = root
+
+	immediate = {
+		religion:buddhism_religion = {
+			save_scope_as = buddhism
+		}
+		faith = {
+			save_scope_as = faith
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0101.a
+		trigger_event = {
+			id = sri_lanka.0102
+			days = { 4 12 }
+		}
+	}
+
+}
+
+
+# Relic veneration part 1
+sri_lanka.0102 = {
+	type = activity_event
+	title = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+					}
+				}
+				desc = sri_lanka.0102.t.bodhi
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+					}
+				}
+				desc = sri_lanka.0102.t.tooth
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+					}
+				}
+				desc = sri_lanka.0102.t.dharmadhatu
+			}
+		}
+	}
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+					}
+				}
+				desc = sri_lanka.0102.desc.bodhi
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+					}
+				}
+				desc = sri_lanka.0102.desc.tooth
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+					}
+				}
+				desc = sri_lanka.0102.desc.dharmadhatu
+			}
+		}
+	}
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	option = { # Ok
+		name = {
+			trigger = {
+				involved_activity = {
+					has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+				}	
+			}
+			text = sri_lanka.0102.a.bodhi
+		}
+		name = {
+			trigger = {
+				involved_activity = {
+					has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+				}	
+			}
+			text = sri_lanka.0102.a.tooth
+		}
+		name = {
+			trigger = {
+				involved_activity = {
+					has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+				}	
+			}
+			text = sri_lanka.0102.a.dharmadhatu
+		}
+		trigger_event = {
+			id = sri_lanka.0103
+			days = { 10 15 }
+		}
+	}
+
+}
+
+
+# Relic veneration part 2
+sri_lanka.0103 = {
+	type = activity_event
+	title = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+					}
+				}
+				desc = sri_lanka.0103.t.bodhi
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+					}
+				}
+				desc = sri_lanka.0103.t.tooth
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+					}
+				}
+				desc = sri_lanka.0103.t.dharmadhatu
+			}
+		}
+	}
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+					}
+				}
+				desc = sri_lanka.0103.desc.bodhi
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+					}
+				}
+				desc = sri_lanka.0103.desc.tooth
+			}
+			triggered_desc = {
+				trigger = {
+					involved_activity = {
+						has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+					}
+				}
+				desc = sri_lanka.0103.desc.dharmadhatu
+			}
+		}
+	}
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = {
+		character = root
+		animation = happiness
+	}
+
+	option = { # Ok
+		name = {
+			trigger = {
+				involved_activity = {
+					has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_bodhi }
+				}	
+			}
+			text = sri_lanka.0103.a.bodhi
+		}
+		name = {
+			trigger = {
+				involved_activity = {
+					has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_tooth }
+				}	
+			}
+			text = sri_lanka.0103.a.tooth
+		}
+		name = {
+			trigger = {
+				involved_activity = {
+					has_activity_option = { category = special_type option = RICE_sri_lanka_relic_veneration_type_dharmadhatu }
+				}	
+			}
+			text = sri_lanka.0103.a.dharmadhatu
+		}
+		trigger_event = {
+			id = sri_lanka.0104
+			days = { 3 8 }
+		}
+	}
+
+}
+
+
+# Relic veneration ends
+sri_lanka.0104 = {
+	type = activity_event
+	title = sri_lanka.0104.t
+	desc = sri_lanka.0104.desc
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = root
+
+	immediate = {
+		RICE_sri_lanka_relic_veneration_completed_log_entry_effect = yes
+	}
+
+	option = { # Ok
+		name = sri_lanka.0104.a
+		RICE_sri_lanka_relic_veneration_monastery_prominence_log_entry_effect = yes
+	}
+
+	after = {
+		hidden_effect = {
+			scope:activity = {
+				hidden_effect = { skip_activity_phase = yes }
+			}
+		}
+	}
+
+}
+
+
+
+######################################################################################
+# 
+# FLAVOR EVENTS
+# 
+# sri_lanka.0150-sri_lanka.0199 reserved
+# 
+######################################################################################
+
+
+# Games for Pattini - ankeliya, the horn game
+sri_lanka.0150 = {
+	type = character_event
+	title = sri_lanka.0150.t
+	desc = sri_lanka.0150.desc
+	theme = tournament_grounds
+	override_background = { reference = RICE_background_sri_lanka_village }
+	
+	right_portrait = {
+		character = root
+		animation = throne_room_applaud_1
+	}
+	
+	trigger = {
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+	}
+
+	immediate = {
+		random_held_title = {			
+			limit = {
+				tier = tier_county
+				any_county_province = {
+					geographical_region = RICE_sri_lanka_struggle_region
+				}
+			}
+			save_scope_as = county
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0150.a
+		random_list = {
+			50 = {
+				desc = sri_lanka.0150.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					left_icon = ROOT
+					title = sri_lanka.0150.a.failure
+				}			
+			}
+			50 = {
+				desc = sri_lanka.0150.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					left_icon = ROOT
+					title = sri_lanka.0150.a.success
+					scope:county = {
+						add_county_modifier = {
+							modifier = RICE_sri_lanka_pattini_team_wins_ankeliya
+							years = 5
+						}
+					}
+				}			
+			}
+		}
+	}
+}
+
+# Games for Pattini - porakeliya, the coconut game
+sri_lanka.0151 = {
+	type = character_event
+	title = sri_lanka.0151.t
+	desc = sri_lanka.0151.desc
+	theme = tournament_grounds
+	override_background = { reference = RICE_background_sri_lanka_village }
+	
+	right_portrait = {
+		character = root
+		animation = throne_room_applaud_1
+	}
+	
+	trigger = {
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+	}
+
+	immediate = {
+		random_held_title = {			
+			limit = {
+				tier = tier_county
+				any_county_province = {
+					geographical_region = RICE_sri_lanka_struggle_region
+				}
+			}
+			save_scope_as = county
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0151.a
+		random_list = {
+			50 = {
+				desc = sri_lanka.0151.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					left_icon = ROOT
+					title = sri_lanka.0151.a.failure
+				}			
+			}
+			50 = {
+				desc = sri_lanka.0151.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					left_icon = ROOT
+					title = sri_lanka.0151.a.success
+					scope:county = {
+						add_county_modifier = {
+							modifier = RICE_sri_lanka_pattini_team_wins_porakeliya
+							years = 5
+						}
+					}
+				}			
+			}
+		}
+	}
+}
+
+
+# Pattini milk-mothers ceremony
+sri_lanka.0152 = {
+	type = character_event
+	title = sri_lanka.0152.t
+	desc = sri_lanka.0152.desc
+	theme = faith
+	override_background = { reference = RICE_background_sri_lanka_village }
+	
+	right_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	
+	trigger = {
+		OR = {
+			culture = culture:sinhala
+			culture = {
+				any_parent_culture_or_above = {
+					this = culture:sinhala
+				}
+			}
+		}
+		OR = { 
+			faith.religion = { is_in_family = rf_pagan }		
+			faith.religion = { is_in_family = rf_eastern }		
+		}	
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = zealous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.2
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -0.2
+			has_trait = callous
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0152.a
+		add_piety = 25
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_milk_mothers_ceremony_modifier
+			years = 10
+		}
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_description_no_bullet = {
+				text = sri_lanka.0152.info
+			}
+		}
+	}
+}
+
+
+
+
+
+# Noble commits a crime and is punished by being exiled to the Rodi caste
+sri_lanka.0153 = {
+	type = character_event
+	title = sri_lanka.0153.t
+	desc = sri_lanka.0153.desc
+	theme = dread
+	
+	left_portrait = {
+		character = root
+		animation = personality_callous
+	}
+	
+	right_portrait = {
+		character = scope:noble
+		animation = beg
+	}
+	
+	trigger = {
+		OR = {
+			culture = { has_cultural_pillar = heritage_indo_aryan }
+			culture = { has_cultural_pillar = heritage_dravidian }
+		}
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+			OR = {
+				culture = { has_cultural_pillar = heritage_indo_aryan }
+				culture = { has_cultural_pillar = heritage_dravidian }
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = forgiving
+		}
+		modifier = {
+			add = -0.2
+			has_trait = vengeful
+		}
+	}
+
+	immediate = {
+		random_held_title = {			
+			limit = {
+				tier = tier_county
+				any_county_province = {
+					geographical_region = RICE_sri_lanka_struggle_region
+				}
+				OR = {
+					culture = { has_cultural_pillar = heritage_indo_aryan }
+					culture = { has_cultural_pillar = heritage_dravidian }
+				}
+			}
+			save_scope_as = county
+		}
+		create_character = {
+			location = root.capital_province
+			template = RICE_sri_lanka_rodi_noble_template
+			save_scope_as = noble			
+		}
+	}
+
+	option = { # Sentence them to join the Rodi caste
+		name = sri_lanka.0153.a
+		add_piety = 50
+		stress_impact = {
+			trusting = miniscule_stress_impact_gain
+			forgiving = miniscule_stress_impact_gain
+		}
+		hidden_effect = {
+			scope:noble = {
+				death = {
+					death_reason = death_vanished
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = sri_lanka.0153.info
+		}
+	}
+
+	option = { # Torture them
+		name = sri_lanka.0153.b
+		add_dread = 10
+		scope:noble = {
+			death = {
+				death_reason = death_execution
+				killer = root
+			}
+		}
+		
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			just = miniscule_stress_impact_gain
+			forgiving = miniscule_stress_impact_gain
+			trusting = miniscule_stress_impact_gain
+		}
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = sri_lanka.0153.info
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0153.c
+		add_piety = -100
+		add_prestige = -100
+		every_courtier_or_guest = {
+			custom = all_courtiers_and_guests
+			add_opinion = {
+				target = root
+				modifier = disappointed_opinion
+				opinion = -15
+			}
+		}
+		add_courtier = scope:noble
+		if = {
+			limit = {
+				can_add_hook = {
+					target = scope:noble
+					type = saved_my_life_hook
+				}
+			}
+			add_hook = {
+				target = scope:noble
+				type = saved_my_life_hook
+			}
+		}
+		stress_impact = {
+			base = minor_stress_impact_gain
+			just = major_stress_impact_gain
+			vengeful = minor_stress_impact_gain
+			zealous = minor_stress_impact_gain
+		}
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = sri_lanka.0153.info
+		}
+	}
+
+}
+
+
+
+
+# Excursion to the countryside of Sri Lanka, resting at an ambalama
+sri_lanka.0154 = {
+	type = character_event
+	title = sri_lanka.0154.t
+	desc = sri_lanka.0154.desc
+	theme = RICE_theme_sri_lanka_landscape
+	
+	left_portrait = {
+		character = root
+		animation = admiration
+	}
+	
+	trigger = {
+		capital_province = {
+			geographical_region = RICE_sri_lanka_struggle_region
+		}	
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = patient
+		}
+		modifier = {
+			add = -0.2
+			has_trait = impatient
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = -0.2
+			has_trait = diligent
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0154.a
+		stress_impact = {
+			base = miniscule_stress_impact_loss
+			lazy = miniscule_stress_impact_loss
+			zealous = miniscule_stress_impact_loss
+		}
+	}
+
+}
+
+
+
+# Good relationship with Vedda in a county
+sri_lanka.0155 = {
+	type = character_event
+	title = sri_lanka.0155.t
+	desc = sri_lanka.0155.desc
+	theme = RICE_theme_sri_lanka_village
+	
+	right_portrait = {
+		character = root
+		animation = personality_content
+	}
+	
+	trigger = {
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+	}
+
+	immediate = {
+		random_held_title = {			
+			limit = {
+				tier = tier_county
+				any_county_province = {
+					geographical_region = RICE_sri_lanka_struggle_region
+				}
+			}
+			save_scope_as = county
+		}
+		culture:vedda = {
+			save_scope_as = vedda
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0155.a
+		scope:county = {
+			add_county_modifier = {
+				modifier = RICE_sri_lanka_good_relationship_with_veddas
+				years = 10
+			}
+		}
+	}
+}
+
+
+# Pirit Ceremony
+sri_lanka.0156 = {
+	type = character_event
+	title = sri_lanka.0156.t
+	desc = sri_lanka.0156.desc
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = {
+		character = root
+		animation = personality_content
+	}
+	
+	trigger = {
+		religion = religion:buddhism_religion
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = zealous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -0.2
+			has_trait = callous
+		}
+	}
+
+
+	option = { # Ok
+		name = sri_lanka.0156.a
+		add_piety = 25
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_pirit_ceremony
+			years = 10
+		}
+	}
+}
+
+
+
+
+# Sri Lankan flower offering ritual
+sri_lanka.0157 = {
+	type = character_event
+	title = sri_lanka.0157.t
+	desc = sri_lanka.0157.desc
+	theme = faith
+	override_background = { reference = relaxing_room }
+	
+	right_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+	
+	trigger = {
+		religion = religion:buddhism_religion
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = zealous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -0.2
+			has_trait = callous
+		}
+	}
+
+
+	option = { # Ok
+		name = sri_lanka.0157.a
+		add_piety = 25
+	}
+}
+
+
+
+
+
+# Some people say you should avoid heretical monasteries
+sri_lanka.0158 = {
+	type = character_event
+	title = sri_lanka.0158.t
+	desc = sri_lanka.0158.desc
+	theme = RICE_theme_sri_lanka_stupa
+	
+	right_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		religion = religion:buddhism_religion
+		OR = {
+			has_trait = RICE_mahavihara_trait
+			has_trait = RICE_abhayagiri_trait
+			has_trait = RICE_jetavana_trait
+		}
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = zealous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = generous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = greedy
+		}
+	}
+
+
+	option = { # Ok
+		name = sri_lanka.0158.a
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_respects_other_buddhist_sects
+			years = 10
+		}
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0158.b
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_avoids_heretical_buddhist_sects
+			years = 10
+		}
+		stress_impact = {
+			humble = minor_stress_impact_gain
+			calm = miniscule_stress_impact_gain
+		}
+	}
+}
+
+
+
+# Gammaduva ceremony
+sri_lanka.0159 = {
+	type = character_event
+	title = sri_lanka.0159.t
+	desc = sri_lanka.0159.desc
+	theme = RICE_theme_sri_lanka_stupa
+	
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+	
+	trigger = {
+		capital_province = {
+			geographical_region = RICE_sri_lanka_struggle_region
+		}	
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = zealous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+	}
+
+
+	option = { # Ok
+		name = sri_lanka.0159.a
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_gammaduva_ceremony_modifier
+			years = 10
+		}
+		custom_tooltip = sri_lanka.0159.info
+	}
+}
+
+
+# Buy some luxury goods brought to Sri Lanka?
+sri_lanka.0160 = {
+	type = character_event
+	title = sri_lanka.0160.t
+	desc = sri_lanka.0160.desc
+	theme = RICE_theme_sri_lanka_beach
+	
+	right_portrait = {
+		character = root
+		animation = admiration
+	}
+	
+	trigger = {
+		capital_province = {
+			geographical_region = RICE_sri_lanka_struggle_region
+		}	
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = greedy
+		}
+		modifier = {
+			add = -0.2
+			has_trait = generous
+		}
+		modifier = {
+			add = 0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = -0.2
+			has_trait = humble
+		}
+	}
+
+
+	option = { # Ok
+		name = sri_lanka.0160.a		
+		stress_impact = {
+			arrogant = miniscule_stress_impact_gain
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0160.b
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= 30
+			}
+		}
+		remove_short_term_gold = 30
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_waterproof_jars
+			years = 10
+		}	
+	}
+
+	option = { # Ok
+		name = sri_lanka.0160.c
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= 30
+			}
+		}
+		remove_short_term_gold = 30
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_precious_gems
+			years = 10
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0160.d
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= 30
+			}
+		}
+		remove_short_term_gold = 30
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_glazed_ceramics
+			years = 10
+		}
+	}
+
+}
+
+
+# Locals discover a hoard of ancient Roman coins
+sri_lanka.0161 = {
+	type = character_event
+	title = sri_lanka.0161.t
+	desc = sri_lanka.0161.desc
+	theme = RICE_theme_sri_lanka_beach
+	
+	right_portrait = {
+		character = root
+		animation = war_over_tie
+	}
+	
+	trigger = {
+		any_held_title = {
+			tier = tier_county
+			any_county_province = {
+				geographical_region = RICE_sri_lanka_struggle_region
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+	}
+
+	immediate = {
+		random_held_title = {			
+			limit = {
+				tier = tier_county
+				any_county_province = {
+					geographical_region = RICE_sri_lanka_struggle_region
+				}
+			}
+			save_scope_as = county
+		}
+	}
+
+
+	option = { # Ok
+		name = sri_lanka.0161.a
+		add_character_modifier = {
+			modifier = RICE_sri_lanka_generous_to_villagers
+			years = 10
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+			arrogant = minor_stress_impact_gain
+			arbitrary = minor_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+			callous = miniscule_stress_impact_gain
+			ambitious = miniscule_stress_impact_gain
+		}
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = sri_lanka.0161.info
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0161.b
+		add_gold = 100
+		stress_impact = {
+			generous = medium_stress_impact_gain
+			humble = minor_stress_impact_gain
+			just = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			content = miniscule_stress_impact_gain
+		}
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = sri_lanka.0161.info
+		}
+	}
+
+	option = { # Ok
+		name = sri_lanka.0161.c
+		add_gold = 50
+		add_prestige = 50
+		stress_impact = {
+			greedy = minor_stress_impact_gain
+			arrogant = miniscule_stress_impact_gain
+			arbitrary = miniscule_stress_impact_gain
+		}
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = sri_lanka.0161.info
+		}
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+

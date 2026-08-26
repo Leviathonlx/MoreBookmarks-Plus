@@ -1,0 +1,213 @@
+﻿RICE_story_cycle_north_atlantic_grand_expedition = {
+
+	on_setup = {
+		# Location
+		set_variable = {
+			name = RICE_grand_expedition_destination
+			value = story_owner.var:RICE_grand_expedition_destination_pick
+		}
+		story_owner = {
+			remove_variable = RICE_grand_expedition_destination_pick
+		}
+		# If you selected one
+		if = {
+			limit = {
+				exists = story_owner.var:RICE_expedition_leader_choice
+			}
+			set_variable = {
+				name = RICE_expedition_leader
+				value = story_owner.var:RICE_expedition_leader_choice
+			}
+			story_owner = {
+				remove_variable = RICE_expedition_leader_choice
+			}
+		}
+		#story_owner = {
+		#	add_character_flag = RICE_north_atlantic_ongoing_grand_expedition
+		#}
+	}
+
+	on_end = {
+		# Remove the trait if they still have it for some reason
+		if = {
+			limit = {
+				exists = scope:story.var:RICE_expedition_leader
+				scope:story.var:RICE_expedition_leader = {
+					has_trait = RICE_exploring_western_seas
+				}
+			}
+			scope:story.var:RICE_expedition_leader = {
+				remove_trait = RICE_exploring_western_seas
+			}
+		}
+		story_owner = {	
+			if = {
+				limit = {
+					has_character_flag = RICE_north_atlantic_ongoing_grand_expedition
+				}
+				remove_character_flag = RICE_north_atlantic_ongoing_grand_expedition
+			}
+		}
+	}
+
+	on_owner_death = {
+		if = {
+			limit = { exists = story_owner.player_heir }
+			# Should not happen, but if it does, heir returns and the expedition is prematurely canceled
+			if = {
+				limit = {
+					story_owner.player_heir = {
+						this = scope:story.var:RICE_expedition_leader
+					}
+				}
+				save_scope_as = leader
+				# Remove the planning an activity character flag
+				if = {
+					limit = {
+						story_owner.player_heir = {
+							has_character_flag = planning_an_activity
+						}
+					}
+					story_owner.player_heir = {
+						remove_character_flag = planning_an_activity
+					}
+				}
+				# Trigger the return of the expedition prematurely
+				story_owner.player_heir = {
+					trigger_event = north_atlantic.0160
+				}
+				#scope:story = { end_story = yes }
+			}
+			# Resume as normal
+			else = {
+				story_owner.player_heir = {
+					add_character_flag = { flag = RICE_north_atlantic_ongoing_grand_expedition years = 5 }
+					if = {
+						limit = {
+							exists = scope:story.var:RICE_expedition_leader
+							scope:story.var:RICE_expedition_leader = {
+								is_landed = no
+								NOT = { is_courtier_of = story_owner.player_heir }
+							}
+						}
+						add_courtier = scope:story.var:RICE_expedition_leader
+					}
+				}
+				make_story_owner = story_owner.player_heir
+			}
+		}
+		else = {
+			scope:story = { end_story = yes }
+			# GET THE EXPEDITION LEADER BACK HOME
+			# scope:story.var:RICE_expedition_leader.activity = {
+			# 	complete_activity = yes
+			# }
+		}
+	}
+
+
+	# The expedition sets sail
+	effect_group = {
+		days = 90 # { 365 1095 } # 1-3 years
+		chance = 100
+	
+		triggered_effect = {
+			trigger = {
+				NOT = { exists = var:RICE_expedition_set_sail }
+			}
+			effect = {
+				set_variable = {
+					name = RICE_expedition_set_sail
+					value = yes
+				}
+				story_owner = {
+					if = {
+						limit = {
+							exists = scope:story.var:RICE_expedition_leader
+						}
+						scope:story.var:RICE_expedition_leader = {
+							save_scope_as = leader
+						}
+					}
+					trigger_event = north_atlantic.0165 # The expedition begins
+				}
+			}
+		}
+	}
+
+
+	# The expedition successfully returns
+	effect_group = {
+		days = { 365 555 } # { 365 1095 } # 1-1.5 years
+		chance = 100
+	
+		triggered_effect = {
+			trigger = {
+				exists = var:RICE_expedition_set_sail
+				NOT = { exists = var:RICE_expedition_returns }
+			}
+			effect = {
+				set_variable = {
+					name = RICE_expedition_returns
+					value = yes
+				}
+				if = {
+					limit = {
+						exists = scope:story.var:RICE_expedition_leader
+					}
+					scope:story.var:RICE_expedition_leader = {
+						save_scope_as = leader
+					}
+				}
+				if = {
+					limit = {
+						var:RICE_grand_expedition_destination = flag:greenland
+					}
+					story_owner = {
+						trigger_event = north_atlantic.0160
+					}
+				}
+				else_if = {
+					limit = {
+						var:RICE_grand_expedition_destination = flag:americas
+					}
+					story_owner = {
+						trigger_event = north_atlantic.0166
+					}
+				}
+			}
+		}
+	}
+
+	
+	# 1.5 years self destruct in case it drags on for some reason
+	effect_group = {
+		days = 600
+		chance = 100
+
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				# Quietly re-enable the decisions to prevent weirdness
+				if = {
+					limit = {
+						var:RICE_grand_expedition_destination = flag:greenland
+						has_global_variable = RICE_north_atlantic_greenland_discovery_in_progress
+						NOT = { has_global_variable = RICE_north_atlantic_greenland_struggle_started }
+					}
+					remove_global_variable = RICE_north_atlantic_greenland_discovery_in_progress
+				}
+				else_if = {
+					limit = {
+						var:RICE_grand_expedition_destination = flag:americas
+						has_global_variable = RICE_north_atlantic_vinland_discovery_in_progress
+						NOT = { has_global_variable = RICE_north_atlantic_vinland_discovered }
+					}
+					remove_global_variable = RICE_north_atlantic_vinland_discovery_in_progress
+				}
+				end_story = yes
+			}
+		}
+	}	
+	
+}

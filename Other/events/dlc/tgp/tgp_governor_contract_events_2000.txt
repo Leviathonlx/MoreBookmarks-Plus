@@ -1,0 +1,502 @@
+﻿##########################
+# GOVERNOR CONTRACT EVENTS
+##########################
+namespace = tgp_governor_contract_event
+
+### Missing Equipment
+# Intro event
+tgp_governor_contract_event.2000 = {
+	type = character_event
+	title = tgp_governor_contract_event.2000.t
+	desc = tgp_governor_contract_event.2000.desc
+	theme = administrative
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	immediate = {
+		# Save the contract
+		random_character_active_contract = {
+			limit = {
+				has_task_contract_type = missing_equipment
+			}
+			save_scope_as = ongoing_contract
+			
+			# Save the location
+			task_contract_location = {
+				save_scope_as = robbery_location
+			}
+		}
+		
+		# Save the capital location
+		top_liege = {
+			capital_province = {
+				save_scope_as = capital_location
+			}
+		}
+	}
+	
+	option = { # Let's pay the workshops a visit.
+		name = tgp_governor_contract_event.2000.a
+		
+		# Travel to the capital and visit a workshop/production facility
+		custom_tooltip = {
+			text = tgp_governor_contract_event.2000.a_tt
+			governor_contract_travel_or_progress_effect = {
+				DESTINATION = scope:capital_location
+				ARRIVAL_EVENT = tgp_governor_contract_event.2001
+			}
+		}
+		
+		ai_chance = {
+			base = 100
+		}
+	}
+	
+	option = {
+		name = tgp_governor_contract_event.2000.b
+		
+		scope:ongoing_contract = {
+			complete_task_contract = buy_replacements
+		}
+		
+		ai_chance = {
+			base = 0
+			
+			modifier = { # The AI may take this if they have A LOT of gold
+				add = 100
+				short_term_gold >= massive_gold_value
+			}
+		}
+	}
+	
+	option = {
+		name = tgp_governor_contract_event.2000.c
+		
+		scope:ongoing_contract = {
+			complete_task_contract = failure_standard
+		}
+		
+		ai_chance = {
+			base = 0
+			
+			modifier = { # Pick this only if necessary
+				add = 100
+				is_available = no
+			}
+		}
+	}
+}
+
+# Arrival at the workshop
+tgp_governor_contract_event.2001 = {
+	type = character_event
+	title = tgp_governor_contract_event.2001.t
+	desc = tgp_governor_contract_event.2001.desc
+	theme = administrative
+	override_background = { reference = market }
+	left_portrait = {
+		character = root
+		animation = disapproval
+	}
+	right_portrait = {
+		character = scope:foreman
+		animation = reading
+	}
+	
+	immediate = {
+		# Save the contract
+		random_character_active_contract = {
+			limit = {
+				has_task_contract_type = missing_equipment
+			}
+			save_scope_as = ongoing_contract
+		}
+		
+		# Save the capital location
+		top_liege = {
+			capital_province = {
+				save_scope_as = capital_location
+			}
+		}
+		
+		# Find/create a foreman for us to talk to
+		if = {
+			limit = {
+				any_pool_character = {
+					province = scope:capital_location
+					is_physically_able_ai_adult = yes
+				}
+			}
+			random_pool_character = {
+				province = scope:capital_location
+				limit = {
+					is_physically_able_ai_adult = yes
+				}
+				save_scope_as = foreman
+			}
+		}
+		else = {
+			create_character = {
+				template = scholar_character
+				culture = scope:capital_location.county.culture
+				faith = scope:capital_location.county.faith
+				location = scope:capital_location
+				gender_female_chance = root_faith_dominant_gender_female_chance
+				save_scope_as = foreman
+			}
+		}
+		
+		# Check if you have an important relation at the imperial court
+		top_liege = {
+			if = {
+				limit = {
+					OR = {
+						has_relation_friend = root
+						has_relation_lover = root
+						is_close_or_extended_family_of = root
+						root = { has_hook = prev }
+					}
+				}
+				save_scope_as = court_relation
+			}
+			else_if = {
+				limit = {
+					cp:councillor_chancellor ?= {
+						OR = {
+							has_relation_friend = root
+							has_relation_lover = root
+							is_close_or_extended_family_of = root
+							root = { has_hook = prev }
+						}
+					}
+				}
+				cp:councillor_chancellor = { save_scope_as = court_relation }
+			}
+			else_if = {
+				limit = {
+					cp:councillor_marshal ?= {
+						OR = {
+							has_relation_friend = root
+							has_relation_lover = root
+							is_close_or_extended_family_of = root
+							root = { has_hook = prev }
+						}
+					}
+				}
+				cp:councillor_marshal = { save_scope_as = court_relation }
+			}
+			else_if = {
+				limit = {
+					cp:councillor_steward ?= {
+						OR = {
+							has_relation_friend = root
+							has_relation_lover = root
+							is_close_or_extended_family_of = root
+							root = { has_hook = prev }
+						}
+					}
+				}
+				cp:councillor_steward = { save_scope_as = court_relation }
+			}
+			else_if = {
+				limit = {
+					cp:councillor_spymaster ?= {
+						OR = {
+							has_relation_friend = root
+							has_relation_lover = root
+							is_close_or_extended_family_of = root
+							root = { has_hook = prev }
+						}
+					}
+				}
+				cp:councillor_spymaster = { save_scope_as = court_relation }
+			}
+			else_if = {
+				limit = {
+					cp:councillor_court_chaplain ?= {
+						OR = {
+							has_relation_friend = root
+							has_relation_lover = root
+							is_close_or_extended_family_of = root
+							root = { has_hook = prev }
+						}
+					}
+				}
+				cp:councillor_court_chaplain = { save_scope_as = court_relation }
+			}
+		}
+		
+		hidden_effect = { # Delay the travel until the events are resolved
+			current_travel_plan ?= {
+				delay_travel_plan = { days = 180 }
+			}
+		}
+	}
+	
+	option = { # A _clerical_ error? [relation] will hear about this...
+		name = tgp_governor_contract_event.2001.a
+		
+		trigger = {
+			exists = scope:court_relation
+		}
+		
+		custom_tooltip = {
+			text = tgp_governor_contract_event.2001.a.tt
+			trigger_event = {
+				id = tgp_governor_contract_event.2002
+			}
+		}
+		
+		ai_chance = {
+			base = 100
+		}
+	}
+	
+	option = { # Surely some additional compensation is in order?
+		name = tgp_governor_contract_event.2001.b
+		
+		duel = {
+			skill = diplomacy
+			value = 10
+			50 = { # Success
+				desc = tgp_governor_contract_event.2001.tt_success_desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				trigger_event = {
+					id = tgp_governor_contract_event.2002
+				}
+				custom_tooltip = tgp_governor_contract_event.2001.tt_success
+			}
+			50 = { # Failure
+				desc = tgp_governor_contract_event.2001.tt_failure_desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+				}
+				trigger_event = {
+					id = tgp_governor_contract_event.2003
+				}
+				custom_tooltip = tgp_governor_contract_event.2001.tt_failure
+				show_as_tooltip = { # Actual deduction is done in follow-up event
+					change_influence = medium_influence_loss
+					add_prestige = medium_prestige_loss
+				}
+			}
+		}
+		
+		stress_impact = {
+			content = medium_stress_impact_gain
+		}
+		
+		ai_chance = {
+			base = 100
+			
+			modifier = {
+				factor = 2
+				diplomacy >= good_skill_level
+			}
+			modifier = {
+				factor = 0
+				exists = scope:court_relation
+			}
+			modifier = {
+				factor = 0
+				has_trait = content
+			}
+		}
+	}
+	
+	option = { # It would be unfortunate if your incompetence became public, no?
+		name = tgp_governor_contract_event.2001.c
+		
+		duel = {
+			skill = intrigue
+			value = 10
+			50 = { # Success
+				desc = tgp_governor_contract_event.2001.tt_success_desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				trigger_event = {
+					id = tgp_governor_contract_event.2002
+				}
+				custom_tooltip = tgp_governor_contract_event.2001.tt_success
+			}
+			50 = { # Failure
+				desc = tgp_governor_contract_event.2001.tt_failure_desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+				}
+				trigger_event = {
+					id = tgp_governor_contract_event.2003
+				}
+				custom_tooltip = tgp_governor_contract_event.2001.tt_failure
+				show_as_tooltip = { # Actual deduction is done in follow-up event
+					change_influence = medium_influence_loss
+					add_prestige = medium_prestige_loss
+				}
+			}
+		}
+		
+		stress_impact = {
+			compassionate = medium_stress_impact_gain
+		}
+		
+		ai_chance = {
+			base = 0
+			
+			modifier = {
+				factor = 2
+				intrigue >= good_skill_level
+			}
+			modifier = {
+				factor = 1.2
+				has_trait = deceitful
+			}
+			modifier = {
+				factor = 0
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	option = { # Very well. Just make certain that it does.
+		name = tgp_governor_contract_event.2001.d
+		
+		scope:ongoing_contract = {
+			complete_task_contract = offered_replacements
+		}
+		
+		current_travel_plan ?= { resume_travel_plan = yes }
+		
+		ai_chance = {
+			base = 50
+			
+			modifier = {
+				factor = 2
+				has_trait = content
+			}
+		}
+	}
+}
+
+# Workship visit: Success
+tgp_governor_contract_event.2002 = {
+	type = character_event
+	title = tgp_governor_contract_event.2002.t
+	desc = tgp_governor_contract_event.2002.desc
+	theme = administrative
+	override_background = { reference = market }
+	left_portrait = {
+		character = root
+		animation = schadenfreude
+	}
+	right_portrait = {
+		character = scope:foreman
+		animation = obsequious_bow
+	}
+	
+	immediate = {
+		generate_governance_outcome_effect = { OPTIONS = 4 }
+	}
+	
+	# Special governor trait option
+	option = { # Let's secure a number of shipments in the future.
+		name = tgp_governor_contract_event.2002.a
+		
+		trigger = {
+			exists = scope:governance_option_a
+		}
+		scope:ongoing_contract = {
+			complete_task_contract = secure_future_deliveries
+		}
+		
+		ai_chance = {
+			base = 100
+		}
+	}
+	
+	option = { # Secure me your next #EMP two#! shipments.
+		name = tgp_governor_contract_event.2002.b
+		trigger = { exists = scope:governance_option_b }
+		
+		scope:ongoing_contract = {
+			complete_task_contract = demand_extra_shipment
+		}
+		
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	option = { # A monetary compensation is in order.
+		name = tgp_governor_contract_event.2002.c
+		trigger = { exists = scope:governance_option_c }
+		
+		scope:ongoing_contract = {
+			complete_task_contract = demand_gold
+		}
+		
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	option = { # Send me the best equipment you have available.
+		name = tgp_governor_contract_event.2002.d
+		trigger = { exists = scope:governance_option_d }
+		
+		scope:ongoing_contract = {
+			complete_task_contract = demand_best_equipment
+		}
+		
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	after = {
+		current_travel_plan ?= { resume_travel_plan = yes }
+	}
+}
+
+# Workship visit: Failure
+tgp_governor_contract_event.2003 = {
+	type = character_event
+	title = tgp_governor_contract_event.2003.t
+	desc = tgp_governor_contract_event.2003.desc
+	theme = administrative
+	override_background = { reference = market }
+	left_portrait = {
+		character = root
+		animation = disappointed
+	}
+	right_portrait = {
+		character = scope:foreman
+		animation = anger
+	}
+	
+	immediate = {
+	}
+	
+	option = { # Fine.
+		name = tgp_governor_contract_event.2003.a
+		
+		scope:ongoing_contract = {
+			complete_task_contract = offered_replacements
+		}
+		
+		change_influence = medium_influence_loss
+		add_prestige = medium_prestige_loss
+	}
+	
+	after = {
+		current_travel_plan ?= { resume_travel_plan = yes }
+	}
+}

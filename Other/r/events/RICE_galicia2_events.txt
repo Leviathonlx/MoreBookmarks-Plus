@@ -1,0 +1,3090 @@
+﻿###############################################################################
+# 
+# GALICIA-VOLHYNIA
+# 
+# galicia2.0000-galicia2.0019			Setup events, history events, miscellaneous events and decisions
+# galicia2.0020-galicia2.0029			Economic events (portage, cochineal, etc.)
+# galicia2.0030-galicia2.0049			Historical events/aspirations
+# galicia2.0050-galicia2.0069			Kupala Night
+# galicia2.0070-galicia2.0079			?????
+# galicia2.0080-galicia2.0099			Generic flavor events
+# 
+###############################################################################
+
+namespace = galicia2
+
+######################################################################################
+# 
+# SETUP EVENTS, HISTORY EVENTS, MISC DECISIONS
+# 
+# galicia2.0000-galicia2.0019
+# 
+######################################################################################
+
+
+# Rus culture event - choose a language
+galicia2.0001 = {
+	type = character_event
+	title = galicia2.0001.t
+	desc = {
+		desc = galicia2.0001.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:original_culture = {
+						NOT = { has_cultural_pillar = language_east_slavic }
+					}
+				}
+				desc = galicia2.0001.desc.non_east_slavic
+			}
+			desc = galicia2.0001.desc.east_slavic
+		}
+	}
+	theme = RICE_theme_slavic_gord
+
+
+	right_portrait = {
+		character = scope:rus_founder
+		animation = frontend_center_idle
+	}
+
+	immediate = {
+		RICE_rus_culture_decision_effect = yes
+	}
+
+	option = {
+		name = galicia2.0001.a
+		scope:rus_culture = {
+			set_culture_pillar = language_east_slavic
+		}
+	}
+
+	option = {
+		name = galicia2.0001.b
+		trigger = {
+			scope:original_culture = {
+				NOT = { has_cultural_pillar = language_east_slavic }
+			}
+		}
+		scope:rus_culture = {
+			set_language_from = scope:original_culture
+		}
+	}
+
+	after = {		
+		show_as_tooltip = {
+			set_culture = culture:russian
+		}
+		hidden_effect = {
+			make_rus_culture_effect = yes		
+			
+		}		
+		every_ruler = {
+			limit = {
+				OR = {
+					this = scope:rus_founder
+					culture = { has_cultural_pillar = heritage_east_slavic }
+					culture = { has_cultural_pillar = heritage_north_germanic }
+					culture = { has_cultural_pillar = heritage_balto_finnic }
+					culture = { has_cultural_pillar = heritage_volga_finnic }
+					culture = { has_cultural_pillar = heritage_baltic }
+					any_held_title = {
+						tier = tier_county
+						any_county_province = {
+							OR = {
+								geographical_region = world_europe_east
+								geographical_region = world_europe_north
+								geographical_region = world_steppe_west
+								geographical_region = world_europe_south_east
+								geographical_region = world_asia_minor
+								geographical_region = world_europe_west_germania
+							}
+						}
+					}					
+				}
+			}
+			trigger_event = galicia2.0002
+		}
+	}
+
+}
+
+# Notification event to everyone
+galicia2.0002 = {
+	type = character_event
+	title = galicia2.0002.t
+	window = fullscreen_event
+	desc = {
+		desc = galicia2.0002.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:rus_culture = {
+						has_cultural_pillar = language_east_slavic
+					}
+				}
+				desc = galicia2.0002.desc.east_slavic
+			}
+			desc = galicia2.0002.desc.non_east_slavic
+		}
+	}
+	theme = diplomacy
+	override_background = { reference = RICE_slavic_settlement }
+
+
+	# right_portrait = {
+	# 	character = scope:rus_founder
+	# 	animation = frontend_center_idle
+	# }
+
+	immediate = {
+		scope:rus_founder = {
+			show_as_tooltip = {
+				RICE_rus_culture_decision_character_effect = yes
+			}
+		}
+		custom_tooltip = RICE_rus_culture_decision_effect_tooltip_5
+	}
+
+	option = {
+		name = galicia2.0002.a
+	}
+
+	after = {
+		if = {
+			limit = {
+				is_landed = yes
+				RICE_rus_progenitor_culture_trigger = yes
+				capital_province = {
+					geographical_region = ghw_region_russia
+				}
+			}
+			trigger_event = galicia2.0003
+		}
+	}
+
+}
+
+
+# Choosing to be Rus or not
+galicia2.0003 = {
+	type = character_event
+	title = galicia2.0003.t
+	desc = galicia2.0003.desc
+	theme = RICE_theme_slavic_gord
+
+
+	right_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	option = {
+		name = galicia2.0003.a
+		show_as_tooltip = {
+			set_culture = culture:russian
+		}
+		hidden_effect = {
+			make_rus_culture_effect = yes			
+		}	
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				root.culture = { has_same_culture_heritage = scope:rus_culture }
+			}
+			modifier = {
+				add = 20
+				top_liege = scope:rus_founder
+			}
+		}
+	}
+
+	option = {
+		name = galicia2.0003.b	
+		trigger = {
+			NOT = { culture = culture:russian }
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+}
+
+# Volga-Dnieper Merchant Spawn event
+galicia2.0010 = {
+	type = character_event
+	title = galicia2.0010.t
+	desc = galicia2.0010.desc	
+	theme = stewardship_wealth_focus
+	override_background = { reference = throne_room }
+	
+	
+	right_portrait = {
+		character = scope:RICE_volga_dnieper_merchant_spawn
+		animation = steward
+	}
+	
+	trigger = {
+		capital_province = {
+			geographical_region = RICE_volga_dnieper_trade_region
+		}
+		NOT = { has_character_flag = RICE_volga_dnieper_merchant_guaranteed_spawn } # It's already guaranteed to spawn so no need to have it happen
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = -0.4
+			has_character_flag = RICE_volga_dnieper_already_spawned_merchant
+		}
+		modifier = {
+			add = 1.1
+			culture = { has_cultural_tradition = tradition_brus_river_lifeblood }
+		}
+		# modifier = {
+		# 	add = 0.75
+		# 	has_character_flag = RICE_trans_saharan_networking_boost_tiny
+		# }
+		# modifier = {
+		# 	add = 1
+		# 	has_character_flag = RICE_trans_saharan_networking_boost_small
+		# }
+		# modifier = {
+		# 	add = 1.33
+		# 	has_character_flag = RICE_trans_saharan_networking_boost_medium
+		# }
+		# modifier = {
+		# 	add = 1.66
+		# 	has_character_flag = RICE_trans_saharan_networking_boost_large
+		# }
+		# modifier = {
+		# 	add = 2
+		# 	has_character_flag = RICE_trans_saharan_networking_boost_huge
+		# }
+	}
+
+	immediate = {
+		capital_province = { save_scope_as = capital_province } #For loc.
+		add_character_flag = RICE_volga_dnieper_already_spawned_merchant
+		every_county_in_region = {
+			region = RICE_volga_dnieper_trade_merchant_region
+			add_to_list = merchant_counties
+		}
+		random_in_list = {
+			list = merchant_counties
+			weight = {
+				base = 100
+				modifier = {
+					add = -40
+					title_province = { has_holding_type = tribal_holding }
+				}
+				modifier = {
+					add = 20
+					any_county_province = {
+						has_holding_type = city_holding
+					}
+				}
+				modifier = {
+					add = 40
+					any_county_province = {
+						OR = {
+							#geographical_region = world_europe_east # Should emphasize outsiders
+							geographical_region = world_europe_north
+							geographical_region = world_europe_south_east
+							geographical_region = world_steppe_west
+							geographical_region = world_asia_minor
+							geographical_region = world_middle_east_jerusalem
+							geographical_region = world_middle_east_arabia
+						}
+					}
+				}
+				modifier = {
+					add = -40
+					culture = { has_same_culture_heritage = root.culture }
+				}
+			}
+			save_scope_as = home_county
+		}
+		scope:home_county.culture = {
+			save_scope_as = culture
+		}
+		scope:home_county.faith = {
+			save_scope_as = faith
+		}
+		create_character = {
+			location = root.location
+			template = RICE_volga_dnieper_merchant_template
+			save_scope_as = RICE_volga_dnieper_merchant_spawn
+			culture = scope:culture
+			faith = scope:faith
+		}
+
+		random_list = {
+			10 = {				
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:amber
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:honey
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:slaves
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:furs
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:weapons
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:ivory
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:textiles
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:coins
+					days = 1
+				}
+			}
+			10 = {				
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:spices
+					days = 1
+				}
+			}
+			10 = {
+				trigger = {
+					faith_forbids_alcohol_trigger = no
+				}
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:wines
+					days = 1
+				}
+			}
+			10 = {
+				set_variable = {
+					name = RICE_volga_dnieper_trade_good_type
+					value = flag:art
+					days = 1
+				}
+			}
+		}
+
+
+	}
+
+	# Okay
+	option = {
+		name = galicia2.0010.a
+		add_prestige = -150
+		pay_short_term_gold = {
+			target = scope:RICE_volga_dnieper_merchant_spawn
+			gold = RICE_merchant_hire_cost_large
+		}
+		add_courtier = scope:RICE_volga_dnieper_merchant_spawn
+		RICE_volga_dnieper_trade_deal_modifier_effect = yes
+		hidden_effect = {
+			random = {
+				chance = 50
+				RICE_generate_small_family = { CHARACTER = scope:RICE_volga_dnieper_merchant_spawn }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_trait = greedy
+			}
+			modifier = {
+				add = 10
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Don't stay, but create a trade deal
+	option = {
+		name = galicia2.0010.b
+		pay_short_term_gold = {
+			target = scope:RICE_volga_dnieper_merchant_spawn
+			gold = RICE_merchant_hire_cost_large
+		}
+		RICE_volga_dnieper_trade_deal_modifier_effect = yes
+		hidden_effect = {
+			random = {
+				chance = 75
+				scope:RICE_volga_dnieper_merchant_spawn = {
+					death = {
+						death_reason = death_disappearance
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 10
+				has_trait = greedy
+			}
+			modifier = {
+				add = 10
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Not interested
+	option = {
+		name = galicia2.0010.c
+		hidden_effect = {
+			random = {
+				chance = 75
+				scope:RICE_volga_dnieper_merchant_spawn = {
+					death = {
+						death_reason = death_disappearance
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	after = {					
+		if = {
+			limit = { has_variable = RICE_volga_dnieper_trade_good_type }
+			remove_variable = RICE_volga_dnieper_trade_good_type
+		}
+		if = {
+			limit = {
+				has_character_flag = RICE_sri_lanka_vijayabahu_built_irrigation_tank
+			}
+			remove_character_flag = RICE_sri_lanka_vijayabahu_built_irrigation_tank
+		}	
+	}
+}
+
+
+# Encounter Volga-Dnieper merchants
+galicia2.0011 = {
+	type = character_event
+	title = galicia2.0011.t
+	desc = galicia2.0011.desc
+	theme = travel_stewardship
+	
+	left_portrait = root
+	right_portrait = scope:merchant
+
+	trigger = {
+		current_travel_plan = {
+			any_entourage_character = {
+				count >= 1 
+				NOT = { this = root }
+				has_trait = RICE_volga_dnieper_merchant
+			}
+		}
+	}
+
+	immediate = {
+		current_travel_plan = {
+			random_entourage_character = {
+				limit = {
+					NOT = { this = root }
+					has_trait = RICE_volga_dnieper_merchant
+				}
+				save_scope_as = merchant
+			}
+		}		
+	}
+
+	option = { # OK
+		name = galicia2.0011.a
+		add_gold = { RICE_merchant_travel_option_gold_gain_min RICE_merchant_travel_option_gold_gain_max }
+		stress_impact = {
+			greedy = minor_stress_impact_gain
+		}
+
+		if = {
+			limit = {
+				exists = var:RICE_volga_dnieper_merchant_success_count
+				OR = {
+					var:RICE_volga_dnieper_merchant_success_count >= 10
+					# dynasty ?= {
+					# 	has_dynasty_perk = RICE_trans_saharan_trade_legacy_5
+					# }
+				}
+				NOT = { has_trait = RICE_volga_dnieper_merchant }
+			}
+			random = {
+				chance = RICE_volga_dnieper_merchant_trait_chance
+				add_trait = RICE_volga_dnieper_merchant
+				custom_tooltip = RICE_volga_dnieper_merchant_trait_gain_tooltip
+			}
+		}
+		if = {
+			limit = {
+				has_trait = RICE_volga_dnieper_merchant
+			}
+			custom_tooltip = RICE_volga_dnieper_merchant_random_trait_gain_tt
+			hidden_effect = {
+				add_trait_xp = {
+					trait = RICE_volga_dnieper_merchant
+					value = { 1 5 } 
+				}				
+			}
+		}
+
+		hidden_effect = {
+			if = {
+				limit = {
+					NOT = { exists = var:RICE_volga_dnieper_merchant_success_count }
+				}
+				set_variable = {
+					name = RICE_volga_dnieper_merchant_success_count
+					value = 1
+				}
+			}
+			else = {
+				change_variable = {
+					name = RICE_volga_dnieper_merchant_success_count
+					add = 1
+				}		
+			}
+		}
+
+		if = {
+			limit = {
+				exists = var:RICE_volga_dnieper_merchant_success_count
+				# NOT = {
+				# 	var:RICE_volga_dnieper_merchant_success_count >= 10
+				# 	# dynasty ?= {
+				# 	# 	has_dynasty_perk = RICE_trans_saharan_trade_legacy_5
+				# 	# }
+				# }
+			}
+			custom_tooltip = RICE_volga_dnieper_number_of_successes_tooltip
+		}
+	}
+
+	option = { # OK
+		name = galicia2.0011.b
+		duel = {
+			skills = { diplomacy stewardship }
+			value = decent_skill_rating
+			# Success.
+			30 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+					min = -49
+				}
+				custom_tooltip = galicia2.0011.b.success
+				show_as_tooltip = {
+					if = {
+						limit = {
+							exists = var:RICE_volga_dnieper_merchant_success_count
+							OR = {
+								var:RICE_volga_dnieper_merchant_success_count >= 10
+								# dynasty ?= {
+								# 	has_dynasty_perk = RICE_trans_saharan_trade_legacy_5
+								# }
+							}
+							NOT = { has_trait = RICE_volga_dnieper_merchant }
+						}
+						random = {
+							chance = RICE_volga_dnieper_merchant_trait_chance
+							add_trait = RICE_volga_dnieper_merchant
+							custom_tooltip = RICE_volga_dnieper_merchant_trait_gain_tooltip
+						}
+					}
+					if = {
+						limit = {
+							has_trait = RICE_volga_dnieper_merchant
+						}
+						custom_tooltip = RICE_volga_dnieper_merchant_random_trait_gain_tt
+						hidden_effect = {
+							add_trait_xp = {
+								trait = RICE_volga_dnieper_merchant
+								value = { 1 5 } 
+							}				
+						}
+					}
+				}
+				hidden_effect = {
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = galicia2.0011.b.success
+						left_icon = root
+						add_gold = { RICE_merchant_travel_option_gold_boosted_gain_min RICE_merchant_travel_option_gold_boosted_gain_max }
+						if = {
+							limit = {
+								exists = var:RICE_volga_dnieper_merchant_success_count
+								OR = {
+									var:RICE_volga_dnieper_merchant_success_count >= 10
+									# dynasty ?= {
+									# 	has_dynasty_perk = RICE_trans_saharan_trade_legacy_5
+									# }
+								}
+								NOT = { has_trait = RICE_volga_dnieper_merchant }
+							}
+							random = {
+								chance = RICE_volga_dnieper_merchant_trait_chance
+								add_trait = RICE_volga_dnieper_merchant
+								custom_tooltip = RICE_volga_dnieper_merchant_trait_gain_tooltip
+							}
+						}
+						if = {
+							limit = {
+								has_trait = RICE_volga_dnieper_merchant
+							}
+							custom_tooltip = RICE_volga_dnieper_merchant_random_trait_gain_tt
+							hidden_effect = {
+								add_trait_xp = {
+									trait = RICE_volga_dnieper_merchant
+									value = { 1 5 } 
+								}				
+							}
+						}
+					}	
+					if = {
+						limit = {
+							NOT = { exists = var:RICE_volga_dnieper_merchant_success_count }
+						}
+						set_variable = {
+							name = RICE_volga_dnieper_merchant_success_count
+							value = 1
+						}
+					}
+					else = {
+						change_variable = {
+							name = RICE_volga_dnieper_merchant_success_count
+							add = 1
+						}		
+					}					
+				}
+			}
+			# Failure.
+			70 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+					min = -49
+				}
+				custom_tooltip = galicia2.0011.b.failure
+				hidden_effect = {
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = galicia2.0011.b.failure
+						left_icon = root
+						add_prestige = -100
+						stress_impact = {
+							base = miniscule_stress_impact_gain
+							greedy = miniscule_stress_impact_gain
+							ambitious = miniscule_stress_impact_gain
+						}
+					}					
+				}
+			}
+		}
+		if = {
+			limit = {
+				exists = var:RICE_volga_dnieper_merchant_success_count
+				# NOT = {
+				# 	var:RICE_volga_dnieper_merchant_success_count >= 10
+				# 	# dynasty ?= {
+				# 	# 	has_dynasty_perk = RICE_trans_saharan_trade_legacy_5
+				# 	# }
+				# }
+			}
+			custom_tooltip = RICE_volga_dnieper_number_of_successes_tooltip
+		}		
+	}
+
+}
+
+
+#################################
+# Choose Personal Deity
+# by Artem Samarsky	
+# Adapted from Baptism of Rus
+#################################
+galicia2.0012 = {
+	type = character_event
+	title = galicia2.0012.t
+	desc = galicia2.0012.desc
+	theme = faith
+	override_background = { reference = RICE_outdoors_pagan_altar_background }
+
+	left_portrait = {
+		character = root
+		animation = prayer
+	}
+	# Perun
+	option = {
+		name = galicia2.0012.perun
+		custom_tooltip = galicia2.0012.perun.tt
+		trigger = {
+			NOT = { has_character_modifier = bhakti_slavic_perun }
+		}
+		RICE_set_bhakti_slavic_effect = { BHAKTI = bhakti_slavic_perun }
+	}
+	# Veles
+	option = {
+		name = galicia2.0012.veles
+		custom_tooltip = galicia2.0012.veles.tt
+		trigger = {
+			NOT = { has_character_modifier = bhakti_slavic_veles }
+		}
+		RICE_set_bhakti_slavic_effect = { BHAKTI = bhakti_slavic_veles }
+	}
+	# Dazhbog
+	option = {
+		name = galicia2.0012.khors_dazhbog
+		custom_tooltip = galicia2.0012.khors_dazhbog.tt
+		trigger = {
+			NOT = { has_character_modifier = bhakti_slavic_khors_dazhbog }
+		}
+		RICE_set_bhakti_slavic_effect = { BHAKTI = bhakti_slavic_khors_dazhbog }
+	}
+	#Stribog
+	option = {
+		name = galicia2.0012.stribog
+		custom_tooltip = galicia2.0012.stribog.tt
+		trigger = {
+			NOT = { has_character_modifier = bhakti_slavic_stribog }
+		}
+		RICE_set_bhakti_slavic_effect = { BHAKTI = bhakti_slavic_stribog }
+	}
+	# Mokosh
+	option = {
+		name = galicia2.0012.mokosh
+		custom_tooltip = galicia2.0012.mokosh.tt
+		trigger = {
+			NOT = { has_character_modifier = bhakti_slavic_mokosh }
+		}
+		RICE_set_bhakti_slavic_effect = { BHAKTI = bhakti_slavic_mokosh }
+	}
+	# Simargl
+	option = {
+		name = galicia2.0012.simargl
+		custom_tooltip = galicia2.0012.simargl.tt
+		trigger = {
+			NOT = { has_character_modifier = bhakti_slavic_simargl }
+		}
+		RICE_set_bhakti_slavic_effect = { BHAKTI = bhakti_slavic_simargl }
+	}
+	# Opt-Out
+	option = {
+		name = galicia2.0012.optout
+		flavor = galicia2.0012.flavor
+		add_gold = {
+			value = 10
+			add = minor_gold_value
+		}
+		add_piety = 100
+		ai_chance = {
+			base = 0
+		}		
+	}
+}
+
+
+
+
+
+######################################################################################
+# 
+# ECONOMIC EVENTS (PORTAGE, COCHINEAL, ETC.)
+# 
+# galicia2.0020-galicia2.0029
+# 
+######################################################################################
+
+
+# Cochineal decision event
+galicia2.0020 = {
+	type = character_event
+	title = galicia2.0020.t
+	desc = galicia2.0020.desc
+	theme = stewardship_wealth_focus
+	override_background = { reference = RICE_background_cochineal }
+
+
+	right_portrait = {
+		character = root
+		animation = frontend_right_idle
+	}
+
+	option = {
+		name = galicia2.0020.a
+		RICE_galicia2_cochineal_decision_effect = yes
+	}
+
+}
+
+# Erect nonchristian portage stones
+galicia2.0021 = {
+	type = character_event
+	title = galicia2.0021.t
+	desc = galicia2.0021.desc
+	theme = RICE_theme_volhynia_countryside
+
+
+	right_portrait = {
+		character = root
+		animation = war_over_tie
+	}
+
+	option = {
+		name = galicia2.0021.a
+		RICE_portage_erect_stones_nonchristian_effect = yes
+	}
+
+}
+
+# Erect christian portage crosses
+galicia2.0022 = {
+	type = character_event
+	title = galicia2.0022.t
+	desc = galicia2.0022.desc
+	theme = RICE_theme_volhynia_countryside
+
+
+	right_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	option = {
+		name = galicia2.0022.a
+		RICE_portage_erect_stones_christian_effect = yes
+	}
+
+}
+
+# Levy boat builders
+galicia2.0023 = {
+	type = character_event
+	title = galicia2.0023.t
+	desc = galicia2.0023.desc
+	theme = RICE_theme_volhynia_countryside
+
+
+	right_portrait = {
+		character = root
+		animation = personality_callous
+	}
+
+	option = {
+		name = galicia2.0023.a
+		RICE_portage_levy_boat_builders_effect = yes
+	}
+
+}
+
+# Maintain hauling sites
+galicia2.0024 = {
+	type = character_event
+	title = galicia2.0024.t
+	desc = galicia2.0024.desc
+	theme = RICE_theme_volhynia_countryside
+
+
+	right_portrait = {
+		character = root
+		animation = personality_content
+	}
+
+	option = {
+		name = galicia2.0024.a
+		RICE_portage_maintain_hauling_sites_effect = yes
+	}
+
+}
+
+# Promoting merchants
+galicia2.0025 = {
+	type = character_event
+	title = galicia2.0025.t
+	desc = galicia2.0025.desc
+	theme = RICE_theme_volhynia_countryside
+
+
+	right_portrait = {
+		character = root
+		animation = personality_greedy
+	}
+
+	option = {
+		name = galicia2.0025.a
+		RICE_portage_promote_merchants_effect = yes
+	}
+
+}
+
+# Reinforcing river forts
+galicia2.0026 = {
+	type = character_event
+	title = galicia2.0026.t
+	desc = galicia2.0026.desc
+	theme = RICE_theme_slavic_gord
+
+
+	right_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	option = {
+		name = galicia2.0026.a
+		RICE_portage_reinforce_river_forts_effect = yes
+	}
+
+}
+
+# Reinforcing river forts
+galicia2.0027 = {
+	type = character_event
+	title = galicia2.0027.t
+	desc = galicia2.0027.desc
+	theme = RICE_theme_slavic_gord
+
+
+	right_portrait = {
+		character = root
+		animation = personality_forgiving
+	}
+
+	option = {
+		name = galicia2.0027.a
+		RICE_portage_encourage_settlement_effect = yes
+	}
+
+}
+
+######################################################################################
+# 
+# HISTORICAL EVENTS/ASPIRATIONS
+# 
+# galicia2.0030-galicia2.0049
+# 
+######################################################################################
+
+
+# Oleg Yaroslavich intro
+galicia2.0030 = {
+	type = character_event
+	title = galicia2.0030.t
+	desc = galicia2.0030.desc
+	theme = intrigue
+	override_background = { reference = RICE_background_halych_castle }
+
+	left_portrait = {
+		character = scope:vladimir
+		animation = war_attacker
+	}
+	right_portrait = {
+		character = scope:oleg
+		animation = war_defender
+	}
+
+	lower_right_portrait = scope:yaroslav
+	lower_left_portrait = scope:anastasia
+
+	immediate = {
+
+		character:222506 = { # Oleg
+			save_scope_as = oleg
+		}		
+		character:222504 = { # Vladimir
+			save_scope_as = vladimir
+		}		
+		character:222500 = { # Yaroslav big brain
+			save_scope_as = yaroslav
+		}		
+		character:RICE_galicia2_005 = { # Anastasia
+			save_scope_as = anastasia
+		}
+		
+		scope:vladimir = {		
+			set_relation_rival = {
+				target = scope:oleg
+				reason = RICE_rival_galicia2_brotherly_competition
+			}
+		}
+
+		show_as_tooltip = {
+			character:222506 = {
+				add_character_modifier = {
+					modifier = RICE_galicia2_aspiration_secure_rule_against_galician_boyars
+				}
+			}
+		}
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0030.a
+	}
+}
+
+
+
+# Oleg Yaroslavich Aspiration Fulfilled
+galicia2.0031 = {
+	type = character_event
+	title = galicia2.0031.t
+	desc = galicia2.0031.desc
+	theme = intrigue
+	override_background = { reference = RICE_background_halych_castle }
+
+	right_portrait = {
+		character = scope:oleg
+		animation = war_over_win
+	}
+
+	lower_right_portrait = scope:vladimir
+
+	immediate = {
+
+		play_music_cue = "mx_cue_epic_sacral_moment"
+
+		RICE_historical_aspiration_fulfilled_effect = yes
+
+		character:222506 = { # Oleg
+			save_scope_as = oleg
+		}		
+		character:222504 = { # Vladimir
+			save_scope_as = vladimir
+		}		
+		# character:222500 = { # Yaroslav big brain
+		# 	save_scope_as = 222500
+		# }		
+		# character:RICE_galicia2_005 = { # Anastasia
+		# 	save_scope_as = anastasia
+		# }
+
+		hidden_effect = {
+			if = {
+				limit = {
+					has_character_modifier = RICE_galicia2_aspiration_secure_rule_against_galician_boyars
+				}
+				remove_character_modifier = RICE_galicia2_aspiration_secure_rule_against_galician_boyars
+			}
+		}
+
+		# Main Objective Reward
+		add_legitimacy = medium_legitimacy_gain
+		add_prestige = RICE_aspiration_large_resource_bonus
+		add_intrigue_lifestyle_perk_points = 1
+		if = {
+			limit = {
+				has_character_modifier = RICE_galicia2_oleg_negative_modifier
+			}
+			remove_character_modifier = RICE_galicia2_oleg_negative_modifier
+		}
+
+		# Bonus Objective Reward(s)
+		if = {
+			limit = {
+				piety_level >= 3
+			}
+			add_diplomacy_lifestyle_perk_points = 1
+		}
+		if = {
+			limit = {
+				legitimacy_level >= 5
+			}
+			spawn_army = {
+				name = event_troop_default_name
+				levies = 350
+				men_at_arms = {
+					type = light_footmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = bowmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = druzhina
+					stacks = 2
+				}
+				men_at_arms = {
+					type = pikemen_unit
+					stacks = 1
+				}
+				men_at_arms = {
+					type = light_horsemen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = armored_horsemen
+					stacks = 1
+				}
+				location = root.capital_province
+				origin = root.capital_province
+			}
+		}
+
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0031.a
+		add_character_modifier = {
+			modifier = RICE_galicia2_oleg_positive_modifier_1
+		}
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0031.b
+		add_character_modifier = {
+			modifier = RICE_galicia2_oleg_positive_modifier_2
+		}
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0031.c
+		add_character_modifier = {
+			modifier = RICE_galicia2_oleg_positive_modifier_3
+		}
+	}
+
+
+}
+
+
+
+
+# Roman Mstislavich intro
+galicia2.0032 = {
+	type = character_event
+	title = galicia2.0032.t
+	desc = galicia2.0032.desc
+	theme = martial
+	override_background = { reference = RICE_background_halych_castle }
+
+	
+	right_portrait = {
+		character = scope:roman
+		animation = marshal
+	}
+
+	immediate = {
+
+		character:222520 = { # Roman Mstislavich
+			save_scope_as = roman
+		}		
+		
+		show_as_tooltip = {
+			character:222520 = {
+				add_character_modifier = {
+					modifier = RICE_galicia2_aspiration_unify_galicia_and_volhynia
+				}
+			}
+		}
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0032.a
+	}
+}
+
+
+
+
+# Roman Mstislavich/Roman the Great Aspiration Fulfilled
+galicia2.0033 = {
+	type = character_event
+	title = galicia2.0033.t
+	window = big_event_window
+	desc = {
+		desc = galicia2.0033.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:wife.dynasty = scope:emperor.dynasty
+				}
+				desc = galicia2.0033.desc.princess
+			}
+			desc = galicia2.0033.desc.noble
+		}
+	}
+	theme = diplomacy_foreign_affairs_focus
+	override_background = { reference = RICE_background_halych_castle }
+
+	left_portrait = {
+		character = scope:emperor
+		animation = acknowledging
+	}
+
+	right_portrait = {
+		character = scope:roman
+		animation = personality_bold
+	}
+
+	lower_right_portrait = {
+		character = scope:wife
+		trigger = { exists = scope:wife }
+	}
+
+	immediate = {
+
+		play_music_cue = "mx_cue_epic_sacral_moment"
+
+		RICE_historical_aspiration_fulfilled_effect = yes
+
+		hidden_effect = {
+			if = {
+				limit = {
+					has_character_modifier = RICE_galicia2_aspiration_unify_galicia_and_volhynia
+				}
+				remove_character_modifier = RICE_galicia2_aspiration_unify_galicia_and_volhynia
+			}
+		}
+
+		# Main Objective Reward
+		add_legitimacy = medium_legitimacy_gain
+		add_prestige = RICE_aspiration_large_resource_bonus
+		add_diplomacy_lifestyle_perk_points = 1
+		scope:roman = {
+			add_opinion = {
+				modifier = event_negotiated_alliance_opinion
+				target = scope:emperor
+			}
+			reverse_add_opinion = {
+				modifier = event_negotiated_alliance_opinion
+				target = scope:emperor
+			}
+			create_alliance = {
+				target = scope:emperor
+				allied_through_owner = scope:roman
+				allied_through_target = scope:emperor
+			}
+		}
+
+		# Bonus Objective Reward(s)
+		if = {
+			limit = {
+				completely_controls = title:c_kiev
+			}
+			add_martial_lifestyle_perk_points = 1
+		}
+		if = {
+			limit = {
+				legitimacy_level >= 5
+			}
+			spawn_army = {
+				name = event_troop_default_name
+				levies = 350
+				men_at_arms = {
+					type = light_footmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = bowmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = druzhina
+					stacks = 2
+				}
+				men_at_arms = {
+					type = pikemen_unit
+					stacks = 1
+				}
+				men_at_arms = {
+					type = light_horsemen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = armored_horsemen
+					stacks = 1
+				}
+				location = root.capital_province
+				origin = root.capital_province
+			}
+		}
+
+		# Possibly divorce wife
+		if = {
+			limit = {
+				allowed_more_spouses = no
+				is_married = yes
+			}
+			random_spouse = {
+				save_scope_as = old_spouse
+			}
+		}
+
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0033.a
+		add_legitimacy = medium_legitimacy_gain
+		add_prestige = RICE_aspiration_small_resource_bonus
+		divorce_effect = {
+			DIVORCER = root
+			DIVORCEE = scope:old_spouse
+		}
+		marry = scope:wife
+		scope:emperor = {
+			trigger_event = galicia2.0035
+		}
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0033.b
+		trigger = {
+			exists = scope:old_spouse
+		}
+		scope:old_spouse = {
+			add_opinion = {
+				modifier = relieved_opinion
+				target = root
+				opinion = 10
+			}
+		}
+		scope:emperor = {
+			trigger_event = galicia2.0036
+		}
+	}
+
+	# Ok
+	option = {
+		name = galicia2.0033.c
+		trigger = {
+			NOT = { exists = scope:old_spouse }
+		}
+		scope:emperor = {
+			trigger_event = galicia2.0036
+		}
+	}
+
+
+}
+
+
+# Roman the Great aspiration fulfilled - ping event to the Byzantine Emperor
+galicia2.0034 = {
+	type = character_event
+	title = galicia2.0034.t
+	window = big_event_window
+	desc = {
+		desc = galicia2.0034.desc
+		triggered_desc = {
+			trigger = {
+				exists = scope:princess
+			}
+			desc = galicia2.0034.desc.princess
+		}
+	}
+	theme = diplomacy_foreign_affairs_focus
+
+	left_portrait = {
+		character = scope:emperor
+		animation = emotion_thinking_scepter
+	}
+
+	right_portrait = {
+		character = scope:roman
+		animation = personality_bold
+	}
+
+	lower_left_portrait = {
+		character = scope:noble
+		trigger = { exists = scope:noble }
+	}
+
+	lower_right_portrait = {
+		character = scope:princess
+		trigger = { exists = scope:princess }
+	}
+
+	immediate = {
+
+		play_music_cue = "mx_the_rus_merchant_ship"
+
+		save_scope_as = emperor
+
+		character:222520 = {
+			save_scope_as = roman
+		}
+
+		if = {
+			limit = {
+				exists = dynasty
+				dynasty = {
+					any_dynasty_member = {
+						is_playable_character = no
+						is_female = yes
+						is_married = no
+						is_betrothed = no
+						can_marry_trigger = yes
+						age >= 16
+						age <= 42
+						# Don't want to steal people from a player's court, unless it is the Roman Emperor themselves
+						liege = {
+							is_ai = yes
+							NOT = { has_title = title:e_byzantium }
+						}
+					}
+				}
+			}
+			dynasty = {
+				every_dynasty_member = {
+					limit = {
+						is_playable_character = no
+						is_female = yes
+						is_married = no
+						is_betrothed = no
+						can_marry_trigger = yes
+						age >= 16
+						age <= 42
+						liege = {
+							is_ai = yes
+							NOT = { has_title = title:e_byzantium }
+						}				
+					}
+					add_to_list = princess_candidates
+				}
+			}
+			random_in_list = {
+				list = princess_candidates
+				weight = {
+					base = 50
+					# Try to pick someone younger
+					modifier = {
+						age <= 30
+						add = 10
+					}
+					# Make someone more directly related to you more likely
+					modifier = {
+						is_close_or_extended_family_of = scope:emperor
+						add = 20
+					}
+					# Make someone more directly related to you more likely
+					modifier = {
+						is_close_family_of = scope:emperor
+						add = 20
+					}
+					# Someone with diplomatic skills is a better candidate
+					modifier = {
+						learning >= extremely_high_skill_rating
+						add = 5
+					}
+					modifier = {
+						learning >= high_skill_rating
+						add = 5
+					}
+					modifier = {
+						learning >= medium_skill_rating
+						add = 5
+					}
+					modifier = {
+						learning <= mediocre_skill_rating
+						add = -5
+					}
+					modifier = {
+						learning <= low_skill_rating
+						add = -5
+					}
+					# Someone with attractive traits
+					modifier = {
+						has_trait = beauty_good
+						add = 15
+					}
+					modifier = {
+						has_trait = beauty_bad
+						add = -15
+					}
+				}
+				save_scope_as = princess
+			}
+		}
+
+		if = {
+			limit = {
+				any_vassal_or_below = {
+					any_courtier = {
+						is_playable_character = no
+						is_female = yes
+						is_married = no
+						is_betrothed = no
+						can_marry_trigger = yes
+						age >= 16
+						age <= 42
+						# Don't want to steal people from a player's court
+						liege = {
+							is_ai = yes
+						}
+						is_lowborn = no
+					}
+				}
+			}
+			
+			every_vassal_or_below = {
+				every_courtier = {
+					limit = {
+						is_playable_character = no
+						is_female = yes
+						is_married = no
+						is_betrothed = no
+						can_marry_trigger = yes
+						age >= 16
+						age <= 40
+						# Don't want to steal people from a player's court
+						liege = {
+							is_ai = yes
+						}		
+						is_lowborn = no			
+					}
+					add_to_list = noble_candidates
+				}
+			}
+			random_in_list = {
+				list = noble_candidates
+				weight = {
+					base = 50
+					# Try to pick someone younger
+					modifier = {
+						age <= 30
+						add = 10
+					}
+					# Make someone more directly related to you more likely
+					modifier = {
+						is_close_or_extended_family_of = root
+						add = 50
+					}
+					# Prioritize women whose family owns some territory
+					modifier = {
+						any_close_or_extended_family_member = {
+							is_landed_or_landless_administrative = yes
+						}
+						add = 50
+					}
+					# Someone with diplomatic skills is a better candidate
+					modifier = {
+						learning >= extremely_high_skill_rating
+						add = 5
+					}
+					modifier = {
+						learning >= high_skill_rating
+						add = 5
+					}
+					modifier = {
+						learning >= medium_skill_rating
+						add = 5
+					}
+					modifier = {
+						learning <= mediocre_skill_rating
+						add = -5
+					}
+					modifier = {
+						learning <= low_skill_rating
+						add = -5
+					}
+					# Someone with attractive traits
+					modifier = {
+						has_trait = beauty_good
+						add = 15
+					}
+					modifier = {
+						has_trait = beauty_bad
+						add = -15
+					}
+				}
+				save_scope_as = noble
+			}
+		}
+
+		# If there is no valid noblewoman, generate one
+		else = {
+			create_character = {
+				location = root.location
+				template = RICE_byzantine_noblewoman_template
+				save_scope_as = noble
+			}
+		}
+
+
+	}
+
+	# Send the princess
+	option = {
+		name = galicia2.0034.a
+		trigger = {
+			exists = scope:princess
+		}
+		scope:princess = {
+			save_scope_as = wife
+		}
+		show_as_tooltip = {
+			scope:roman = {
+				add_opinion = {
+					modifier = event_negotiated_alliance_opinion
+					target = scope:emperor
+				}
+				reverse_add_opinion = {
+					modifier = event_negotiated_alliance_opinion
+					target = scope:emperor
+				}
+				create_alliance = {
+					target = scope:emperor
+					allied_through_owner = scope:roman
+					allied_through_target = scope:emperor
+				}
+			}
+		}
+		hidden_effect = {
+			scope:noble = {
+				death = {
+					death_reason = death_vanished
+				}
+			}
+		}
+		custom_tooltip = galicia2.0034.tooltip
+		# AI tends to favor doing this option
+		ai_chance = {
+			base = 175
+		}
+	}
+
+	# Send the noblewoman
+	option = {
+		name = galicia2.0034.b
+		scope:noble = {
+			save_scope_as = wife
+		}
+		show_as_tooltip = {
+			scope:roman = {
+				add_opinion = {
+					modifier = event_negotiated_alliance_opinion
+					target = scope:emperor
+				}
+				reverse_add_opinion = {
+					modifier = event_negotiated_alliance_opinion
+					target = scope:emperor
+				}
+				create_alliance = {
+					target = scope:emperor
+					allied_through_owner = scope:roman
+					allied_through_target = scope:emperor
+				}
+			}
+		}
+		custom_tooltip = galicia2.0034.tooltip
+		ai_chance = {
+			base = 25
+		}
+	}
+
+	# Don't send anyone
+	# option = {
+	# 	name = galicia2.0034.c
+	# 	trigger = {
+	# 		is_ai = no
+	# 		scope:roman = {
+	# 			is_ai = no
+	# 		}
+	# 	}
+	# 	hidden_effect = {
+	# 		scope:noble = {
+	# 			death = {
+	# 				death_reason = death_vanished
+	# 			}
+	# 		}
+	# 	}
+	# }
+
+	after = {
+		scope:roman = {
+			trigger_event = galicia2.0033
+		}
+	}
+
+
+}
+
+
+
+# Emperor is notified that Roman has decided to marry the offered princess/noble
+galicia2.0035 = {
+	type = character_event
+	title = galicia2.0035.t
+	window = big_event_window
+	desc = galicia2.0035.desc
+	theme = diplomacy_foreign_affairs_focus
+
+	left_portrait = {
+		character = scope:emperor
+		animation = scepter
+	}
+
+	right_portrait = {
+		character = scope:roman
+		animation = obsequious_bow
+	}
+
+	lower_right_portrait = {
+		character = scope:wife
+		trigger = { exists = scope:wife }
+	}
+
+	
+	# Ok
+	option = {
+		name = galicia2.0035.a
+	}
+}
+
+
+# Emperor is notified that Roman has decided not to marry the offered princess/noble
+galicia2.0036 = {
+	type = character_event
+	title = galicia2.0036.t
+	window = big_event_window
+	desc = {
+		desc = galicia2.0036.desc
+			triggered_desc = {
+				trigger = {
+					scope:roman = {
+						is_married = yes
+					}
+				}
+				desc = galicia2.0036.desc.wife
+			}
+			desc = galicia2.0036.desc.conclusion
+	}
+	theme = diplomacy_foreign_affairs_focus
+
+	left_portrait = {
+		character = scope:emperor
+		animation = scepter
+	}
+
+	right_portrait = {
+		character = scope:roman
+		animation = obsequious_bow
+	}
+
+	lower_right_portrait = {
+		character = scope:wife
+		trigger = { exists = scope:wife }
+	}
+
+	
+	# Ok
+	option = {
+		name = galicia2.0036.a
+	}
+}
+
+# Yaroslav dies
+galicia2.0040 = {
+	type = character_event
+	window = duel_event
+	title = galicia2.0040.t
+	desc = {
+		desc = galicia2.0040.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					root = scope:vladimir
+				}
+				desc = galicia2.0040.desc.vladimir
+			}
+			desc = galicia2.0040.desc.oleg
+		}
+	}
+	theme = intrigue
+	override_background = { reference = RICE_background_halych_castle }
+
+
+	left_portrait = {
+		character = scope:vladimir
+		animation = spymaster
+	}
+
+	right_portrait = {
+		character = scope:oleg
+		animation = aggressive_sword
+	}
+
+	#lower_left_portrait = scope:anastasia
+	#lower_right_portrait = scope:yaroslav
+
+	immediate = {
+		character:222500 = {
+			save_scope_as = yaroslav
+		}
+		character:222504 = {
+			save_scope_as = vladimir
+		}
+		character:222506 = {
+			save_scope_as = oleg
+		}
+		character:RICE_galicia2_005 = {
+			save_scope_as = anastasia
+		}
+		if = {
+			limit = {
+				root = scope:vladimir
+			}
+			RICE_galicia2_yaroslav_death_vladimir_effect = yes
+		}
+		else = {
+			show_as_tooltip = {
+				scope:vladimir = {
+					RICE_galicia2_yaroslav_death_vladimir_effect = yes
+				}
+			}
+		}
+
+		scope:vladimir = {
+			every_held_title = {
+				add_to_list = vladimir_titles
+			}
+		}
+
+		scope:oleg = {
+			every_held_title = {
+				add_to_list = oleg_titles
+			}
+		}
+
+		if = {
+			limit = {
+				root = scope:oleg
+			}
+			every_in_list = {
+				list = vladimir_titles	
+				scope:oleg = {
+					add_pressed_claim = prev
+				}
+			}
+		}
+		else = {
+			show_as_tooltip = {				
+				every_in_list = {
+					list = vladimir_titles
+					scope:oleg = {
+						add_pressed_claim = prev
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				root = scope:vladimir
+			}
+			every_in_list = {
+				list = oleg_titles	
+				scope:vladimir = {
+					add_pressed_claim = prev
+				}
+			}
+		}
+		else = {
+			show_as_tooltip = {				
+				every_in_list = {
+					list = oleg_titles
+					scope:vladimir = {
+						add_pressed_claim = prev
+					}
+				}
+			}
+		}
+
+	}
+
+	option = {
+		name = galicia2.0040.a
+	}
+
+}
+
+
+
+
+
+
+######################################################################################
+# 
+# KUPALA NIGHT
+# 
+# galicia2.0050-galicia2.0069
+# 
+######################################################################################
+
+
+# Kupala Night preparations
+galicia2.0050 = {
+	type = activity_event
+	title = galicia2.0050.t
+	desc = {
+		desc = galicia2.0050.desc
+		triggered_desc = {
+			trigger = {
+				NOT = { religion = { is_in_family = rf_pagan } }
+				NOT = { faith = { has_doctrine = tenet_unreformed_syncretism } }
+				NOT = { faith = { has_doctrine = doctrine_pluralism_pluralistic } }
+			}
+			desc = galicia2.0050.desc.non_pagan
+		}	
+	}
+	theme = RICE_theme_slavic_gord
+	
+	right_portrait = root
+	
+	option = { # Ok
+		name = galicia2.0050.a
+		trigger_event = {
+			id = galicia2.0051
+			days = { 3 5 }
+		}	
+	}
+}
+
+
+# Kupala Night starts - bathing to clean oneself
+galicia2.0051 = {
+	type = activity_event
+	title = galicia2.0051.t
+	desc = galicia2.0051.desc
+	theme = RICE_theme_kupala_river
+	
+	right_portrait = root
+	
+	immediate = {
+		add_character_flag = is_naked
+	}
+
+	option = { # Ok
+		name = galicia2.0051.a
+		trigger_event = {
+			id = galicia2.0052
+			days = { 4 6 }
+		}	
+	}
+	after = {
+		if = {
+			limit = { has_character_flag = is_naked }
+			remove_character_flag = is_naked
+		}
+		if = {
+			limit = {
+				has_activity_intent = RICE_galicia2_kupala_night_herb_gathering_intent
+			}
+			trigger_event = {
+				id = galicia2.0055
+				days = { 2 3 }
+			}
+		}
+		else = {
+			hidden_effect = {
+				random = {
+					chance = 20
+					trigger_event = {
+						id = galicia2.0055
+						days = { 2 3 }
+					}	
+				}				
+			}
+		}
+	}
+}
+
+
+# Kupala Night - bonfire
+galicia2.0052 = {
+	type = activity_event
+	title = galicia2.0052.t
+	desc = {
+		desc = galicia2.0052.desc
+		triggered_desc = {
+			trigger = {
+				exists = scope:jumper
+			}
+			desc = galicia2.0052.desc.lover
+		}	
+	}
+	theme = RICE_theme_kupala_river
+	override_background = { reference = bp1_bonfire }
+	
+	left_portrait = {
+		character = scope:jumper
+		animation = flirtation_left
+		trigger = {
+			exists = scope:jumper
+		}
+	}	
+
+	right_portrait = {
+		character = root
+		animation = throne_room_cheer_1
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				is_healthy = yes
+				age <= 35
+				scope:activity = {
+					any_attending_character = {
+						age <= 35
+						OR = {
+							is_consort_of = root
+							has_relation_lover = root
+							has_relation_soulmate = root
+						}
+					}
+				}				
+			}
+			scope:activity = {
+				random_attending_character = {
+					limit = {
+						age <= 35
+						OR = {
+							is_consort_of = root
+							has_relation_lover = root
+							has_relation_soulmate = root
+						}
+					}
+					save_scope_as = jumper
+				}
+			}
+		}		
+	}
+	
+	option = { # Ok
+		name = galicia2.0052.a	
+	}
+	
+	option = { # Try to jump over the bonfire yourself
+		name = galicia2.0052.b
+		trigger = {
+			exists = scope:jumper
+		}
+		add_prestige = 50
+		scope:jumper = {
+			add_prestige = 50
+			add_opinion = {
+				target = root
+				modifier = love_opinion
+				opinion = 5
+			}
+			reverse_add_opinion = {
+				target = root
+				modifier = love_opinion
+				opinion = 5
+			}
+			random = {
+				chance = 10
+				increase_wounds_no_death_effect = { REASON = burned }
+			}	
+		}
+		random = {
+			chance = 10
+			increase_wounds_no_death_effect = { REASON = burned }
+		}	
+	}
+
+	after = {		
+		trigger_event = {
+			id = galicia2.0053
+			days = { 3 5 }
+		}
+	}
+
+}
+
+# Kupala Night - search for the flowers?
+galicia2.0053 = {
+	type = activity_event
+	title = galicia2.0053.t
+	desc = galicia2.0053.desc
+	theme = RICE_theme_kupala_river
+	override_background = { reference = bp1_bonfire }
+	
+	right_portrait = {
+		character = root
+		animation = throne_room_cheer_1
+	}
+	
+	option = { # Will just chill here with others
+		name = galicia2.0053.a
+		stress_impact = {
+			base = miniscule_stress_impact_loss
+			lazy = miniscule_stress_impact_loss
+			content = miniscule_stress_impact_loss
+		}	
+	}
+	
+	option = { # Go search for the flowers
+		name = galicia2.0053.b
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			lustful = miniscule_stress_impact_loss
+		}	
+		custom_tooltip = galicia2.0053.b.tooltip
+		hidden_effect = {
+			random = {
+				chance = 1
+				modifier = {
+					add = 7
+					has_activity_intent = RICE_galicia2_kupala_night_herb_gathering_intent
+				}	
+				modifier = {
+					add = 7					
+					has_character_flag = RICE_kupala_night_serious_fern_flower_searcher
+				}	
+				trigger_event = galicia2.0056
+			}		
+			if = {
+				limit = {
+					scope:activity = {
+						any_attending_character = {
+							OR = {
+								is_consort_of = root
+								has_relation_lover = root
+								has_relation_soulmate = root
+							}
+						}
+					}				
+				}
+				random = {
+					chance = 50
+					trigger_event = galicia2.0057
+				}
+			}
+			# if = {
+			# 	limit = {
+			# 		OR = {
+			# 			has_sexuality = heterosexual
+			# 			has_sexuality = bisexual
+			# 		}
+			# 	}
+			# 	random = {
+			# 		chance = 10
+			# 		trigger_event = galicia2.0057
+			# 	}	
+			# }
+		}
+	}
+
+	after = {		
+		trigger_event = {
+			id = galicia2.0054
+			days = { 3 5 }
+		}
+	}
+
+}
+
+
+# Kupala Night - bonfire dies down, celebrations conclude
+galicia2.0054 = {
+	type = activity_event
+	title = galicia2.0054.t
+	desc = galicia2.0054.desc
+	theme = RICE_theme_kupala_river
+	override_background = { reference = bp1_bonfire }
+	
+	right_portrait = {
+		character = root
+		animation = personality_content
+	}
+	
+	option = { # Ok
+		name = galicia2.0054.a
+		every_held_title = {
+			custom = RICE_every_county
+			limit = {
+				tier = tier_county			
+			}
+			random = {
+				chance = 33
+				add_county_modifier = {
+					modifier = RICE_kupala_night_county_modifier
+					years = 10
+				}
+			}
+		}
+		RICE_galicia2_kupala_night_completed_log_entry_effect = yes
+	}
+	
+	after = {
+		if = {
+			limit = {
+				has_character_flag = RICE_kupala_night_serious_fern_flower_searcher
+			}
+			remove_character_flag = RICE_kupala_night_serious_fern_flower_searcher
+		}
+		hidden_effect = {
+			scope:activity = {
+				hidden_effect = { skip_activity_phase = yes }
+			}
+		}
+	}
+
+}
+
+# Kupala Night - searching for herbs
+galicia2.0055 = {
+	type = activity_event
+	title = galicia2.0055.t
+	desc = galicia2.0055.desc
+	theme = RICE_theme_kupala_river
+	
+	left_portrait = {
+		character = root
+		animation = survey
+	}
+	
+	option = { # Ok
+		name = galicia2.0055.a	
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_galicia2_kupala_night_found_searching_for_herbs_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host	
+				scope:host = {
+					stress_impact = {
+						base = minor_stress_impact_loss
+						content = miniscule_stress_impact_loss
+						gregarious = miniscule_stress_impact_loss
+					}
+					if = {
+						limit = {
+							has_activity_intent = RICE_galicia2_kupala_night_herb_gathering_intent
+						}
+						add_prestige = 50
+					}
+					add_character_modifier = {
+						modifier = RICE_kupala_night_herbs_modifier
+						years = 10
+					}
+				}
+			}
+		}
+	}
+	
+	option = { # Take it seriously (increase chances of finding the fern flower)
+		name = galicia2.0055.b
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_galicia2_kupala_night_found_searching_for_herbs_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host	
+				scope:host = {
+					if = {
+						limit = {
+							has_activity_intent = RICE_galicia2_kupala_night_herb_gathering_intent
+						}
+						add_prestige = 50
+					}
+					add_character_modifier = {
+						modifier = RICE_kupala_night_herbs_modifier
+						years = 10
+					}
+				}
+			}
+		}
+		add_character_flag = {
+			flag = RICE_kupala_night_serious_fern_flower_searcher
+			days = 15
+		}
+		custom_tooltip = galicia2.0055.b.tooltip
+	}
+
+}
+
+# Kupala Night - found the fern flower
+galicia2.0056 = {
+	type = activity_event
+	title = galicia2.0056.t
+	desc = galicia2.0056.desc
+	theme = RICE_theme_kupala_river
+	override_background = { reference = bp1_bonfire }
+	override_effect_2d = {
+		reference = legend_glow
+	}
+	
+	right_portrait = {
+		character = root
+		animation = stunned
+	}
+
+	immediate = {		
+		play_music_cue = mx_cue_touching_moment
+	}
+	
+	option = { # Found the fern flower
+		name = galicia2.0056.a
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_galicia2_kupala_night_found_fern_flower_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host	
+				scope:host = {
+					if = {
+						limit = {
+							faith.religion = { is_in_family = rf_pagan }
+						}
+						add_piety = major_piety_gain
+					}
+					add_character_modifier = {
+						modifier = RICE_galicia2_found_fern_flower
+						years = 25
+					}
+				}
+			}
+		}
+	}
+
+}
+
+# Kupala Night - amorous encounter with consort or lover
+galicia2.0057 = {
+	type = activity_event
+	title = galicia2.0057.t
+	desc = galicia2.0057.desc
+	theme = seduction
+	override_background = { reference = bp1_bonfire }
+	
+	left_portrait = {
+		character = scope:lover
+		animation = flirtation_left
+	}
+	
+	right_portrait = {
+		character = root
+		animation = flirtation
+	}
+
+	immediate = {
+
+		scope:activity = {
+			random_attending_character = {
+				limit = {
+					OR = {
+						is_consort_of = root
+						has_relation_lover = root
+						has_relation_soulmate = root
+					}
+				}
+				save_scope_as = lover
+			}
+		}	
+
+	}
+	
+	option = { # Nice
+		name = galicia2.0057.a
+		scope:activity = {
+			add_activity_log_entry = {
+				key = RICE_galicia2_kupala_night_amorous_encounter_log
+				tags = { good }
+				# this line below adds the entry to the Effects section of the conclusion UI
+				show_in_conclusion = yes
+				character = scope:host	
+				custom_tooltip = galicia2.0057.a.tooltip
+				scope:host = {
+					stress_impact = {
+						base = miniscule_stress_impact_loss
+						lustful = minor_stress_impact_loss
+						gregarious = miniscule_stress_impact_loss
+					}
+				}
+				scope:lover = {
+					add_opinion = {
+						target = root
+						modifier = love_opinion
+						opinion = 10
+					}
+					reverse_add_opinion = {
+						target = root
+						modifier = love_opinion
+						opinion = 10
+					}
+					stress_impact = {
+						base = miniscule_stress_impact_loss
+						lustful = minor_stress_impact_loss
+						gregarious = miniscule_stress_impact_loss
+					}
+				}
+			}
+		}
+
+		hidden_effect = {
+			if = {
+				limit = {
+					is_female = yes
+					age <= 45
+					is_pregnant = no
+				}
+				random_list = {
+					#Actually pregnant
+					50 = {
+						modifier = {
+							add = 25
+							fertility >= high_fertility
+						}
+						make_pregnant = {
+							father = scope:lover 
+						}
+					}
+					#Not pregnant
+					50 = {
+						modifier = {
+							add = 25
+							fertility <= low_fertility
+						}
+						#nothing	
+					}	
+				}
+			}
+			else_if = {
+				limit = {
+					scope:lover = {
+						is_female = yes					
+						age <= 45
+						is_pregnant = no
+					}
+				}
+				random_list = {
+					#Actually pregnant
+					50 = {
+						modifier = {
+							add = 25
+							fertility >= high_fertility
+						}
+						scope:lover = {
+							make_pregnant = {
+								father = root
+							}
+						}
+					}
+					#Not pregnant
+					50 = {
+						modifier = {
+							add = 25
+							fertility <= low_fertility
+						}
+						#nothing	
+					}	
+				}			
+			}
+		}
+	}
+	
+	option = { # Focus on finding flowers
+		name = galicia2.0057.b
+		add_prestige = minor_prestige_gain
+		stress_impact = {
+			lustful = minor_stress_impact_gain
+			gregarious = miniscule_stress_impact_gain
+		}
+		scope:lover = {
+			add_opinion = {
+				target = root
+				modifier = disappointed_opinion
+				opinion = -10
+			}
+		}
+	}
+
+	
+
+}
+
+
+
+
+######################################################################################
+# 
+# GENERIC FLAVOR EVENTS
+# 
+# galicia2.0080-galicia2.0099
+# 
+######################################################################################
+
+
+
+# People are still doing the pagan practice of cremating the dead even after Christianization (or another region)
+galicia2.0080 = {
+	type = character_event
+	title = galicia2.0080.t
+	desc = galicia2.0080.desc
+	theme = RICE_theme_slavic_gord
+	override_icon = { reference = "gfx/interface/icons/event_types/type_illness.dds" }
+
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	right_portrait = {
+		character = scope:chaplain
+		animation = disapproval
+	}
+		
+	trigger = {
+		culture_has_slavic_heritage_pillar_trigger = yes
+		cp:councillor_court_chaplain = {
+			exists = yes
+			is_available_adult = yes
+			faith = root.faith
+		}
+		NOT = { religion = religion:slavic_religion }
+		faith = {
+			NOR = {
+				has_doctrine_parameter = cremation_funeral
+				has_doctrine = unreformed_faith_doctrine
+				has_doctrine = tenet_unreformed_syncretism
+			}
+		}
+		any_held_title = {
+			tier = tier_county
+			culture_has_slavic_heritage_pillar_trigger = yes
+			religion = root.religion
+			faith = {
+				NOR = {
+					has_doctrine_parameter = cremation_funeral
+					has_doctrine = unreformed_faith_doctrine
+					has_doctrine = tenet_unreformed_syncretism
+				}
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = zealous
+		}
+		modifier = {
+			add = -0.2
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = -0.2
+			has_trait = humble
+		}
+	}
+
+	immediate = {
+		cp:councillor_court_chaplain = { save_scope_as = chaplain }
+		random_held_title = {
+			limit = {
+				tier = tier_county
+				culture_has_slavic_heritage_pillar_trigger = yes
+				religion = root.religion
+				faith = {
+					NOR = {
+						has_doctrine_parameter = cremation_funeral
+						has_doctrine = unreformed_faith_doctrine
+						has_doctrine = tenet_unreformed_syncretism
+					}
+				}
+			}
+			save_scope_as = county
+		}
+	}
+	
+
+	option = { # Ok
+		name = galicia2.0080.a
+		add_piety = 50
+		stress_impact = {
+			content = miniscule_stress_impact_gain
+			cynical = miniscule_stress_impact_gain
+			humble = miniscule_stress_impact_gain
+			forgiving = miniscule_stress_impact_gain
+			lazy = miniscule_stress_impact_gain
+		}
+		scope:county = {
+			add_county_modifier = {
+				modifier = RICE_galicia2_cremation_crackdown
+				years = 20
+			}
+		}
+		scope:chaplain = {
+			add_opinion = {
+				modifier = pleased_opinion
+				target = root
+				opinion = 10
+			}
+		}
+	}
+
+	option = { # Ok
+		name = galicia2.0080.b
+		add_prestige = 50
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+			diligent = miniscule_stress_impact_gain
+			ambitious = miniscule_stress_impact_gain
+			arrogant = miniscule_stress_impact_gain
+		}
+		scope:county = {
+			add_county_modifier = {
+				modifier = RICE_galicia2_cremation_continued
+				years = 20
+			}
+		}
+		scope:chaplain = {
+			add_opinion = {
+				modifier = disappointed_opinion
+				target = root
+				opinion = -10
+			}
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = galicia2.0080.info
+		}
+	}
+
+}
+
+
+
+# Galicia-Volhynia school of architecture - bring in artisans from another part of Europe?
+galicia2.0081 = {
+	type = character_event
+	title = galicia2.0081.t
+	desc = galicia2.0081.desc
+	theme = RICE_theme_halych_castle
+
+	right_portrait = {
+		character = root
+		animation = personality_greedy
+	}
+		
+	trigger = {
+		culture = { has_cultural_pillar = heritage_east_slavic }
+		capital_county = {
+			title_province = { geographical_region = RICE_galicia_volhynia_region }
+		}
+		current_date >= 1100.1.1
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = content
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+	}
+
+	immediate = {
+		random_county_in_region = {
+			region = ghw_region_central_european
+			limit = {
+				NOT = { holder = root }
+			}
+			save_scope_as = county
+		}
+		scope:county.culture = {
+			save_scope_as = culture
+		}
+	}
+	
+
+	option = { # Ok
+		name = galicia2.0081.a
+		trigger = {
+			OR = {
+				is_ai = no
+				gold >= 50
+			}
+		}
+		remove_short_term_gold = 50
+		add_prestige = 50
+		capital_county = {
+			add_county_modifier = {
+				modifier = RICE_galicia2_galicia_volhynia_architecture_modifier
+				years = 20
+			}
+		}
+		stress_impact = {
+			greedy = minor_stress_impact_gain
+			lazy = miniscule_stress_impact_gain
+		}
+	}
+
+	option = { # Ok
+		name = galicia2.0081.b
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+			diligent = miniscule_stress_impact_gain
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = galicia2.0081.info
+		}
+	}
+
+}
+
+
+# Ignorant envoy does to understand how cochineal is produced and why it is rare
+galicia2.0082 = {
+	type = character_event
+	title = galicia2.0082.t
+	desc = galicia2.0082.desc
+	theme = RICE_theme_halych_castle
+
+	right_portrait = {
+		character = root
+		animation = personality_callous
+	}
+		
+	trigger = {		
+		any_held_title = {
+			tier = tier_county			
+			any_county_province = {
+				OR = {
+					geographical_region = RICE_european_cochineal_poland_region
+					geographical_region = RICE_european_cochineal_ukraine_region
+				}
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = content
+		}
+		modifier = {
+			add = 0.2
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.2
+			has_trait = lazy
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+	}
+	
+
+	option = { # Ok
+		name = galicia2.0082.a
+		add_character_modifier = {
+			modifier = RICE_galicia2_cochineal_explainer
+			years = 10
+		}
+		stress_impact = {
+			shy = minor_stress_impact_gain
+			lazy = miniscule_stress_impact_gain
+			paranoid = miniscule_stress_impact_gain
+		}
+	}
+
+	option = { # Ok
+		name = galicia2.0082.b
+		add_character_modifier = {
+			modifier = RICE_galicia2_suspicious_of_cochineal_merchants
+			years = 10
+		}
+		stress_impact = {
+			forgiving = minor_stress_impact_gain
+			just = miniscule_stress_impact_gain
+			trusting = miniscule_stress_impact_gain
+		}
+	}
+
+
+}
+
+
+
+# East Slav hears about Ibn Fadlan's account of their ancestors
+galicia2.0083 = {
+	type = character_event
+	title = galicia2.0083.t
+	desc = galicia2.0083.desc
+	theme = RICE_theme_slavic_gord
+
+	right_portrait = {
+		character = root
+		animation = laugh
+	}
+		
+	trigger = {		
+		any_held_title = {
+			tier = tier_county			
+			any_county_province = {
+				geographical_region = world_europe_east
+			}
+		}
+		culture = { has_cultural_pillar = heritage_east_slavic }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = patient
+		}
+		modifier = {
+			add = -0.2
+			has_trait = impatient
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.2
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -0.2
+			has_trait = shy
+		}
+	}
+	
+
+	option = { # Ok
+		name = galicia2.0083.a
+		add_piety = 50
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+			arbitrary = miniscule_stress_impact_gain
+		}
+	}
+
+	option = { # Ok
+		name = galicia2.0083.b
+		add_prestige = 25
+		add_piety = 25
+		stress_impact = {
+			wrathful = minor_stress_impact_gain
+			just = miniscule_stress_impact_gain
+		}
+	}
+
+	option = { # Ok
+		name = galicia2.0083.c
+		add_prestige = 50
+		stress_impact = {
+			forgiving = minor_stress_impact_gain
+			trusting = miniscule_stress_impact_gain
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = galicia2.0083.info
+		}
+	}
+
+}
+
+
+# Eat hogweed soup, an ancestor of borscht
+galicia2.0084 = {
+	type = character_event
+	title = galicia2.0084.t
+	desc = galicia2.0084.desc
+	theme = travel
+	override_background = { reference = RICE_background_volhynia_countryside }
+	
+	right_portrait = root
+
+	trigger = {
+		is_location_valid_for_travel_event_on_land = yes
+		location.county.culture = {
+			OR = {
+				has_cultural_pillar = heritage_east_slavic
+				has_cultural_pillar = heritage_west_slavic
+			}
+		}
+		location = {
+			OR = {
+				geographical_region = world_europe_east
+				geographical_region = world_steppe_west
+			}
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.2
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -0.2
+			has_trait = sadistic
+		}
+		modifier = {
+			add = 0.2
+			has_trait = just
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arbitrary
+		}
+		modifier = {
+			add = 0.2
+			has_trait = humble
+		}
+		modifier = {
+			add = -0.2
+			has_trait = arrogant
+		}
+	}
+
+	immediate = {
+		root.location.culture = {
+			save_scope_as = culture
+		}
+	}
+
+	option = { # Ok
+		name = galicia2.0084.a
+		add_piety = 25
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+			gluttonous = miniscule_stress_impact_gain
+		}
+	}
+
+	option = { # Ok
+		name = galicia2.0084.b
+		add_prestige = 25
+		stress_impact = {
+			humble = minor_stress_impact_gain
+			temperate = miniscule_stress_impact_gain
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = galicia2.0084.info
+		}
+	}
+
+}

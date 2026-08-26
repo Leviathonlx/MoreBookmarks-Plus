@@ -1,0 +1,228 @@
+﻿##########################
+# UNITY EFFECTS
+##########################
+
+# This is a general effect to make you able to impact House Unity.
+# The following scopes are needed:
+#	CHARACTER	- The character doing the "action" that changes unity (usually scope:actor or ROOT)
+#	TARGET		- The character being targeted by the "action"
+#	VALUE		- How much unity should change (there are scripted values for these)
+#	DESC		- A description of what CHARACTER did
+#add_clan_unity_interaction_effect = {
+#	if = {
+#		limit = { # Check if unity is relevant
+#			$CHARACTER$ = { government_has_flag = government_is_clan }
+#			$TARGET$ = { government_has_flag = government_is_clan }
+#			exists = $CHARACTER$.house
+#			exists = $TARGET$.house
+#			$CHARACTER$.house = $TARGET$.house
+#		}
+#		
+#		# Save scopes for localisation
+#		$CHARACTER$ = { save_scope_as = unity_character }
+#		$TARGET$ = { save_scope_as = unity_target }
+#		
+#		$CHARACTER$.house = {
+#			save_scope_as = character_house
+#			
+#			add_unity_value = {
+#				value = {
+#					value = $VALUE$
+#					if = { # House heads have a larger impact on unity
+#						limit = { house_head = $CHARACTER$ }
+#						multiply = unity_house_head_multiplier_value
+#					}
+#				}
+#				character = $CHARACTER$
+#				desc = $DESC$
+#			}
+#		}
+#	}
+#}
+
+# Used in the following events:
+# vassal_interaction.0002
+# vassal_interaction.0003
+# vassal_interaction.0004
+stop_attacker_vassal_war_add_clan_unity_effect = {
+	# If we are clan, we want to affect unity, but only during certain situations...
+	if = {
+		limit = { # If we are asking a non-house member to stop attacking a house member, gain unity
+			exists = scope:actor.house
+			exists = scope:recipient.house
+			scope:recipient.house != scope:actor.house
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:defender
+			VALUE = medium_unity_gain
+			DESC = clan_unity_aided_in_war.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+	else_if = {
+		limit = { # If we are asking a house member to stop attacking a non-house member, lose unity
+			exists = scope:actor.house
+			exists = scope:defender.house
+			scope:defender.house != scope:actor.house
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = medium_unity_loss
+			DESC = clan_unity_stopped_vassal_war.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+}
+
+# Used in the following events:
+# vassal_interaction.0012
+# vassal_interaction.0013
+# vassal_interaction.0014
+stop_defender_vassal_war_add_clan_unity_effect = {
+	# If we are clan, we want to affect unity, but only during certain situations...
+	if = {
+		limit = { # If recipient is a house member and the attacker is not, lose unity
+			exists = scope:actor.house
+			exists = scope:attacker.house
+			scope:attacker.house != scope:actor.house
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = medium_unity_loss
+			DESC = clan_unity_stop_defender_vassal_war.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+	else_if = {
+		limit = { # If recipient is a non-house member and the attacker is, gain unity
+			exists = scope:actor.house
+			exists = scope:recipient.house
+			scope:recipient.house != scope:actor.house
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:attacker
+			VALUE = medium_unity_gain
+			DESC = clan_unity_aided_in_war.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+}
+
+refuse_call_to_arms_add_clan_unity_effect = {
+	add_clan_unity_interaction_effect = {
+		CHARACTER = scope:actor
+		TARGET = scope:recipient
+		VALUE = medium_unity_loss
+		DESC = clan_unity_call_to_war_decline.desc
+		REVERSE_NON_HOUSE_TARGET = no
+	}
+}
+
+accept_faith_conversion_add_clan_unity_effect = {
+	# If we are clan, we want to affect unity when converting another house member to our faith...
+	if = { # But you only gain unity if you are converting a member TO the house's primary faith
+		limit = {
+			exists = scope:actor.house
+			scope:actor.house = {
+				any_house_member = {
+					percent >= 0.6
+					faith = scope:actor.faith
+				}
+			}
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = minor_unity_gain
+			DESC = clan_unity_conversion_accepted.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+	else_if = { # If you are converting them AWAY from the primary faith, lose unity
+		limit = {
+			exists = scope:actor.house
+			scope:actor.house = {
+				any_house_member = {
+					percent >= 0.6
+					faith = scope:recipient.faith
+				}
+			}
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = medium_unity_loss
+			DESC = clan_unity_conversion_accepted.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+}
+
+refuse_faith_conversion_add_clan_unity_effect = {
+	# If we are clan, we want to affect unity when we fail to convert another house member to our faith...
+	if = { # If target declines to convert TO the house's primary faith, lose unity
+		limit = {
+			exists = scope:actor.house
+			scope:actor.house = {
+				any_house_member = {
+					percent >= 0.6
+					faith = scope:actor.faith
+				}
+			}
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = medium_unity_loss
+			DESC = clan_unity_conversion_declined.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+	else_if = { # If target declines to convert while BEING of the primary faith, gain unity
+		limit = {
+			exists = scope:actor.house
+			scope:actor.house = {
+				any_house_member = {
+					percent >= 0.6
+					faith = scope:recipient.faith
+				}
+			}
+		}
+		add_clan_unity_interaction_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			VALUE = minor_unity_gain
+			DESC = clan_unity_conversion_declined.desc
+			REVERSE_NON_HOUSE_TARGET = no
+		}
+	}
+}
+
+notify_players_about_unity_change_effect = {
+	# Notify human players if they are not involved!
+ 	$CHARACTER$.house = {
+ 		every_house_member = {
+			limit = {
+				is_ai = no
+				NOT = { this = $CHARACTER$ }
+				NOT = { this = $TARGET$ }
+			}
+			$CHARACTER$ = { save_scope_as = actor }
+
+			send_interface_message = {
+				type = event_generic_neutral_text
+				title = unity_changed_title
+				desc = {
+					desc = unity_changed_desc
+					desc = $DESC$
+				}
+				left_icon = $CHARACTER$
+				right_icon = $TARGET$
+			}
+		}
+	}
+}

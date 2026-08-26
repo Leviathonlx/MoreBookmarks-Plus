@@ -1,0 +1,300 @@
+﻿# Root = Accolade
+# Event targets: positive ( bool )
+on_accolade_rank_change = {
+	effect = {
+		save_scope_as = changing_accolade
+		acclaimed_knight = {
+			save_scope_as = acclaimed_knight
+		}
+		accolade_owner = {
+			# level up notification
+			if = {
+				limit = {
+					scope:positive = yes
+				}
+				trigger_event = accolade.0001
+			}
+			# level down notification
+			else = {
+				trigger_event = accolade.0002
+			}
+		}
+		
+		if = {
+			limit = {
+				scope:changing_accolade = {
+					accolade_rank >= 1
+					acclaimed_knight = {
+						exists = this
+						NOT = {
+							any_memory = {
+								memory_type = accolade_ranked_up
+							}
+						}
+					}
+				}
+				scope:positive = yes
+			}
+			scope:changing_accolade.acclaimed_knight = {
+				create_character_memory = {
+					type = accolade_ranked_up
+					participants = {
+						liege = root.accolade_owner
+					}
+				}
+			}
+		}
+	}
+}
+
+# Root = Accolade
+# Event targets: glory ( value )
+on_accolade_glory_change = {
+	effect = {
+		if = {
+			limit = {
+				NOT = {
+					has_variable = lifetime_glory
+				}
+			}
+			set_variable = {
+				name = lifetime_glory
+				value = scope:glory
+			}
+		}
+		else = {
+			change_variable = {
+				name = lifetime_glory
+				add = scope:glory
+			}
+		}
+	}
+}
+
+# Root = Accolade
+on_accolade_created = {
+	effect = {
+		if = {
+			limit = {
+				acclaimed_knight ?= {
+					NOT = {
+						any_memory = {
+							memory_type = accolade_created
+						}
+					}
+				}
+			}
+			acclaimed_knight ?= {
+				create_character_memory = {
+					type = accolade_created
+					participants = {
+						liege = root.accolade_owner
+					}
+				}
+			}
+		}
+	}
+}
+
+# Root = Accolade
+# Event targets: new_owner
+on_accolade_succession = {
+
+}
+
+# Root = Accolade
+# Event targets: old_acclaimed_knight, new_accolade_type ( yes/no )
+on_accolade_acclaimed_death = {
+	effect = {
+		set_variable = {
+			name = old_knight
+			value = scope:old_acclaimed_knight
+		}
+		save_scope_as = succeeding_accolade
+		accolade_owner = {
+			accolade_knight_notification_with_glory_reset_effect = {
+				REASON = death
+			}
+		}
+	}
+}
+
+# Root = Accolade
+# Event targets: old_acclaimed_knight, new_accolade_type ( yes/no ), new_owner
+on_accolade_acclaimed_removal = {
+	effect = {
+		set_variable = {
+			name = old_knight
+			value = scope:old_acclaimed_knight
+		}
+		save_scope_as = succeeding_accolade
+		#Invalidation event
+		accolade_owner = {
+			accolade_knight_notification_with_glory_reset_effect = {
+				REASON = invalid
+			}
+		}
+	}
+}
+
+# Root = Accolade
+# Event targets: old_acclaimed_knight, new_accolade_type ( yes/no ), new_owner
+on_accolade_create_squire = {
+	effect = {
+		#Used in the accolade_character_creation_effect scripted effect
+		save_scope_as = succeeding_accolade
+		#Used in the accolade_create_squire_effect scripted effect
+		save_scope_as = accolade_in_need
+		scope:old_acclaimed_knight ?= {
+			save_scope_as = knight_in_need
+		}
+		scope:new_owner = {
+			accolade_create_squire_effect = yes
+		}
+	}
+}
+
+# Root = Accolade
+# Event targets: glory ( value ), new_accolade_type ( bool ), new_acclaimed_knight, old_acclaimed_knight
+on_accolade_new_acclaimed_knight = {
+	effect = {
+		if = {
+			limit = {
+				NOT = {
+					exists = var:old_knight
+				}
+			}
+			set_variable = {
+				name = old_knight
+				value = scope:old_acclaimed_knight
+			}
+		}
+		save_scope_as = succeeding_accolade
+		#Glory loss on succession
+		if = {
+			limit = {
+				#Unless the old knight is dead and died with honor!
+				exists = var:old_knight
+				var:old_knight = {
+					is_alive = no
+					OR = {
+						death_reason = death_duel
+						death_reason = death_wounds
+						death_reason = death_wounded_1
+						death_reason = death_wounded_2
+						death_reason = death_wounded_3
+						death_reason = death_maimed
+						death_reason = death_maimed_by_wild_beast
+						death_reason = death_battle
+						death_reason = death_head_ripped_off
+						death_reason = death_cloven_in_half
+						death_reason = death_viciously_dismembered
+						death_reason = death_ripped_apart_limb_by_limb
+						death_reason = death_chopped_to_pieces
+						death_reason = death_heart_ripped_out
+						death_reason = death_skull_cracked_open
+						death_reason = death_strangled_with_own_intestines
+						death_reason = death_decapitated
+						death_reason = death_piteously_cut_down
+						death_reason = death_fight
+						death_reason = death_siege
+						death_reason = death_raid
+						death_reason = death_pilgrimage_bandit_attack
+						death_reason = death_bandit_attack
+						death_reason = death_attacked
+						death_reason = death_wolf
+						death_reason = death_wolves
+						death_reason = death_bear
+						death_reason = death_wolverine
+						death_reason = death_lynx
+						death_reason = death_moose
+						death_reason = death_crushed_in_chariot_race
+						death_reason = death_scuffle_with_soldiers
+						death_reason = death_martyrdom
+						death_reason = death_cut_down_by_many_swords
+						death_reason = death_tournament_pas_darmes_defend
+						death_reason = death_tournament_pas_darmes_challenge
+						death_reason = death_wild_animal
+						death_reason = death_contest_melee_accident
+						death_reason = death_contest_joust_accident
+						death_reason = death_tournament_melee_throat
+						death_reason = death_tournament_roundhouse
+						death_reason = death_contest_duel_accident
+						death_reason = death_contest_wrestling_accident
+						death_reason = death_chariot_race_trick
+						death_reason = death_deer
+						death_reason = death_antelope
+						death_reason = death_gazelle
+						death_reason = death_bison
+						death_reason = death_boar
+						death_reason = death_aurochs
+						death_reason = death_hyena
+						death_reason = death_lion
+						death_reason = death_tiger
+						death_reason = death_leopard
+						death_reason = death_roe
+						death_reason = death_hart
+						death_reason = death_slaughtered_by_guards
+						death_reason = death_cut_off_by_enemy_troops_offensive
+						death_reason = death_greek_fire
+						death_reason = death_frankokratia_sacking
+						death_reason = death_gok_slaughter
+						death_reason = death_raid_estate
+						death_reason = death_killed_by_monstrous_dog
+						death_reason = death_killed_by_monstrous_wolf
+						death_reason = death_killed_by_monstrous_hyena
+						death_reason = death_killed_by_monstrous_lion
+						death_reason = death_killed_by_monstrous_tiger
+						death_reason = death_killed_by_monstrous_leopard
+						death_reason = death_killed_by_monstrous_panther
+						death_reason = death_killed_by_monstrous_lynx
+						death_reason = death_killed_by_monstrous_caracal
+						death_reason = death_killed_by_monstrous_bear
+						death_reason = death_killed_by_monstrous_hippo
+						death_reason = death_killed_by_monstrous_crocodile
+						death_reason = death_slain_in_riot
+						death_reason = death_shot_by_arrows
+					}
+				}
+			}
+			save_scope_value_as = {
+				name = glory
+				value = 0
+			}
+		}
+		else = {
+			save_scope_value_as = {
+				name = glory
+				value = accolade_succession_glory_loss
+			}
+			add_glory = accolade_succession_glory_loss
+		}
+
+		if = {
+			limit = {
+				scope:new_acclaimed_knight = {
+					NOT = {
+						any_memory = {
+							memory_type = became_acclaimed
+						}
+					}
+				}
+			}
+			scope:new_acclaimed_knight = {
+				create_character_memory = {
+					type = became_acclaimed
+					participants = {
+						liege = root.accolade_owner
+					}
+				}
+			}
+		}
+
+		#Notification event that also cleans up variables
+		accolade_owner = {
+			accolade_knight_notification_effect = {
+				REASON = new
+			}
+		}
+	}
+}

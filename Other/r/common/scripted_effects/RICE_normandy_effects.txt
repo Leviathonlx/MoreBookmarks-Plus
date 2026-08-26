@@ -1,0 +1,1864 @@
+﻿
+
+RICE_setup_normandy_flavor_pack_effect = {
+
+
+	#########################################################################
+	#
+	# BUILDING AND COUNTY/PROVINCE STUFF
+	#
+	#########################################################################
+
+	# Add Mont Saint Michel Abbey
+	if = {
+		limit = {
+			has_cp6_dlc_trigger = no
+		}
+		title:b_avranches.title_province = {
+			add_special_building = RICE_normandy_mont_saint_michel_01
+		}
+	}
+
+
+
+
+	#########################################################################
+	#
+	# CULTURE AND RELIGION STUFF
+	#
+	#########################################################################
+
+	# If French isn't filled with traditions from other mods
+	# Add Religious Patronage to represent the ties between Church and state in medieval France
+	if = {
+		limit = {
+			culture:french = {
+				free_tradition_slot > 0
+			}
+		}		
+		culture:french = {
+			add_culture_tradition = tradition_religious_patronage
+			remove_variable = tradition_cooldown
+		}
+	}
+
+	#########################################################################
+	#
+	# SET UP HISTORY
+	#
+	#########################################################################
+
+	# 867 stuff
+	if = {
+		limit = {
+			game_start_date = 867.1.1
+		}
+		if = {
+			limit = {
+				# If not run with TIP, since TIP has them at war
+				is_tip_trigger = no
+				# title:k_brittany.holder = {
+				# 	NOT = { has_title = title:c_avranches }
+				# }
+			}
+			# Give Bretons Avranches
+			title:k_brittany.holder = {
+				get_title = title:c_avranches
+			}
+		}
+		# add_truce_both_ways = {
+		# 	character = scope:this_war.primary_defender
+		# 	years = 5
+		# 	war = scope:this_war
+		# 	result = white_peace
+		# }
+		character:242 = {
+			if = {
+				limit = {
+					#NOT = { has_game_rule = RICE_normandy_rollo_no }
+					OR = {
+						has_game_rule = RICE_normandy_rollo_always_landed
+						NOT = { has_dlc_feature = roads_to_power }
+					}
+				}
+				get_title = title:c_trandheim
+				RICE_setup_new_granted_ruler_bonuses_effect = yes
+			}
+			set_sexuality = heterosexual
+			add_character_modifier = {
+				modifier = RICE_normandy_aspiration_settle_in_normandy
+			}
+			add_character_modifier = {
+				modifier = RICE_normandy_rollo_modifier
+			}
+			set_variable = {
+				name = RICE_historical_aspiration
+				value = flag:rollo
+			}
+		}
+
+		title:k_france.holder = {
+			save_scope_as = french_king
+		}
+
+		# Make Wulfad Archbishop of Bourges
+		character:RICE_irish_004 = {
+			get_title = title:c_issoudun 	# Contains Bourges in-game
+			get_title = title:d_berry 		# So that he becomes an archbishop
+			save_scope_as = wulfad
+			change_government = theocracy_government
+			RICE_setup_new_granted_ruler_bonuses_effect = yes
+		}
+		create_title_and_vassal_change = {
+			type = swear_fealty
+			save_scope_as = change
+		}
+		scope:wulfad = {
+			change_liege = {
+				liege = scope:french_king
+				change = scope:change
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+
+	}
+
+	if = {
+		limit = {
+			game_start_date >= 1000.1.1
+		}
+		set_global_variable = {
+			name = RICE_normandy_adventure_phase_once
+			value = yes
+		}
+		set_global_variable = {
+			name = RICE_normandy_acculturation_phase_once
+			value = yes
+		}
+	}
+
+	# Make William and Matilda lovers
+	if = {
+		limit = {
+			game_start_date >= 1066.9.15
+			character:140 = {
+				is_alive = yes
+			}
+			character:367 = {
+				is_alive = yes
+			}
+		}
+		character:367 = {
+			set_sexuality = heterosexual
+			set_relation_lover = { reason = lover_history target = character:140 }
+		}
+	}
+	# 1066 stuff
+	if = {
+		limit = {
+			game_start_date = 1066.9.15
+		}
+		# Give William the Conqueror Rouen
+		character:140 = {
+			get_title = title:c_rouen
+			add_trait = zealous # He was known for his great piety as much as his cruelty
+			set_sexuality = heterosexual
+			# Troops that goes away
+			spawn_army = {
+				name = event_troop_default_name
+				men_at_arms = {
+					type = conrois
+					stacks = 2
+				}
+				location = province:2174
+				origin = province:2325
+			}
+			# William the Conqueror starting events
+			trigger_event = {
+				id = normandy.0090
+				days = { 10 20 }
+			}
+		}
+		# Ensure that William and Matilda can be lovers
+		character:367 = {
+			add_trait = generous # Helped her husband out and later their eldest son despite problems between them
+			set_sexuality = heterosexual	
+			add_opinion = {
+				target = character:normandy_002
+				modifier = RICE_normandy_hate
+			}		
+		}
+		# Give Roger de Montgomery Alencon
+		character:152 = {
+			get_title = title:c_alencon
+			RICE_setup_new_granted_ruler_bonuses_effect = yes
+		}
+		# Give Beorhtric/Brictric some titles in England
+		character:normandy_002 = {
+			get_title = title:c_gloucestershire
+			get_title = title:c_wiltshire
+			get_title = title:c_worcestershire
+			RICE_setup_new_granted_ruler_bonuses_effect = yes
+		}
+		# Mabel, wife of Roger II de Montgommery
+		character:449 = {
+			RICE_remove_personality_traits_effect = yes
+			#remove_trait = education_intrigue_2
+			#add_trait = education_learning_4
+			add_trait = ambitious
+			add_trait = deceitful
+			add_trait = sadistic
+		}
+	}
+
+
+	#########################################################################
+	#
+	# MISC STUFF
+	#
+	#########################################################################
+
+	# if = {
+	# 	limit = {
+	# 		game_start_date >= 783.1.1 # Start of Viking era
+	# 		game_start_date <= 911.1.1 # Traditional date of Rollo being given Normandy
+	# 	}
+	# 	every_county_in_region = {
+	# 		region = RICE_normandy_region
+	# 		add_county_modifier = {
+	# 			modifier = RICE_normandy_norse_raids
+	# 		}
+	# 	}
+	# }
+
+	if = {
+		limit = {
+			game_start_date >= 911.1.1 # Traditional date of Rollo being given Normandy
+		}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:RICE_normandy_granted_to_norse_already
+		}
+		character:242 = {
+			add_to_global_variable_list = {
+				name = RICE_normandy_rollo_list
+				target = this
+			}	
+			dynasty = {
+				add_dynasty_modifier = {
+					modifier = RICE_normandy_rollo_family_equivalent
+				}
+			}
+		}
+		character:90111 = {
+			add_to_global_variable_list = {
+				name = RICE_normandy_charles_list
+				target = this
+			}	
+		}
+		set_global_variable = {
+			name = RICE_normandy_struggle_started
+			value = yes
+		}
+	}
+
+	if = {
+		limit = {
+			game_start_date >= 911.1.1 # Traditional date of Rollo being given Normandy
+			game_start_date < 1076.1.1 # Norman Conquest fully "completed" in 1075 after William the Conqueror put down the Revolt of the Earls
+		}
+		if = {
+			limit = { has_game_rule = RICE_struggle_normandy_toggle_on }
+			start_struggle = {
+				struggle_type = RICE_normandy_struggle
+				start_phase = struggle_RICE_normandy_phase_adventure
+			}
+			struggle:RICE_normandy_struggle ?= {
+				trigger_event = { on_action = RICE_normandy_struggle_starting_events }
+			}
+		}
+	}
+
+
+	if = {
+		limit = {
+			game_start_date >= 1017.1.1 # Approximate date the Historia Normannorum was completed and latest date Saint Aubert's relics rediscovered
+		}		
+		set_global_variable = {
+			name = RICE_normandy_historia_normannorum_done
+			value = yes
+		}
+		set_global_variable = {
+			name = RICE_normandy_saint_aubert_relics_missing
+			value = yes
+		}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:RICE_normandy_commission_normandy_history
+		}
+		culture:norman = {
+			add_culture_tradition = tradition_RICE_adventurers_and_aristocrats
+			remove_variable = tradition_cooldown
+		}	
+	}
+	else = {
+		culture:norman = {
+			set_culture_pillar = language_norse
+			add_culture_tradition = tradition_RICE_northmen
+			remove_variable = tradition_cooldown
+		}	
+	}
+
+	if = {
+		limit = {
+			game_start_date >= 1017.1.1 # Approximate date Saint Aubert's relics were found
+		}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:RICE_normandy_saint_aubert_relics_found
+		}
+	}
+
+	if = {
+		limit = {
+			game_start_date >= 1076.1.1 # Norman Conquest fully "completed" in 1075 after William the Conqueror put down the Revolt of the Earls
+		}
+		every_culture_global = {
+			limit = {
+				has_cultural_tradition = tradition_RICE_adventurers_and_aristocrats
+			}		
+			remove_culture_tradition = tradition_RICE_adventurers_and_aristocrats
+			add_culture_tradition = tradition_RICE_adventurers_and_aristocrats_military
+			remove_variable = tradition_cooldown
+		}		
+		every_culture_global = {
+			limit = {
+				has_cultural_tradition = tradition_RICE_northmen
+			}		
+			remove_culture_tradition = tradition_RICE_northmen
+			add_culture_tradition = tradition_RICE_adventurers_and_aristocrats_military
+			remove_variable = tradition_cooldown
+		}	
+	}
+
+	if = {
+		limit = {
+			game_start_date >= 1086.1.1 # Domesday Book completed
+		}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:RICE_normandy_domesday_book_compiled
+		}
+	}
+
+	if = {
+		limit = {
+			game_start_date >= 1306.1.1 # Date when the big statue of Michael was donated to Mont-Saint-Michel were donated by King Philip
+		}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:RICE_normandy_michael_statue_dedicated
+		}
+	}
+
+}
+
+
+RICE_normandy_struggle_conquest_ender_effect = {
+	give_nickname = nick_the_conqueror
+	add_prestige = 500
+	dynasty = {
+		add_dynasty_prestige = 1000
+		add_dynasty_modifier = {
+			modifier = RICE_normandy_norman_conquest
+		}
+	}
+	hidden_effect = {
+		every_culture_global = {
+			limit = {
+				has_cultural_tradition = tradition_RICE_adventurers_and_aristocrats
+			}		
+			remove_culture_tradition = tradition_RICE_adventurers_and_aristocrats
+			add_culture_tradition = tradition_RICE_adventurers_and_aristocrats_military
+			remove_variable = tradition_cooldown
+		}		
+		every_culture_global = {
+			limit = {
+				has_cultural_tradition = tradition_RICE_northmen
+			}		
+			remove_culture_tradition = tradition_RICE_northmen
+			add_culture_tradition = tradition_RICE_adventurers_and_aristocrats_military
+			remove_variable = tradition_cooldown
+		}		
+	}
+}
+
+RICE_normandy_struggle_conquest_ending_tooltip_effect = {
+	# Unlocks decision to compile the domesday book
+	custom_tooltip = RICE_normandy_struggle_ending_domesday_book_tt
+	# Norman culture upgrades their Adventurers and Aristocrats tradition
+	custom_tooltip = RICE_normandy_struggle_ending_conquest_tradition_tt
+	# Form Greater Normandy
+	#custom_tooltip = RICE_normandy_struggle_ending_greater_normandy_tt
+}
+
+
+RICE_normandy_struggle_assimilation_ender_effect = {
+	give_nickname = RICE_nick_beauclerc
+	add_prestige = 1000
+	dynasty = {
+		add_dynasty_prestige = 2500
+		add_dynasty_modifier = {
+			modifier = RICE_normandy_norman_assimilation
+		}
+	}
+	hidden_effect = {
+		every_culture_global = {
+			limit = {
+				has_cultural_tradition = tradition_RICE_adventurers_and_aristocrats
+			}		
+			remove_culture_tradition = tradition_RICE_adventurers_and_aristocrats
+			add_culture_tradition = tradition_RICE_adventurers_and_aristocrats_culture
+			remove_variable = tradition_cooldown
+		}	
+		every_culture_global = {
+			limit = {
+				has_cultural_tradition = tradition_RICE_northmen
+			}		
+			remove_culture_tradition = tradition_RICE_northmen
+			add_culture_tradition = tradition_RICE_adventurers_and_aristocrats_culture
+			remove_variable = tradition_cooldown
+		}		
+	}
+}
+
+RICE_normandy_struggle_assimilation_ending_tooltip_effect = {
+	# Unlocks decision to compile the domesday book
+	custom_tooltip = RICE_normandy_struggle_ending_scholars_tt
+	# Norman culture upgrades their Adventurers and Aristocrats tradition
+	custom_tooltip = RICE_normandy_struggle_ending_assimilation_tradition_tt
+}
+
+
+RICE_normandy_struggle_outsider_ender_effect = {
+	give_nickname = RICE_nick_the_pacifier
+	add_prestige = 3000
+	dynasty = {
+		add_dynasty_prestige = 5000
+		# add_dynasty_modifier = {
+		# 	modifier = RICE_normandy_norman_outsider
+		# }
+	}
+}
+
+RICE_normandy_struggle_outsider_ending_tooltip_effect = {
+	# Unlocks decision to compile the domesday book
+	#custom_tooltip = RICE_normandy_struggle_ending_domesday_book_tt
+	# Norman culture upgrades their Adventurers and Aristocrats tradition
+	#custom_tooltip = RICE_normandy_struggle_ending_tradition_tt
+}
+
+# RICE_find_saint_aubert_relics_effect = {
+# 	add_piety = 1000
+# }
+
+RICE_mont_saint_michel_statue_effect = {
+	add_piety = 400
+	add_prestige = 200
+}
+
+
+
+# Add all Involved cultures with counties to a list
+# RICE_normandy_struggle_ending_culture_list_effect = {
+# 	every_culture_global = {		
+# 		limit = {
+# 			#TODO_CD_FP2 (JP) check if this can be more performant, every_struggle_culture would be better
+# 			save_temporary_scope_as = this_culture
+# 			struggle:RICE_normandy_struggle ?= { is_culture_involved_in_struggle = scope:this_culture }
+# 			#culture_number_of_counties > 0
+# 		}
+# 		save_scope_as = culture_scope
+# 		add_to_global_variable_list = {
+# 			name = RICE_normandy_struggle_ending_culture_list
+# 			target = scope:culture_scope
+# 		}
+# 	}
+# }
+
+
+
+RICE_normandy_historia_normannorum_effect = {
+	every_culture_global = {
+		limit = {
+			has_cultural_tradition = tradition_RICE_northmen
+		}		
+		remove_culture_tradition = tradition_RICE_northmen
+		add_culture_tradition = tradition_RICE_adventurers_and_aristocrats
+		remove_variable = tradition_cooldown
+	}	
+	# culture:norman = {
+	# 	set_culture_pillar = language_french
+	# }
+}
+
+
+RICE_norse_adventurers_spawn_effect = {
+	random_list = {
+		# 200
+		20 = {
+			spawn_army = {
+				levies = 100
+				men_at_arms = {
+					type = varangian_veterans
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norse_spawn_event_troops
+			}
+		}
+		# 400
+		20 = {
+			spawn_army = {
+				levies = 200
+				men_at_arms = {
+					type = varangian_veterans
+					stacks = 1
+				}
+				men_at_arms = {
+					type = bondi
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norse_spawn_event_troops
+			}
+		}
+		# 600
+		15 = {
+			spawn_army = {
+				levies = 300
+				men_at_arms = {
+					type = varangian_veterans
+					stacks = 1
+				}
+				men_at_arms = {
+					type = bondi
+					stacks = 1
+				}
+				men_at_arms = {
+					type = vigmen
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norse_spawn_event_troops
+			}
+		}
+		# 800
+		10 = {
+			spawn_army = {
+				levies = 400
+				men_at_arms = {
+					type = varangian_veterans
+					stacks = 1
+				}
+				men_at_arms = {
+					type = bondi
+					stacks = 1
+				}
+				men_at_arms = {
+					type = vigmen
+					stacks = 2
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norse_spawn_event_troops
+			}
+		}
+		# 1000
+		5 = {
+			spawn_army = {
+				levies = 500
+				men_at_arms = {
+					type = varangian_veterans
+					stacks = 1
+				}
+				men_at_arms = {
+					type = bondi
+					stacks = 1
+				}
+				men_at_arms = {
+					type = vigmen
+					stacks = 2
+				}
+				men_at_arms = {
+					type = huscarl
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norse_spawn_event_troops
+			}
+		}
+	}
+}
+
+RICE_norman_adventurers_spawn_effect = {
+	random_list = {
+		# 200
+		20 = {
+			spawn_army = {
+				levies = 100
+				men_at_arms = {
+					type = conrois
+					stacks = 2
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norman_spawn_event_troops
+			}
+		}
+		# 400
+		20 = {
+			spawn_army = {
+				levies = 200
+				men_at_arms = {
+					type = conrois
+					stacks = 2
+				}
+				men_at_arms = {
+					type = bowmen
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norman_spawn_event_troops
+			}
+		}
+		# 600
+		15 = {
+			spawn_army = {
+				levies = 300
+				men_at_arms = {
+					type = conrois
+					stacks = 2
+				}
+				men_at_arms = {
+					type = bowmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = armored_footmen
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norman_spawn_event_troops
+			}
+		}
+		# 800
+		10 = {
+			spawn_army = {
+				levies = 400
+				men_at_arms = {
+					type = conrois
+					stacks = 2
+				}
+				men_at_arms = {
+					type = bowmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = armored_footmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = light_horsemen
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norman_spawn_event_troops
+			}
+		}
+		# 1000
+		5 = {
+			spawn_army = {
+				levies = 500
+				men_at_arms = {
+					type = conrois
+					stacks = 2
+				}
+				men_at_arms = {
+					type = bowmen
+					stacks = 1
+				}
+				men_at_arms = {
+					type = armored_footmen
+					stacks = 2
+				}
+				men_at_arms = {
+					type = light_horsemen
+					stacks = 1
+				}
+				location = root.capital_province
+				inheritable = no
+				name = RICE_norman_spawn_event_troops
+			}
+		}
+	}
+}
+
+RICE_build_christian_chapel_effect = {
+	add_prestige = 50
+	add_piety = 50
+	add_character_modifier = {
+		modifier = RICE_normandy_built_chapel
+		years = 10
+	}
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_chapel_county
+			years = 10
+		}			
+	}
+	if = {
+		limit = {
+			#exists = struggle:RICE_normandy_struggle			
+			any_character_struggle = {
+				involvement = involved
+				is_struggle_type = RICE_normandy_struggle
+			}
+		}
+		struggle:RICE_normandy_struggle ?= {
+			activate_struggle_catalyst = {
+				catalyst = catalyst_RICE_normandy_found_chapel
+				character = root
+			}
+		}
+	} 
+}
+
+RICE_build_christian_small_church_effect = {
+	add_prestige = 150
+	add_piety = 50
+	add_character_modifier = {
+		modifier = RICE_normandy_built_small_church
+		years = 10
+	}
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_small_church_county
+			years = 10
+		}			
+	}
+	if = {
+		limit = {
+			#exists = struggle:RICE_normandy_struggle			
+			any_character_struggle = {
+				involvement = involved
+				is_struggle_type = RICE_normandy_struggle
+			}
+		}
+		struggle:RICE_normandy_struggle ?= {
+			activate_struggle_catalyst = {
+				catalyst = catalyst_RICE_normandy_found_small_church
+				character = root
+			}
+		}
+	} 
+}
+
+RICE_build_christian_small_monastery_effect = {
+	add_prestige = 50
+	add_piety = 150
+	add_character_modifier = {
+		modifier = RICE_normandy_built_small_monastery
+		years = 10
+	}
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_small_monastery_county
+			years = 10
+		}			
+	} 
+	if = {
+		limit = {
+			#exists = struggle:RICE_normandy_struggle			
+			any_character_struggle = {
+				involvement = involved
+				is_struggle_type = RICE_normandy_struggle
+			}
+		}
+		struggle:RICE_normandy_struggle ?= {
+			activate_struggle_catalyst = {
+				catalyst = catalyst_RICE_normandy_found_small_monastery
+				character = root
+			}
+		}
+	}
+}
+
+RICE_build_christian_large_church_effect = {
+	add_prestige = 200
+	add_piety = 100
+	dynasty ?= {
+		add_dynasty_prestige = RICE_christian_building_dynasty_prestige_amount
+	}	
+	add_character_modifier = {
+		modifier = RICE_normandy_built_large_church
+		years = 10
+	}
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_large_church_county
+			years = 10
+		}			
+	} 
+	if = {
+		limit = {
+			#exists = struggle:RICE_normandy_struggle			
+			any_character_struggle = {
+				involvement = involved
+				is_struggle_type = RICE_normandy_struggle
+			}
+		}
+		struggle:RICE_normandy_struggle ?= {
+			activate_struggle_catalyst = {
+				catalyst = catalyst_RICE_normandy_found_large_church
+				character = root
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_character_modifier = RICE_north_atlantic_aspiration_cultivate_icelands_church
+		}
+		add_character_flag = RICE_north_atlantic_isleifur_built_large_christian_building
+	}
+}
+
+RICE_build_christian_large_monastery_effect = {
+	add_prestige = 100
+	add_piety = 200
+	dynasty ?= {
+		add_dynasty_prestige = RICE_christian_building_dynasty_prestige_amount
+	}	
+	add_character_modifier = {
+		modifier = RICE_normandy_built_large_monastery
+		years = 10
+	}
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_large_monastery_county
+			years = 10
+		}			
+	}  
+	if = {
+		limit = {
+			#exists = struggle:RICE_normandy_struggle			
+			any_character_struggle = {
+				involvement = involved
+				is_struggle_type = RICE_normandy_struggle
+			}
+		}
+		struggle:RICE_normandy_struggle ?= {
+			activate_struggle_catalyst = {
+				catalyst = catalyst_RICE_normandy_found_large_monastery
+				character = root
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_character_modifier = RICE_north_atlantic_aspiration_cultivate_icelands_church
+		}
+		add_character_flag = RICE_north_atlantic_isleifur_built_large_christian_building
+	}
+}
+
+RICE_build_christian_chapel_converted_effect = {
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_chapel_county
+			years = 10
+		}			
+	}
+}
+
+RICE_build_christian_small_church_converted_effect = {
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_small_church_county
+			years = 10
+		}			
+	} 
+}
+
+RICE_build_christian_small_monastery_converted_effect = {
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_small_monastery_county
+			years = 10
+		}			
+	} 
+}
+
+RICE_build_christian_large_church_converted_effect = {
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_large_church_county
+			years = 10
+		}			
+	} 
+}
+
+RICE_build_christian_large_monastery_converted_effect = {
+	capital_county = {
+		add_county_modifier = {
+			modifier = RICE_normandy_built_large_monastery_county
+			years = 10
+		}			
+	} 
+}
+
+RICE_domesday_finished_effect = {
+	add_prestige = 500
+	dynasty = {
+		add_dynasty_prestige = 300
+	}
+	random_list = {
+		desc = RICE_domesday_decision_tt
+		100 = {
+			trigger = {
+				has_global_variable = RICE_normandy_ending_norman_conquest_greater_normandy
+			}
+			show_chance = no
+			every_county_in_region = {
+				region = RICE_greater_normandy_region
+				custom = RICE_every_county_in_greater_normandy
+				change_county_control = 15
+				add_county_modifier = {
+					modifier = RICE_normandy_domesday_book_surveyed
+					years = 50
+				}
+			}
+		}
+		100 = {
+			trigger = {
+				has_global_variable = RICE_normandy_ending_norman_conquest_francia
+			}
+			show_chance = no
+			every_county_in_region = {
+				region = custom_west_francia_minus_mediterranean
+				custom = RICE_every_county_in_france
+				change_county_control = 15
+				add_county_modifier = {
+					modifier = RICE_normandy_domesday_book_surveyed
+					years = 50
+				}
+			}
+		}
+		100 = {
+			trigger = {
+				has_global_variable = RICE_normandy_ending_norman_conquest_england
+			}
+			show_chance = no
+			every_county_in_region = {
+				region = custom_england
+				custom = RICE_every_county_in_england
+				change_county_control = 15
+				add_county_modifier = {
+					modifier = RICE_normandy_domesday_book_surveyed
+					years = 50
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
+RICE_normandy_greater_normandy_effect = {
+	#Create the title and make it primary
+	create_title_and_vassal_change = {
+		type = created
+		save_scope_as = title_change
+		add_claim_on_loss = no
+	}
+	title:k_normandy = {
+		set_de_jure_liege_title = title:e_france
+		change_title_holder = {
+			holder = root
+			change = scope:title_change
+		}
+	}
+	#title:d_tuyuhun = {  # Grant Tuyuhun as well?
+	#	change_title_holder = {
+	#		holder = scope:new_pope
+	#		change = scope:change
+	#	}
+	#}
+	resolve_title_and_vassal_change = scope:title_change
+	set_primary_title_to = title:k_normandy
+	
+	#set_realm_capital = title:c_rouen
+
+	title:d_normandy = {
+		set_de_jure_liege_title = title:k_normandy
+	}
+
+	title:d_flanders = {
+		set_de_jure_liege_title = title:k_normandy
+	}
+
+	title:d_anjou = {
+		set_de_jure_liege_title = title:k_normandy
+	}
+
+	title:d_holland = {
+		set_de_jure_liege_title = title:k_normandy
+	}
+
+	title:d_brittany = {
+		set_de_jure_liege_title = title:k_normandy
+	}
+}
+
+
+
+RICE_invite_norse_initial_setup_effect = {	
+	capital_county = {
+		save_scope_as = capital
+	}
+	if = {
+		limit = {
+			var:RICE_norse_adventurer_type = flag:rulers
+		}
+		save_scope_as = granter
+	}
+	if = {
+		limit = {
+			var:RICE_norse_adventurer_type = flag:courtiers
+		}
+		remove_short_term_gold = RICE_norse_adventurers_small_cost
+	}
+	else = {			
+		remove_short_term_gold = RICE_norse_adventurers_large_cost
+	}
+}
+
+
+RICE_invite_norse_main_effect = {	
+	if = {
+		limit = {
+			var:RICE_norse_adventurer_type = flag:courtiers
+		}
+		if = {
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_normandy_struggle
+				}
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_normandy_invited_norse_courtiers
+					character = root
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			var:RICE_norse_adventurer_type = flag:colonists
+		}
+		random_list = {
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norse_colonists
+				# 		years = 10
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0021.colonists_duchy_tt_10
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norse_colonists
+									years = 10
+								}
+							}
+						}
+					}
+				}
+			}
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norse_colonists
+				# 		years = 15
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0021.colonists_duchy_tt_15
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norse_colonists
+									years = 15
+								}
+							}
+						}
+					}
+				}
+			}
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norse_colonists
+				# 		years = 20
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0021.colonists_duchy_tt_20
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norse_colonists
+									years = 20
+								}
+							}
+						}
+					}
+				}
+			}
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norse_colonists
+				# 		years = 25
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0021.colonists_duchy_tt_25
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norse_colonists
+									years = 25
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_normandy_struggle
+				}
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_normandy_invited_norse_colonists
+					character = root
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:RICE_norse_adventurer_type = flag:mercenaries
+		}
+		custom_tooltip = RICE_normandy_spawn_event_troops_tooltip
+		hidden_effect = {
+			RICE_norse_adventurers_spawn_effect = yes
+		}
+		# So they wear armor
+		scope:courtier_1 = {
+			add_character_flag = single_combat_duel_armor
+		}
+		if = {
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_normandy_struggle
+				}
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_normandy_invited_norse_mercenaries
+					character = root
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:RICE_norse_adventurer_type = flag:traders
+		}
+		random_list = {
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norse_traders
+					years = 10
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norse_traders
+					years = 15
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norse_traders
+					years = 20
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norse_traders
+					years = 25
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_character_struggle = {
+					involvement = involved
+					is_struggle_type = RICE_normandy_struggle
+				}
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = {
+					catalyst = catalyst_RICE_normandy_invited_norse_traders
+					character = root
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:RICE_norse_adventurer_type = flag:rulers
+		}
+		save_scope_as = granter
+		random_held_title = {
+			limit = {
+				tier = tier_county
+				NOT = { this = root.capital_county }
+				#NOT = { this = scope:capital_county }
+			}	
+			save_scope_as = award_county
+		}			
+		scope:courtier_1 = {
+			get_title = scope:award_county
+		}
+		if = {
+			limit = {
+				highest_held_title_tier > tier_county
+			}
+			create_title_and_vassal_change = {
+				type = swear_fealty
+				save_scope_as = change
+			}
+			scope:courtier_1 = {
+				change_liege = {
+					liege = root
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+		}
+		else_if = {
+			limit = {
+				is_independent_ruler = no
+			}
+			create_title_and_vassal_change = {
+				type = swear_fealty
+				save_scope_as = change
+			}
+			scope:courtier_1 = {
+				change_liege = {
+					liege = scope:granter.liege
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+		}
+		add_truce_both_ways = {
+			character = scope:courtier_1
+			days = purchase_truce_interaction_truce_days_small_value
+			name = RICE_normandy_adventurer_truce
+		}
+		random_list = {
+			# 20 = {
+			# 	add_character_modifier = {
+			# 		modifier = fp1_reprieve_from_sa_modifier
+			# 		years = 5
+			# 	}
+			# }
+			10 = {
+				add_character_modifier = {
+					modifier = fp1_reprieve_from_sa_modifier
+					years = 10
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = fp1_reprieve_from_sa_modifier
+					years = 15
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = fp1_reprieve_from_sa_modifier
+					years = 20
+				}
+			}
+		}
+		scope:courtier_1 = {			
+			custom_tooltip = RICE_norse_adventurer_convert_tooltip
+		}
+	}
+}
+
+
+
+RICE_invite_norman_initial_setup_effect = {	
+	capital_county = {
+		save_scope_as = capital
+	}
+	if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:rulers
+		}
+		save_scope_as = granter
+	}
+	if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:courtiers
+		}
+		remove_short_term_gold = RICE_norman_adventurers_small_cost
+	}
+	else = {			
+		remove_short_term_gold = RICE_norman_adventurers_large_cost
+	}
+}
+
+
+RICE_invite_norman_main_effect = {	
+	if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:courtiers
+		}
+		if = {
+			limit = {
+				exists = struggle:RICE_normandy_struggle
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = catalyst_RICE_normandy_invited_norman_courtiers
+			}
+		}
+	}
+	if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:colonists
+		}
+		random_list = {
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norman_colonists
+				# 		years = 10
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0031.colonists_duchy_tt_10
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norman_colonists
+									years = 10
+								}
+							}
+						}
+					}
+				}
+			}
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norman_colonists
+				# 		years = 15
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0031.colonists_duchy_tt_15
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norman_colonists
+									years = 15
+								}
+							}
+						}
+					}
+				}
+			}
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norman_colonists
+				# 		years = 20
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0031.colonists_duchy_tt_20
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norman_colonists
+									years = 20
+								}
+							}
+						}
+					}
+				}
+			}
+			10 = {
+				# scope:capital = {
+				# 	change_development_progress_with_overflow = 50
+				# 	change_county_control = 15
+				# 	add_county_modifier = {
+				# 		modifier = RICE_normandy_norman_colonists
+				# 		years = 25
+				# 	}
+				# }
+				scope:capital = {
+					save_temporary_scope_as = current_title
+					duchy = {
+						every_in_de_jure_hierarchy = {
+							limit = {
+								tier = tier_county
+								holder = {
+									OR = {
+										this = scope:current_title.holder
+										is_vassal_or_below_of = scope:current_title.holder
+									}
+								}
+							}
+							custom = RICE_every_county_in_capital_duchy
+							custom_tooltip = normandy.0031.colonists_duchy_tt_25
+							change_development_progress_with_overflow = 50
+							change_county_control = 15
+							hidden_effect = {
+								add_county_modifier = {
+									modifier = RICE_normandy_norman_colonists
+									years = 25
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				exists = struggle:RICE_normandy_struggle
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = catalyst_RICE_normandy_invited_norman_colonists
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:mercenaries
+		}
+		custom_tooltip = RICE_normandy_spawn_event_troops_tooltip
+		hidden_effect = {
+			RICE_norman_adventurers_spawn_effect = yes
+		}
+		# So they wear armor
+		scope:courtier_1 = {
+			add_character_flag = single_combat_duel_armor
+		}
+		if = {
+			limit = {
+				exists = struggle:RICE_normandy_struggle
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = catalyst_RICE_normandy_invited_norman_mercenaries
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:traders
+		}
+		random_list = {
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_traders
+					years = 10
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_traders
+					years = 15
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_traders
+					years = 20
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_traders
+					years = 25
+				}
+			}
+		}
+		if = {
+			limit = {
+				exists = struggle:RICE_normandy_struggle
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = catalyst_RICE_normandy_invited_norman_traders
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:rulers
+		}
+		save_scope_as = granter
+		random_held_title = {
+			limit = {
+				tier = tier_county
+				NOT = { this = root.capital_county }
+				#NOT = { this = scope:capital_county }
+			}	
+			save_scope_as = award_county
+		}			
+		scope:courtier_1 = {
+			get_title = scope:award_county
+		}
+		if = {
+			limit = {
+				highest_held_title_tier > tier_county
+			}
+			create_title_and_vassal_change = {
+				type = swear_fealty
+				save_scope_as = change
+			}
+			scope:courtier_1 = {
+				change_liege = {
+					liege = root
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+		}
+		else_if = {
+			limit = {
+				is_independent_ruler = no
+			}
+			create_title_and_vassal_change = {
+				type = swear_fealty
+				save_scope_as = change
+			}
+			scope:courtier_1 = {
+				change_liege = {
+					liege = scope:granter.liege
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+		}
+		add_truce_both_ways = {
+			character = scope:courtier_1
+			days = purchase_truce_interaction_truce_days_small_value
+			name = RICE_normandy_adventurer_truce
+		}
+		# random_list = {
+		# 	# 20 = {
+		# 	# 	add_character_modifier = {
+		# 	# 		modifier = fp1_reprieve_from_sa_modifier
+		# 	# 		years = 5
+		# 	# 	}
+		# 	# }
+		# 	10 = {
+		# 		add_character_modifier = {
+		# 			modifier = fp1_reprieve_from_sa_modifier
+		# 			years = 10
+		# 		}
+		# 	}
+		# 	10 = {
+		# 		add_character_modifier = {
+		# 			modifier = fp1_reprieve_from_sa_modifier
+		# 			years = 15
+		# 		}
+		# 	}
+		# 	10 = {
+		# 		add_character_modifier = {
+		# 			modifier = fp1_reprieve_from_sa_modifier
+		# 			years = 20
+		# 		}
+		# 	}
+		# }
+		scope:courtier_1 = {			
+			custom_tooltip = RICE_norse_adventurer_convert_tooltip
+		}
+		if = {
+			limit = {
+				exists = struggle:RICE_normandy_struggle
+			}
+			struggle:RICE_normandy_struggle ?= {
+				activate_struggle_catalyst = catalyst_RICE_normandy_invited_norman_rulers
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:RICE_norman_adventurer_type = flag:scholars
+		}
+		# if = {
+		# 	limit = { has_lifestyle = diplomacy_lifestyle }
+		# 	add_diplomacy_lifestyle_perk_points = 1
+		# }
+		# else_if = {
+		# 	limit = { has_lifestyle = martial_lifestyle }
+		# 	add_martial_lifestyle_perk_points = 1
+		# }
+		# else_if = {
+		# 	limit = { has_lifestyle = stewardship_lifestyle }
+		# 	add_stewardship_lifestyle_perk_points = 1
+		# }
+		# else_if = {
+		# 	limit = { has_lifestyle = intrigue_lifestyle }
+		# 	add_intrigue_lifestyle_perk_points = 1
+		# }
+		# else_if = {
+		# 	limit = { has_lifestyle = learning_lifestyle }
+		# 	add_learning_lifestyle_perk_points = 1
+		# }
+		# else = {
+		# 	10 = { add_diplomacy_lifestyle_perk_points = 1	}
+		# 	10 = { add_martial_lifestyle_perk_points = 1	}
+		# 	10 = { add_stewardship_lifestyle_perk_points = 1	}
+		# 	10 = { add_intrigue_lifestyle_perk_points = 1	}
+		# 	10 = { add_learning_lifestyle_perk_points = 1	}
+		# }
+		dynasty = {
+			add_dynasty_prestige = minor_prestige_gain
+		}
+		random_list = {
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_scholars_modifier
+					years = 10
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_scholars_modifier
+					years = 15
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_scholars_modifier
+					years = 20
+				}
+			}
+			10 = {
+				add_character_modifier = {
+					modifier = RICE_normandy_norman_scholars_modifier
+					years = 25
+				}
+			}
+		}
+	}
+}
+
+
+RICE_normandy_saint_aubert_procession_completed_log_entry_effect = {
+	scope:activity = {
+		add_activity_log_entry = {
+			key = RICE_normandy_saint_aubert_procession_completed_log
+			tags = { completed }
+			# this line below adds the entry to the Effects section of the conclusion UI
+			show_in_conclusion = yes
+			character = root
+			show_as_tooltip = {
+				scope:host = {
+					add_piety = 100
+				}
+				if = {
+					limit = {
+						scope:host = {
+							has_character_modifier = RICE_normandy_saint_aubert_miracle
+						}
+					}
+					scope:host = {
+						add_character_modifier = {
+							modifier = RICE_normandy_saint_aubert_miracle
+						}
+					}
+				}
+				every_attending_character = {
+					limit = { NOT = { this = scope:host } }
+					custom = EVERY_ACTIVITY_PARTICIPANT_EFFECT
+					add_piety = 25
+				}
+			}
+		}
+	}
+}
+
+
+RICE_normandy_mont_saint_michel_pilgrimage_completed_log_entry_effect = {
+	scope:activity = {
+		add_activity_log_entry = {
+			key = RICE_normandy_mont_saint_michel_pilgrimage_completed_log
+			tags = { completed }
+			# this line below adds the entry to the Effects section of the conclusion UI
+			show_in_conclusion = yes
+			character = root
+			scope:host = {
+				RICE_local_pilgrimage_generic_host_effect = yes
+			}
+			every_attending_character = {
+				limit = { NOT = { this = scope:host } }
+				custom = EVERY_ACTIVITY_PARTICIPANT_EFFECT
+				RICE_local_pilgrimage_generic_guest_effect = yes
+			}	
+		}
+	}
+}

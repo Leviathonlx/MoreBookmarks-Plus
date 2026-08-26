@@ -1,0 +1,145 @@
+﻿# Happens once a year for the culture. Arbitrary day, but the same day every year for that culture
+# Root is the culture
+yearly_culture_pulse = {
+	on_actions = {
+		yearly_culture_pulse_RICE
+	}
+
+}
+
+
+yearly_culture_pulse_RICE = {
+	effect = {
+		if = {
+			limit = {
+				NOT = { culture_number_of_counties > 0 }
+			}
+			# Give innovations for cultures that aren't on the map
+			random = {
+				chance = 8
+				add_random_innovation = yes
+			}
+		}
+	}
+}
+
+# Happens when a character changes culture
+# Root = character
+on_character_culture_change = {
+	on_actions = {
+		on_culture_change_RICE
+	}
+}
+
+on_culture_change_RICE = {
+	effect = {
+		# Trigger Normandy stuff if done through the vanilla decision
+		if = {
+			limit = {
+				#is_ruler = yes
+				completely_controls = title:d_normandy
+				root = {
+					culture = culture:norman
+				}
+				NOT = {
+					is_target_in_global_variable_list = {
+						name = unavailable_unique_decisions
+						target = flag:flag_formed_normandy_decision
+					}
+				}
+				NOT = { has_global_variable = RICE_normandy_struggle_started }
+			}
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_normandy_decision
+			}
+			if = {
+				limit = { has_game_rule = RICE_struggle_normandy_toggle_on }
+				set_global_variable = {
+					name = RICE_normandy_struggle_started
+					value = yes
+				}
+				start_struggle = {
+					struggle_type = RICE_normandy_struggle
+					start_phase = struggle_RICE_normandy_phase_adventure
+				}
+				struggle:RICE_normandy_struggle ?= {
+					trigger_event = { on_action = RICE_normandy_struggle_starting_events }
+				}
+			}
+			add_to_global_variable_list = {
+				name = RICE_normandy_rollo_list
+				target = root
+			}
+			if = {
+				limit = {
+					title:d_normandy.holder = {
+						is_dynast = yes
+						exists = dynasty
+					}
+				}
+				title:d_normandy.holder = {
+					dynasty = {				
+						set_dynasty_name = "dynn_RICE_normandie"
+					}
+					house = {
+						set_house_name = "dynn_RICE_normandie"
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					title:d_normandy.holder = {
+						exists = house
+					}
+				}
+				title:d_normandy.holder = {
+					house = {
+						set_house_name = "dynn_RICE_normandie"
+					}
+				}
+			}
+			struggle:RICE_normandy_struggle ?= {
+				every_involved_ruler = {
+					limit = {
+						is_alive = yes
+						is_ai = no
+					}
+					trigger_event = normandy.0001
+				}
+			}
+		}
+	}
+}
+
+# Happens when a culture is created through hybridization or divergence
+# Root = The new culture
+# scope:founder = The founder of the new culture
+on_culture_created = {
+	on_actions = {
+		on_culture_created_RICE
+	}
+}
+
+on_culture_created_RICE = {
+	effect = {
+		if = {
+			limit = {
+				NOT = {
+					is_target_in_global_variable_list = {
+						name = unavailable_unique_decisions
+						target = flag:RICE_khuzestan_khuzi_dignity_restored
+					}
+				}
+				any_parent_culture = {
+					#OR = {
+					#	has_cultural_pillar = heritage_elamite
+						has_cultural_tradition = tradition_RICE_khuzi
+					#}
+				}
+				NOT = { has_innovation = innovation_RICE_khuzi }
+			}
+			add_innovation = innovation_RICE_khuzi
+		}
+	}
+}

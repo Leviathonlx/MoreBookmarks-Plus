@@ -1,0 +1,332 @@
+﻿namespace = ep3_akolouthos_events
+
+# Varangian-eligible courtier gains Varangian or Varangian gains Loyal
+ep3_akolouthos_events.1000 = {
+	hidden = yes
+
+	trigger = {
+		OR = {
+			# A varangian who isn't loyal
+			any_courtier = {
+				has_trait = varangian
+				NOT = { has_trait = loyal }
+			}
+			#An eligible Varangian who doesn't have the trait
+			any_courtier = {
+				NOT = { has_trait = varangian }
+				ep3_varangian_trigger = yes
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			any_court_position_holder = {
+				type = bodyguard_court_position
+				NOT = { has_trait = varangian }
+				ep3_varangian_trigger = yes
+			}
+		}
+		modifier = {
+			add = 1
+			any_court_position_holder = {
+				type = bodyguard_court_position
+				NOT = { has_trait = loyal }
+				has_trait = varangian
+			}
+		}
+		modifier = {
+			add = 1
+			any_court_position_holder = {
+				type = akolouthos_court_position
+				NOT = { has_trait = varangian }
+				ep3_varangian_trigger = yes
+			}
+		}
+	}
+
+	immediate = {
+		random_court_position_holder = {
+			type = akolouthos_court_position
+			save_scope_as = akolouthos
+		}
+		#Most important that Varangian Akolouthos becomes Varangian
+		if = {
+			limit = {
+				any_court_position_holder = {
+					type = akolouthos_court_position
+					NOT = { has_trait = varangian }
+					ep3_varangian_trigger = yes
+				}
+			}
+			random_court_position_holder = {
+				type = akolouthos_court_position
+				limit = {
+					NOT = { has_trait = varangian }
+					ep3_varangian_trigger = yes
+				}
+				save_scope_as = trait_getter
+			}
+			ep3_send_akolouthos_message_varangian = yes
+		}
+		#Second-most important: Varangian bodyguard becomes Varangian
+		else_if = {
+			limit = {
+				any_court_position_holder = {
+					type = bodyguard_court_position
+					NOT = { has_trait = varangian }
+					ep3_varangian_trigger = yes
+				}
+			}
+			random_court_position_holder = {
+				type = bodyguard_court_position
+				limit = {
+					NOT = { has_trait = varangian }
+					ep3_varangian_trigger = yes
+				}
+				save_scope_as = trait_getter
+			}
+			ep3_send_akolouthos_message_varangian = yes
+		}
+		#Then either add loyal to a Varangian bodyguard or to Akolouthos
+		else_if = {
+			limit = {
+				OR = {
+					any_court_position_holder = {
+						type = bodyguard_court_position
+						has_trait = varangian
+						NOT = { has_trait = loyal }
+					}
+					any_court_position_holder = {
+						type = akolouthos_court_position
+						has_trait = varangian
+						NOT = { has_trait = loyal }
+					}
+				}
+			}
+			random_list = {
+				#Add loyal to a Varangian bodyguard
+				10 = {
+					trigger = {
+						any_court_position_holder = {
+							type = bodyguard_court_position
+							has_trait = varangian
+							NOT = { has_trait = loyal }
+						}
+					}
+					random_court_position_holder = {
+						type = bodyguard_court_position
+						limit = {
+							has_trait = varangian
+							NOT = { has_trait = loyal }
+						}
+						save_scope_as = trait_getter
+					}
+					ep3_send_akolouthos_message_loyal = yes
+				}
+				#Add loyal to a Varangian akolouthos
+				10 = {
+					trigger = {
+						any_court_position_holder = {
+							type = akolouthos_court_position
+							has_trait = varangian
+							NOT = { has_trait = loyal }
+						}
+					}
+					random_court_position_holder = {
+						type = akolouthos_court_position
+						limit = {
+							has_trait = varangian
+							NOT = { has_trait = loyal }
+						}
+						save_scope_as = trait_getter
+					}
+					ep3_send_akolouthos_message_loyal = yes
+				}
+			}
+		}
+		#Add Varangian to some non-Varangian Varangian
+		else_if = {
+			limit = {
+				any_courtier = {
+					NOT = { has_trait = varangian }
+					ep3_varangian_trigger = yes
+				}
+			}
+			random_courtier = {
+				limit = {
+					NOT = { has_trait = varangian }
+					ep3_varangian_trigger = yes
+				}
+				save_scope_as = trait_getter
+			}
+			ep3_send_akolouthos_message_varangian = yes
+		}
+		#Add loyal to some non-bodyguard Varangian
+		else = {
+			random_courtier = {
+				limit = {
+					has_trait = varangian
+					NOT = { has_trait = loyal }
+				}
+				save_scope_as = trait_getter
+			}
+			ep3_send_akolouthos_message_loyal = yes
+		}
+	}
+}
+
+# Akolouthos recruits Varangian
+ep3_akolouthos_events.1001 = {
+	hidden = yes
+
+	trigger = {
+		#Don't really need this if root is swarming in Varangians already
+		NOT = {
+			any_courtier_or_guest = {
+				count >= 8
+				ep3_varangian_trigger = yes
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		#Weigh up chances if Varangians are needed to fill posts
+		modifier = {
+			add = 1
+			NOT = {
+				any_courtier_or_guest = {
+					count >= 3
+					ep3_varangian_trigger = yes
+				}
+			}
+		}
+	}
+
+	immediate = {
+		random_court_position_holder = {
+			type = akolouthos_court_position
+			save_scope_as = akolouthos
+		}
+		#Find a candidate in the local pool
+		if = {
+			limit = {
+				is_landed = yes
+				any_pool_character = {
+					province = root.capital_province
+					ep3_varangian_trigger = yes
+					prowess > low_skill_rating
+				}
+			}
+			random_pool_character = {
+				province = root.capital_province
+				limit = {
+					ep3_varangian_trigger = yes
+					prowess > low_skill_rating
+				}
+				save_scope_as = new_varangian
+			}
+			scope:new_varangian = {
+				if = {
+					limit = {
+						NOT = { has_trait = varangian }
+					}
+					hidden_effect = {
+						add_trait = varangian
+					}
+				}
+			}
+		}
+		#Find a candidate in pools of akolouthos's culture
+		else_if = {
+			limit = {
+				scope:akolouthos = {
+					ep3_varangian_trigger = yes
+				}
+				exists = scope:akolouthos.culture.culture_head
+				scope:akolouthos.culture.culture_head = {
+					is_landed = yes
+				}
+				any_pool_character = {
+					province = scope:akolouthos.culture.culture_head.capital_province
+					ep3_varangian_trigger = yes
+					prowess >= low_skill_rating
+				}
+			}
+			scope:akolouthos.culture.culture_head = {
+				save_scope_as = akolouthos_culture_head
+			}
+			random_pool_character = {
+				province = scope:akolouthos_culture_head.capital_province
+				limit = {
+					ep3_varangian_trigger = yes
+					prowess > low_skill_rating
+				}
+				save_scope_as = new_varangian
+			}
+			scope:new_varangian = {
+				if = {
+					limit = {
+						NOT = { has_trait = varangian }
+					}
+					hidden_effect = {
+						add_trait = varangian
+					}
+				}
+			}
+		}
+		#Create a candidate
+		else_if = {
+			limit = {
+				scope:akolouthos = {
+					ep3_varangian_trigger = yes
+				}
+			}
+			create_character = {
+				template = varangian_template
+				location = root.location
+				culture = scope:akolouthos.culture
+				faith = scope:akolouthos.faith
+				dynasty = none
+				save_scope_as = new_varangian
+			}
+		}
+		else_if = {
+			limit = {
+				current_date < 990
+			}
+			#Norse
+			create_character = {
+				template = varangian_template
+				location = root.location
+				culture = culture:norse
+				faith = root.faith
+				dynasty = none
+				save_scope_as = new_varangian
+			}
+		}
+		else = {
+			#Anglo-Saxon
+			create_character = {
+				template = varangian_template
+				location = root.location
+				culture = culture:anglo_saxon
+				faith = root.faith
+				dynasty = none
+				save_scope_as = new_varangian
+			}
+		}
+		send_interface_message = {
+			type = event_martial_good_with_text
+			title = ep3_akolouthos_events.1001
+			desc = ep3_akolouthos_events.1001_notification_tooltip
+			tooltip = akolouthos_effect_tooltip
+			left_icon = scope:new_varangian
+			right_icon = scope:akolouthos
+			add_courtier = scope:new_varangian
+		}
+	}
+}

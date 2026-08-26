@@ -1,0 +1,115 @@
+﻿namespace = jewish_events
+
+### Rabbinic priesthood wants to become monogamous
+
+jewish_events.0001 = {
+	type = character_event
+	title = jewish_events.0001.t
+	desc = jewish_events.0001.desc
+	theme = learning
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	option = { #Just accept it
+		name = jewish_events.0001.a
+		show_as_tooltip = {
+			root.faith = {
+				remove_doctrine = doctrine_polygamy
+				add_doctrine = doctrine_monogamy
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = { #Refuse to change
+		name = jewish_events.0001.b
+		trigger = {
+			this = root.culture.culture_head
+			root.culture = {
+				NOT = { has_cultural_tradition = tradition_polygamous }
+			}
+		}
+		add_piety = major_piety_loss
+		show_as_tooltip = {
+			root.faith = {
+				remove_doctrine = doctrine_polygamy
+				add_doctrine = doctrine_monogamy
+			}
+		}
+		root.culture = {
+			if = {
+				limit = {
+					has_cultural_tradition = tradition_monogamous
+				}
+				remove_culture_tradition = tradition_monogamous
+			}
+			if = {
+				limit = {
+					has_cultural_tradition = tradition_concubines
+				}
+				remove_culture_tradition = tradition_concubines
+			}
+			add_culture_tradition = tradition_polygamous
+		}
+	}
+
+	option = { #Refuse to change but also you're powerful enough to supercede the priesthood
+		name = jewish_events.0001.c
+		trigger = {
+			exists = root.faith.religious_head
+			root.faith.religious_head = { is_vassal_or_below_of = root }
+		}
+		add_piety_level = -1
+		reverse_add_opinion = {
+			target = root.faith.religious_head
+        	modifier = insulted_opinion
+        	opinion = -75
+		}
+		root.faith = {
+			set_variable = {
+				name = rabbinicism_rejected_monogamy
+				value = yes
+			}
+		}
+	}
+
+	after = {
+		add_character_flag = had_event_jewish_events_0001
+		if = {
+			limit = {
+				NOT = { root.faith = { has_variable = rabbinicism_rejected_monogamy } }
+			}
+			if = {
+				limit = {
+					root.faith = { has_doctrine = doctrine_polygamy }
+				}
+				root.faith = {
+					set_variable = {
+						name = rabbinicism_accepted_monogamy
+						value = yes
+					}
+					remove_doctrine = doctrine_polygamy
+					add_doctrine = doctrine_monogamy
+				}
+			}
+			if = {
+				limit = {
+					exists = root.faith.religious_head
+					root.faith.religious_head = { is_vassal_or_below_of = root }
+				}
+				every_player = {
+					limit = {
+						faith = root.faith
+						NOT = { has_character_flag = had_event_jewish_events_0001 }
+					}
+					trigger_event = jewish_events.0001
+				}
+			}
+		}
+	}
+}

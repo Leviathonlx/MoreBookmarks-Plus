@@ -1,0 +1,311 @@
+﻿RICE_story_cycle_north_atlantic_support_greenland = {
+
+	on_setup = {
+
+		# Location
+		set_variable = {
+			name = RICE_greenland_aid_type
+			value = story_owner.var:RICE_greenland_aid
+		}
+		story_owner = {
+			remove_variable = RICE_greenland_aid
+		}
+
+	}
+
+	on_end = {
+
+	}
+
+	on_owner_death = {
+		if = {
+			limit = { exists = story_owner.player_heir }
+			make_story_owner = story_owner.player_heir
+		}
+		else = {
+			scope:story = { end_story = yes }
+		}
+	}
+
+	# The support fails to arrive
+	effect_group = {
+		days = { 20 40 } # { 365 1095 } # 1-3 years
+		chance = 100
+	
+		triggered_effect = {
+			trigger = {
+				NOT = { exists = var:RICE_support_success }
+				NOT = { exists = var:RICE_support_fail }
+			}
+			effect = {
+
+				random = {
+					chance = 25
+					modifier = {
+						add = 5
+						exists = struggle:RICE_greenland_struggle
+						struggle:RICE_greenland_struggle ?= {
+							is_struggle_phase = struggle_RICE_greenland_phase_subsistence
+						}
+					}	
+					modifier = {
+						add = 10
+						exists = struggle:RICE_greenland_struggle
+						struggle:RICE_greenland_struggle ?= {
+							is_struggle_phase = struggle_RICE_greenland_phase_marginalization
+						}
+					}
+					# modifier = {
+					# 	add = 5
+					# 	exists = struggle:RICE_greenland_struggle
+					# 	struggle:RICE_greenland_struggle ?= {
+					# 		is_struggle_phase = struggle_RICE_greenland_phase_subsistence
+					# 	}	
+					# }
+					# modifier = {
+					# 	add = 10
+					# 	exists = struggle:RICE_greenland_struggle
+					# 	struggle:RICE_greenland_struggle ?= {
+					# 		is_struggle_phase = struggle_RICE_greenland_phase_marginalization
+					# 	}	
+					# }
+					set_variable = {
+						name = RICE_support_fail
+						value = yes
+					}
+	
+					set_variable = {
+						name = RICE_support_resilience_decrease
+						value = {
+							value = 0
+							if = {
+								limit = {
+									var:RICE_greenland_aid_type = flag:basic_supplies
+								}
+								add = {
+									integer_range = {
+										min = 1
+										max = 2
+									}
+								}
+							}
+							else_if = {
+								limit = {
+									OR = {
+										var:RICE_greenland_aid_type = flag:settlers
+										var:RICE_greenland_aid_type = flag:food
+										var:RICE_greenland_aid_type = flag:materials
+										var:RICE_greenland_aid_type = flag:clergy
+										var:RICE_greenland_aid_type = flag:shielings
+									}
+								}
+								add = {
+									integer_range = {
+										min = 1
+										max = 4
+									}
+								}
+							}
+							else_if = {
+								limit = {
+									OR = {
+										var:RICE_greenland_aid_type = flag:hunting_stations
+										var:RICE_greenland_aid_type = flag:temples
+									}
+								}
+								add = {
+									integer_range = {
+										min = 1
+										max = 9
+									}
+								}
+							}
+						}
+					}
+	
+					set_variable = {
+						name = RICE_support_networks_decrease
+						value = {
+							value = 0
+							if = {
+								limit = {
+									var:RICE_greenland_aid_type = flag:basic_supplies
+								}
+								add = {
+									integer_range = {
+										min = 1
+										max = RICE_greenland_support_very_tiny_bonus_value
+									}
+								}
+							}
+							else_if = {
+								limit = {
+									OR = {
+										var:RICE_greenland_aid_type = flag:settlers
+										var:RICE_greenland_aid_type = flag:food
+										var:RICE_greenland_aid_type = flag:materials
+										var:RICE_greenland_aid_type = flag:clergy
+										var:RICE_greenland_aid_type = flag:shielings
+									}
+								}
+								add = {
+									integer_range = {
+										min = 1
+										max = RICE_greenland_support_tiny_bonus_value
+									}
+								}
+							}
+							else_if = {
+								limit = {
+									OR = {
+										var:RICE_greenland_aid_type = flag:hunting_stations
+										var:RICE_greenland_aid_type = flag:temples
+									}
+								}
+								add = {
+									integer_range = {
+										min = 1
+										max = RICE_greenland_support_small_bonus_value
+									}
+								}
+							}
+						}
+					}
+	
+					story_owner = {
+						trigger_event = north_atlantic.0102 # The expedition fails
+					}
+				}
+
+			}
+		}
+	}
+
+	# The aid successfully arrives
+	effect_group = {
+		days = { 20 40 } # { 45 60 } # 1-3 years
+		chance = 100
+	
+		triggered_effect = {
+			trigger = {
+				NOT = { exists = var:RICE_support_success }
+			}
+			effect = {
+
+				set_variable = {
+					name = RICE_support_success
+					value = yes
+				}
+
+				set_variable = {
+					name = RICE_support_primary_resource_increase
+					value = {
+						value = 0
+						if = {
+							limit = {
+								var:RICE_greenland_aid_type = flag:basic_supplies
+							}
+							add = {
+								integer_range = {
+									min = 1
+									max = RICE_greenland_support_small_bonus_value
+								}
+							}
+						}
+						else_if = {
+							limit = {
+								OR = {
+									var:RICE_greenland_aid_type = flag:settlers
+									var:RICE_greenland_aid_type = flag:food
+									var:RICE_greenland_aid_type = flag:materials
+									var:RICE_greenland_aid_type = flag:clergy
+									var:RICE_greenland_aid_type = flag:shielings
+								}
+							}
+							add = {
+								integer_range = {
+									min = 1
+									max = RICE_greenland_support_medium_bonus_value
+								}
+							}
+						}
+						else_if = {
+							limit = {
+								OR = {
+									var:RICE_greenland_aid_type = flag:hunting_stations
+									var:RICE_greenland_aid_type = flag:temples
+								}
+							}
+							add = {
+								integer_range = {
+									min = 1
+									max = RICE_greenland_support_large_bonus_value
+								}
+							}
+						}
+					}
+				}
+
+				if = {
+					limit = {
+						OR = {
+							var:RICE_greenland_aid_type = flag:hunting_stations
+							var:RICE_greenland_aid_type = flag:temples
+							var:RICE_greenland_aid_type = flag:basic_supplies
+						}
+
+					}
+					set_variable = {
+						name = RICE_support_secondary_resource_increase
+						value = {
+							value = 0
+							add = {
+								integer_range = {
+									min = 1
+									max = RICE_greenland_support_small_bonus_value
+								}
+							}
+						}
+					}
+				}
+				else_if = {
+					limit = {						
+						var:RICE_greenland_aid_type = flag:shielings
+					}
+					set_variable = {
+						name = RICE_support_secondary_resource_increase
+						value = {
+							value = 0
+							add = {
+								integer_range = {
+									min = 1
+									max = RICE_greenland_support_medium_bonus_value
+								}
+							}
+						}
+					}
+				}
+
+				story_owner = {
+					trigger_event = north_atlantic.0101 # Supplies arrive safe and sound
+				}
+
+			}
+		}
+	}
+
+	# 100 days self destruct in case it drags on for some reason
+	effect_group = {
+		days = 100
+		chance = 100
+
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				end_story = yes
+			}
+		}
+	}	
+
+	
+}

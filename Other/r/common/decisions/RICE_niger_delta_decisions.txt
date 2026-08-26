@@ -1,0 +1,1586 @@
+﻿
+
+##################################################
+# Convert Realm to Feudalism (West African Pagan)
+# Adapted from vanilla for RICE faiths
+##################################################
+
+# A decision for West African pagans added by RICE to feudalise without reforming.
+RICE_convert_whole_realm_to_feudalism_west_african_pagan_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_RICE_african_mansa.dds"
+	}
+	decision_group_type = major
+	desc = convert_whole_realm_to_feudalism_west_african_pagan_decision_desc
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 72
+		duchy = 36
+		kingdom = 36
+		empire = 36
+		hegemony = 36
+	}
+
+	is_shown = {
+		# Only tribals need formalise.
+		government_has_flag = government_is_tribal
+		# Unreformed West African Pagans are our targets.
+		faith = {
+			# Unreformed West African Pagans are our targets.
+			RICE_new_african_religions_trigger = yes
+			custom_tooltip = {
+				text = faith_qualifies_for_west_african_pagan_feudalisation_trigger.tt
+				has_doctrine_parameter = unreformed
+			}
+		}
+	}
+
+	is_valid = {
+		# Repeat the faith requirements, so that the player knows what's up.
+		faith = {
+			# Unreformed West African Pagans are our targets.
+			RICE_new_african_religions_trigger = yes
+			custom_tooltip = {
+				text = faith_qualifies_for_west_african_pagan_feudalisation_trigger.tt
+				has_doctrine_parameter = unreformed
+			}
+		}
+		# Must have suitable authority.
+		has_realm_law = tribal_authority_3
+		# Independents only.
+		top_liege = this
+		# West Africans feudalise from large empires.
+		calc_true_if = {
+			amount >= 4
+			realm_size >= minor_realm_size
+			highest_held_title_tier >= tier_kingdom
+			custom_tooltip = {
+				text = convert_whole_realm_to_feudalism_west_african_pagan_decision.tt.vassal_count
+				any_vassal = { count >= convert_whole_realm_to_feudalism_west_african_pagan_decision_vassal_count_value }
+			}
+			prestige_level >= high_prestige_level
+			piety_level >= high_piety_level
+			custom_tooltip = {
+				text = convert_whole_realm_to_feudalism_west_african_pagan_decision.tt.wa_capital_development
+				capital_county = {
+					development_level >= convert_whole_realm_to_feudalism_west_african_pagan_decision_wa_capital_development_value
+					title_province = { geographical_region = world_africa_west }
+				}
+			}
+		}
+		# You need to have 70% of all (non-regional/unique) tribal innovations!
+		custom_description = {
+			text = has_all_tribal_innovations
+			subject = root.culture
+			culture = {
+				calc_true_if = {
+					amount >= 9
+					has_innovation = innovation_motte
+					has_innovation = innovation_catapult
+					has_innovation = innovation_barracks
+					has_innovation = innovation_mustering_grounds
+					has_innovation = innovation_bannus
+					has_innovation = innovation_quilted_armor
+					has_innovation = innovation_gavelkind
+					has_innovation = innovation_crop_rotation
+					has_innovation = innovation_city_planning
+					has_innovation = innovation_casus_belli
+					has_innovation = innovation_plenary_assemblies
+					has_innovation = innovation_ledger
+					has_innovation = innovation_development_01
+					has_innovation = innovation_currency_01
+				}
+			}
+		}
+	}
+
+	cost = { prestige = 500 }
+
+	effect = {
+		trigger_event = major_decisions.0001
+		save_scope_as = actor
+		convert_whole_realm_to_feudalism_effect = yes
+		hidden_effect = {
+			every_vassal = {
+				trigger_event = {
+					id = major_decisions.0002
+					days = 3
+				}
+			}
+		}
+	}
+
+	ai_potential = {
+		# Cut down on checks for other tribals.
+		exists = capital_county.title_province
+		capital_county.title_province = { geographical_region = world_africa_west }
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+
+
+
+
+RICE_restore_ooni_decision = {
+	picture = { reference = "gfx/interface/illustrations/decisions/decision_RICE_benin_kingdom.dds" }
+
+	desc = RICE_restore_ooni_decision_desc
+	selection_tooltip = RICE_restore_ooni_decision_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 144
+		duchy = 144
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	is_shown = {
+		is_landed = yes
+		highest_held_title_tier > tier_barony
+		faith = faith:west_african_orisha_pagan
+		NOT = { faith = { exists = religious_head } }
+	}
+
+	is_valid = {
+		completely_controls = title:c_ife
+		faith = faith:west_african_orisha_pagan
+		piety_level >= high_piety_level
+		#highest_held_title_tier >= tier_duchy # Must be at least a duke
+		sub_realm_size >= 5
+		#num_sinful_traits < 1
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		is_independent_ruler = yes
+	}
+
+	effect = {
+
+		custom_tooltip = RICE_restore_ooni_decision_effect_tooltip
+
+		religion:west_african_orisha_religion = {
+			save_scope_as = yoruba
+		}
+
+		show_as_tooltip = {
+			RICE_niger_delta_restore_ooni_effect = yes
+		}
+
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = RICE_restore_ooni_decision_context_tooltip
+		}
+
+		trigger_event = {
+			id = niger_delta.0006 # middle_east_decisions.0003
+		}
+
+	}
+	
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = { #Always do it when possible.
+		base = 100
+		ai_value_modifier = {
+			ai_zeal = 1.0
+		}
+		modifier = {
+			factor = 0.1
+			has_trait = cynical
+		}
+	}
+}
+
+
+
+RICE_niger_delta_restore_ooni_to_ife = {
+	picture = { reference = "gfx/interface/illustrations/decisions/decision_RICE_benin_kingdom.dds" }
+
+	desc = RICE_niger_delta_restore_ooni_to_ife_desc
+	selection_tooltip = RICE_niger_delta_restore_ooni_to_ife_tooltip
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 24
+		duchy = 24
+		kingdom = 12
+		empire = 12
+		hegemony = 12
+	}
+
+	is_shown = {
+		is_landed = yes
+		highest_held_title_tier > tier_barony
+		religion = religion:west_african_orisha_religion
+		NOT = {
+			has_title = title:d_ooni_of_ife
+		}
+		NOT = { title:c_ife.holder = { has_title = title:d_ooni_of_ife } }
+		title:d_ooni_of_ife.holder = {
+			NOT = { 	
+				has_opinion_modifier = { #Not accepting it if you conquered it yourself.
+					target = root
+					modifier = declared_war
+				}
+			}
+			NOT = { 	
+				has_opinion_modifier = { #Not accepting it if you conquered it yourself.
+					target = root
+					modifier = revoked_title
+				}
+			}
+		}
+		faith.religious_head = {
+			has_title = title:d_ooni_of_ife
+		}
+		NOT = { has_character_flag = flag_already_given_ife_once }
+	}
+
+	is_valid = {
+		religion = religion:west_african_orisha_religion
+		NOT = { has_title = title:d_ooni_of_ife }
+		custom_tooltip = {
+			text = RICE_ife_is_capital
+			NOT = { capital_county = { this = title:c_ife } }
+		}
+		highest_held_title_tier > 2 # Only dukes or above
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		custom_tooltip = {
+			text = hof_exists_tt
+			faith = { exists = religious_head }
+		}
+		custom_tooltip = {
+			text = RICE_ife_held_by_you_or_vassal_tt
+			OR = {
+				title:c_ife.holder = { 	
+					any_liege_or_above = { this = root }
+				}
+				title:c_ife.holder = { this = root }
+			}
+		}
+	}
+
+	effect = {
+		add_piety = 1000
+		add_character_flag = flag_already_given_ife_once
+		create_title_and_vassal_change = {
+			type = returned
+			save_scope_as = change
+			add_claim_on_loss = no
+		}
+		title:c_ife = {
+			change_title_holder = {
+				holder = title:d_ooni_of_ife.holder
+				change = scope:change
+			}
+		}
+		resolve_title_and_vassal_change = scope:change
+
+		title:d_ooni_of_ife.holder = {
+			set_realm_capital = title:c_ife
+			add_opinion = {
+				target = prev
+				modifier = RICE_restored_ooni_opinion
+			}
+		}
+
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = RICE_restore_ooni_decision_context_tooltip
+		}
+
+	}
+	
+	ai_potential = {
+		faith = faith:west_african_orisha_pagan
+		highest_held_title_tier > 2 # Only dukes or above
+	}
+
+	ai_will_do = { #Do it always, for coherence.
+		base = 100
+		modifier = {
+			factor = 0
+			title:c_ife.holder = {
+				OR = {
+					is_ai = no
+					any_liege_or_above = { is_ai = no }  # AI will never take Ife province away from a player.
+				}
+			}
+		}
+		modifier = {
+			factor = 0.1
+			has_trait = cynical
+		}
+	}
+}
+
+RICE_niger_delta_request_beaded_crown = {
+	picture = { reference = "gfx/interface/illustrations/decisions/decision_RICE_benin_kingdom.dds" }
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 24
+		duchy = 24
+		kingdom = 12
+		empire = 12
+		hegemony = 12
+	}
+
+	cooldown = { days = 1825 }
+
+	desc = RICE_niger_delta_request_beaded_crown_desc
+	
+	is_shown = {
+		has_character_modifier = RICE_niger_delta_uncrowned
+		NOT = { has_character_flag = RICE_niger_delta_received_beaded_crown }
+		exists = title:d_ooni_of_ife.holder
+		NOT = { has_title = title:d_ooni_of_ife }
+		is_landed = yes
+		OR = {
+			religion = religion:west_african_orisha_religion
+			culture = culture:yoruba
+			culture = {
+				any_parent_culture_or_above = {
+					this = culture:yoruba
+				}
+			}
+			culture = culture:edo
+			culture = {
+				any_parent_culture_or_above = {
+					this = culture:edo
+				}
+			}
+			AND = {
+				any_held_title = {
+					tier = tier_county
+					any_county_province = {
+						geographical_region = RICE_yorubaland_region	
+					}
+				}
+				culture = {
+					has_cultural_tradition = tradition_RICE_kinship_based_craft_guilds
+				}
+			}
+		}
+	}
+	
+	is_valid = {
+		exists = title:d_ooni_of_ife.holder
+		custom_description = {
+			text = RICE_not_received_beaded_crown_req
+			NOT = { has_character_flag = RICE_niger_delta_received_beaded_crown }
+		}
+		OR = {
+			religion = religion:west_african_orisha_religion
+			culture = culture:yoruba
+			custom_description = {
+				text = RICE_decision_yoruba_culture_requirement
+				culture = {
+					any_parent_culture_or_above = {
+						this = culture:yoruba
+					}
+				}
+			}
+			culture = culture:edo
+			custom_description = {
+				text = RICE_decision_edo_culture_requirement
+				culture = {
+					any_parent_culture_or_above = {
+						this = culture:edo
+					}
+				}
+			}
+			AND = {
+				custom_description = {
+					text = RICE_yorubaland_geographical_req
+					any_held_title = {
+						tier = tier_county
+						any_county_province = {
+							geographical_region = RICE_yorubaland_region	
+						}
+					}
+				}
+				culture = {
+					has_cultural_tradition = tradition_RICE_kinship_based_craft_guilds
+				}
+			}
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		NOT = { has_character_modifier = RICE_niger_delta_ooni_denounced_permanent }
+	}
+
+    widget = {
+    	gui = "decision_view_widget_RICE_niger_delta_beaded_crown_decision"
+		controller = decision_option_list_controller
+    	
+		#decision_has_second_step = yes
+		#decision_custom_widget_container = "custom_widgets_container_step_two"
+		decision_to_second_step_button = "RICE_niger_delta_pick_a_ooni_gift_type" 
+
+
+		# A modest sacrifice in honor of the Ooni - safe basic option, no gain or loss
+		item = {
+			value = RICE_niger_delta_modest_sacrifice_option
+			is_valid = {
+				OR = {
+					is_ai = no
+					gold >= 50
+				}
+			}
+			current_description = RICE_niger_delta_modest_sacrifice_option_desc
+			localization = RICE_niger_delta_modest_sacrifice_option
+			icon = "gfx/interface/icons/message_feed/religious.dds"
+
+			ai_chance = {
+				value = 3
+				if = { # Certain AI's really do not want to part with gold
+					limit = {
+						ai_greed >= 50
+					}
+					add = -2
+				}
+			}
+		}
+
+		# Gift of Gold to the Shrine of Oduduwa - piety option
+		item = {
+			value = RICE_niger_delta_gift_gold_oduduwa_shrine_option
+			is_valid = {
+				OR = {
+					is_ai = no
+					gold >= 100
+				}
+			}
+			current_description = RICE_niger_delta_gift_gold_oduduwa_shrine_option_desc
+			localization = RICE_niger_delta_gift_gold_oduduwa_shrine_option
+			icon = "gfx/interface/icons/message_feed/sway_scheme.dds"
+
+			ai_chance = {
+				value = 3
+				if = { # Certain AI's really do not want to part with gold
+					limit = {
+						ai_greed >= 50
+					}
+					add = -2
+				}
+			}
+		}
+
+		# A sacred vow to serve them - lose prestige, loyalty hook
+		item = {
+			value = RICE_niger_delta_sacred_vow_option
+			is_valid = {
+				can_add_hook = {
+					target = title:d_ooni_of_ife.holder
+					type = loyalty_hook
+				}
+			}
+			current_description = RICE_niger_delta_sacred_vow_option_desc
+			localization = RICE_niger_delta_sacred_vow_option
+			icon = "gfx/interface/icons/message_feed/hook_strong.dds"
+
+			ai_chance = {
+				value = 2
+			}
+		}
+
+		# Art artifacts - random amount of prestige or piety
+		item = {
+			value = RICE_niger_delta_art_gift_option
+			is_valid = {
+				exists = dynasty
+				OR = {
+					is_ai = no
+					gold >= 100
+				}
+				dynasty = {
+					OR = {
+						has_dynasty_modifier = RICE_niger_delta_bronze_caster_guild_modifier
+						has_dynasty_modifier = RICE_niger_delta_ivory_and_wood_carver_guild_modifier
+						has_dynasty_modifier = RICE_niger_delta_bead_maker_guild_modifier
+						has_dynasty_modifier = RICE_niger_delta_ironsmith_guild_modifier
+					}
+				}
+			}
+			current_description = RICE_niger_delta_art_gift_option_desc
+			localization = RICE_niger_delta_art_gift_option
+			icon = "gfx/interface/icons/message_feed/steward_job.dds"
+
+			ai_chance = {
+				value = 3
+				if = { # Certain AI's really do not want to part with gold
+					limit = {
+						ai_greed >= 50
+					}
+					add = -2
+				}
+			}
+		}
+
+		# Cash bribe to the Ooni - gold and piety loss
+		# item = {
+		# 	value = RICE_niger_delta_cash_gift_option
+		# 	is_valid = {
+		# 		OR = {
+		# 			is_ai = no
+		# 			gold >= 100
+		# 		}
+		# 	}
+		# 	current_description = RICE_niger_delta_cash_gift_option_desc
+		# 	localization = RICE_niger_delta_cash_gift_option
+		# 	icon = "gfx/interface/icons/message_feed/county_corruption.dds" #money
+
+		# 	ai_chance = {
+		# 		value = 3
+		# 	}
+		# }
+
+		# Land to a relative
+		item = {
+			value = RICE_niger_delta_land_option
+			is_valid = {
+				any_held_title = {
+					tier = tier_county
+					count > 1
+				}
+				title:d_ooni_of_ife.holder = {
+					any_close_family_member = {
+						exists = yes
+						is_landed = no
+						NOT = { is_primary_heir_of = title:d_ooni_of_ife.holder }
+					}					
+				}
+			}
+			current_description = RICE_niger_delta_land_option_desc
+			localization = RICE_niger_delta_land_option
+			icon = "gfx/interface/icons/message_feed/titles.dds"
+
+			ai_chance = {
+				value = 1
+			}
+		}
+
+		# Low ranked concubine/wife
+		item = {
+			value = RICE_niger_delta_low_concubine_option
+			# Hide for now
+			# is_shown = {
+			# 	always = no
+			# }
+            is_valid = {
+                title:d_ooni_of_ife.holder ?= {
+                    allowed_more_concubines = yes
+                }
+            }
+			current_description = RICE_niger_delta_low_concubine_option_desc
+			localization = RICE_niger_delta_low_concubine_option
+			icon = "gfx/interface/icons/message_feed/marriage.dds"
+
+			ai_chance = {
+				value = 2
+			}
+		}
+
+		# Low ranked concubine/wife
+		# item = {
+		# 	value = RICE_niger_delta_low_concubine_option
+		# 	# Hide for now
+		# 	# is_shown = {
+		# 	# 	always = no
+		# 	# }
+		# 	is_valid = {
+		# 		any_courtier = {
+		# 			age <= 40
+		# 			is_adult = yes
+		# 			is_landed = no
+		# 			is_ruler = no
+		# 			NOT = { is_close_or_extended_family_of = root }
+		# 			NOT = { is_heir_of = root }
+		# 			OR = {
+		# 				can_be_offered_as_concubine_to_character_trigger = {
+		# 					GIVER = root
+		# 					CHARACTER = title:d_ooni_of_ife.holder
+		# 				}
+		# 				can_marry_character_trigger = { CHARACTER = title:d_ooni_of_ife.holder }
+		# 			}
+		# 		}
+		# 	}
+		# 	current_description = RICE_niger_delta_low_concubine_option_desc
+		# 	localization = RICE_niger_delta_low_concubine_option
+		# 	icon = "gfx/interface/icons/message_feed/marriage.dds"
+
+		# 	ai_chance = {
+		# 		value = 2
+		# 	}
+		# }
+
+		# # High ranked concubine/wife
+		# item = {
+		# 	value = RICE_niger_delta_high_concubine_option
+		# 	# Hide for now
+		# 	is_shown = {
+		# 		always = no
+		# 	}
+		# 	is_valid = {
+		# 		any_courtier = {
+		# 			age <= 40
+		# 			is_adult = yes
+		# 			is_landed = no
+		# 			is_ruler = no
+		# 			is_close_or_extended_family_of = root
+		# 			NOT = { is_heir_of = root }
+		# 			OR = {
+		# 				can_be_offered_as_concubine_to_character_trigger = {
+		# 					GIVER = root
+		# 					CHARACTER = title:d_ooni_of_ife.holder
+		# 				}
+		# 				can_marry_character_trigger = { CHARACTER = title:d_ooni_of_ife.holder }
+		# 			}
+		# 		}
+		# 	}
+		# 	current_description = RICE_niger_delta_high_concubine_option_desc
+		# 	localization = RICE_niger_delta_high_concubine_option
+		# 	icon = "gfx/interface/icons/message_feed/marriage.dds"
+
+		# 	ai_chance = {
+		# 		value = 1
+		# 	}
+		# }
+
+		# My presence is good enough - only for insane or weird characters or those who really hate the Ooni
+		item = {
+			value = RICE_niger_delta_no_gift_option
+			current_description = RICE_niger_delta_no_gift_option_desc
+			localization = RICE_niger_delta_no_gift_option
+			icon = "gfx/interface/icons/message_feed/faction.dds"
+
+			ai_chance = {
+				value = 0 
+				if = {
+					limit = {
+						# Only make this choice if you're crazy or don't like the Ooni for whatever reason, but even then there's a low chance of doing it
+						OR = {
+							has_trait = lunatic
+							has_relation_rival = title:d_ooni_of_ife.holder
+							has_relation_nemesis = title:d_ooni_of_ife.holder
+							opinion = {
+								target = title:d_ooni_of_ife.holder
+								value <= medium_negative_opinion
+							}
+						}
+					}
+					add = 1
+				}
+			}
+		}		
+
+	}
+
+	effect = {
+			
+		custom_tooltip = RICE_niger_delta_request_beaded_crown_effect_tooltip
+
+		save_scope_as = scoped_ruler
+
+
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = RICE_niger_delta_request_beaded_crown_context_tooltip
+		}
+
+		if = { # Modest sacrifice
+			limit = { scope:RICE_niger_delta_modest_sacrifice_option = yes }
+			set_variable = {
+				name = RICE_ooni_gift_type
+				value = flag:sacrifice
+			}
+		}
+
+		else_if = { # Donation to Oduduwa's Shrine
+			limit = { scope:RICE_niger_delta_gift_gold_oduduwa_shrine_option = yes }
+			set_variable = {
+				name = RICE_ooni_gift_type
+				value = flag:oduduwa_shrine
+			}
+		}
+
+		else_if = { # Sacred Vow
+			limit = { scope:RICE_niger_delta_sacred_vow_option = yes }
+			set_variable = {
+				name = RICE_ooni_gift_type
+				value = flag:sacred_vow
+			}
+		}
+
+		else_if = { # Gift of Art
+			limit = { scope:RICE_niger_delta_art_gift_option = yes }
+			set_variable = {
+				name = RICE_ooni_gift_type
+				value = flag:art
+			}
+		}
+
+		else_if = { # Land to the Ooni's relative
+			limit = { scope:RICE_niger_delta_land_option = yes }
+			set_variable = {
+				name = RICE_ooni_gift_type
+				value = flag:land
+			}
+		}
+
+		else_if = { # Low Status Concubine
+			limit = { scope:RICE_niger_delta_low_concubine_option = yes }
+			set_variable = {
+				name = RICE_ooni_gift_type
+				value = flag:low_concubine
+			}
+		}
+
+		# else_if = { # High Status Concubine
+		# 	limit = { scope:RICE_niger_delta_high_concubine_option = yes }
+		# 	set_variable = {
+		# 		name = RICE_ooni_gift_type
+		# 		value = flag:high_concubine
+		# 	}
+		# }
+
+		else_if = { # No Gift
+			limit = { scope:RICE_niger_delta_no_gift_option = yes }
+			set_variable = {
+				name = RICE_ooni_gift_type
+				value = flag:no_gift
+			}
+		}
+
+		title:d_ooni_of_ife.holder = {
+			save_scope_as = ooni
+			trigger_event = niger_delta.0050
+			#trigger_event = {
+			#	id = niger_delta.0050
+			#	days = 1
+			#}
+		}
+	}
+
+	# No costs per se
+	# cost = { 
+	# 	gold = { value = RICE_guanche_activity_cost } # Will depend
+	# }	
+
+	ai_potential = {
+		short_term_gold > 50
+	}
+
+	ai_will_do = {
+		base = 750
+		modifier = {
+			add = -100
+			has_trait = content
+		}
+		modifier = {
+			add = 100
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -100
+			has_trait = lazy
+		}
+		modifier = {
+			add = 100
+			has_trait = diligent
+		}
+	}
+}
+
+
+RICE_niger_delta_form_craft_guilds = {
+	picture = { reference = "gfx/interface/illustrations/decisions/decision_RICE_benin_kingdom.dds" }
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 48
+		duchy = 36
+		kingdom = 24
+		empire = 24
+		hegemony = 24
+	}
+
+	cooldown = { days = 1825 } #3650 1825
+	
+	desc = RICE_niger_delta_form_craft_guilds_desc
+	
+	is_shown = {
+		exists = dynasty
+		is_dynast = yes
+		highest_held_title_tier > tier_barony
+		is_landed = yes
+		OR = {
+			has_title = title:c_ife
+			has_title = title:d_ooni_of_ife
+			culture = {
+				OR = {
+					has_cultural_tradition = tradition_RICE_kinship_based_craft_guilds
+					has_cultural_tradition = tradition_RICE_ritual_hegemony
+				}
+			}
+		}
+		dynasty = {
+			NAND = {
+				has_dynasty_modifier = RICE_niger_delta_bronze_caster_guild_modifier
+				has_dynasty_modifier = RICE_niger_delta_ivory_and_wood_carver_guild_modifier
+				has_dynasty_modifier = RICE_niger_delta_bead_maker_guild_modifier
+				has_dynasty_modifier = RICE_niger_delta_ironsmith_guild_modifier
+			}
+		}
+		
+	}
+	
+	is_valid = {
+		is_dynast = yes
+		OR = {
+			has_title = title:c_ife
+			has_title = title:d_ooni_of_ife
+			culture = {
+				OR = {
+					has_cultural_tradition = tradition_RICE_kinship_based_craft_guilds
+					has_cultural_tradition = tradition_RICE_ritual_hegemony
+				}
+			}
+		}
+		# dynasty = {
+		# 	NAND = {
+		# 		has_dynasty_modifier = RICE_niger_delta_bronze_caster_guild_modifier
+		# 		has_dynasty_modifier = RICE_niger_delta_ivory_and_wood_carver_guild_modifier
+		# 		has_dynasty_modifier = RICE_niger_delta_bead_maker_guild_modifier
+		# 		has_dynasty_modifier = RICE_niger_delta_ironsmith_guild_modifier
+		# 	}
+		# }
+	}
+	
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		# trigger_if = {
+		# 	limit = { scope:RICE_niger_delta_form_bronze_casters_option = yes }
+		# 	custom_tooltip = {
+		# 		text = RICE_niger_delta_commission_bronze_casters_req
+		# 		dynasty = {
+		# 			has_dynasty_modifier = RICE_niger_delta_bronze_caster_guild_modifier
+		# 		}
+		# 	}
+		# }
+		# trigger_if = {
+		# 	limit = { scope:RICE_niger_delta_form_ironsmiths_option = yes }
+		# 	custom_tooltip = {
+		# 		text = RICE_niger_delta_commission_ironsmiths_req
+		# 		dynasty = {
+		# 			has_dynasty_modifier = RICE_niger_delta_ironsmith_guild_modifier
+		# 		}
+		# 	}
+		# }
+		# trigger_if = {
+		# 	limit = { scope:RICE_niger_delta_form_ivory_and_wood_carvers_option = yes }
+		# 	custom_tooltip = {
+		# 		text = RICE_niger_delta_commission_ivory_and_wood_carvers_req
+		# 		dynasty = {
+		# 			has_dynasty_modifier = RICE_niger_delta_ivory_and_wood_carver_guild_modifier
+		# 		}
+		# 	}
+		# }
+		# trigger_if = {
+		# 	limit = { scope:RICE_niger_delta_form_beadmakers_option = yes }
+		# 	OR = {
+		# 		has_title = title:c_ife
+		# 		has_title = title:d_ooni_of_ife
+		# 		AND = {
+		# 			custom_description = {
+		# 				text = "is_king_or_emperor"
+		# 				highest_held_title_tier >= tier_kingdom
+		# 			}
+		# 			custom_tooltip = {
+		# 				text = RICE_niger_delta_commission_beadmakers_req
+		# 				dynasty = {
+		# 					has_dynasty_modifier = RICE_niger_delta_bead_maker_guild_modifier
+		# 				}
+		# 			}
+		# 		}
+		# 	}
+		# }
+	}
+
+    widget = {
+    	gui = "decision_view_widget_RICE_niger_delta_form_craft_guild_decision"
+		controller = decision_option_list_controller
+    	
+		#decision_has_second_step = yes
+		#decision_custom_widget_container = "custom_widgets_container_step_two"
+		decision_to_second_step_button = "RICE_niger_delta_pick_a_guild_to_form_type" 
+
+
+		# Bronze Casters
+		item = {
+			value = RICE_niger_delta_form_bronze_casters_option
+			is_shown = {
+				exists = dynasty
+				NOT = {
+					dynasty = {
+						has_dynasty_modifier = RICE_niger_delta_bronze_caster_guild_modifier
+					}
+				}
+			}
+			is_valid = {
+				culture = {
+					has_innovation = innovation_lost_wax_casting	
+				}				
+			}
+			current_description = RICE_niger_delta_form_bronze_casters_option_desc
+			localization = RICE_niger_delta_form_bronze_casters_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_bronze.dds"
+
+			ai_chance = {
+				value = 1
+			}
+		}
+
+		# Ironsmiths
+		item = {
+			value = RICE_niger_delta_form_ironsmiths_option
+			is_shown = {
+				exists = dynasty
+				NOT = {
+					dynasty = {
+						has_dynasty_modifier = RICE_niger_delta_ironsmith_guild_modifier
+					}
+				}
+			}
+			is_valid = {				
+				prestige_level >= 3
+			}
+			current_description = RICE_niger_delta_form_ironsmiths_option_desc
+			localization = RICE_niger_delta_form_ironsmiths_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_iron.dds"
+
+			ai_chance = {
+				value = 1
+			}
+		}
+
+		# Ivory/Wood Carvers
+		item = {
+			value = RICE_niger_delta_form_ivory_and_wood_carvers_option
+			is_shown = {
+				exists = dynasty
+				NOT = {
+					dynasty = {
+						has_dynasty_modifier = RICE_niger_delta_ivory_and_wood_carver_guild_modifier
+					}
+				}
+			}
+			current_description = RICE_niger_delta_form_ivory_and_wood_carvers_option_desc
+			localization = RICE_niger_delta_form_ivory_and_wood_carvers_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_ivory.dds"
+
+			ai_chance = {
+				value = 1
+			}
+		}
+
+		# Bead Makers
+		item = {
+			value = RICE_niger_delta_form_beadmakers_option
+			is_shown = {
+				exists = dynasty
+				NOT = {
+					dynasty = {
+						has_dynasty_modifier = RICE_niger_delta_bead_maker_guild_modifier
+					}
+				}
+			}
+			is_valid = {
+				OR = {
+					has_title = title:c_ife
+					has_title = title:d_ooni_of_ife
+					#custom_description = {
+					#	text = "is_king_or_emperor"
+						highest_held_title_tier >= tier_kingdom
+					#}
+				}
+			}
+			current_description = RICE_niger_delta_form_beadmakers_option_desc
+			localization = RICE_niger_delta_form_beadmakers_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_beads.dds"
+
+			ai_chance = {
+				value = 1
+			}
+		}
+
+	}
+
+	effect = {
+		custom_tooltip = RICE_niger_delta_form_craft_guilds_effect_tooltip_1
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = RICE_niger_delta_form_craft_guilds_context_tooltip
+		}
+
+		save_scope_as = organizer
+
+		show_as_tooltip = {
+			dynasty = {
+				add_dynasty_prestige = 100
+				every_dynasty_member = {
+					limit = {
+						NOT = { this = root }
+					}
+					custom = RICE_all_dynasty_members
+					add_prestige = 50
+				}
+			}
+		}
+
+		if = { # Bronze
+			limit = { scope:RICE_niger_delta_form_bronze_casters_option = yes }
+			set_variable = {
+				name = RICE_guild_type
+				value = flag:bronze_casters
+			}
+		}
+
+		else_if = { # Iron
+			limit = { scope:RICE_niger_delta_form_ironsmiths_option = yes }
+			set_variable = {
+				name = RICE_guild_type
+				value = flag:ironsmiths
+			}
+		}
+
+		else_if = { # Wood/Ivory
+			limit = { scope:RICE_niger_delta_form_ivory_and_wood_carvers_option = yes }
+			set_variable = {
+				name = RICE_guild_type
+				value = flag:ivory_and_wood_carvers
+			}
+		}
+
+		else_if = { # Beads
+			limit = { scope:RICE_niger_delta_form_beadmakers_option = yes }
+			set_variable = {
+				name = RICE_guild_type
+				value = flag:beadmakers
+			}
+		}
+
+		trigger_event = {
+			id = niger_delta.0020
+		}
+	}
+
+	cost = { 
+		gold = { value = RICE_guanche_activity_cost } # Will depend
+	}	
+
+	ai_potential = {
+		short_term_gold > RICE_guanche_activity_cost
+	}
+
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = -8
+			has_trait = cynical
+		}
+		modifier = {
+			add = 8
+			has_trait = zealous
+		}
+		modifier = {
+			add = -8
+			has_trait = lazy
+		}
+		modifier = {
+			add = 8
+			has_trait = diligent
+		}
+	}
+}
+
+
+
+RICE_niger_delta_commission_art_from_craft_guilds = {
+	picture = { reference = "gfx/interface/illustrations/decisions/decision_RICE_african_village.dds" }
+	decision_group_type = RICE_regional
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 80
+		duchy = 64
+		kingdom = 48
+		empire = 48
+		hegemony = 48
+	}
+
+	cooldown = { days = RICE_guanche_standard_festival_cooldown_time } #3650 1825
+	
+	desc = RICE_niger_delta_commission_art_from_craft_guilds_desc
+	
+	is_shown = {
+		exists = dynasty
+		highest_held_title_tier > tier_barony
+		is_landed = yes
+		OR = {
+			has_title = title:c_ife
+			has_title = title:d_ooni_of_ife
+			culture = {
+				OR = {
+					has_cultural_tradition = tradition_RICE_kinship_based_craft_guilds
+					has_cultural_tradition = tradition_RICE_ritual_hegemony
+				}
+			}
+		}		
+	}
+	
+	is_valid = {
+		custom_description = {
+			text = RICE_niger_delta_currently_commissioning_artwork
+			NOT = { has_character_flag = RICE_niger_delta_waiting_for_artifact }
+		}
+		OR = {
+			has_title = title:c_ife
+			has_title = title:d_ooni_of_ife
+			culture = {
+				OR = {
+					has_cultural_tradition = tradition_RICE_kinship_based_craft_guilds
+					has_cultural_tradition = tradition_RICE_ritual_hegemony
+				}
+			}
+		}
+		OR = {
+			has_title = title:c_ife
+			has_title = title:d_ooni_of_ife
+			AND = {
+				dynasty = {
+					has_dynasty_modifier = RICE_niger_delta_bead_maker_guild_modifier
+				}
+				custom_description = {
+					text = "is_king_or_emperor"
+					highest_held_title_tier >= tier_kingdom
+				}
+			}
+			dynasty = {
+				has_dynasty_modifier = RICE_niger_delta_bronze_caster_guild_modifier
+			}
+			dynasty = {
+				has_dynasty_modifier = RICE_niger_delta_ivory_and_wood_carver_guild_modifier
+			}
+			dynasty = {
+				has_dynasty_modifier = RICE_niger_delta_ironsmith_guild_modifier
+			}
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+    widget = {
+    	gui = "decision_view_widget_RICE_niger_delta_commission_craft_guild_decision"
+		controller = decision_option_list_controller
+    	
+		#decision_has_second_step = yes
+		#decision_custom_widget_container = "custom_widgets_container_step_two"
+		decision_to_second_step_button = "RICE_niger_delta_pick_a_guild_type" 
+
+
+		# Bronze Casters
+		item = {
+			value = RICE_niger_delta_bronze_casters_option
+			is_valid = {
+				exists = dynasty
+				dynasty = {
+					has_dynasty_modifier = RICE_niger_delta_bronze_caster_guild_modifier
+				}
+			}
+			current_description = RICE_niger_delta_bronze_casters_option_desc
+			localization = RICE_niger_delta_bronze_casters_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_bronze.dds"
+
+			ai_chance = {
+				value = 2
+			}
+		}
+
+		# Ironsmiths
+		item = {
+			value = RICE_niger_delta_ironsmiths_option
+			is_valid = {
+				exists = dynasty
+				dynasty = {
+					has_dynasty_modifier = RICE_niger_delta_ironsmith_guild_modifier
+				}
+			}
+			current_description = RICE_niger_delta_ironsmiths_option_desc
+			localization = RICE_niger_delta_ironsmiths_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_iron.dds"
+
+			ai_chance = {
+				value = 2
+			}
+		}
+
+		# Ivory/Wood Carvers
+		item = {
+			value = RICE_niger_delta_ivory_and_wood_carvers_option
+			is_valid = {
+				exists = dynasty
+				dynasty = {
+					has_dynasty_modifier = RICE_niger_delta_ivory_and_wood_carver_guild_modifier
+				}
+			}
+			current_description = RICE_niger_delta_ivory_and_wood_carvers_option_desc
+			localization = RICE_niger_delta_ivory_and_wood_carvers_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_ivory.dds"
+
+			ai_chance = {
+				value = 2
+			}
+		}
+
+		# Bead Makers
+		item = {
+			value = RICE_niger_delta_beadmakers_option
+			is_valid = {
+				exists = dynasty
+				OR = {
+					has_title = title:c_ife
+					has_title = title:d_ooni_of_ife
+					AND = {
+						highest_held_title_tier >= tier_kingdom
+						dynasty = {
+							has_dynasty_modifier = RICE_niger_delta_bead_maker_guild_modifier
+						}
+					}
+				}
+			}
+			current_description = RICE_niger_delta_beadmakers_option_desc
+			localization = RICE_niger_delta_beadmakers_option
+			icon = "gfx/interface/icons/widgets/RICE_niger_delta_guild_beads.dds"
+
+			ai_chance = {
+				value = 0
+				if = {
+					limit = {
+						gold >= 125
+					}
+					add = 2
+				}
+			}
+		}
+
+	}
+
+	effect = {
+		custom_tooltip = RICE_niger_delta_commission_art_from_craft_guilds_effect_tooltip_1
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = RICE_niger_delta_commission_art_from_craft_guilds_context_tooltip
+		}
+
+		if = { # Bronze
+			limit = { scope:RICE_niger_delta_bronze_casters_option = yes }
+			set_variable = {
+				name = RICE_art_type
+				value = flag:bronze
+			}
+		}
+
+		else_if = { # Iron
+			limit = { scope:RICE_niger_delta_ironsmiths_option = yes }
+			set_variable = {
+				name = RICE_art_type
+				value = flag:iron
+			}
+		}
+
+		else_if = { # Wood/Ivory
+			limit = { scope:RICE_niger_delta_ivory_and_wood_carvers_option = yes }
+			hidden_effect = {
+				random_list = {
+					50 = {
+						set_variable = {
+							name = RICE_art_type
+							value = flag:ivory
+						}
+					}
+					50 = {
+						set_variable = {
+							name = RICE_art_type
+							value = flag:wood
+						}
+					}
+				}
+			}
+		}
+
+		else_if = { # Beads
+			limit = { scope:RICE_niger_delta_beadmakers_option = yes }
+			if = {
+				limit = {
+					capital_county = { is_coastal_county = yes }
+				}
+				set_variable = {
+					name = RICE_art_type
+					value = flag:coral
+				}
+			}
+			else = {				
+				set_variable = {
+					name = RICE_art_type
+					value = flag:glass
+				}
+			}
+		}
+
+		trigger_event = {
+			id = niger_delta.0021
+		}
+	}
+
+	minimum_cost = {
+		gold = 50
+	}
+	
+	ai_potential = {
+		short_term_gold > 100
+	}
+
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = -8
+			has_trait = cynical
+		}
+		modifier = {
+			add = 8
+			has_trait = zealous
+		}
+		modifier = {
+			add = -8
+			has_trait = lazy
+		}
+		modifier = {
+			add = 8
+			has_trait = diligent
+		}
+	}
+}
+
+
+RICE_niger_delta_offer_kola_nuts = {
+	picture = { reference = "gfx/interface/illustrations/decisions/decision_RICE_kola_nut.dds" }
+	decision_group_type = RICE_religious
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 80
+		duchy = 64
+		kingdom = 48
+		empire = 48
+		hegemony = 48
+	}
+
+	cooldown = { days = 3650 }
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					culture = {
+						has_cultural_tradition = tradition_RICE_igwebuike
+					}
+				}
+				desc = RICE_niger_delta_offer_kola_nuts_desc.culture
+			}
+			triggered_desc = {
+				trigger = {
+					religion = religion:odinala_religion
+				}
+				desc = RICE_niger_delta_offer_kola_nuts_desc.religion
+			}
+		}
+	}
+
+	is_shown = {
+		is_playable_character = yes
+		OR = {
+			culture = {
+				has_cultural_tradition = tradition_RICE_igwebuike
+			}
+			religion = religion:odinala_religion
+		}
+	}
+	
+	is_valid = {
+		OR = {
+			culture = {
+				has_cultural_tradition = tradition_RICE_igwebuike
+			}
+			religion = religion:odinala_religion
+		}
+		NOR = {
+			has_character_modifier = RICE_niger_delta_kola_nut_one_lobe
+			has_character_modifier = RICE_niger_delta_kola_nut_two_lobes
+			has_character_modifier = RICE_niger_delta_kola_nut_three_lobes
+			has_character_modifier = RICE_niger_delta_kola_nut_four_lobes
+			has_character_modifier = RICE_niger_delta_kola_nut_five_lobes
+			has_character_modifier = RICE_niger_delta_kola_nut_six_lobes
+			has_character_modifier = RICE_niger_delta_kola_nut_seven_lobes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+	}
+
+	effect = {
+		
+		#custom_tooltip = RICE_niger_delta_offer_kola_nuts_effect_tooltip_1
+		#custom_tooltip = RICE_niger_delta_offer_kola_nuts_effect_tooltip_2
+
+		show_as_tooltip = {
+			random_list = {
+				desc = RICE_niger_delta_offer_kola_nuts_tt
+				10 = {
+					#show_chance = no
+					desc = RICE_niger_delta_offer_kola_nuts.one
+					add_piety = -100
+					add_character_modifier = {
+						modifier = RICE_niger_delta_kola_nut_one_lobe
+						years = 5
+					}
+				}
+				20 = {
+					#show_chance = no
+					desc = RICE_niger_delta_offer_kola_nuts.two
+					add_piety = -50
+					add_character_modifier = {
+						modifier = RICE_niger_delta_kola_nut_two_lobes
+						years = 5
+					}
+				}
+				25 = {
+					#show_chance = no
+					desc = RICE_niger_delta_offer_kola_nuts.three
+					add_piety = 50
+					add_character_modifier = {
+						modifier = RICE_niger_delta_kola_nut_three_lobes
+						years = 5
+					}
+				}
+				20 = {
+					#show_chance = no
+					desc = RICE_niger_delta_offer_kola_nuts.four
+					add_piety = 50
+					add_character_modifier = {
+						modifier = RICE_niger_delta_kola_nut_four_lobes
+						years = 5
+					}
+				}
+				10 = {
+					#show_chance = no
+					desc = RICE_niger_delta_offer_kola_nuts.five
+					add_piety = 150
+					add_character_modifier = {
+						modifier = RICE_niger_delta_kola_nut_five_lobes
+						years = 5
+					}
+				}
+				10 = {
+					#show_chance = no
+					desc = RICE_niger_delta_offer_kola_nuts.six
+					add_piety = 200
+					add_character_modifier = {
+						modifier = RICE_niger_delta_kola_nut_six_lobes
+						years = 5
+					}
+				}
+				5 = {
+					#show_chance = no
+					desc = RICE_niger_delta_offer_kola_nuts.seven
+					add_piety = 250
+					add_character_modifier = {
+						modifier = RICE_niger_delta_kola_nut_seven_lobes
+						years = 5
+					}
+				}
+			}			
+		}
+
+
+		if = {
+			limit = {
+				has_game_rule = RICE_historical_context_on
+			}
+			custom_tooltip = RICE_niger_delta_offer_kola_nuts_context_tooltip
+		}
+
+		trigger_event = {
+			id = niger_delta.0010
+		}
+	}
+	
+	cost = { 
+		gold = { value = RICE_guanche_activity_cost } # Will depend
+	}	
+
+	ai_potential = {
+		short_term_gold > RICE_guanche_activity_cost
+	}
+
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = -8
+			has_trait = cynical
+		}
+		modifier = {
+			add = 8
+			has_trait = zealous
+		}
+		modifier = {
+			add = -8
+			has_trait = lazy
+		}
+		modifier = {
+			add = 8
+			has_trait = diligent
+		}
+	}
+}

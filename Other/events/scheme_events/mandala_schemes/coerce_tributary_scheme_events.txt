@@ -1,0 +1,306 @@
+﻿namespace = coerce_tributary_ongoing
+
+#########################################
+# coerce_tributary_ongoing.0001 - Steward imposes bigger tariffs to target
+# coerce_tributary_ongoing.0010 - Send intimidating party to threaten target
+#########################################
+
+# Steward imposes bigger tariffs to target
+coerce_tributary_ongoing.0001 = {
+	type = character_event
+	title = coerce_tributary_ongoing.0001.t
+	desc = coerce_tributary_ongoing.0001.desc
+	
+	theme = intrigue
+	cooldown = { years = 5 }
+	
+	left_portrait = {
+		character = root
+		animation = personality_greedy
+	}
+	right_portrait = {
+		character = scope:steward
+		animation = page_flipping
+	}
+	lower_right_portrait = scope:target
+	widget = {
+		gui = "event_window_widget_scheme"
+		container = "custom_widgets_container"
+	}
+
+	trigger = {
+		is_available_adult = yes
+		any_scheme = {
+			type = coerce_tributary
+			any_scheme_agent_character = {
+				is_available_ai_adult = yes
+				save_temporary_scope_as = target_temp
+			}
+		}
+		exists = cp:councillor_steward
+		cp:councillor_steward != scope:target_temp
+	}
+
+	immediate = {
+		random_scheme = {
+			type = coerce_tributary
+			save_scope_as = my_scheme
+			scheme_target_character = {
+				save_scope_as = target
+				capital_province = { save_scope_as = capital }
+			}
+		}
+		cp:councillor_steward = {
+			assign_quirk_effect = yes
+			save_scope_as = steward
+		}
+		if = { # Do not ruin the AI for this
+			limit = {
+				scope:target.short_term_gold <= major_gold_value
+			}
+			hidden_effect = {
+				scope:target = { add_short_term_gold = medium_gold_value }
+			}
+		}
+	}
+
+	# Do it
+	option = {
+		name = coerce_tributary_ongoing.0001.a
+		scope:steward = {
+        	duel = {
+				skill = stewardship
+				value = decent_skill_rating
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					desc = coerce_tributary_ongoing.0001.a.success
+					root = {
+						send_interface_toast = {
+							title = coerce_tributary_ongoing.0001.a.success
+							left_icon = scope:steward
+							right_icon = scope:target
+							scope:my_scheme = {
+								add_scheme_modifier = {
+									type = scheme_extra_tariffs
+								}
+							}
+							scope:target = {
+								pay_short_term_gold = {
+									gold = {
+										value = medium_gold_value
+										multiply = 0.6
+									}
+									target = root
+								}
+							}
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					desc = coerce_tributary_ongoing.0001.a.failure
+					root = {
+						send_interface_toast = {
+							title = coerce_tributary_ongoing.0001.a.failure
+							left_icon = scope:steward
+							right_icon = scope:target
+							remove_short_term_gold = minor_gold_value
+						}
+					}
+				}
+			}
+        }
+		stress_impact = {
+			greedy = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = greedy
+					scope:steward.stewardship >= high_skill_rating
+				}
+			}
+			modifier = {
+				factor = 0
+				short_term_gold <= medium_gold_value
+			}
+		}
+	}
+
+	# Don't take the risk
+	option = {
+		name = coerce_tributary_ongoing.0001.b
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Send intimidating party to threaten target
+coerce_tributary_ongoing.0010 = {
+	type = character_event
+	title = coerce_tributary_ongoing.0010.t
+	desc = coerce_tributary_ongoing.0010.desc
+	
+	theme = intrigue
+	override_background = { reference = courtyard }
+	cooldown = { years = 5 }
+	
+	left_portrait = {
+		character = root
+		triggered_animation = {
+			trigger = {
+				OR = {
+					has_trait = calm
+					has_trait = compassionate
+				}
+			}
+			animation = worry
+		}
+		animation = interested
+	}
+	right_portrait = {
+		character = scope:marshal
+		animation = relaxed_spear
+	}
+	lower_right_portrait = scope:target
+	widget = {
+		gui = "event_window_widget_scheme"
+		container = "custom_widgets_container"
+	}
+
+	trigger = {
+		is_available_adult = yes
+		any_scheme = {
+			type = coerce_tributary
+			any_scheme_agent_character = {
+				is_available_ai_adult = yes
+				save_temporary_scope_as = target_temp
+			}
+		}
+		exists = cp:councillor_marshal
+		cp:councillor_marshal != scope:target_temp
+	}
+
+	immediate = {
+		random_scheme = {
+			type = coerce_tributary
+			save_scope_as = my_scheme
+			scheme_target_character = {
+				save_scope_as = target
+				capital_province = { save_scope_as = capital }
+			}
+		}
+		cp:councillor_marshal = {
+			assign_quirk_effect = yes
+			save_scope_as = marshal
+		}
+	}
+
+	# Do it
+	option = {
+		name = coerce_tributary_ongoing.0010.a
+		scope:marshal = {
+        	duel = {
+				skill = martial
+				target = scope:target
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					modifier = {
+						add = 10
+						root.dread >= medium_dread_value
+					}
+					desc = coerce_tributary_ongoing.0010.a.success
+					root = {
+						send_interface_toast = {
+							title = coerce_tributary_ongoing.0010.a.success
+							left_icon = scope:marshal
+							right_icon = scope:target
+							scope:my_scheme = {
+								add_scheme_modifier = {
+									type = scheme_tribute_intimidation
+								}
+							}
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					modifier = {
+						add = 10
+						scope:target.dread >= medium_dread_value
+					}
+					desc = coerce_tributary_ongoing.0010.a.failure
+					root = {
+						send_interface_toast = {
+							title = coerce_tributary_ongoing.0010.a.failure
+							left_icon = scope:marshal
+							right_icon = scope:target
+							scope:target = {
+								progress_towards_rival_effect = {
+									CHARACTER = root
+									OPINION = -40
+									REASON = rival_tried_to_intimidate
+								}
+							}
+						}
+					}
+				}
+			}
+        }
+		stress_impact = {
+			wrathful = minor_stress_impact_loss
+			calm = medium_stress_impact_gain
+			compassionate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = wrathful
+					scope:marshal.martial >= high_skill_rating
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = calm
+					has_trait = compassionate
+				}
+			}
+		}
+	}
+
+	# 
+	option = {
+		name = coerce_tributary_ongoing.0010.b
+		stress_impact = {
+			wrathful = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}

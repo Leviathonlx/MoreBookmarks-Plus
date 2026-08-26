@@ -1,0 +1,173 @@
+﻿########################
+# EP3 Councillors Events
+########################
+namespace = ep3_councillor_event
+
+# Spouse increases your Influence
+ep3_councillor_event.0001 = {
+	hidden = yes
+	
+	cooldown = { years = 10 }
+	
+	trigger = {
+		valid_spouse_councillor_trigger = yes
+		government_allows = administrative
+	}
+
+	weight_multiplier = {
+		base = 1
+		councillor_spouse_limited_skill_rating_modifier = {
+			SKILL = intrigue
+			SCALE = 1
+			SKILL_RATING = spouse_skill_rating_1
+		}
+	}
+
+	immediate = {
+		cp:councillor_spouse = {
+			save_scope_as = councillor
+		}
+		send_interface_message = {
+			type = msg_spouse_task_good
+			title = ep3_councillor_event.0001.t
+			desc = {
+				triggered_desc = {
+					trigger = {
+						scope:councillor = { diplomacy < average_skill_level }
+					}
+					desc = spouse_task_diplomacy_good_unskilled_notification_tooltip
+				}
+				triggered_desc = {
+					trigger = {
+						scope:councillor = { diplomacy >= average_skill_level }
+					}
+					desc = spouse_task_diplomacy_good_skilled_notification_tooltip
+				}
+			}
+			
+			right_icon = scope:councillor
+
+			change_influence = {
+				if = {
+					limit = {
+						scope:councillor = {
+							culture = { has_cultural_tradition = tradition_ep3_palace_politics }
+						}
+					}
+					add = medium_influence_gain
+				}
+				else = {
+					add = minor_influence_gain
+				}
+			}
+		}
+	}
+}
+
+# Spouse increases your candidate score for a title if you are in to inherit
+ep3_councillor_event.0002 = {
+	hidden = yes
+	
+	cooldown = { years = 10 }
+	
+	trigger = {
+		valid_spouse_councillor_trigger = yes
+		government_allows = administrative
+		top_liege = {
+			any_sub_realm_title = {
+				tier >= tier_duchy
+				is_noble_family_title = no
+				holder = { government_allows = administrative }
+				any_title_heir = {
+					prev = { # For getting the correct title
+						place_in_line_of_succession = {
+							target = prev # And again for going back and getting the correct character
+							value <= 3
+						}
+					}
+					this = root
+				}
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		councillor_spouse_limited_skill_rating_modifier = {
+			SKILL = diplomacy
+			SCALE = 1
+			SKILL_RATING = spouse_skill_rating_1
+		}
+	}
+
+	immediate = {
+		cp:councillor_spouse = {
+			save_scope_as = councillor
+		}
+		top_liege = {
+			random_sub_realm_title = {
+				limit = {
+					tier >= tier_duchy
+					is_noble_family_title = no
+					holder = { government_allows = administrative }
+					any_title_heir = {
+						prev = {
+							place_in_line_of_succession = {
+								target = prev
+								value <= 3
+							}
+						}
+						this = root
+					}
+				}
+				save_scope_as = target_title
+			}
+		}
+		save_scope_value_as = {
+			name = improved_candidate_score
+			value = {
+				if = {
+					limit = {
+						scope:councillor = {
+							culture = { has_cultural_tradition = tradition_ep3_palace_politics }
+						}
+					}
+					add = 15
+				}
+				else = {
+					add = 10
+				}
+			}
+		}
+		send_interface_message = {
+			type = msg_spouse_task_good
+			title = ep3_councillor_event.0002.t
+			desc = {
+				triggered_desc = {
+					trigger = {
+						scope:councillor = { diplomacy < average_skill_level }
+					}
+					desc = spouse_task_diplomacy_good_unskilled_notification_tooltip
+				}
+				triggered_desc = {
+					trigger = {
+						scope:councillor = { diplomacy >= average_skill_level }
+					}
+					desc = spouse_task_diplomacy_good_skilled_notification_tooltip
+				}
+			}
+			
+			right_icon = scope:councillor
+			left_icon = scope:target_title
+			
+			custom_tooltip = ep3_councillor_event.0002.desc
+
+			scope:target_title = {
+				change_appointment_investment = {
+					target = root
+					value = scope:improved_candidate_score
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,1716 @@
+﻿namespace = devaraja
+
+# Healthy Charity
+devaraja.0001 = {
+	type = character_event
+	title = devaraja.0001.title
+	desc = devaraja.0001.desc
+
+	theme = travel_tour
+	cooldown = { years = 2 }
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+	right_portrait = {
+		character = scope:diseased_peasant
+		animation = beg
+		outfit_tags = { beggar_rags }
+	}
+	trigger = {
+		AND = {
+			primary_title.tier >= tier_duchy
+			is_independent_ruler = yes
+		}
+		is_location_valid_for_travel_event_on_land = yes
+		has_activity_intent = altruism_intent
+		government_has_flag = government_is_mandala
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = compassionate
+		}
+		modifier = {
+			factor = 2
+			has_trait = zealous
+		}
+	}
+
+	immediate = {
+		location = {
+			county = {
+				save_scope_as = diseased_county_scope
+				save_scope_as = background_wilderness_scope # For theme
+			}
+		}
+		create_character = {
+			location = scope:diseased_county_scope.title_province
+			template = diseased_peasant_character
+			culture = scope:diseased_county_scope.culture
+			faith = scope:diseased_county_scope.faith
+			gender_female_chance = 50
+			save_scope_as = diseased_peasant
+		}
+		if = {
+			limit = {
+				cp:councillor_steward ?= {
+					is_available_ai = yes
+				}
+			}
+			cp:councillor_steward = {
+				save_scope_as = steward
+			}
+		}
+	}
+
+	# I must be among my people
+	option = { 
+		name = devaraja.0001.a
+
+		add_prestige = minor_prestige_gain
+		add_piety = medium_piety_gain
+		random = {
+			chance = 5
+			show_as_tooltip = { add_trait = ill }
+			hidden_effect = {
+				trigger_event = {
+					id = health.1001
+					days = { 3 10 }
+				}
+			}
+		}
+		scope:diseased_county_scope = {
+			change_county_control = 5
+			add_county_modifier = {
+				modifier = healed_by_the_devaraja
+				years = 10
+			}
+		}
+		stress_impact = {
+			base = minor_stress_impact_gain
+			compassionate = minor_stress_impact_loss
+			callous = medium_stress_impact_gain
+			arrogant = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = callous
+					has_trait = arrogant
+				}
+			}
+		}
+	}
+
+	# I leave this work to my steward
+	option = {
+		name = devaraja.0001.b
+		trigger=  {
+			exists = scope:steward
+		}
+
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			callous = minor_stress_impact_loss
+			arrogant = minor_stress_impact_loss
+		}
+
+		scope:steward = {
+			add_piety = minor_piety_gain
+			random = {
+				chance = 10
+				show_as_tooltip = { add_trait = ill }
+				hidden_effect = {
+					trigger_event = {
+						id = health.1001
+						days = { 3 10 }
+					}
+				}
+			}
+			scope:diseased_county_scope = {
+				change_county_control = 2
+				add_county_modifier = {
+					modifier = healed_by_the_devaraja
+					years = 2
+				}
+			}
+			stress_impact = {
+				compassionate = minor_stress_impact_loss
+				callous = minor_stress_impact_gain
+				arrogant = minor_stress_impact_gain
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = callous
+					has_trait = arrogant
+				}
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					has_trait = diligent
+					has_trait = compassionate
+					has_trait = zealous
+				}
+			}
+		}
+	}
+
+	# This place is gross and icky
+	option = {
+		name = devaraja.0001.c
+
+		add_piety = medium_piety_loss
+		stress_impact = {
+			forgiving = minor_stress_impact_gain
+			humble = minor_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+			zealous = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = humble
+					has_trait = compassionate
+					has_trait = zealous
+				}
+			}
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				scope:diseased_peasant = {
+					is_alive = yes
+					employer != root
+				}
+			}
+			scope:diseased_peasant = { silent_disappearance_effect = yes }
+		}
+	}
+}
+
+# Prayers for the God-King
+devaraja.0002 = {
+	type = character_event
+	title = devaraja.0002.title
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:brahmin_or_chaplain = {
+						has_court_position = court_brahmin_court_position
+					}
+				}
+				desc = devaraja.0002.desc.brahmin
+			}
+			desc = devaraja.0002.desc.chaplain
+		}
+	}
+
+	theme = mandala
+	cooldown = { years = 10 }
+
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	right_portrait = {
+		character = scope:brahmin_or_chaplain
+		animation = prayer
+	}
+
+	trigger = {
+		is_available_for_activity_trigger = yes # is not currently rollicking around
+		primary_title.tier >= tier_duchy
+		top_liege = this
+		government_has_flag = government_is_mandala
+
+		OR = {
+			any_court_position_holder = {
+				type = court_brahmin_court_position
+				is_available_ai = yes
+			}
+			cp:councillor_court_chaplain ?= {
+				is_available_ai = yes
+			}
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_court_position_holder = {
+					type = court_brahmin_court_position
+				}
+			}
+			random_court_position_holder = {
+				type = court_brahmin_court_position
+				save_scope_as = brahmin_or_chaplain
+			}
+		}
+		else = {
+			cp:councillor_court_chaplain = {
+				save_scope_as = brahmin_or_chaplain
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0002.a
+
+		duel = {
+			skill = diplomacy
+			value = high_skill_rating
+
+			50 = {
+				desc = devaraja.0002.a.tt.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					# Always give _some_ chance.
+					min = -39
+				}
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = devaraja.0002.a.tt.success
+					left_icon = root
+					right_icon = scope:brahmin_or_chaplain
+
+					add_prestige = minor_prestige_gain
+					add_opinion = {
+						modifier = pleased_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = 10
+					}
+					reverse_add_opinion = {
+						modifier = respect_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = 10
+					}
+				}
+			}
+			# Everybody stares at you. "Dude, what?" someone in the audience murmurs.
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					# Limit how low the off-chance can go.
+					min = -19
+				}
+				desc = devaraja.0002.a.tt.failure
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = devaraja.0002.a.tt.failure
+					left_icon = root
+					right_icon = scope:brahmin_or_chaplain
+
+					add_prestige = minor_prestige_loss
+					add_opinion = {
+						modifier = insult_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = -10
+					}
+					reverse_add_opinion = {
+						modifier = disrespect_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = -10
+					}
+				}
+			}
+		}
+
+		stress_impact = {
+			arrogant = miniscule_stress_impact_loss
+			eccentric = minor_stress_impact_loss
+			shy = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = patient
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = eccentric
+					has_trait = brave
+					has_trait = gregarious
+				}
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0002.b
+
+		add_prestige = miniscule_prestige_gain
+
+		custom_tooltip = devaraja.0002.b.tt
+		scope:brahmin_or_chaplain = {
+			add_stress = minor_stress_loss
+		}
+
+		stress_impact = {
+			arbitrary = minor_stress_impact_gain
+			eccentric = medium_stress_impact_gain
+		}
+
+		
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = eccentric
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = patient
+					has_trait = shy
+				}
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0002.c
+
+		duel = {
+			skill = learning
+			value = very_high_skill_rating
+
+			50 = {
+				desc = devaraja.0002.c.tt.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					# Always give _some_ chance.
+					min = -39
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = devaraja.0002.c.quote.success
+					left_icon = root
+					right_icon = scope:brahmin_or_chaplain
+
+					add_prestige = minor_prestige_gain
+					add_piety = minor_piety_gain
+					add_opinion = {
+						modifier = pleased_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = 25
+					}
+					reverse_add_opinion = {
+						modifier = impressed_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = 25
+					}
+				}
+			}
+			# You fumble it
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					# Limit how low the off-chance can go.
+					min = -19
+				}
+				desc = devaraja.0002.b.tt.failure
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = devaraja.0002.b.tt.failure
+					left_icon = root
+					right_icon = scope:brahmin_or_chaplain
+
+					add_prestige = minor_prestige_loss
+					add_piety = minor_piety_loss
+					add_opinion = {
+						modifier = upset_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = -25
+					}
+					reverse_add_opinion = {
+						modifier = disrespect_opinion
+						target = scope:brahmin_or_chaplain
+						opinion = -25
+					}
+				}
+			}
+		}		
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = cynical
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_lifestyle = learning_lifestyle
+					has_trait = zealous
+				}
+			}
+		}
+	}
+}
+
+# A Special Dharma Talk
+devaraja.0003 = {
+	type = character_event
+	title = devaraja.0003.title
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:guru_or_chaplain = {
+						has_court_position = court_guru_court_position
+					}
+				}
+				desc = devaraja.0003.desc.guru
+			}
+			desc = devaraja.0003.desc.chaplain
+		}
+	}
+	theme = mandala
+	cooldown = { years = 10 }
+
+	left_portrait = {
+		character = root
+		animation = admiration
+	}
+	right_portrait = {
+		character = scope:guru_or_chaplain
+		animation = debating
+	}
+
+	trigger = {
+		government_has_flag = government_is_mandala
+		is_available_for_activity_trigger = yes
+		OR = {
+			any_court_position_holder = {
+				type = court_guru_court_position
+				is_available_ai = yes
+			}
+			cp:councillor_court_chaplain ?= {
+				is_available_ai = yes
+			}
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_court_position_holder = {
+					type = court_guru_court_position
+				}
+			}
+			random_court_position_holder = {
+				type = court_guru_court_position
+				save_scope_as = guru_or_chaplain
+			}
+		}
+		else = {
+			cp:councillor_court_chaplain = {
+				save_scope_as = guru_or_chaplain
+			} 
+		}
+	}
+
+
+	option = {
+		name = devaraja.0003.a
+
+		add_prestige = minor_piety_gain
+
+		pay_short_term_gold = {
+			target = scope:guru_or_chaplain
+			gold = minor_gold_value
+		}
+
+		add_opinion = {
+			modifier = impressed_opinion
+			target = scope:guru_or_chaplain
+			opinion = 15
+		}
+		reverse_add_opinion = {
+			modifier = pleased_opinion
+			target = scope:guru_or_chaplain
+			opinion = 15
+		}
+
+		stress_impact = {
+			greedy = minor_stress_impact_gain
+			generous = minor_stress_impact_loss
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = greedy
+					has_trait = wrathful
+				}
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0003.b
+
+		add_piety = miniscule_piety_gain
+
+		add_opinion = {
+			modifier = disappointed_opinion
+			target = scope:guru_or_chaplain
+			opinion = -5
+		}
+		reverse_add_opinion = {
+			modifier = disappointed_opinion
+			target = scope:guru_or_chaplain
+			opinion = -5
+		}
+
+		stress_impact = {
+			greedy = minor_stress_impact_loss
+			diligent = minor_stress_impact_loss
+			generous = minor_stress_impact_gain
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = generous
+					has_trait = gregarious
+				}
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0003.c
+
+		rightfully_imprison_character_effect = {
+			TARGET = scope:guru_or_chaplain
+			IMPRISONER = root
+		}
+		
+		stress_impact = {   
+			arbitrary = medium_stress_impact_loss
+			wrathful = medium_stress_impact_loss
+			compassionate = medium_stress_impact_gain
+			forgiving = massive_stress_impact_gain
+			generous = major_stress_impact_gain
+		}
+	
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = generous
+					has_trait = compassionate
+					has_trait = forgiving
+				}
+			}
+		}
+	}
+
+
+	option = {
+		name = devaraja.0003.d
+		trigger = {
+			has_lifestyle = learning_lifestyle
+		}
+
+		duel = {
+			skill = learning
+			target = scope:guru_or_chaplain
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				send_interface_toast = {
+					title = devaraja.0003.d.tt.success
+					left_icon = root
+					right_icon = scope:guru_or_chaplain
+
+					add_piety = major_piety_gain
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+				}
+				send_interface_toast = {
+					title = devaraja.0003.d.tt.failure
+					left_icon = root
+					right_icon = scope:guru_or_chaplain
+
+					add_piety = major_piety_loss
+				}
+			}
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = craven
+					has_trait = shy
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = zealous
+					has_trait = ambitious
+				}
+			}
+		}
+	}
+}
+
+# I Love A Parade
+# Actual tale about a King of Siam, combined with a little Music Man
+devaraja.0004 = {
+	type = character_event
+	title = devaraja.0004.title
+	desc = devaraja.0004.desc
+	theme = mandala
+	cooldown = { years = 15 }
+
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+
+	trigger = {
+		government_has_flag = government_is_mandala
+		is_available_for_activity_trigger = yes
+		capital_county.county_control < full_county_control
+		cp:councillor_court_chaplain ?= {
+			is_available_ai = yes
+		}
+	}
+
+	immediate = {
+		cp:councillor_court_chaplain = {
+			save_scope_as = chaplain
+		}
+		capital_county = {
+			save_scope_as = capital_county
+		}
+	}
+
+	option = {
+		name = devaraja.0004.a
+
+		add_prestige = minor_prestige_gain
+		capital_county = {
+			change_county_control = major_county_control_gain
+			add_county_modifier = {
+				modifier = devaraja_hosts_parade
+				years = 5
+			}
+		}
+
+		scope:chaplain = {
+			add_opinion = {
+				modifier = requested_money_opinion
+				target = root
+				opinion = -25
+			}
+			remove_short_term_gold = minor_gold_value
+		}
+		every_powerful_vassal = {
+			limit = { 
+				faith = root.faith 
+				OR = {
+					government_has_flag = government_is_theocracy
+					has_trait = zealous
+				}
+			}
+			add_opinion = {
+				modifier = disrespect_opinion
+				target = root
+				opinion = -15
+			}
+		}
+
+		stress_impact = {
+			zealous = medium_stress_impact_gain
+		}	
+
+		ai_chance = {
+			base = 100
+
+			modifier = {
+				factor = 0
+				has_trait = zealous
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0004.b
+
+		custom_tooltip = devaraja.0004.b.tt
+		add_piety = miniscule_piety_gain
+
+		stress_impact = {   
+			humble = medium_stress_impact_loss
+		}
+		
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = humble
+			}
+		}
+	}
+}
+
+# The Wall With Two Faces
+# triggered by on_building_completed on_action
+devaraja.0005 = {
+	type = character_event
+	title = devaraja.0005.title
+	desc = devaraja.0005.desc
+	theme = mandala
+	cooldown = { years = 15 }
+
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	# triggered by on_building_completed on_action
+
+	trigger = {
+		government_has_flag = government_is_mandala
+		has_mandala_aspect_trigger = yes
+	}
+
+	option = {
+		name = devaraja.0005.a
+
+		add_piety = medium_piety_gain
+
+		ai_chance = {
+			base = 100
+
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = zealous
+					has_trait = humble
+				}
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0005.b
+
+		add_prestige = medium_prestige_gain
+		
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = arrogant
+			}
+		}
+	}
+}
+
+# Wisdom of the Paddle
+devaraja.0006 = {
+	type = character_event
+	title = devaraja.0006.title
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:guru_or_chaplain = {
+						has_court_position = court_guru_court_position
+					}
+				}
+				desc = devaraja.0006.desc.guru
+			}
+			desc = devaraja.0006.desc.chaplain
+		}
+	}
+	theme = mandala
+	cooldown = { years = 10 }
+
+	left_portrait = {
+		character = root
+		animation = shame
+	}
+	right_portrait = {
+		character = scope:guru_or_chaplain
+		animation = chaplain
+	}
+
+	trigger = {
+		government_has_flag = government_is_mandala
+		is_available_for_activity_trigger = yes
+		OR = {
+			any_court_position_holder = {
+				type = court_guru_court_position
+				is_available_ai = yes
+			}
+			cp:councillor_court_chaplain ?= {
+				is_available_ai = yes
+			}
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_court_position_holder = {
+					type = court_guru_court_position
+				}
+			}
+			random_court_position_holder = {
+				type = court_guru_court_position
+				save_scope_as = guru_or_chaplain
+			}
+		}
+		else = {
+			cp:councillor_court_chaplain = {
+				save_scope_as = guru_or_chaplain
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0006.a
+		if = {
+			limit = {
+				has_trait = lifestyle_reveler
+			}
+			add_trait_xp = {
+				trait = lifestyle_reveler
+				value = -15
+			}
+
+			add_piety = medium_piety_gain
+			add_stress = medium_stress_gain
+		}
+		else = {
+			add_piety = medium_piety_gain
+
+			stress_impact = {
+				base = miniscule_stress_impact_gain
+				gluttonous = medium_stress_impact_gain
+				drunkard = major_stress_impact_gain
+				temperate = minor_stress_impact_loss
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = temperate
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = lifestyle_reveler
+					has_trait = gluttonous
+				}
+			}
+		}
+	}
+	option = {
+		name = devaraja.0006.b
+		if = {
+			limit = {
+				has_trait = lifestyle_reveler
+			}
+			add_trait_xp = {
+				trait = lifestyle_reveler
+				value = 15
+			}
+
+			add_piety = minor_piety_loss
+			add_stress = minor_stress_loss
+		}
+		else = {
+			random = {
+				chance = 40
+				add_trait = lifestyle_reveler
+			}
+
+			add_piety = minor_piety_loss
+
+			stress_impact = {
+				base = miniscule_stress_impact_loss
+				gluttonous = minor_stress_impact_loss
+				drunkard = medium_stress_impact_loss
+				temperate = major_stress_impact_gain
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = temperate
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = lifestyle_reveler
+					has_trait = gluttonous
+				}
+			}
+		}
+	}
+	option = {
+		name = devaraja.0006.c
+		add_piety = medium_piety_loss
+
+		if = {
+			limit = {
+				scope:guru_or_chaplain = {
+					has_court_position = court_guru_court_position
+				}
+			}
+	        revoke_court_position = {
+	        	court_position = court_guru_court_position
+	        	recipient = scope:guru_or_chaplain
+	        }
+		}
+		else = {
+			fire_councillor = scope:guru_or_chaplain
+		}
+
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+			temperate = medium_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			wrathful = minor_stress_impact_loss
+			arbitrary = minor_stress_impact_loss
+			forgiving = minor_stress_impact_gain
+		}
+	}
+	option = {
+		name = devaraja.0006.d
+		trigger = {
+			has_trait = drunkard
+		}
+
+		# 1 in 3 chance of getting rid of drunkard
+		random_list = {
+			1 = {
+				remove_trait = drunkard
+				add_stress = minor_stress_gain
+				add_piety = medium_piety_gain
+			}
+			2 = {
+				add_stress = medium_stress_gain
+				add_piety = minor_piety_gain	# hey, at least you took it seriously
+			}
+		}
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				NOR = {
+					has_trait = diligent
+					has_trait = temperate
+					has_trait = zealous
+				}
+			}
+		}
+	}
+}
+
+# Unambiguous Ambiguity
+devaraja.0007 = {
+	type = character_event
+	title = devaraja.0007.title
+	desc = devaraja.0007.desc
+	theme = mandala
+	cooldown = { years = 15 }
+
+	left_portrait = {
+		character = root
+		animation = debating
+	}
+
+	trigger = {
+		government_has_flag = government_is_mandala
+		is_available_for_activity_trigger = yes
+		has_mandala_aspect_trigger = yes
+	}
+
+	option = {
+		name = devaraja.0007.a
+		add_prestige = minor_piety_gain
+
+		add_character_modifier = {
+			modifier = devaraja_as_god
+			years = 10
+		}
+
+		ai_chance = {
+			base = 100
+
+			modifier = {
+				factor = 2
+				OR = {
+					has_trait = zealous
+					has_trait = humble
+				}
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0007.b
+		add_prestige = minor_prestige_gain
+
+		add_character_modifier = {
+			modifier = devaraja_as_king
+			years = 10
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = cynical
+				has_trait = arrogant
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0007.c
+		trigger = {
+			has_lifestyle = learning_lifestyle
+		}
+
+		duel = {
+			skill = learning
+			value = high_skill_rating
+
+			50 = {
+				desc = devaraja.0007.c.tt.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					# Always give _some_ chance.
+					min = -39
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = devaraja.0007.c.tt.success
+					left_icon = root
+
+					add_piety = medium_piety_gain
+					add_learning_lifestyle_xp = major_lifestyle_experience
+					add_character_modifier = {
+						modifier = devaraja_as_hypostatic_union
+						years = 10
+					}
+					
+					every_courtier_or_guest = {
+						add_opinion = {
+							modifier = impressed_opinion
+							target = root
+							opinion = 20
+						}
+					}
+				}
+			}
+
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					# Limit how low the off-chance can go.
+					min = -19
+				}
+				desc = devaraja.0007.c.tt.failure
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = devaraja.0007.c.tt.failure
+					left_icon = root
+
+					add_prestige = minor_prestige_loss
+					add_piety = minor_piety_loss
+
+					every_courtier_or_guest = {
+						add_opinion = {
+							modifier = confusion_opinion
+							target = root
+							opinion = -10
+						}
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_lifestyle = learning_lifestyle
+			}
+		}
+	}
+}
+
+# Alleged deathbed conversion
+devaraja.0008 = {
+	type = character_event
+	title = devaraja.0008.title
+	desc = devaraja.0008.desc
+
+	theme = mandala
+	cooldown = { years = 5 }
+
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	right_portrait = {
+		character = scope:suzerains_missionary
+		animation = admiration
+	}
+	lower_center_portrait = {
+		character = scope:deathbed_conversion_ancestor
+		animation = dead
+	}
+
+	trigger = {
+		any_ancestor = {
+			even_if_dead = yes
+			highest_held_title_tier >= tier_county
+			is_alive = no
+			faith != root.suzerain.faith
+		}
+		is_available_for_activity_trigger = yes
+		is_tributary = yes
+		suzerain = {
+			faith != root.faith
+		}
+		any_courtier = {
+			has_character_flag = suzerains_missionary
+			faith = root.suzerain.faith
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_flag = suzerains_missionary
+				faith = root.suzerain.faith
+			}
+			save_scope_as = suzerains_missionary
+		}
+
+		random_ancestor = {
+			even_if_dead = yes
+			limit = {
+				highest_held_title_tier >= tier_county
+				is_alive = no
+				faith != root.suzerain.faith
+			}
+			save_scope_as = deathbed_conversion_ancestor
+		}
+
+		suzerain = {
+			save_scope_as = suzerain
+		}
+	}
+
+	option = {
+		name = devaraja.0008.a
+
+		scope:deathbed_conversion_ancestor = {
+			set_character_faith_history = scope:suzerain.faith
+		}
+
+		add_prestige = minor_prestige_gain
+
+		add_opinion = {
+			modifier = respect_opinion
+			target = scope:suzerain
+			opinion = 10
+		}
+		reverse_add_opinion = {
+			modifier = pious_opinion
+			target = scope:suzerain
+			opinion = 10
+		}
+		reverse_add_opinion = {
+			modifier = pious_opinion
+			target = scope:suzerains_missionary
+			opinion = 10
+		}
+
+		scope:suzerain = {
+			send_interface_toast = {
+				type = event_toast_effect_good
+				title = devaraja.0008.a.tt.conversion
+				left_icon = root
+				right_icon = scope:deathbed_conversion_ancestor
+
+				add_piety = minor_piety_gain
+
+				# Deceased character converts in ROOT's effects, but we want to show it happening to the suzerain
+				show_as_tooltip = {
+					scope:deathbed_conversion_ancestor = {
+						set_character_faith_history = scope:suzerain.faith
+					}
+				}
+				faith = {
+					change_fervor = {
+						value = 5
+						desc = fervor_gain_deathbed_conversion_discovered
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = zealous
+			}
+			modifier = {
+				factor = 2
+				has_lifestyle = diplomacy_lifestyle
+			}
+		}
+	}
+
+	option = {
+		name = devaraja.0008.b
+
+		faith = {
+			change_fervor = {
+				value = 1
+				desc = fervor_gain_faith_reaffirmed
+			}
+		}
+
+		reverse_add_opinion = {
+			modifier = impious_opinion
+			target = scope:suzerains_missionary
+			opinion = -10
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0.5
+				has_trait = cynical
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_lifestyle = learning_lifestyle
+					has_trait = zealous
+				}
+			}
+		}
+	}
+}
+
+# Has converted to the same faith as the missionary
+devaraja.0009 = {
+	type = character_event
+	title = devaraja.0009.title
+	desc = devaraja.0009.desc
+
+	theme = mandala
+
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:suzerains_missionary
+		animation = boredom
+	}
+
+	trigger = {
+		is_available_for_activity_trigger = yes
+		is_tributary = yes
+		suzerain = {
+			faith = root.faith
+		}
+		any_courtier = {
+			has_character_flag = suzerains_missionary
+			has_faith = suzerain.faith
+			NOT = {
+				has_council_position = councillor_court_chaplain
+			}
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_flag = suzerains_missionary
+				has_faith = suzerain.faith
+			}
+			save_scope_as = suzerains_missionary
+		}
+
+		suzerain = {
+			save_scope_as = suzerain
+		}
+	}
+
+	# Invite the missionary to become your chaplain
+	option = {
+		name = devaraja.0009.a
+
+		assign_councillor_type = {
+			type = councillor_court_chaplain
+			target = scope:suzerains_missionary
+			remove_existing_councillor = yes
+		}
+
+		reverse_add_opinion = {
+			modifier = pleased_opinion
+			target = scope:suzerain
+			opinion = 10
+		}
+		reverse_add_opinion = {
+			modifier = respect_opinion
+			target = scope:suzerains_missionary
+			opinion = 25
+		}
+
+		scope:suzerain = {
+			send_interface_toast = {
+				type = event_toast_effect_good
+				title = devaraja.0009.a.tt.missionary_now_chaplain
+				left_icon = root
+				right_icon = scope:suzerains_missionary
+
+				add_piety = minor_piety_gain
+			}
+		}
+
+		scope:suzerains_missionary = {
+			remove_character_flag = suzerains_missionary
+			remove_character_flag = blocked_from_leaving
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = compassionate
+			}
+			modifier = {
+				factor = 2
+				has_trait = zealous
+			}
+		}
+	}
+
+	# PLEASE LEAVE
+	option = {
+		name = devaraja.0009.b
+
+		remove_courtier_or_guest = scope:suzerains_missionary
+
+		add_opinion = {
+			modifier = dismissive_opinion
+			target = scope:suzerains_missionary
+			opinion = -20
+		}
+		reverse_add_opinion = {
+			modifier = disrespect_opinion
+			target = scope:suzerains_missionary
+			opinion = -20
+		}
+
+
+		scope:suzerains_missionary = {
+			remove_character_flag = suzerains_missionary
+			remove_character_flag = blocked_from_leaving
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = shy
+			}
+			modifier = {
+				factor = 2
+				has_trait = arbitrary
+			}
+		}
+	}
+}
+
+# Suzerain no longer has the same faith as the missionary
+devaraja.0010 = {
+	type = character_event
+	title = devaraja.0010.title
+	desc = devaraja.0010.desc
+
+	theme = mandala
+
+	left_portrait = {
+		character = scope:suzerains_missionary
+		animation = disappointed
+	}
+	right_portrait = {
+		character = scope:suzerain
+		animation = personality_zealous
+	}
+
+	trigger = {
+		is_available_for_activity_trigger = yes
+		is_tributary = yes
+		suzerain = {
+			faith != root.faith
+		}
+		any_courtier = {
+			has_character_flag = suzerains_missionary
+			NOT = { has_faith = suzerain.faith }
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_flag = suzerains_missionary
+				has_faith = suzerain.faith
+			}
+			save_scope_as = suzerains_missionary
+		}
+
+		suzerain = {
+			save_scope_as = suzerain
+		}
+	}
+
+	# Let the missionary figure things out on their own
+	option = {
+		name = devaraja.0010.a
+
+		random_list = {
+
+			# The missionary just becomes a sad lonely lump, abandoned by his suzerain and his community
+			50 = {
+				# more likely to stay their own faith if the missionary doesn't really like the suzerain
+				modifier = {
+					factor = 25
+					scope:suzerains_missionary = {
+						opinion = {
+							target = scope:suzerain
+							value < low_positive_opinion
+						}
+					}
+				}
+				modifier = {
+					factor = -25
+					scope:suzerains_missionary = {
+						has_trait = zealous
+					}
+				}
+				modifier = {
+					factor = -10
+					scope:suzerains_missionary = {
+						has_trait = depressed	# either gained depression or genetic depression
+					}
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = devaraja.0010.a.tt.unconverted
+					left_icon = root
+					right_icon = scope:suzerains_missionary
+
+					scope:suzerains_missionary = {
+						if = {
+							limit = {
+								NOT = { has_trait = depressed }
+							}
+							add_trait = depressed_1
+						}
+						else = {
+							add_stress = major_stress_impact_gain
+						}
+						remove_character_flag = suzerains_missionary
+						remove_character_flag = blocked_from_leaving
+					}
+				}
+			}
+
+			# The missionary converts to the suzerain's new faith and remains a proselytizer, missionary events can continue
+			50 = {
+				# more likely to convert to the suzerain's new faith if the missionary actually likes the suzerain
+				modifier = {
+					factor = 25
+					scope:suzerains_missionary = {
+						opinion = {
+							target = scope:suzerain
+							value >= low_positive_opinion
+						}
+					}
+				}
+
+				send_interface_toast = {
+					type = event_toast_effect_neutral
+					title = devaraja.0010.a.tt.converts
+					left_icon = root
+					right_icon = scope:suzerains_missionary
+
+					scope:suzerains_missionary = {
+						set_character_faith = scope:suzerain.faith
+					}
+
+					scope:suzerain = {
+						add_piety = minor_piety_gain
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = shy
+			}
+			modifier = {
+				factor = 2
+				has_trait = cynical
+			}
+			modifier = {
+				factor = 2
+				has_trait = lazy
+			}
+		}
+	}
+
+	# The missionary converts to your faith and no longer can be a proselytizer because you both share the same faith now
+	option = {
+		name = devaraja.0010.b
+
+		duel = {
+			skill = learning
+			target = scope:suzerains_missionary
+
+			50 = {
+				desc = devaraja.0010.b.tt.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					# Always give _some_ chance.
+					min = -39
+				}
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = devaraja.0010.b.tt.success
+					left_icon = root
+					right_icon = scope:suzerains_missionary
+
+					add_piety = minor_piety_gain
+
+					scope:suzerains_missionary = {
+						set_character_faith = root.faith
+						remove_character_flag = suzerains_missionary
+						remove_character_flag = blocked_from_leaving
+					}
+
+					stress_impact = {
+						zealous = minor_stress_impact_loss
+					}
+				}
+			}
+			# 
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					# Limit how low the off-chance can go.
+					min = -19
+				}
+				desc = devaraja.0010.b.tt.failure
+
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = devaraja.0010.b.tt.failure
+					left_icon = root
+					right_icon = scope:suzerains_missionary
+
+					add_piety = minor_piety_loss
+
+					scope:suzerains_missionary = {
+						remove_character_flag = suzerains_missionary
+						remove_character_flag = blocked_from_leaving
+					}
+
+					stress_impact = {
+						base = minor_stress_impact_gain
+						zealous = medium_stress_impact_gain
+					}
+				}
+			}			
+		}
+
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = zealous
+			}
+			modifier = {
+				factor = 2
+				has_trait = diligent
+			}
+			modifier = {
+				factor = 2
+				has_lifestyle = learning_lifestyle
+			}
+		}
+	}
+}

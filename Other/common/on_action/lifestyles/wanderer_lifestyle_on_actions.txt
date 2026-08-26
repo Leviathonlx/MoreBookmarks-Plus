@@ -1,0 +1,124 @@
+﻿######################################
+# Standard actions for random events #
+######################################
+
+wanderer_lifestyle_progress_pulse = { # Fires 4 times per year
+	trigger = {
+		has_lifestyle = wanderer_lifestyle
+		is_landed = yes # Lifestyle events inherently assume you have one. Non-landed rulers shouldn't get lifestyle events, even if they still have a lifestyle.
+		exists = capital_province # Because in rare situations landed AI rulers can end up without a capital.
+		trigger_if = {
+			limit = {
+				is_ai = no
+			}
+			has_had_focus_for_days > 30
+		}
+		NOT = {
+			has_character_flag = had_recent_lifestyle_ongoing_event
+
+			# Must not currently be in a wanderer event chain.
+			#has_character_flag = is_in_wanderer_surveyor_special_event
+			#has_character_flag = is_in_wanderer_journey_special_event
+			#has_character_flag = is_in_wanderer_destination_special_event
+		}
+	}
+
+	first_valid_on_action = {
+		wanderer_lifestyle_ongoing_events # General event pool
+		wanderer_lifestyle_unavailable_events # Special event pool for unavailable characters (imprisoned, commanding an army, infirm, etc.)
+	}
+}
+
+#Ongoing events and story cycles
+wanderer_lifestyle_ongoing_events = {
+	trigger = {
+		is_available = yes
+	}
+
+	random_on_action = {
+		chance_to_happen = 5 # Roughly one event every 36 months
+		chance_of_no_event = {
+			if = {
+				limit = {
+					is_ai = yes
+					highest_held_title_tier >= tier_kingdom
+				}
+				add = 30 # No need to waste performance here
+			}
+			else_if = {
+				limit = {
+					is_ai = yes
+					highest_held_title_tier >= tier_duchy
+				}
+				add = 70 # No need to waste performance here
+			}
+			else_if = {
+				limit = {
+					is_ai = yes
+				}
+				add = 95 # AI counts aren't particularly important
+			}
+		}
+
+		80 = wanderer_lifestyle_common_events
+		15 = wanderer_lifestyle_uncommon_events
+		5 = wanderer_lifestyle_rare_events		
+	}
+}
+
+# Characters get a Common event roughly once every 48 months (4 years). Most lifestyle events should be Common events.
+wanderer_lifestyle_common_events = {
+	random_events = {
+		100 = journey_events.10
+		100 = journey_events.30
+		100 = journey_events.40
+		100 = destination_events.10
+		100 = destination_events.20
+		100 = wanderer_lifestyle_events.10
+		100 = wanderer_lifestyle_events.20
+		100 = wanderer_lifestyle_events.30
+		100 = wanderer_lifestyle_events.40
+		100 = internal_affairs.20
+		100 = internal_affairs.30
+		100 = internal_affairs.40
+		100 = internal_affairs.50
+		100 = internal_affairs.60
+		100 = mpo_events_tova.0002
+	}
+}
+
+# Characters get an Uncommon event roughly once every 240 months (20 years). Longer event chains and lucrative opportunities should be Uncommon events.
+wanderer_lifestyle_uncommon_events = {
+	random_events = {
+		100 = journey_events.20
+		100 = journey_events.60
+		100 = destination_events.40
+		100 = internal_affairs.10
+	}
+	fallback = wanderer_lifestyle_common_events
+}
+
+# Characters get a Rare event roughly once every 720 months (60 years). Character-defining events and easter egg events should be Rare events.
+wanderer_lifestyle_rare_events = {
+	random_events = {
+		100 = journey_events.50
+		100 = destination_events.30
+	}
+	fallback = wanderer_lifestyle_uncommon_events
+}
+
+# Special event pool for unavailable characters (imprisoned, commanding an army, infirm, etc.)
+wanderer_lifestyle_unavailable_events = {
+	trigger = {
+		is_available = no
+	}
+
+	random_events = {
+ 		# WARNING: All events in this pool *MUST* have custom is_available triggers defined.
+ 		# Otherwise we can wind up with weird things like imprisoned characters having a strategy discussion with their army commanders out on the campaign trail.
+ 		chance_to_happen = 10
+
+ 		
+	}
+}
+
