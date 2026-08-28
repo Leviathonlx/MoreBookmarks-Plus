@@ -20,3 +20,223 @@ mb_events.0001 = {
 		name = mb_events.0001.a
 	}
 }
+
+
+###
+
+
+mb_events.0002 = {   
+	title = DE_decision_event.0026.t
+	desc = DE_decision_event.0026.desc
+	theme = new_royal_court
+	left_portrait = {
+		character = this
+	}
+
+	option = { 
+		name = DE_decision_event.0026.a
+		
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+
+###
+
+
+
+namespace = balkan_culture
+
+
+# Event to spawn Bosnian dynamically after the Kingdom has been formed
+# mb_events.0003-0009													
+
+mb_events.0003 = {
+	scope = none
+	hidden = yes
+
+	immediate = {
+		
+		#Bosnian gets the innovations from Croatian and Serbian
+		culture:bosnian = {
+			reset_culture_creation_date = yes
+			get_all_innovations_from = culture:croatian
+			get_all_innovations_from = culture:slavonian
+			get_all_innovations_from = culture:serbian
+
+		}
+
+		every_county = {
+			limit = {
+				culture = { has_cultural_pillar = heritage_south_slavic }
+				title_province = {	
+					geographical_region = custom_roman_illyricum
+				}
+			}
+			add_to_list = bosnian_counties
+		}
+
+		every_in_list = {
+			list = bosnian_counties
+
+			# South Slavic Counties become Bosnian
+			if = {
+				limit = {
+					culture = { has_cultural_pillar = heritage_south_slavic }
+					county = {	
+						OR = {
+							this = title:c_usora
+							this = title:c_soli
+							this = title:c_vhrbosna
+							this = title:c_donjikraji
+							this = title:c_rama
+						}
+					}
+				}
+				set_county_culture = culture:bosnian
+
+				# Croatian and Serbian Rulers switch culture; every courtier that is South Slavic flips along
+				holder = {
+					if = {
+						limit = {
+							culture = { has_cultural_pillar = heritage_south_slavic }
+							capital_province = {
+								geographical_region = ghw_region_balkans
+							}
+						}
+						set_culture = culture:bosnian
+						every_courtier = {
+							limit = {
+								culture = { has_cultural_pillar = heritage_south_slavic }
+							}
+							set_culture = culture:bosnian
+						}
+					}
+				}
+			}
+		}
+
+		every_player = {
+			if = {
+				limit = {
+					is_ai = no
+					save_temporary_scope_as = player
+					any_in_list = {
+						list = bosnian_counties
+						holder = {
+							is_within_diplo_range = { CHARACTER = scope:player }
+						}
+					}
+				}
+				trigger_event = mb_events.0004
+			}
+		}
+
+	}
+
+}
+
+# Informative Event of the Shift
+mb_events.0004 = {
+	type = character_event
+	title = balkan_culture.0002.t
+	desc = balkan_culture.0002.desc
+	theme = culture_change
+	left_portrait = root
+
+	option = {
+		name = balkan_culture.0002.a
+	}
+	
+}
+
+balkan_culture.0003 = {
+ 	scope = none
+ 	hidden = yes
+
+ 	immediate = {
+
+ 		every_county = {
+ 			limit = {
+ 				culture = culture:abotrite
+				title_province = {
+					OR = {
+						geographical_region = custom_hungary
+						geographical_region = ghw_region_balkans
+					}
+				}
+ 			}
+ 			add_to_list = abotrite_counties
+ 		}
+		
+ 		title:c_severin = {
+			if = {
+				limit = {
+					culture = culture:severian
+					holder = { NOT = { culture = culture:severian } }
+				}
+				set_county_culture = culture:vlach
+				set_county_faith = faith:orthodox
+			}
+ 		}
+		
+		title:c_visegrad = {
+			if = {
+				limit = {
+					holder = { culture = culture:mogyer }
+				}
+				set_county_culture = culture:mogyer
+				set_county_faith = faith:magyar_pagan
+				change_development_level = -2
+			}
+ 		}
+
+ 		every_in_list = {
+ 			list = abotrite_counties
+			
+ 			if = {
+ 				limit = {
+ 					culture = culture:abotrite
+ 					county = {	
+ 						this = title:c_krasso
+ 					}
+					holder = { NOT = { culture = culture:abotrite } }
+ 				}
+ 				set_county_culture = culture:vlach
+				set_county_faith = faith:orthodox
+ 			}
+			
+			if = {
+ 				limit = {
+ 					culture = culture:abotrite
+ 					county = {	
+ 						this = title:c_szerem
+ 					}
+					holder = { NOT = { culture = culture:abotrite } }
+ 				}
+ 				set_county_culture = culture:serbian
+ 			}
+			
+			if = {
+ 				limit = {
+					holder = { culture = culture:mogyer }
+ 					culture = culture:abotrite
+ 				}
+ 				set_county_culture = culture:mogyer
+				set_county_faith = faith:magyar_pagan
+ 			}
+			
+			else = {
+				limit = {
+ 					culture = culture:abotrite
+ 				}
+				set_county_culture = culture:serbian
+			}
+			
+ 		}
+
+ 	}
+
+}
