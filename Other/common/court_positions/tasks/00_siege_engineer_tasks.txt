@@ -1,0 +1,126 @@
+﻿### Siege Engineer Tasks ###
+
+siege_engineer_build_equipment = {
+	court_position_types = { siege_engineer_court_position }
+
+	# Monthly cost for the task
+	cost = {
+		round = no
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = no
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = yes
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		custom_tooltip = {
+			text = siege_engineer_build_equipment_trigger_tt
+			scope:liege ?= {
+				NOT = {
+					any_maa_regiment = {
+						can_upgrade_maa = no
+						is_unit_type = siege_weapon
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = siege_engineer_build_equipment_trigger_tt_2
+			scope:liege ?= {
+				maa_regiments_count < maa_regiments_max_count
+			}
+		}
+	}
+
+	on_start = {
+		custom_tooltip = siege_engineer_build_equipment_tt
+	}
+
+	on_monthly = {
+		random = {
+			chance = {
+				value = 1
+				add = "root.aptitude(siege_engineer_court_position)"
+			}
+			scope:liege ?= {
+				if = {
+					limit = {
+						any_maa_regiment = {
+							is_unit_type = siege_weapon
+						}
+					}
+					random_maa_regiment = {
+						limit = {
+							is_unit_type = siege_weapon
+							can_upgrade_maa = yes
+						}
+						change_maa_regiment_size = 1
+					}
+				}
+				else_if = {
+					limit = {
+						NOT = {
+							any_maa_regiment = {
+								is_unit_type = siege_weapon
+							}
+						}
+						maa_regiments_count < maa_regiments_max_count
+					}
+					create_maa_regiment = {
+						type = onager
+						check_can_recruit = no
+						size = 1
+					}
+				}
+			}
+		}
+	}
+
+	scaling_employer_modifiers = {
+		terrible = {
+			maa_siege_value_add = 0.01
+		}
+		poor = {
+			maa_siege_value_add = 0.02
+		}
+		average = {
+			maa_siege_value_add = 0.03
+		}
+		good = {
+			maa_siege_value_add = 0.04
+		}
+		excellent = {
+			maa_siege_value_add = 0.05
+		}
+	}
+
+	ai_will_do = {
+		value = 100
+	}
+}

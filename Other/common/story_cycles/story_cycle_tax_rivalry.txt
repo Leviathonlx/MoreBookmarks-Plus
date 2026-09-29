@@ -1,0 +1,114 @@
+﻿# TAX COLLECTOR STEWARD RIVALRY
+# =============================
+# Before creating story, make sure story owner has var:story_steward and var:story_tax_collector set
+
+story_cycle_tax_rivalry = {
+	on_setup = {
+		set_variable = {
+			name = steward
+			value = story_owner.var:story_steward
+		}
+		set_variable = {
+			name = tax_collector
+			value = story_owner.var:story_tax_collector
+		}
+		story_owner = {
+			remove_variable = story_steward
+			remove_variable = story_tax_collector
+		}
+	}
+
+	# The rivalry continues even after the death of the liege, assuming the two still serve the same liege
+	on_owner_death = {
+		if = {
+			limit = {
+				exists = story_owner.primary_heir
+			}
+			# For now, just make the primary heir the story owner
+			# We'll check if the story has been invalidated in tax_rivalry.0001
+			make_story_owner = story_owner.primary_heir
+			# One of the rivals has become the other's liege
+			if = {
+				limit = {	
+					OR = {
+						AND = {
+							story_owner = var:steward
+							var:tax_collector = { 
+								OR = {
+									is_vassal_or_below_of = var:steward
+									is_courtier_of = var:steward
+								}
+							}
+						}
+						AND = {
+							story_owner = var:tax_collector
+							var:steward = { 
+								OR = {
+									is_vassal_or_below_of = var:tax_collector
+									is_courtier_of = var:tax_collector
+								}
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						story_owner = var:steward
+					}
+					var:steward = { save_scope_as = fortunate_rival }
+					var:tax_collector = { save_scope_as = less_fortunate_rival }
+				}
+				else = {
+					var:tax_collector = { save_scope_as = fortunate_rival }
+					var:steward = { save_scope_as = less_fortunate_rival }
+				}
+				# If the rivalry was particularly strong, then notify the rivals appropriately
+				if = {
+					limit = {
+						scope:fortunate_rival = {
+							has_relation_rival = scope:less_fortunate_rival
+						}
+					}
+					# Inform the fortunate rival triumphantly
+					scope:fortunate_rival = {
+						trigger_event = {
+							id = tax_rivalry.9000
+							days = { 3 7 }
+						}
+					}
+					# Inform the not-fortunate rival with worry
+					scope:less_fortunate_rival = {
+						trigger_event = {
+							id = tax_rivalry.9001
+							days = { 3 7 }
+						}	
+					}
+				}
+				# Otherwise just let the rivalry end without any extra fuss
+				else = {
+					end_story = yes
+				}
+			}
+		}
+		else = {
+			end_story = yes
+		}
+	}
+
+	# Random events relating to the rivalry between the steward and tax collector
+	effect_group = {
+		days = { 365 600 }
+		chance = 50
+
+		triggered_effect = {
+			trigger = {
+				always = yes
+			}
+			# Maintenance event that checks whether the story is still valid
+			# If so, then fires on_action ongoing_tax_rivalry_events
+			effect = {
+				story_owner = { trigger_event = tax_rivalry.0001 }
+			}
+		}
+	}
+}

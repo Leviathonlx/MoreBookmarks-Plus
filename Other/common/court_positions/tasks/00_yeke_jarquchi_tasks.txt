@@ -1,0 +1,93 @@
+﻿### Yeke Jarquchi Tasks ###
+
+yeke_jarquchi_culture_acceptance = {
+	court_position_types = { yeke_jarquchi_court_position }
+
+	# Monthly cost for the task
+	cost = {
+		round = no
+		prestige = {
+			add = {
+				value = monthly_court_position_task_cost
+				desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+				format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		custom_tooltip = {
+			text = yeke_jarquchi_culture_acceptance_trigger_tt
+			scope:liege ?= {
+				any_realm_county = {
+					NOT = { this.culture = scope:liege.culture }
+				}
+			}
+		}
+	}
+
+	employee_modifier = {
+		different_culture_opinion = 10
+	}
+
+	on_start = {
+		custom_tooltip = yeke_jarquchi_culture_acceptance_tt
+	}
+
+	on_yearly = {
+		scope:liege ?= {
+			every_realm_county = {
+				culture = {
+					if = {
+						limit = {
+							NOR = {
+								is_in_list = culture_targets
+								this = scope:liege.culture
+							}
+						}
+						add_to_list = culture_targets
+					}
+				}
+			}
+		}
+		every_in_list = {
+			list = culture_targets
+			if = {
+				limit = {
+					cultural_acceptance = {
+						target = scope:liege.culture
+						value < 50
+					}
+				}
+				change_cultural_acceptance = {
+					target = scope:liege.culture
+					value = {
+						add = {
+							add = "root.aptitude(yeke_jarquchi_court_position)"
+							multiply = 2 
+						}
+					}
+					desc = culture_acceptance_desc_yeke_jarquchi
+				}
+				if = {
+					limit = {
+						cultural_acceptance = {
+							target = scope:liege.culture
+							value > 50
+						}
+					}
+					set_cultural_acceptance = {
+						target = scope:liege.culture
+						value = 50
+					}
+				}
+			}
+			remove_from_list = culture_targets
+		}
+	}
+
+	ai_will_do = {
+		value = ai_compassion
+	}
+}
+

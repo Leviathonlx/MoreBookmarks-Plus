@@ -1,0 +1,294 @@
+﻿##### FAMILY FEUD #####
+
+# Relation has variable with specified flag
+house_relation_feud_flag_trigger = {
+	has_bp1_dlc_trigger = yes
+	has_house_relation_level = feud
+	exists = var:$VARIABLE$
+	var:$VARIABLE$ = flag:$FLAG$
+}
+
+# Feud relation targeting a specified House
+house_has_feud_relation_with_trigger = {
+	exists = house
+	exists = $TARGET$.house
+	house != $TARGET$.house
+	OR = {
+		house = {
+			any_house_relation = {
+				has_house_relation_level = feud
+				any_relation_house = { $TARGET$.house = this }
+			}
+		}
+		exists = scope:return_feud_as_true_for_debug
+	}
+	has_bp1_dlc_trigger = yes
+}
+
+# General checks house head can start a feud
+valid_for_feud_events_trigger = {
+	has_bp1_dlc_trigger = yes
+	# Must be House Head
+	is_house_head = yes
+	# Stop unlanded AI going crazy
+	is_playable_character = yes
+	is_available_adult = yes
+	# Save scopes for checking against
+	save_temporary_scope_as = house_head_temp
+}
+
+valid_for_feud_events_with_target_trigger = {
+	# General checks
+	valid_for_feud_events_trigger = yes
+	# Victim House Head must exist
+	exists = $TARGET$.house.house_head
+	# Target House must be different
+	NOT = { house = $TARGET$.house }
+	# Ensure target is 'equal'
+	trigger_if = {
+		limit = {
+			is_landed = yes
+			$TARGET$.house.house_head = { is_landed = yes }
+		}
+		tier_difference = {
+			target = $TARGET$.house.house_head
+			value >= -1
+		}
+		tier_difference = {
+			target = $TARGET$.house.house_head
+			value <= 1
+		}
+	}
+	trigger_else = {
+		NOR = {
+			highest_held_title_tier > tier_duchy
+			$TARGET$.house.house_head.highest_held_title_tier > tier_duchy
+		}
+	}
+	NOR = {
+		# Is not part of same family as target House Head
+		is_close_family_of = $TARGET$.house.house_head
+		# Is not friendly with target House Head
+		has_any_good_relationship_with_character_trigger = { CHARACTER = $TARGET$.house.house_head }
+	}
+	# Avoid starting Feuds between Vassals and Lieges, as they are not 'equals'
+	trigger_if = {
+		limit = { exists = $TARGET$.house.house_head.liege }
+		NOR = {
+			# Is not liege of target House Head
+			this = $TARGET$.house.house_head.liege
+			# Does not share house with target's liege
+			this.house = $TARGET$.house.house_head.liege.house
+		}
+	}
+	# Must be near target House Head
+	in_diplomatic_range = $TARGET$.house.house_head
+	# Save scopes for checking against
+	save_temporary_scope_as = house_head_temp
+	$TARGET$.house.house_head = { save_temporary_scope_as = target_house_head_temp }
+}
+
+# House Head, and House is valid to be a Feud target
+house_feud_valid_feud_target_trigger = {
+	exists = house
+	this = this.house.house_head
+	is_playable_character = yes
+	NOR = {
+		house = root.house
+		is_close_family_of = root
+		has_any_good_relationship_with_character_trigger = { CHARACTER = root }
+	}
+	save_temporary_scope_as = house_head_temp
+	# House must not be too small (too easy to wipe out)
+	house = {
+		any_house_member = {
+			count >= 3
+			is_adult = yes
+			can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = scope:house_head_temp }
+		}
+	}
+	# Must be interactable
+	in_diplomatic_range = root
+}
+
+# Valid to be a target of a murder scheme
+house_feud_scheme_target_trigger = {
+	is_available_adult = yes
+	save_temporary_scope_as = house_feud_scheme_target_temp
+	NOR = {
+		this = this.house.house_head
+		root = {
+			is_scheming_against = { target = scope:house_feud_scheme_target_temp }
+		}
+		is_in_list = house_feud_scheme_targets
+	}
+	root = {
+		can_start_scheme = {
+			type = murder
+			target_character = scope:house_feud_scheme_target_temp
+		}
+	}
+}
+
+# Valid member of own house
+house_feud_member_trigger = {
+	is_available_adult = yes
+	house = root.house
+	in_diplomatic_range = root
+	NOT = {
+		has_any_bad_relationship_with_character_trigger = { CHARACTER = root }
+	}
+}
+
+# House has no remaining members
+house_feud_wiped_out_trigger = {
+	house ?= {
+		any_house_relation = {
+			has_house_relation_level = feud
+			any_relation_house = {
+				this = $TARGET$.house
+				NOT = {
+					any_house_member = { is_alive = yes }
+				}
+			}
+		}
+	}
+}
+
+##################################################
+# Sycophant Triggers
+
+bp1_yearly_8100_sycophant_trigger = {
+	is_available_ai_adult = yes
+	liege = $LIEGE$
+	reverse_opinion = {
+		target = $LIEGE$
+		value >= 25
+	}
+	NOT = { is_vassal_of = $LIEGE$ }
+	trigger_if = {
+		limit = { exists = $LIEGE$.cp:councillor_spouse }
+		NOT = { this = $LIEGE$.cp:councillor_spouse }
+	}
+	trigger_if = {
+		limit = {
+			$LIEGE$.faith = { has_doctrine = doctrine_clerical_succession_spiritual_fixed_appointment }
+			exists = $LIEGE$.cp:councillor_court_chaplain
+		}
+		NOT = { this = $LIEGE$.cp:councillor_court_chaplain }
+	}
+	OR = {
+		has_relation_lover = $LIEGE$
+		has_relation_friend = $LIEGE$
+		can_set_relation_friend_trigger = { CHARACTER = $LIEGE$ }
+		any_secret = {
+			type = secret_lover
+			secret_target = $LIEGE$
+		}
+	}
+	NOT = { is_close_or_extended_family_of = $LIEGE$ }
+}
+
+##################################################
+# Feud AI Scheme Triggers
+
+house_feud_ai_murder_join_trigger = {
+	save_temporary_scope_as = instigator_temp
+	house ?= {
+		any_house_member = {
+			any_scheme = {
+				type = murder
+				scope:scheme_target_character.house ?= {
+					NOT = { this = scope:instigator_temp.house }
+					any_house_relation = {
+						has_house_relation_parameter = members_more_likely_to_scheme_hostile
+						any_relation_house = { this = scope:instigator_temp.house }
+					}
+				}
+				save_temporary_scope_as = murder_scheme_temp
+			}
+		}
+	}
+	trigger_if = {
+		limit = { exists = scope:murder_scheme_temp }
+		NOR = {
+			is_scheming_against = { target = scope:murder_scheme_temp.scheme_target_character }
+			has_any_good_relationship_with_character_trigger = { CHARACTER = scope:murder_scheme_temp.scheme_target_character }
+		}
+		char_can_fit_into_scheme_trigger = { SCHEME = scope:murder_scheme_temp }
+	}
+	trigger_else = { always = no }
+}
+
+house_feud_ai_murder_start_trigger = {
+	save_temporary_scope_as = instigator_temp
+	house ?= {
+		any_house_relation = {
+			has_house_relation_parameter = members_more_likely_to_scheme_hostile
+			any_relation_house = {
+				NOT = { this = scope:instigator_temp.house }
+				any_house_member = { save_temporary_scope_as = murder_victim_temp }
+			}
+		}
+	}
+	trigger_if = {
+		limit = { exists = scope:murder_victim_temp }
+		NOR = {
+			is_scheming_against = { target = scope:murder_victim_temp }
+			has_any_good_relationship_with_character_trigger = { CHARACTER = scope:murder_victim_temp }
+		}
+		can_start_scheme = {
+			type = murder
+			target_character = scope:murder_victim_temp
+		}
+	}
+	trigger_else = { always = no }
+}
+
+house_feud_ai_seduce_start_trigger = {
+	save_temporary_scope_as = instigator_temp
+	NOR = {
+		has_trait = chaste
+		has_trait = devoted
+	}
+	might_cheat_on_every_partner_trigger = yes
+	house ?= {
+		any_house_relation = {
+			has_house_relation_parameter = members_more_likely_to_scheme_hostile
+			any_relation_house = {
+				NOT = { this = scope:instigator_temp.house }
+				any_house_member = {
+					is_married = yes
+					save_temporary_scope_as = seduce_victim_temp
+					any_spouse = {
+						trigger_if = {
+							limit = {
+								exists = house
+								house != scope:seduce_victim_temp.house
+							}								
+						}
+						NOT = {
+							has_any_good_relationship_with_character_trigger = { CHARACTER = scope:seduce_victim_temp }
+						}
+						save_temporary_scope_as = seduce_spouse_temp
+					}
+				}
+			}
+		}
+	}
+	trigger_if = {
+		limit = {
+			exists = scope:seduce_victim_temp
+			exists = scope:seduce_spouse_temp
+		}
+		NOR = {
+			has_any_good_relationship_with_character_trigger = { CHARACTER = scope:seduce_victim_temp }
+			has_any_bad_relationship_with_character_trigger = { CHARACTER = scope:seduce_spouse_temp }
+		}
+		can_start_scheme = {
+			type = seduce
+			target_character = scope:seduce_spouse_temp
+		}
+	}
+	trigger_else = { always = no }
+}

@@ -1,0 +1,130 @@
+﻿### Bookmaker Tasks ###
+
+bookmaker_cook_the_books = {
+	court_position_types = { bookmaker_court_position }
+
+	is_shown = { is_independent_ruler = yes }
+
+	is_valid_showing_failures_only = {
+		NOT = { has_character_flag = cook_the_books_cooldown_flag }
+	}
+
+	on_start = {
+		custom_tooltip = bookmaker_cook_the_books.tt
+		add_character_flag = bookmaker_cooking_the_books
+		scope:liege = {
+			if = {
+				limit = { has_legitimacy = yes }
+				add_legitimacy = minor_legitimacy_loss
+			}
+		}
+	}
+
+	on_end = {
+		remove_character_flag = bookmaker_cooking_the_books
+	}
+
+	ai_will_do = {
+		value = 0
+		if = {
+			limit = {
+				can_host_activity = activity_chariot_race
+			}
+			add = 200
+		}
+		if = {
+			limit = { # I have no monies
+				short_term_gold < 50
+			}
+			add = -100
+		}
+		if = {
+			limit = {
+				has_treasury = no
+				monthly_character_income < monthly_court_position_task_cost_double
+			}
+			add = -500 #to force the switch to default task, the ai_will_do must be negative
+		}
+		else_if = {
+			limit = {
+				has_treasury = yes
+				monthly_character_treasury_income < monthly_court_position_task_cost_double
+			}
+			add = -500 #to force the switch to default task, the ai_will_do must be negative
+		}
+	}
+}
+
+bookmaker_distribute_bribes = {
+	court_position_types = { bookmaker_court_position }
+
+	# Monthly cost for the task
+	cost = {
+		round = no
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = no
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = yes
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+	}
+
+	scaling_employer_modifiers = {
+		terrible = { monthly_influence = 0.5 }
+		poor = { monthly_influence = 0.75 }
+		average = { monthly_influence = 1.0 }
+		good = { monthly_influence = 1.25 }
+		excellent = { monthly_influence = 1.5 }
+	}
+
+	ai_will_do = {
+		value = 100
+		if = {
+			limit = {
+				OR = {
+					has_trait = ambitious
+					has_trait = deceitful
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				has_treasury = no
+				monthly_character_income < monthly_court_position_task_cost_double
+			}
+			add = -500 #to force the switch to default task, the ai_will_do must be negative
+		}
+		else_if = {
+			limit = {
+				has_treasury = yes
+				monthly_character_treasury_income < monthly_court_position_task_cost_double
+			}
+			add = -500 #to force the switch to default task, the ai_will_do must be negative
+		}
+	}
+}

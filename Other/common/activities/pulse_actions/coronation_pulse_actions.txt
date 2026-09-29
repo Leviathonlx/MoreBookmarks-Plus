@@ -1,0 +1,736 @@
+﻿#loyalty pledge
+#nobles cheer
+
+# prestige gain from vassal with positive opinion
+loyalty_pledge = {
+	is_valid = {
+		scope:host = {
+			is_alive = yes
+		}
+		any_guest_subset = {
+			name = supporter
+			is_playable_character = yes
+			is_vassal_of = scope:host
+			location = scope:province
+			opinion = {
+				target = scope:host
+				value >= low_positive_opinion
+			}
+		}
+	}
+
+	weight = {
+		value = 0.3
+	}
+
+	effect = {
+		scope:host = {
+			save_scope_as = first
+		}
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				is_playable_character = yes
+				is_vassal_of = scope:host
+				location = scope:province
+				opinion = {
+					target = scope:host
+					value >= low_positive_opinion
+				}
+			}
+			save_scope_as = second
+		}
+
+		add_activity_log_entry = {
+			key = loyalty_pledge
+			tags = { pulse_action }
+			character = scope:first
+			target = scope:second
+
+			scope:first = {
+				add_prestige = minor_prestige_gain
+			}
+		}
+	}
+}
+
+
+# success chance from high prestige level
+nobles_cheer = {
+	is_valid = {
+		scope:host = {
+			is_alive = yes
+			prestige_level >= 4
+		}
+	}
+
+	weight = {
+		value = 0.3
+	}
+
+	effect = {
+		scope:host = {
+			save_scope_as = first
+		}
+
+		add_activity_log_entry = {
+			key = loyalty_pledge
+			tags = { pulse_action }
+			character = scope:first
+
+			scope:first = {
+				scope:activity = { activity_special_type_progression_miniscule = yes }
+			}
+		}
+	}
+}
+
+# success chance from high piety level
+received_blessing = {
+	is_valid = {
+		scope:host = {
+			is_alive = yes
+			piety_level >= 4
+		}
+		any_guest_subset = {
+			name = supporter
+			is_clergy = yes
+			location = scope:province
+			opinion = {
+				target = scope:host
+				value >= low_positive_opinion
+			}
+		}
+	}
+
+	weight = {
+		value = 0.3
+	}
+
+	effect = {
+		scope:host = {
+			save_scope_as = first
+		}
+
+		random_guest_subset = {
+			name = contestant
+			limit = {
+				is_clergy = yes
+				location = scope:province
+				opinion = {
+					target = scope:host
+					value >= low_positive_opinion
+				}
+			}
+			save_scope_as = second
+		}
+
+		add_activity_log_entry = {
+			key = loyalty_pledge
+			tags = { pulse_action }
+			character = scope:first
+			target = scope:second
+
+			scope:first = {
+				scope:activity = { activity_special_type_progression_miniscule = yes }
+			}
+		}
+	}
+}
+
+# opinion from regalia
+regalia_impresses_attendees = {
+	is_valid = {
+		scope:host = {
+			is_alive = yes
+			any_character_artifact = {
+				artifact_slot_type = regalia
+				OR = {
+					rarity = illustrious
+					rarity = famed
+				}
+			}
+		}
+	}
+
+	weight = {
+		value = 0.3
+	}
+
+	effect = {
+		scope:host = {
+			save_scope_as = first
+			random_character_artifact = {
+				limit = {
+					artifact_slot_type = regalia
+					OR = {
+						rarity = illustrious
+						rarity = famed
+					}
+				}
+				save_scope_as = regalia
+			}
+		}
+
+		add_activity_log_entry = {
+			key = regalia_impresses_attendees
+			tags = { pulse_action }
+			character = scope:first
+			
+			every_attending_character = {
+				limit = { NOT = { this = scope:host } }
+				custom = custom.every_attending_character
+				add_opinion = {
+					target = scope:host
+					modifier = impressed_opinion
+					opinion = 2
+				}
+			}
+		}
+	}
+}
+
+# friendship from sharing support
+supporters_bond = {
+	is_valid = {
+		any_guest_subset = {
+			name = supporter
+			location = scope:province
+			count >= 2
+			is_ai = yes
+		}
+	}
+
+	weight = {
+		value = 0.3
+	}
+
+	effect = {
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				location = scope:province
+				is_ai = yes
+			}
+			save_scope_as = first
+		}
+
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				location = scope:province
+				NOT = {
+					this = scope:first
+				}
+				is_ai = yes
+			}
+			save_scope_as = second
+		}
+
+
+		add_activity_log_entry = {
+			key = supporters_bond
+			tags = { pulse_action }
+			character = scope:first
+			target = scope:second
+			
+			scope:first = {
+				progress_towards_friend_effect = {
+					REASON = friend_feast_talking_and_laughing
+					CHARACTER = scope:second
+					OPINION = default_friend_opinion
+				}
+			}
+		}
+	}
+}
+
+# friendship from sharing dissent
+detractors_bond = {
+	is_valid = {
+		any_guest_subset = {
+			name = detractor
+			location = scope:province
+			count >= 2
+			is_ai = yes
+		}
+	}
+
+	weight = {
+		value = 0.1
+	}
+
+	effect = {
+		random_guest_subset = {
+			name = detractor
+			limit = {
+				location = scope:province
+				is_ai = yes
+			}
+			save_scope_as = first
+		}
+
+		random_guest_subset = {
+			name = detractor
+			limit = {
+				location = scope:province
+				NOT = {
+					this = scope:first
+				}
+				is_ai = yes
+			}
+			save_scope_as = second
+		}
+
+
+		add_activity_log_entry = {
+			key = detractors_bond
+			tags = { pulse_action }
+			character = scope:first
+			target = scope:second
+			
+			scope:first = {
+				progress_towards_friend_effect = {
+					REASON = friend_feast_talking_and_laughing
+					CHARACTER = scope:second
+					OPINION = default_friend_opinion
+				}
+			}
+		}
+	}
+}
+
+# friendship from intent
+befriend_loyalists = {
+	is_valid = {
+		scope:host = {
+			has_activity_intent = coronation_embrace_supporters
+			is_ai = yes
+		}
+		any_guest_subset = {
+			name = supporter
+			location = scope:province 
+			is_ai = yes
+		}
+
+	}
+
+	weight = {
+		value = 0.5
+	}
+
+	effect = {
+
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				location = scope:province
+				is_ai = yes
+			}
+			save_scope_as = first
+		}
+
+
+		add_activity_log_entry = {
+			key = befriend_loyalists
+			tags = { pulse_action }
+			character = scope:host
+			target = scope:first
+			
+			scope:host = {
+				progress_towards_friend_effect = {
+					REASON = friend_feast_talking_and_laughing
+					CHARACTER = scope:first
+					OPINION = default_friend_opinion
+				}
+			}
+		}
+	}
+}
+
+# Supporter stresses out Detractor
+supporter_stresses_detractor = {
+	icon = social
+	is_valid = {
+		is_current_phase_active = yes
+		any_guest_subset = {
+			name = supporter
+			location = scope:province 
+		}
+		any_guest_subset = {
+			name = detractor
+			location = scope:province 
+			is_ai = yes
+		}
+	}
+
+	weight = {
+		value = 1
+	}
+
+	effect = {
+		random_guest_subset = {
+			name = detractor
+			limit = {
+				location = scope:province
+				is_ai = yes
+			}
+			save_scope_as = first
+		}
+
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				location = scope:province
+			}
+			save_scope_as = second
+		}
+
+		add_activity_log_entry = {
+			key = supporter_stresses_detractor
+			tags = { pulse_action }
+			character = scope:first
+			target = scope:second
+
+			
+			scope:second = {
+				add_opinion = {
+					target = scope:first
+					modifier = annoyed_opinion
+					opinion = -10
+				}
+			}
+			scope:first = {
+				add_stress = minor_stress_gain
+			}	
+		}
+	}
+}
+
+# friendship from being a supporter
+praised_king_together = {
+	icon = public
+	is_valid = {
+		is_current_phase_active = yes
+		any_guest_subset = {
+			name = supporter
+			location = scope:province 
+			count >= 2
+		}
+	}
+
+	weight = {
+		value = 1
+	}
+
+	effect = {			
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				location = scope:province
+			}
+			save_scope_as = first
+		}
+		
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				location = scope:province
+				NOT = {
+					this = scope:first
+				}
+			}
+			save_scope_as = second
+		}
+		
+		add_activity_log_entry = {
+			key = praised_king_together
+			tags = { pulse_action }
+			character = scope:first
+			
+			scope:first = {
+				add_opinion = {
+					target = scope:second
+					modifier = friendliness_opinion
+					opinion = 10
+				}
+			}
+
+			scope:second = {
+				add_opinion = {
+					target = scope:first
+					modifier = friendliness_opinion
+					opinion = 10
+				}
+			}
+		}
+	}
+}
+
+bonded_over_help = {
+	icon = social
+	is_valid = {
+		is_current_phase_active = yes
+		any_guest_subset = {
+			name = supporter
+			location = scope:province
+		}
+	}
+
+	weight = {
+		value = 1
+		if = {
+			limit = {
+				has_variable = bonded_over_help
+			}
+			multiply = 0.1
+		}
+	}
+
+	effect = {
+		scope:host = {
+			save_scope_as = first
+		}
+		set_variable = {
+			name = bonded_over_help
+			value = yes
+		}
+
+		random_guest_subset = {
+			name = supporter
+			limit = {
+				location = scope:province
+			}
+			save_scope_as = second
+		}
+
+		add_activity_log_entry = {
+			key = bonded_over_help
+			tags = { pulse_action }
+			character = scope:first
+			target = scope:second
+			
+			scope:first = {
+				add_stress = minor_stress_loss
+				add_opinion = {
+					target = scope:second
+					modifier = friendliness_opinion
+					opinion = 15
+				}
+			}
+
+			scope:second = {
+				add_stress = minor_stress_loss
+				add_opinion = {
+					target = scope:first
+					modifier = friendliness_opinion
+					opinion = 15
+				}				
+			}
+
+			scope:activity = { activity_special_type_progression_miniscule = yes }
+		}
+	}
+}
+
+beautiful_choir_song = {
+	icon = public
+	is_valid = {
+		scope:activity = { has_current_phase = coronation_phase_coronation }
+		is_current_phase_active = yes
+		any_attending_character = {
+			location = scope:province
+			count >= 1
+		}
+	}
+
+	weight = {
+		value = 1
+	}
+
+	effect = {			
+		random_attending_character = {
+			limit = {
+				location = scope:province
+			}
+			save_scope_as = first
+		}
+		
+		add_activity_log_entry = {
+			key = beautiful_choir_song
+			tags = { pulse_action }
+			character = scope:first
+			
+			scope:first = {
+				add_stress = minor_stress_loss
+			}
+		}
+	}
+}
+
+taking_a_break = {
+	icon = public
+	is_valid = {
+		scope:activity = { has_current_phase = coronation_phase_preparations }
+		is_current_phase_active = yes
+		any_attending_character = {
+			location = scope:province
+			count >= 1
+		}
+	}
+
+	weight = {
+		value = 1
+	}
+
+	effect = {			
+		random_attending_character = {
+			limit = {
+				location = scope:province
+			}
+			save_scope_as = first
+		}
+		
+		add_activity_log_entry = {
+			key = taking_a_break
+			tags = { pulse_action }
+			character = scope:first
+			
+			scope:first = {
+				add_stress = minor_stress_loss
+			}
+		}
+	}
+}
+
+heir_diplomacy_boost = {
+	is_valid = {
+		is_current_phase_active = yes
+		scope:host = {
+			location = scope:province
+			has_activity_intent = coronation_exalt_crown
+			primary_heir = {
+				location = scope:province
+				NOR = {
+					has_trait = dull
+					has_trait = intellect_bad
+					diplomacy >= 25
+					has_character_flag = heir_stat_boost
+				}
+				is_ai = yes
+			}
+		}
+	}
+
+	weight = {
+		value = 1
+	}
+
+	effect = {
+		scope:host.primary_heir = {
+			save_scope_as = first
+			add_character_flag = {
+				flag = heir_stat_boost
+				days = 730
+			}
+		}
+
+		add_activity_log_entry = {
+			key = heir_diplomacy_boost
+			tags = { pulse_action }
+			character = scope:first
+			
+			scope:first = {
+				add_diplomacy_skill = 1
+			}
+		}
+	}
+}
+
+heir_stewardship_boost = {
+	is_valid = {
+		is_current_phase_active = yes
+		scope:host = {
+			location = scope:province
+			has_activity_intent = coronation_exalt_crown
+			primary_heir = {
+				location = scope:province
+				NOR = {
+					has_trait = dull
+					has_trait = intellect_bad
+					stewardship >= 25
+					has_character_flag = heir_stat_boost
+				}
+				is_ai = yes
+			}
+		}
+	}
+
+	weight = {
+		value = 1
+	}
+
+	effect = {
+		scope:host.primary_heir = {
+			save_scope_as = first
+			add_character_flag = {
+				flag = heir_stat_boost
+				days = 730
+			}
+		}
+
+		add_activity_log_entry = {
+			key = heir_stewardship_boost
+			tags = { pulse_action }
+			character = scope:first
+			
+			scope:first = {
+				add_stewardship_skill = 1
+			}
+		}
+	}
+}
+
+heir_learning_boost = {
+	is_valid = {
+		is_current_phase_active = yes
+		scope:host = {
+			location = scope:province
+			has_activity_intent = coronation_exalt_crown
+			primary_heir = {
+				location = scope:province
+				NOR = {
+					has_trait = dull
+					has_trait = intellect_bad
+					learning >= 25
+					has_character_flag = heir_stat_boost
+				}
+				is_ai = yes
+			}
+		}
+	}
+
+	weight = {
+		value = 1
+	}
+
+	effect = {
+		scope:host.primary_heir = {
+			save_scope_as = first
+			add_character_flag = {
+				flag = heir_stat_boost
+				days = 730
+			}
+		}
+
+		add_activity_log_entry = {
+			key = heir_learning_boost
+			tags = { pulse_action }
+			character = scope:first
+			
+			scope:first = {
+				add_learning_skill = 1
+			}
+		}
+	}
+}
