@@ -1,30 +1,18 @@
-﻿
-
-can_be_warrior_trigger = {
-	is_adult = yes
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-	can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
-	trigger_if = {
-		limit = { $ARMY_OWNER$ = { culture = { has_cultural_parameter = high_prowess_ignores_knight_restrictions } } }
-		prowess >= 10
-	}
-}
-
-can_be_knight_trigger = {
+﻿can_be_knight_trigger = {
 	is_available_quick = {
 		ai = yes
 		hostage = no
 	}
 	NOT = { has_trait = pregnant } 
 	NOT = { has_trait = infirm } #Kinda odd/silly vanilla lets infirm people be knights and lead armies
-	
+	can_be_warrior_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
 	trigger_if = { # Admin governors cannot be knights
 		limit = {
-			$ARMY_OWNER$ = { government_allows = administrative }
+			$ARMY_OWNER$ = { government_has_mechanic = administrative }
 			is_courtier = no
+			exists = primary_title
 		}
-		primary_title ?= {
+		primary_title = {
 			tier < tier_duchy
 			trigger_if = {
 				limit = { is_noble_family_title = yes }
@@ -32,7 +20,6 @@ can_be_knight_trigger = {
 			}
 		}
 	}
-	
 	trigger_if = {
 		limit = {
 			$ARMY_OWNER$.culture = {
@@ -41,16 +28,18 @@ can_be_knight_trigger = {
 		}
 		prowess >= 12
 	}
-	can_be_warrior_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
 	trigger_if = {
 		limit = {
-			OR = {
-				has_trait = devoted
-				is_clergy = yes
-			}
+			is_clergy = yes
 		}
 		OR = {
-			faith = { has_doctrine_parameter = clergy_can_fight }
+			rite = { rite_has_parameter = clergy_can_fight }
+			AND = {
+				has_personal_tenet_flag = clergy_can_fight_personal
+				NOT = {
+					rite = { rite_has_parameter = pacifist }
+				}
+			}
 			culture = { has_cultural_parameter = culture_clergy_can_fight }
 			AND = {
 				$ARMY_OWNER$.culture = {
@@ -97,25 +86,11 @@ can_be_commander_basic_trigger = {
 		incapable = no
 		hostage = no
 	}
+
 	NOT = { has_trait = pregnant } 
 	NOT = { has_trait = infirm } 
 	age >= 18 #Fine with not making knights be older as there are historical examples of people being knighted at 16 (though very rare) but less so for the person actually leading the army
 	
-	NOR = {
-		has_trait = incapable
-		AND = {
-			OR = {
-				has_trait = devoted
-				is_clergy = yes
-			}
-			NOR = {
-				has_trait = order_member # Order Members will fight for their faith even if their faith says no
-				faith = { has_doctrine_parameter = clergy_can_fight }
-				culture = { has_cultural_parameter = culture_clergy_can_fight }
-			}
-		}
-	}
-
 	OR = { # You can always lead your own armies
 		this = $ARMY_OWNER$
 		can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
@@ -124,6 +99,6 @@ can_be_commander_basic_trigger = {
 	trigger_if = {
 		limit = { $ARMY_OWNER$ = { is_ai = yes } }
 		is_ai = yes
-		highest_held_title_tier < tier_hegemony								 
+		highest_held_title_tier < tier_hegemony
 	}
 }

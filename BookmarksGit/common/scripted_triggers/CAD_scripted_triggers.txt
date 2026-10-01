@@ -1,56 +1,15 @@
-﻿
-portrait_religious_orthodox_trigger = {
-    OR = {
-	#Orthodox Faiths
-	faith = faith:orthodox
-	faith = faith:melkite
-	faith = faith:alexandrian_melkite
-	faith = faith:jerusalem_melkite
-	faith = faith:irenopolis_melkite
-	faith = faith:romagyris_melkite
-	#Oriental Faiths
-	faith = faith:armenian_apostolic
-	faith = faith:albanian_apostolic
-    faith = faith:coptic
-	faith = faith:jacobite
-	faith = faith:maphrianate
-	faith = faith:nubian_orthodox
-	faith = faith:ethiopian_orthodox
-	#Nestorian Faiths
-    faith = faith:nestorian
-	faith = faith:malankaran
-	#Misc Eastern Faiths
-    faith = faith:messalian
-    faith = faith:bogomilist
-    faith = faith:paulician
-	faith = faith:iconoclast
-	faith = faith:monothelitism
-	faith = faith:julianists
-	faith = faith:tsat
-	faith = faith:ivirs
-	faith = faith:stephanites
-	#faith = faith:strigolniki
-	#Autocephalous Faiths
-	faith = faith:bulgarian_orthodox
-	faith = faith:cyprus_orthodox
-	faith = faith:georgian_orthodox
-	faith = faith:serbian_orthodox
-	#faith = faith:russian_orthodox
-	faith = faith:slavic_orthodox #Deprecated
-	faith = faith:vlach_orthodox
-    }	
-}
-
-
-portrait_religious_zoroastrian_trigger = {
-    OR = {
-        religion = religion:zoroastrianism_religion
-        religion = religion:yazidi_religion
-        religion = religion:zunism_religion
-        religion = religion:sampsaeism_religion #Mandaeism
+﻿portrait_religious_zoroastrian_trigger = {
+	OR = {
+		religion = religion:zoroastrianism_religion
+		religion = religion:yazidi_religion
+		religion = religion:zunism_religion
+		faith = {
+			portrait_religious_faith_or_foundational_trigger = { FAITH = faith:mandaean_faith }
+		}
+		religion = religion:sampsaeism_religion #Mandaeism
         religion = religion:dualism_religion #Manichaeism
-        religion = religion:basque_religion
-    }
+		religion = religion:basque_religion
+	}
 }
 
 #Christian Heresy Groups
@@ -135,6 +94,7 @@ religion_has_angels_trigger = {
 		religion = religion:zoroastrianism_religion
 		religion = religion:dualism_religion
 		religion = religion:judaism_religion
+		religion = religion:yazidi_religion
 		religion = religion:sampsaeism_religion
 	}
 }
@@ -147,32 +107,6 @@ religion_has_circumcision_trigger = {
 	}
 }
 
-#Apostate Triggers
-lapsi_trigger = {
-	AND = {
-		$FAITH$ = { has_doctrine_parameter = lapsi_prohibited }
-		$CHARACTER$ = {
-			old_faith = root
-		}
-	}
-}
-
-apostate_trigger = {
-	AND = {
-		$FAITH$ = { has_doctrine_parameter = apostate_prohibited }
-		$CHARACTER$ = {
-			AND = {
-				old_faith.religion = root
-				NOT = { religion = root } #The current religion won't be considered
-			}
-		}
-	}
-}
-
-no_conversion_trigger = {
-	$FAITH$ = { has_doctrine_parameter = conversion_prohibited }
-}
-
 #Councillor Triggers
 can_be_court_chaplain_trigger = {
 	save_temporary_scope_as = court_chaplain_check
@@ -180,20 +114,20 @@ can_be_court_chaplain_trigger = {
 	$COURT_OWNER$ ?= {
 		NOT = { government_has_flag = government_is_nomadic }
 	}
-	NOT = {
-		OR = { 
-			has_council_position = councillor_spouse
-			AND = {
-				this = liege.diarch
-				liege = { has_diarchy_active_parameter = diarchy_is_vizierate }
-			}
+	NOR = {
+		 
+		has_council_position = councillor_spouse
+		AND = {
+			this = liege.diarch
+			liege = { has_diarchy_active_parameter = diarchy_is_vizierate }
+	
 		}
 	}
-	$COURT_OWNER$.faith = { has_allowed_gender_for_clergy = scope:court_chaplain_check }
-	faith = $COURT_OWNER$.faith
+	$COURT_OWNER$.rite = { rite_has_allowed_gender_for_clergy = scope:court_chaplain_check }
+	rite = $COURT_OWNER$.rite
 	trigger_if = {
 		limit = {
-			faith = { has_doctrine = doctrine_theocracy_temporal }
+			rite = { rite_has_doctrine = doctrine_theocracy_temporal }
 		}
 		OR = {
 			is_ruler = no
@@ -208,9 +142,18 @@ can_be_court_chaplain_trigger = {
 	}
 	trigger_if = { # An excommunicated ruler tolerate excommunicated bishops
 		limit = {
-			$COURT_OWNER$ = { NOT = { has_trait = excommunicated } }
+			$COURT_OWNER$ ?= { NOT = { has_trait = excommunicated } }
 		}
 		NOT = { has_trait = excommunicated }
+	}
+	trigger_if = { # Married characters are excluded if the doctrine is not there
+		limit = {
+			rite = {
+				NOT = { rite_has_parameter = clergy_can_marry }
+			}
+		}
+		is_married = no
+	}
 	}
 	trigger_if = { #Only Eunuchs allowed in certain faiths
 		limit = {
