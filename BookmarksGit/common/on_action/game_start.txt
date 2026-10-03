@@ -14,16 +14,8 @@ on_game_start = {
 
 	effect = {
 		set_global_variable = { name = is_game_start_date days = 1 }
-		# Chinese Song-fashion
-		if = {
-			limit = {
-				current_date >= 960.1.1
-			}
-			set_global_variable = {
-				name = chinese_fashion_change
-				value = 1
-			}
-		}
+		# Set up bookmark-aware Permitted/Prohibited tenet statuses for faiths whose main rite intends spiritual or temporal head of faith.
+		setup_rite_tenet_permissions_effect = yes
 		#Epidemics 10 years grace
 		set_global_variable = {
 			name = start_epidemic_grace
@@ -48,7 +40,10 @@ on_game_start = {
 			religion:judaism_religion = {
 				every_faith = {
 					limit = {
-						has_doctrine = temple_authority_rabbinic_doctrine
+						main_rite = {
+							rite_has_doctrine = temple_authority_rabbinic_doctrine
+							rite_has_doctrine = doctrine_polygamy
+						}
 					}
 					remove_doctrine = doctrine_polygamy
 					add_doctrine = doctrine_monogamy
@@ -238,13 +233,24 @@ on_game_start = {
 			hre_margraves_effect = yes
 		}
 
+		# Empire Faith Gate: seed global list of empire holders for perf (yearly pulse uses this list).
+		if = {
+			limit = { empire_faith_gate_enabled_trigger = yes }
+			every_independent_ruler = {
+				limit = { highest_held_title_tier >= tier_empire }
+				add_to_global_variable_list = {
+					name = efg_empire_holders
+					target = this
+				}
+			}
+		}
 		### ARMENIAN SETUP ###
 		title:e_byzantium.holder ?= {
 			every_vassal = {
 				limit = {
 					government_has_flag = government_is_feudal
 					vassal_contract_has_modifiable_obligations = yes
-					faith = faith:armenian_apostolic
+					rite = rite:armenian_rite
 				}
 				vassal_contract_set_obligation_level = { type = religious_rights level = 1 }
 				set_subject_contract_modification_blocked = no
@@ -255,7 +261,7 @@ on_game_start = {
 				limit = {
 					government_has_flag = government_is_feudal
 					vassal_contract_has_modifiable_obligations = yes
-					faith = faith:armenian_apostolic
+					rite = rite:armenian_rite
 				}
 				vassal_contract_set_obligation_level = { type = feudal_government_taxes level = 3 }
 				vassal_contract_set_obligation_level = { type = feudal_government_levies level = 2 }
@@ -944,7 +950,7 @@ on_game_start = {
 						if = {
 							limit = {
 								NOT = {
-									has_government = tribal_government
+									government_has_flag = tribal_government
 								}
 							}
 							change_government = tribal_government
@@ -1009,11 +1015,11 @@ on_game_start = {
 				has_cp6_dlc_trigger = yes
 			}
 			#remove
-	        title:b_vaticano.title_province = { remove_building = holy_site_cathedral_01 } #2577
+	        #title:b_vaticano.title_province = { remove_building = holy_site_cathedral_01 } #2577
 			title:b_indraprastha.title_province = { remove_building = iron_pillar_of_delhi_01 } #1365
 
 			#always exists
-	        title:b_vaticano.title_province = { add_special_building = holy_site_st_peters_basilica_01 } #2577
+	        #title:b_vaticano.title_province = { add_special_building = holy_site_st_peters_basilica_01 } #2577
 	        title:b_kathmandu.title_province = { add_special_building = boudhanath_01 } #9116
 	        title:b_indraprastha.title_province = { add_special_building = qutb_minar_01 } #1365
 	        title:b_sanchi.title_province = { add_special_building = sanchi_stupa_01 } #3323
@@ -1110,181 +1116,17 @@ on_game_start = {
 
 		### RELIGIOUS THINGS ###
 		# Set up Holy Site Buildings to be buildable in Holy Sites
-		religion:islam_religion = {
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_mosque_01
-					}
-				}
-			}
-		}
-		religion:christianity_religion = {
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_cathedral_01
-					}
-				}
-			}
-		}
-		religion:zoroastrianism_religion = {
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_fire_temple_01
-					}
-				}
-			}
-		}
-		religion:buddhism_religion = {
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_buddhist_grand_temple_01
-					}
-				}
-			}
-		}
-		religion:shintoism_religion = {
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_japanese_temple_01
-					}
-				}
-			}
-		}
-		religion:taoism_religion = {
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_chinese_temple_01
-					}
-				}
-			}
-		}
-		religion:confucianism_religion = {
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_chinese_temple_01
-					}
-				}
-			}
-		}
-		every_religion_global = {
-			limit = {
-				OR = {
-					this = religion:hinduism_religion
-
-					this = religion:jainism_religion
-					this = religion:tani_religion
-					this = religion:bon_religion
-				}
-			}
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_indian_grand_temple_01
-					}
-				}
-			}
-		}
-		every_religion_global = {
-			limit = {
-				OR = {
-					this = religion:satsana_phi_religion
-					this = religion:dayawism_religion
-					this = religion:hantuism_religion
-					this = religion:satsana_phi_religion
-					this = religion:kaharingan_religion
-					this = religion:tolotang_religion
-					this = religion:aluk_religion
-					this = religion:dab_qhuas_religion
-					this = religion:biliku_religion
-				}
-			}
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_se_asia_pagan_temple_01
-					}
-				}
-			}
-		}
-		every_religion_global = {
-			limit = {
-				is_in_family = rf_pagan
-			}
-			every_faith = {
-				every_holy_site = {
-					limit = {
-						title_province = {
-							has_special_building_slot = no
-						}
-					}
-					title_province = {
-						add_special_building_slot = holy_site_pagan_grand_temple_01
-					}
-				}
-			}
-		}
 		every_religion_global = {
 			every_faith = {
-				every_holy_site = {
+				save_scope_as = holy_site_faith
+				every_holy_site_barony = {
 					limit = {
 						title_province = {
 							has_special_building_slot = no
 						}
 					}
 					title_province = {
-						add_special_building_slot = holy_site_other_grand_temple_01
+						add_holy_site_fallback_special_building_slot_effect = { FAITH = scope:holy_site_faith }
 					}
 				}
 			}
@@ -1294,7 +1136,7 @@ on_game_start = {
 		title:b_makka.county.holder = {
 			if = {
 				limit = {
-					faith = { has_doctrine_parameter = mandatory_hajj }
+					rite = { rite_has_parameter = mandatory_hajj }
 					NOT = { has_trait = hajjaj }
 				}
 				# Have some Hajjaj
@@ -1304,7 +1146,7 @@ on_game_start = {
 
 		# Pagans that start pre-reformed
 		## Bon has already been reformed into new bon.
-		faith:old_bon = {
+		faith:bon_faith = {
 			set_variable = { name = has_been_reformed }
 		}
 
@@ -1319,77 +1161,58 @@ on_game_start = {
 		faith:kabarism = {
 			set_variable = { name = block_reformation_var }
 		}
+		
+		## Needs done
+		
+		# Heresy system (PAM): block conversion to historical Christian heresies until they're declared in-game.
+		# Grouped by which available start date (867 / 1066 / 1178) blocks each heresy.
 
+		# Declared after every current start date (Lateran III 1184, Eternal Evangel 1255, Earthquake Council 1382, Hus 1419):
+		faith:waldensian = {
+			set_variable = {
+				name = block_conversion_till_decision_taken
+			}
+		}
+		faith:lollard = {
+			set_variable = {
+				name = block_conversion_till_decision_taken
+			}
+		}
+		faith:hussite = {
+			set_variable = {
+				name = block_conversion_till_decision_taken
+			}
+		}
+		faith:joachimite = {
+			set_variable = {
+				name = block_conversion_till_decision_taken
+			}
+		}
+
+		# Cathar: declared at the Council of Tours (1163) - block at 867 and 1066, leave 1178 convertible.
+		if = {
+			limit = { game_start_date <= 1066.9.15 }
+			faith:cathar = {
+				set_variable = {
+					name = block_conversion_till_decision_taken
+				}
+			}
+		}
+		# Bogomilist: condemned by the Synod of Constantinople (~1029) - block at 867 only.
+		
+		if = {
+			limit = { game_start_date <= 867.1.1 }
+			faith:bogomilist = {
+				set_variable = {
+					name = block_conversion_till_decision_taken
+				}
+			}
+		}
+		
+		####
+		
 		### GAME RULE: EXTRA ADMINS
 		apply_historic_administrative_game_rule_effect = yes
-
-		#I do this in my own file
-		#### 1178 CRUSADE SETUP ###
-		#if = {
-		#	limit = {
-		#		game_start_date >= 1178.10.1
-		#	}
-		#	religion:islam_religion = {
-		#		set_variable = {
-		#			name = variable_ghw_unlocked
-		#			value = yes
-		#		}
-		#	}
-		#	religion:christianity_religion = {
-		#		set_variable = {
-		#			name = variable_ghw_unlocked
-		#			value = yes
-		#		}
-		#	}
-		#	set_global_variable = {
-		#		name = had_first_catholic_crusade
-		#		value = yes
-
-		#	}
-		#}
-		#My Holy Order setup is better
-		#if = {
-		#	limit = {
-		#		game_start_date >= 1178.10.1
-		#	}
-		#	character:st_amand_1 = {
-		#		save_scope_as = leader
-		#	}
-		#	character:223523 = {
-		#		save_scope_as = founder
-		#	}
-		#	title:b_saida = {
-		#		save_scope_as = barony
-		#	}
-		#	create_holy_order_neutral_effect = {
-		#		LEADER = scope:leader
-		#		CAPITAL = scope:barony
-		#		NEW_HO_SCOPE = new_holy_order
-		#		FOUNDER = scope:founder
-
-		#	}
-		#}
-		#if = {
-		#	limit = {
-		#		game_start_date >= 1178.10.1
-		#	}
-		#	character:231000 = {
-		#		save_scope_as = leader
-		#	}
-		#	character:223523 = {
-		#		save_scope_as = founder
-		#	}
-		#	title:b_hebron = {
-		#		save_scope_as = barony
-		#	}
-		#	create_holy_order_neutral_effect = {
-		#		LEADER = scope:leader
-		#		CAPITAL = scope:barony
-		#		NEW_HO_SCOPE = new_holy_order
-		#		FOUNDER = scope:founder
-
-		#	}
-		#}
 
 		### UNIVERSITIES ###
 
@@ -1671,9 +1494,10 @@ on_game_start = {
 			limit = { current_date = 867.1.1 }
 
 			# Iberian Struggle
-			if = { # If we're in 867, Aragonese should be removed from the Struggle, since they don't quite exist yet.
-				limit = { exists = struggle:iberian_struggle }
-				struggle:iberian_struggle = { set_culture_as_uninvolved = culture:aragonese }
+			struggle:iberian_struggle ?= {
+				set_culture_as_uninvolved = culture:aragonese
+				set_faith_as_involved = rite:mozarabic_church.faith
+				set_faith_as_uninvolved = faith:catholic
 			}
 
 			# Persian Struggle
@@ -3016,11 +2840,13 @@ on_game_start = {
 			}
 			every_religion_global = {
 				every_faith = {
-					switch = {
-						trigger = has_doctrine
-						doctrine_no_anointment = { remove_doctrine = doctrine_no_anointment }
-						doctrine_anointment_permitted = { remove_doctrine = doctrine_anointment_permitted }
-						doctrine_imperial_anointment = { remove_doctrine = doctrine_imperial_anointment }
+					every_faith_rite = {
+						switch = {
+							trigger = rite_has_doctrine
+							doctrine_no_anointment = { remove_rite_doctrine = doctrine_no_anointment }
+							doctrine_anointment_permitted = { remove_rite_doctrine = doctrine_anointment_permitted }
+							doctrine_imperial_anointment = { remove_rite_doctrine = doctrine_imperial_anointment }
+						}
 					}
 				}
 			}

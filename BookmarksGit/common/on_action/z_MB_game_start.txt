@@ -32,7 +32,6 @@ on_game_start = {
 	events = {
 		shogunate_alliance.0001						# Setup Alliances on game start for marriages as these are otherwise not set in the base game
 		shogunate_startup.0001						# Setup Living Characters
-		#CEIintro.0001								# CE innovation setup for new cultures in this mod
 	}
 }
 
@@ -116,6 +115,16 @@ MB_on_game_start = {
 					has_game_rule = crusades_not_allowed_after_1300_start
 				}
 			}
+			
+			set_global_variable = {
+				name = had_first_catholic_crusade
+				value = yes
+			}
+			set_global_variable = {
+				name = num_catholic_crusades
+				value = 1
+			}
+			
 			religion:christianity_religion = {
 				every_faith = {
 					religion = {
@@ -136,9 +145,12 @@ MB_on_game_start = {
 					}
 				}
 			}
+
+		}
+		else = {
 			set_global_variable = {
-				name = had_first_catholic_crusade
-				value = yes
+				name = num_catholic_crusades
+				value = 0
 			}
 		}
 
@@ -1152,7 +1164,7 @@ MB_culture_setup = {
 		#Doctrine changes for Coptic
 		faith:coptic = {
 			if = {
-				limit = { has_doctrine = doctrine_consanguinity_aunt_nephew_and_uncle_niece }
+				limit = { rite_has_doctrine = doctrine_consanguinity_aunt_nephew_and_uncle_niece }
 				remove_doctrine = doctrine_consanguinity_aunt_nephew_and_uncle_niece
 				add_doctrine = doctrine_consanguinity_restricted
 			}
@@ -3517,54 +3529,13 @@ MB_religion_setup = {
 			if = {
 				limit = {
 					AND = {
-						faith = faith:armenian_apostolic
+						rite = rite:armenian_rite
 						capital_province = { geographical_region = caucasian_albania_region }
 					}
 				}
-				set_character_faith_with_conversion = faith:albanian_apostolic
+				set_character_faith_with_conversion = rite:albanian_apostolic
 			}
 		}
-
-		##Ambrosian Catholics, rulers only
-		#every_ruler = {
-		#	if = {
-		#		limit = {
-		#			AND = {
-		#				faith = faith:catholic
-		#				capital_province.faith = faith:ambrosian
-		#				highest_held_title_tier < 4 #Will prevent Italy from becoming Ambrosian outright
-		#			}
-		#		}
-		#		set_character_faith_with_conversion = faith:ambrosian
-		#	}
-		#}
-		#
-		##Ethiopian Orthodox
-		#every_ruler = {
-		#	if = {
-		#		limit = {
-		#			AND = {
-		#				faith = faith:coptic
-		#				capital_province.faith = faith:ethiopian_orthodox
-		#			}
-		#		}
-		#		set_character_faith_with_conversion = faith:ethiopian_orthodox
-		#	}
-		#}
-		#
-		#
-		#Changes to specific faiths
-
-		#faith:bulgarian_orthodox = {
-		#	if = {
-		#		limit = { game_start_date >= 867.1.1 }
-		#		#remove_doctrine = orthodox_autocephaly_autocephalous
-		#		#add_doctrine = unavailable_doctrine
-		#		remove_doctrine = tenet_adaptive
-		#		add_doctrine = tenet_communion
-		#		add_doctrine = tenet_monasticism
-		#	}
-		#}
 
 		#Convert all the Slavic counties to separate faiths
 		#To basically handle the one area where there'd be meaningful compatibility issues with 'Children of Perun'
@@ -5304,12 +5275,12 @@ MB_add_syncretic_doctrines = {
 				if = {
 					limit = {
 						NOR = {
-							has_doctrine = tenet_eastern_syncretism
-							has_doctrine = tenet_unreformed_syncretism
-							has_doctrine = tenet_christian_syncretism
-							has_doctrine = tenet_islamic_syncretism
-							has_doctrine = tenet_jewish_syncretism
-							has_doctrine = tenet_no_syncretism
+							rite_has_doctrine = tenet_eastern_syncretism
+							rite_has_doctrine = tenet_unreformed_syncretism
+							rite_has_doctrine = tenet_christian_syncretism
+							rite_has_doctrine = tenet_islamic_syncretism
+							rite_has_doctrine = tenet_jewish_syncretism
+							rite_has_doctrine = tenet_no_syncretism
 						}
 					}
 					add_doctrine = tenet_no_syncretism
@@ -5319,14 +5290,14 @@ MB_add_syncretic_doctrines = {
 				#else_if = {
 				#	limit = {
 				#		OR = {
-				#			has_doctrine = tenet_eastern_syncretism
-				#			has_doctrine = tenet_unreformed_syncretism
-				#			has_doctrine = tenet_christian_syncretism
-				#			has_doctrine = tenet_islamic_syncretism
-				#			has_doctrine = tenet_jewish_syncretism
+				#			rite_has_doctrine = tenet_eastern_syncretism
+				#			rite_has_doctrine = tenet_unreformed_syncretism
+				#			rite_has_doctrine = tenet_christian_syncretism
+				#			rite_has_doctrine = tenet_islamic_syncretism
+				#			rite_has_doctrine = tenet_jewish_syncretism
 				#		}
-				#		has_doctrine = doctrine_pluralism_pluralistic
-				#		NOT = { has_doctrine = tenet_adaptive }
+				#		rite_has_doctrine = doctrine_pluralism_pluralistic
+				#		NOT = { rite_has_doctrine = tenet_adaptive }
 				#
 				#		# I can't find if there's any script that's along the lines of 'ignore faiths that have 3 tenets already' so I'll just add the ones that give errors here to make the errors go away
 				#
@@ -19058,7 +19029,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19084,7 +19055,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19110,7 +19081,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19136,7 +19107,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19162,7 +19133,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19188,7 +19159,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19214,7 +19185,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19240,7 +19211,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19265,7 +19236,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19291,7 +19262,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19316,7 +19287,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19359,7 +19330,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -19385,7 +19356,7 @@ MB_set_noble_families = {
 					every_vassal_or_below = {
 						limit = {
 							highest_held_title_tier >= tier_county
-							has_government = celestial_government
+							government_has_flag = government_is_celestial
 							has_tgp_dlc_trigger = yes
 							is_house_head = yes
 						}
@@ -24983,7 +24954,7 @@ MB_set_government = { # Sets governments by script. Much cleaner than doing hist
 								has_government = feudal_government
 								has_government = clan_government
 								has_government = administrative_government
-								has_government = celestial_government
+								government_has_flag = government_is_celestial
 								has_government = steppe_admin_government
 								has_government = republic_government
 							}
@@ -25514,7 +25485,7 @@ MB_set_government = { # Sets governments by script. Much cleaner than doing hist
 								has_government = feudal_government
 								has_government = clan_government
 								has_government = administrative_government
-								has_government = celestial_government
+								government_has_flag = government_is_celestial
 							}
 						}
 						change_government = steppe_admin_government
@@ -25550,7 +25521,7 @@ MB_set_government = { # Sets governments by script. Much cleaner than doing hist
 								has_government = feudal_government
 								has_government = clan_government
 								has_government = administrative_government
-								has_government = celestial_government
+								government_has_flag = government_is_celestial
 							}
 						}
 						change_government = steppe_admin_government
