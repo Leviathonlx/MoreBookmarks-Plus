@@ -1,0 +1,214 @@
+﻿##################################################
+###
+### The Song of El Cid
+### by Veronica Pazos
+###
+##################################################
+
+story_el_cid = {
+	visible = yes
+
+	icon = {
+		reference = "gfx/interface/icons/artifact/artefact_icons_unique_artifact_excalibur.dds"
+	}
+
+	background = {
+		reference = "gfx/interface/illustrations/event_scenes/fp2_courtyard.dds"
+	}
+
+	visualization = {
+		character = {
+			variable_name = "cid_liege"
+			label = "CID_LIEGE"
+		}
+		custom_string_key = "EL_CID_CUSTOM_STRING_KEY"
+		traits = {
+			campeador
+		}
+		tug_of_war_counter = {
+			label = "cid_loyalty_counter_label"
+			variable_name = "cid_loyalty_counter"
+			tooltip = EL_LOYALTY_COUNTER_TOOLTIP
+			min_label = CID_LOYALTY_MIN_LABEL
+			max_label = CID_LOYALTY_MAX_LABEL
+			min = -5
+			max = 5
+		}
+	}
+	
+	on_setup = {
+		story_owner = {
+			top_liege = { save_scope_as = liege }
+		}
+	}
+	
+	on_end = {
+		debug_log = "El Cid's story ended on:"
+		debug_log_date = yes
+		#We clean up all variables
+		remove_variable = cid_liege
+		remove_variable = cid_enemy
+		remove_variable = cid_loyalty_counter
+		story_owner = {
+			remove_variable = ongoing_cid_story_cycle
+			remove_variable = cid_title_to_give
+			#And you can never have this again
+			set_variable = had_cid_story_cycle
+		}
+	}
+
+	on_owner_death = {
+		end_story = yes
+	}
+
+	# Liege dies 
+	effect_group = {
+		months = 1
+
+		first_valid = {
+			triggered_effect = { #If your liege dies
+				trigger = {
+					story_owner = {
+						OR = {
+							any_owned_story = {
+								has_variable = cid_liege
+								var:cid_liege = {
+									is_alive = no
+								}
+							}
+							NOT = { 
+								any_owned_story = {
+									has_variable = cid_liege
+								}
+							}
+						}
+					}
+				}
+				effect = {
+					save_scope_as = story
+					story_owner = {
+						trigger_event = cid.5000
+					}
+				}
+			}
+		}
+	}
+	
+	effect_group = {
+		months = { 6 12 }
+		chance = 100
+
+		random_valid = { 
+			triggered_effect = {
+				trigger = { # Landless events
+					story_owner = {
+						has_government = landless_adventurer_government
+					}
+				}
+				effect = {
+					save_scope_as = story
+					var:cid_liege = { save_scope_as = liege }
+					var:cid_enemy = { save_scope_as = enemy }
+					story_owner = {
+						trigger_event = { on_action = el_cid_landless_on_action }
+					}
+				}
+			}
+			triggered_effect = {
+				trigger = { # Landless OR Landed events
+					always = yes
+				}
+				effect = {
+					save_scope_as = story
+					var:cid_liege = { save_scope_as = liege }
+					var:cid_enemy = { save_scope_as = enemy }
+					story_owner = {
+						trigger_event = { on_action = el_cid_landless_or_landed_on_action }
+					}
+				}
+			}
+		}
+	}
+	
+	# Endings
+	effect_group = {
+		months = 3
+
+		first_valid = { #Your liege takes you back
+			triggered_effect = {
+				trigger = {
+					var:cid_loyalty_counter >= 5
+					story_owner = {
+						has_government = landless_adventurer_government
+					}
+				}
+				effect = {
+					save_scope_as = story
+					story_owner = {
+						trigger_event = cid.2020
+					}
+				}
+			}
+			triggered_effect = { #Your liege hates you
+				trigger = {
+					var:cid_loyalty_counter <= -5
+					story_owner = {
+						has_government = landless_adventurer_government
+					}
+				}
+				effect = {
+					save_scope_as = story
+					story_owner = {
+						trigger_event = cid.4010
+					}
+				}
+			}
+			triggered_effect = { #Neutral ending
+				trigger = {
+					var:cid_loyalty_counter > -5
+					var:cid_loyalty_counter < 5
+					story_owner = {
+						has_variable = had_cid_1000
+						has_variable = had_cid_1030
+						has_variable = had_cid_1040
+						trigger_if = {
+							limit = {
+								any_courtier = {
+									is_adult = yes
+									NOR = {
+										is_close_family_of = prev
+										is_spouse_of = prev
+									}
+									count >= 2
+								}
+							}
+							has_variable = had_cid_1010
+						}
+						trigger_if = {
+							limit = {
+								any_courtier = {
+									is_spouse_of = prev
+								}
+							}
+							has_variable = had_cid_1020
+						}
+						trigger_if = {
+							limit = {
+								any_child = {
+									is_betrothed = no
+								}
+							}
+							has_variable = had_cid_2010
+						}
+					}
+				}
+				effect = {
+					save_scope_as = story
+					story_owner = {
+						trigger_event = cid.4000
+					}
+				}
+			}
+		}
+	}
+}

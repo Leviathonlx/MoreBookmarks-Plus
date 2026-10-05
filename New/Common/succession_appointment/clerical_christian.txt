@@ -1,0 +1,786 @@
+﻿clerical_christian = {
+	allow_children = no
+	use_investment_cap = no
+	allowed_candidate_tier = any
+	keep_top_tier_titles_together = yes
+	allow_out_of_realm_investment = landless
+	cooldown = yes
+
+	# An inherited clerical region leaves the realm if no counties overlap, unless its holder heads the faith
+
+	# No family categories, because a clerical office is not an inheritance
+	default_candidates = { holder_councilor holder_court_position direct_subject clerical_region_clergy clerical_region_clergy_councilor }
+
+	candidate_score = {
+		value = {
+			# A see wants a scholar first, but not so much more than a diplomat that nothing else can compete.
+			add = {
+				value = learning
+				desc = learning_skill_bonus_desc
+			}
+
+			if = { # Diplomacy skill
+				limit = {
+					diplomacy > 1
+				}
+				add = {
+					value = diplomacy
+					multiply = 0.8
+					round = yes
+					desc = diplomacy_skill_bonus_desc
+				}
+			}
+
+			if = { # Stewardship skill
+				limit = {
+					stewardship > 1
+				}
+				add = {
+					value = stewardship
+					multiply = 0.8
+					round = yes
+					desc = stewardship_skill_bonus_desc
+				}
+			}
+
+			if = { # Intrigue skill
+				limit = {
+					intrigue > 1
+				}
+				add = {
+					value = intrigue
+					multiply = 0.8
+					round = yes
+					desc = intrigue_skill_bonus_desc
+				}
+			}
+
+			if = { # Martial skill, on the same terms as the martial education below
+				limit = {
+					martial > 1
+					pam_rite_values_martial_clergy_trigger = yes
+				}
+				add = {
+					value = martial
+					multiply = 0.8
+					round = yes
+					desc = martial_skill_bonus_desc
+				}
+			}
+
+			if = { # Learning education
+				limit = {
+					has_trait = education_learning
+				}
+				add = {
+					value = clerical_appointment_education_rank_value
+					multiply = 6
+					desc = learning_education_desc
+				}
+			}
+
+			if = { # Diplomacy education
+				limit = {
+					has_trait = education_diplomacy
+				}
+				add = {
+					value = clerical_appointment_education_rank_value
+					multiply = 5
+					desc = diplomacy_education_desc
+				}
+			}
+
+			if = { # Stewardship education
+				limit = {
+					has_trait = education_stewardship
+				}
+				add = {
+					value = clerical_appointment_education_rank_value
+					multiply = 5
+					desc = stewardship_education_desc
+				}
+			}
+
+			if = { # Intrigue education
+				limit = {
+					has_trait = education_intrigue
+				}
+				add = {
+					value = clerical_appointment_education_rank_value
+					multiply = 5
+					desc = intrigue_education_desc
+				}
+			}
+
+			if = { # Martial education, worth nothing unless the rite has room for a fighting prelate
+				limit = {
+					has_trait = education_martial
+					pam_rite_values_martial_clergy_trigger = yes
+				}
+				add = {
+					value = clerical_appointment_education_rank_value
+					multiply = 5
+					desc = martial_education_desc
+				}
+			}
+
+			if = { # Ecclesiastical government ruler
+				limit = {
+					has_government = ecclesiastical_government
+					is_landed = yes
+				}
+				add = { 
+					value = 25
+					desc = ecclesiastical_government_holder_desc
+				}
+			}
+			else_if = { # Any other landed prelate - a see of one's own still outranks a cloistered monk
+				limit = {
+					government_has_flag = government_is_theocracy
+					is_landed = yes
+				}
+				add = {
+					value = 25
+					desc = landed_clergy_holder_desc
+				}
+			}
+
+			if = { # A greater see carries weight of its own, beyond simply being landed
+				limit = {
+					government_has_flag = government_is_theocracy
+					is_landed = yes
+					highest_held_title_tier >= tier_duchy
+				}
+				add = {
+					value = highest_held_title_tier
+					subtract = 2
+					multiply = 10
+					desc = clerical_title_tier_desc
+				}
+			}
+
+			# The pool still admits landed secular rulers
+			if = {
+				limit = {
+					is_ruler = yes
+					NOT = { government_has_flag = government_is_theocracy }
+				}
+				subtract = {
+					value = 1000
+					desc = secular_ruler_candidate_desc
+				}
+			}
+
+			if = { # Inside the faith's clergy organization
+				limit = {
+					is_clergy = yes
+				}
+				add = {
+					value = 25
+					desc = clergy_organization_member_desc
+				}
+			}
+			else_if = { # Outside it. Lay clergy rites are exempt, since their faithful have no organization to join
+				limit = {
+					NOT = {
+						rite = { rite_has_parameter = lay_clergy }
+					}
+				}
+				subtract = {
+					value = 15
+					desc = not_clergy_organization_member_desc
+				}
+			}
+
+			if = { # Number of virtuous traits
+				limit = {
+					num_virtuous_traits > 0
+				}
+				add = {
+					value = 10
+					multiply = num_virtuous_traits
+					desc = virtuous_traits_desc
+				}
+			}
+
+			if = { # Number of sinful traits
+				limit = {
+					num_sinful_traits > 0
+				}
+				add = {
+					value = -10
+					multiply = num_sinful_traits
+					desc = sinful_traits_desc
+				}
+			}
+
+			if = { # Piety level is Sinner
+				limit = {
+					OR = {
+						piety_level = 0
+					}
+				}
+				subtract = {
+					value = 30
+					desc = piety_level_holder_desc
+				}
+			}
+
+			if = { # Piety level is Faithful or higher
+				limit = {
+					OR = {
+						piety_level > 1
+					}
+				}
+				add = {
+					value = piety_level
+					multiply = 10
+					desc = piety_level_holder_desc
+				}
+			}
+
+			if = { # Got weak hook on the current holder
+				limit = {
+					has_weak_hook = scope:title.holder
+				}
+				add = {
+					value = 20
+					desc = weak_hook_holder_desc
+				}
+			}
+
+			if = { # Got strong hook on the current holder
+				limit = {
+					has_strong_hook = scope:title.holder
+				}
+				add = {
+					value = 40
+					desc = strong_hook_holder_desc
+				}
+			}
+
+			if = { # Got weak claim on the current title
+				limit = {
+					has_weak_claim_on = scope:title
+				}
+				add = {
+					value = 20
+					desc = title_weak_claim_desc
+				}
+			}
+
+			if = { # Got strong claim on the current title
+				limit = {
+					has_strong_claim_on = scope:title
+				}
+				add = {
+					value = 40
+					desc = strong_hook_holder_desc
+				}
+			}
+
+			if = { # Has the Theologian trait
+				limit = {
+					has_trait = theologian
+				}
+				add = {
+					value = 15
+					desc = theologian_bonus_desc
+				}
+			}
+
+			if = { # Has the Pilgrim trait
+				limit = {
+					has_trait = pilgrim
+				}
+				add = {
+					value = 10
+					desc = pilgrim_bonus_desc
+				}
+			}
+
+			if = { # Has the Erudite trait
+				limit = {
+					has_trait = erudite
+				}
+				add = {
+					value = 15
+					desc = erudite_bonus_desc
+				}
+			}
+
+			if = { # Has the Devoted trait
+				limit = {
+					has_trait = devoted
+				}
+				add = {
+					value = 20
+					desc = devoted_bonus_desc
+				}
+			}
+
+			if = { # Has the Cleric trait
+				limit = {
+					has_trait = cleric
+				}
+				add = {
+					value = 15
+					desc = cleric_bonus_desc
+				}
+			}
+
+			if = { # Has inbred
+				limit = {
+					has_trait = inbred
+				}
+				subtract = {
+					value = 50
+					desc = inbred_penalty_desc
+				}
+			}
+
+			if = { # Has blind
+				limit = {
+					has_trait = blind
+				}
+				subtract = {
+					value = 50
+					desc = blind_penalty_desc
+				}
+			}
+
+			if = { # Has the Scholar trait (level 0)
+				limit = {
+					has_trait = lifestyle_scholar
+					has_trait_xp = { trait = lifestyle_scholar value < 20 }
+				}
+				add = {
+					value = 10
+					desc = scholar_0_bonus_desc
+				}
+			}
+			else_if = { # Has the Scholar trait (level 1)
+				limit = {
+					has_trait = lifestyle_scholar
+					has_trait_xp = { trait = lifestyle_scholar value < 40  }
+				}
+				add = {
+					value = 20
+					desc = scholar_1_bonus_desc
+				}
+			}
+			else_if = { # Has the Scholar trait (level 2)
+				limit = {
+					has_trait = lifestyle_scholar
+					has_trait_xp = { trait = lifestyle_scholar value < 60  }
+				}
+				add = {
+					value = 30
+					desc = scholar_2_bonus_desc
+				}
+			}
+			else_if = { # Has the Scholar trait (level 3)
+				limit = {
+					has_trait = lifestyle_scholar
+					has_trait_xp = { trait = lifestyle_scholar value < 80  }
+				}
+				add = {
+					value = 40
+					desc = scholar_3_bonus_desc
+				}
+			}
+			else_if = { # Has the Scholar trait (level 4)
+				limit = {
+					has_trait = lifestyle_scholar
+					has_trait_xp = { trait = lifestyle_scholar value < 100  }
+				}
+				add = {
+					value = 50
+					desc = scholar_4_bonus_desc
+				}
+			}
+			else_if = { # Has the Scholar trait (level 5)
+				limit = {
+					has_trait = lifestyle_scholar
+					has_trait_xp = { trait = lifestyle_scholar value = 100  }
+				}
+				add = {
+					value = 75
+					desc = scholar_5_bonus_desc
+				}
+			}
+
+			if = { # Has the infirm trait (level 0)
+				limit = {
+					has_trait = infirm
+					has_trait_xp = { trait = infirm value < 25 }
+				}
+				subtract = {
+					value = 25
+					desc = infirm_0_penalty_desc
+				}
+			}
+			else_if = { # Has the infirm trait (level 1)
+				limit = {
+					has_trait = infirm
+					has_trait_xp = { trait = infirm value < 50  }
+				}
+				subtract = {
+					value = 50
+					desc = infirm_1_penalty_desc
+				}
+			}
+			else_if = { # Has the infirm trait (level 2)
+				limit = {
+					has_trait = infirm
+					has_trait_xp = { trait = infirm value < 75  }
+				}
+				subtract = {
+					value = 75
+					desc = infirm_2_penalty_desc
+				}
+			}
+			else_if = { # Has the infirm trait (level 3)
+				limit = {
+					has_trait = infirm
+					has_trait_xp = { trait = infirm value < 100  }
+				}
+				subtract = {
+					value = 100
+					desc = infirm_3_penalty_desc
+				}
+			}
+			else_if = { # Has the infirm trait (level 4)
+				limit = {
+					has_trait = infirm
+					has_trait_xp = { trait = infirm value = 100  }
+				}
+				subtract = {
+					value = 150
+					desc = infirm_4_penalty_desc
+				}
+			}
+
+			if = { # Has the Incapable trait
+				limit = {
+					has_trait = incapable
+				}
+				subtract = {
+					value = 5000
+					desc = incapable_penalty_desc
+				}
+			}
+
+			# CRIMINAL TRAITS
+			if = {
+				limit = {
+					has_trait = deviant
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:deviant RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "deviant_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = incestuous
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:incestuous RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "incestuous_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = sodomite
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:sodomite RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "sodomite_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = cannibal
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:cannibal RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "cannibal_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = kinslayer_1
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:kinslayer_1 RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "kinslayer_1_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = kinslayer_2
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:kinslayer_2 RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "kinslayer_2_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = kinslayer_3
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:kinslayer_3 RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "kinslayer_3_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = witch
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:witch RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "witch_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = adulterer
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:adulterer RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "adulterer_and_criminal_desc"
+				}
+			}
+			if = {
+				limit = {
+					has_trait = fornicator
+					trait_is_criminal_in_rite_trigger = { TRAIT = trait:fornicator RITE = rite GENDER_CHARACTER = root }
+				}
+				subtract = {
+					value = appointment_score_crime_penalty
+					desc = "fornicator_and_criminal_desc"
+				}
+			}
+
+			# RELATIONS
+			if = { # Is close family of holder - an appointment should not be a family affair by default, that's what interactions are for
+				limit = {
+					scope:title.holder ?= { is_close_family_of = root }
+				}
+				subtract = {
+					value = 40
+					desc = close_family_holder_desc
+				}
+			}
+			if = { # Is a friend
+				limit = {
+					scope:title.holder ?= { has_relation_friend = root }
+				}
+				add = {
+					value = 15
+					desc = governor_friend_desc
+				}
+			}
+			else_if = { # Is best friend
+				limit = {
+					scope:title.holder ?= { has_relation_best_friend = root }
+				}
+				add = {
+					value = 30
+					desc = governor_best_friend_desc
+				}
+			}
+
+			if = { # The holder's own prelates come first - a see should be filled from within
+				limit = {
+					exists = scope:title.holder
+					is_vassal_of = scope:title.holder
+				}
+				add = {
+					value = 25
+					desc = direct_subject_holder_desc
+				}
+			}
+			else_if = { # Failing that, someone already serving in the holder's own court
+				limit = {
+					exists = scope:title.holder
+					is_courtier_of = scope:title.holder
+				}
+				add = {
+					value = 15
+					desc = holder_courtier_desc
+				}
+			}
+
+			# COUNCIL POSITIONS
+			if = { # Councillor of the current holder
+				limit = {
+					scope:title.holder ?= {
+						any_councillor ?= { this = root }
+					}
+				}
+				add = {
+					value = 10
+					desc = councillor_position_current_holder_desc
+				}
+			}
+
+			if = { # Realm priest/court chaplain of a count
+				limit = {
+					has_council_position = councillor_court_chaplain
+					liege = { highest_held_title_tier = tier_county }
+				}
+				add = {
+					value = 10
+					desc = count_realm_priest_councillor_desc
+				}
+			}
+
+			if = { # Realm priest/court chaplain of a duke
+				limit = {
+					has_council_position = councillor_court_chaplain
+					liege = { highest_held_title_tier = tier_duchy }
+				}
+				add = {
+					value = 20
+					desc = duke_realm_priest_councillor_desc
+				}
+			}
+
+			if = { # Realm priest/court chaplain of a king
+				limit = {
+					has_council_position = councillor_court_chaplain
+					liege = { highest_held_title_tier = tier_kingdom }
+				}
+				add = {
+					value = 30
+					desc = king_realm_priest_councillor_desc
+				}
+			}
+
+			if = { # Realm priest/court chaplain of an emperor
+				limit = {
+					has_council_position = councillor_court_chaplain
+					liege = { highest_held_title_tier = tier_empire }
+				}
+				add = {
+					value = 40
+					desc = emperor_realm_priest_councillor_desc
+				}
+			}
+
+			if = { # Realm priest/court chaplain of an hegemony
+				limit = {
+					has_council_position = councillor_court_chaplain
+					liege = { highest_held_title_tier = tier_hegemony }
+				}
+				add = {
+					value = 50
+					desc = hegemon_realm_priest_councillor_desc
+				}
+			}
+
+			# COURT POSITIONS
+			if = { # Has a court position
+				limit = {
+					liege ?= {
+						any_court_position_holder ?= {
+							this = root
+						}
+					}
+				}
+				add = {
+					value = 10
+					desc = court_position_desc
+				}
+			}
+
+			if = { # Follows the same rite
+				limit = {
+					rite = scope:title.holder.rite
+				}
+				add = { 
+					value = 50
+					desc = same_rite_as_holder_desc
+				}
+			}
+
+			if = { # Follows a different rite
+				limit = {
+					rite != scope:title.holder.rite
+				}
+				add = { 
+					value = -50
+					desc = different_rite_as_holder_desc
+				}
+			}
+
+			if = { # Old and experienced
+				limit = {
+					age >= 40
+					age < 70
+				}
+				add = {
+					value = age
+					divide = 2
+					desc = old_age_desc
+				}
+			}
+
+			if = { # Too old
+				limit = {
+					age >= 70
+				}
+				add = {
+					value = age
+					divide = 4
+					multiply = -1
+					desc = too_old_age_desc
+				}
+			}
+
+			if = { # Young and inexperienced
+				limit = {
+					age < 30
+				}
+				add = {
+					value = 40
+					subtract = age
+					multiply = -1
+					desc = young_age_desc
+				}
+			}
+
+			if = { # Mitre and Crosier dynasty legacy
+				limit = {
+					dynasty ?= { has_dynasty_perk = pam_legacy_4 }
+				}
+				add = {
+					value = 25
+					desc = pam_legacy_4_candidacy_bonus_desc
+				}
+			}
+
+			if = { # Humiliated in a religious war (pam_humiliation_cb)
+				limit = {
+					has_character_modifier = pam_clerical_disgrace_modifier
+				}
+				subtract = {
+					value = 50
+					desc = pam_clerical_disgrace_candidacy_penalty_desc
+				}
+			}
+		}
+	}
+}

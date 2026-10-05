@@ -1,0 +1,208 @@
+﻿japanese_governor = {
+	allow_children = no
+
+	default_candidates = { holder_close_family landed_vassal holder_councilor holder_court_position }
+
+	candidate_score = {
+		value = {
+			# Base - Based on skills
+			add = {
+				value = martial
+				add = diplomacy
+				add = stewardship
+				add = intrigue
+				add = learning
+				multiply = 1
+				desc = sum_of_skills_desc
+			}
+
+			add = appointment_score_base
+			add = appointment_score_non_military
+			add = appointment_score_non_merit
+			add = appointment_score_governor
+
+			# PETITION
+			if = {
+				limit = {
+					exists = house.var:petition_liege_appointment_support
+					top_liege.primary_title.var:administrative_ui_special_title.holder ?= house.var:petition_liege_appointment_support
+					NOT = { scope:title = top_liege.primary_title } # Only governorships
+				}
+				multiply = {
+					value = 1.15
+					desc = ceremonial_liege_appointment_support_desc
+				}
+			}
+
+			# CEREMONIAL LIEGE
+			if = {
+				limit = {
+					tgp_is_ceremonial_liege_trigger = yes
+					NOT = { scope:title = top_liege.primary_title }
+				}
+				add = {
+					value = -1000
+					desc = ceremonial_liege_desc
+				}
+			}
+			# PERKS
+			if = {
+				limit = { has_title = title:e_japan }
+				add = {
+					value = -1000
+					desc = is_kampaku_tt
+				}
+			}
+			# Age
+			if = {
+				limit = { age < 50 }
+				add = {
+					value = 50
+					subtract = age
+					multiply = -2
+					desc = japanese_kampaku_age_desc
+				}
+			}
+			else = {
+				add = {
+					value = age
+					subtract = 50
+					multiply = 2
+					desc = japanese_kampaku_age_desc
+				}
+			}
+			# CLIMBING TOO EARLY - AT END
+			if = {
+				limit = {
+					trigger_if = {
+						limit = { is_governor = yes }
+						scope:title.tier > main_administrative_tier
+						trigger_if = {
+							limit = { scope:title.tier = tier_county }
+							always = no
+						}
+						trigger_if = {
+							limit = { scope:title.tier = tier_duchy }
+							highest_held_title_tier <= tier_barony
+						}
+						trigger_else_if = {
+							limit = { scope:title.tier = tier_kingdom }
+							highest_held_title_tier <= tier_county
+						}
+						trigger_else_if = {
+							limit = { scope:title.tier = tier_empire }
+							highest_held_title_tier <= tier_duchy
+						}
+						trigger_else = {
+							limit = { scope:title.tier = tier_hegemony }
+							highest_held_title_tier <= tier_kingdom
+						}
+					}
+					trigger_else = { scope:title.tier > scope:title.holder.main_administrative_tier }
+				}
+				multiply = {
+					value = 0.5
+					desc = should_hold_a_lower_tier_governorship_first
+				}
+			}
+			# HOUSE BLOC
+			if = {
+				limit = {
+					confederation ?= { has_cohesion_level_parameter = any_member_house_governor_appointment_score }
+				}
+				multiply = {
+					value = 1.1
+					desc = SERVICE_BLOC_COHESION_DESC
+				}
+			}
+			if = {
+				limit = {
+					exists = scope:title.holder.confederation
+					confederation ?= {
+						this = scope:title.holder.confederation
+						has_cohesion_level_parameter = any_member_house_continued_appointment_score
+					}
+				}
+				multiply = {
+					value = 1.1
+					desc = SERVICE_BLOC_COHESION_DESC
+				}
+			}
+			add = appointment_score_final_factors
+		}
+	}
+}
+
+japanese_military_governor = {
+	allow_children = no
+
+	default_candidates = { holder_close_family landed_vassal holder_councilor holder_court_position }
+
+	candidate_score = {
+		value = {
+			add = appointment_score_base
+			add = appointment_score_military
+			add = appointment_score_non_merit
+			add = appointment_score_governor
+			# Prestige
+			if = {
+				limit = { prestige_level != 1 }
+				add = {
+					value = 10
+					multiply = {
+						value = prestige_level
+						subtract = 1 # Baseline is at 1, so we want the bonus to start at 2
+					}
+					desc = PRESTIGE_LEVEL_CONCEPT
+				}
+			}
+			# PETITION
+			if = {
+				limit = {
+					exists = house.var:petition_liege_appointment_support
+					top_liege.primary_title.var:administrative_ui_special_title.holder ?= house.var:petition_liege_appointment_support
+					NOT = { scope:title = top_liege.primary_title } # Only governorships
+				}
+				multiply = {
+					value = 1.15
+					desc = ceremonial_liege_appointment_support_desc
+				}
+			}
+			# CLIMBING TOO EARLY - AT END
+			if = {
+				limit = {
+					trigger_if = {
+						limit = { is_governor = yes }
+						scope:title.tier > main_administrative_tier
+						trigger_if = {
+							limit = { scope:title.tier = tier_county }
+							always = no
+						}
+						trigger_if = {
+							limit = { scope:title.tier = tier_duchy }
+							highest_held_title_tier <= tier_barony
+						}
+						trigger_else_if = {
+							limit = { scope:title.tier = tier_kingdom }
+							highest_held_title_tier <= tier_county
+						}
+						trigger_else_if = {
+							limit = { scope:title.tier = tier_empire }
+							highest_held_title_tier <= tier_duchy
+						}
+						trigger_else = {
+							limit = { scope:title.tier = tier_hegemony }
+							highest_held_title_tier <= tier_kingdom
+						}
+					}
+					trigger_else = { scope:title.tier > scope:title.holder.main_administrative_tier }
+				}
+				multiply = {
+					value = 0.5
+					desc = should_hold_a_lower_tier_governorship_first
+				}
+			}
+			add = appointment_score_final_factors
+		}
+	}
+}

@@ -1,0 +1,388 @@
+### BARTER WINDOW
+window = {
+	name = "barter_window"
+	size = { 625 400 }
+	parentanchor = bottom|left
+	movable = no
+	layer = middle
+	datacontext = "[BarterWindow.GetBarter]"
+	datacontext = "[BarterMission.GetArmy]"
+	datacontext = "[BarterMission.GetProvince]"
+
+	background = {
+		texture = "gfx/interface/component_tiles/tile_window_background_subwindow.dds"
+		spriteType = Corneredtiled
+		spriteborder = { 18 18 }
+		margin = { -23 -17 }
+		margin_left = 20
+		margin_bottom = 20
+		texture_density = 2
+		
+		modify_texture = {
+			name = "overlay"
+			texture = "gfx/interface/component_overlay/overlay_effect.dds"
+			spriteType = Corneredstretched
+			spriteborder = { 0 0 }
+			blend_mode = overlay
+		}
+	}
+
+	state = {
+		name = _show
+		on_start = "[GetVariableSystem.Set( 'hide_bottom_left_HUD', 'true' )]"
+
+		using = Animation_FadeIn_Standard
+		using = Sound_WindowShow_Standard
+		using = Animation_FadeIn_BottomLeft
+	}
+
+	state = {
+		name = _hide
+		on_start = "[GetVariableSystem.Clear( 'hide_bottom_left_HUD' )]"
+
+		using = Animation_FadeOut_Standard
+		using = Sound_WindowHide_Standard
+		using = Animation_FadeOut_BottomLeft
+	}
+
+	vbox = {
+		name = "window_content"
+		margin_right = 35
+		margin_top = 30
+
+        ####################################
+		############## HEADER ##############
+		####################################
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			margin_right = 15
+			margin_left = 5
+			margin_top = 5
+			margin_bottom = 5
+
+			background = {
+				using = Background_Area_Dark
+				margin_left = 5
+			}
+
+			### BARTERING ARMY SELECT
+			highlight_icon = {
+				size = { 40 40 }
+				name = "blocked_icon"
+				texture = "gfx/interface/icons/map_icons/icon_barter.dds"
+			}
+
+			text_single = {
+				name = "title"
+				text = "[BarterMission.GetName]"
+				margin_left = 5
+				margin_bottom = 4
+				using = Font_Size_Big
+				font = TitleFont
+			}
+
+			expand = {}
+
+			### BARTERING ARMIES SELECT
+			button_group = {
+				onclick = "[BarterWindow.OpenArmyWindow]"
+				visible = "[Army.GetOwner.IsLocalPlayer]"
+				tooltip = "BW_TT_OPEN_ARMY_WINDOW"
+				using = tooltip_ws
+				oversound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_pointer_over"
+				clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
+
+				highlight_icon = {
+					parentanchor = vcenter
+					widgetanchor = vcenter
+					size = { 40 40 }
+					name = "blocked_icon"
+					texture = "gfx/interface/icons/map_icons/onmap_army_icon.dds"
+				}
+			}
+
+			button_group = {
+				onclick = "[BarterWindow.OpenHoldingView]"
+				tooltip = "SW_TT_SHOW_HOLDING"
+				using = tooltip_ne
+				oversound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_pointer_over"
+				clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
+
+				highlight_icon = {
+					parentanchor = vcenter
+					widgetanchor = vcenter
+					size = { 40 40 }
+					name = "blocked_icon"
+					texture = "gfx/interface/icons/map_icons/onmap_holding_icon.dds"
+				}
+			}
+
+			buttons_window_control = {
+
+				blockoverride "button_go_to"
+				{
+					onclick = "[DefaultOnCoatOfArmsRightClick(Province.GetCounty.GetTitle.GetID)]"
+					tooltip = "GOTO_PROVINCE_TT"
+					using = tooltip_ne
+					oversound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_pointer_over"
+					clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
+				}
+
+				blockoverride "button_close"
+				{
+					onclick = "[BarterWindow.Close]"
+				}
+			}
+		}
+
+		####################################
+		########### BARTER INFO ############
+		####################################
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+
+			#### DARK AREA ###
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				margin_top = 10
+
+				background = {
+					using = Background_Area
+				}
+
+				text_label_center = {
+					name = "time_left"
+					visible = "[Not(BarterMission.IsBlocked)]"
+					text = "BW_TIME_LEFT"
+					tooltip = "BW_TIME_LEFT_TT"
+				}
+
+				#### PROGRESSBAR ###
+				hbox = {
+					name = "progressbar_area"
+					margin = { 10 0 }
+					allow_outside = yes
+
+					datacontext = "[Army.GetOwner]"
+
+					widget = {
+						size = { 64 50 }
+						allow_outside = yes
+
+						coa_realm_medium = {
+							name = "barterer_realm"
+							tooltip = "BW_TT_BARTERING_REALM_TOOLTIP"
+							using = tooltip_ws
+							parentanchor = top
+						}
+					}
+
+					vbox = {
+						layoutpolicy_vertical = expanding
+
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							margin_top = 5
+							tooltip = "BARTER_PROGRESS_TOOLTIP"
+							using = tooltip_above
+
+							widget = {
+								size = { 370 45 }
+
+								progressbar = {
+									name = "progress_bar_attacker"
+									visible = "[And(Character.IsLocalPlayer, Not(BarterMission.IsBlocked))]"
+
+									parentanchor = top
+									size = { 370 35 }
+									position = { 0 8 }
+
+									progresstexture = "gfx/interface/progressbars/war_progress_blue.dds"
+									noprogresstexture = "gfx/interface/progressbars/war_progress_noprogress.dds"
+
+									value = "[BarterMission.GetProgressPercent]"
+
+									direction = horizontal
+									alwaystransparent = yes
+								}
+
+								progressbar = {
+									name = "progress_bar_defender"
+									visible = "[And(Not(Character.IsLocalPlayer), Not(BarterMission.IsBlocked))]"
+									parentanchor = top
+									size = { 370 35 }
+									position = { 0 8 }
+
+									progresstexture = "gfx/interface/progressbars/war_progress_red.dds"
+									noprogresstexture = "gfx/interface/progressbars/war_progress_noprogress.dds"
+
+									value = "[BarterMission.GetProgressPercent]"
+
+									direction = horizontal
+									alwaystransparent = yes
+								}
+
+								progressbar = {
+									name = "progress_bar_blocked"
+									visible = "[BarterMission.IsBlocked]"
+									parentanchor = top
+									size = { 370 35 }
+									position = { 0 8 }
+
+									progresstexture = "gfx/interface/progressbars/war_progress_blue.dds"
+
+									noprogresstexture = "gfx/interface/progressbars/war_progress_noprogress.dds"
+
+									value = "[BarterMission.GetProgressPercent]"
+
+									direction = horizontal
+									alwaystransparent = yes
+								}
+
+								widget = {
+									name = "power_bar_frame"
+									parentanchor = top
+									size = { 100% 100% }
+									alwaystransparent = yes
+
+									background = {
+										texture = "gfx/interface/progressbars/siege_frame.dds"
+										spriteType = Corneredstretched
+										spriteborder = { 30 40 }
+										margin = { 5 0 }
+										margin_bottom = 10
+										texture_density = 2
+									}
+								}
+							}
+						}
+
+						expand = {}
+					}
+
+					widget = {
+						size = { 58 50 }
+						allow_outside = yes
+
+						coa_realm_medium = {
+							name = "defending_realm"
+							datacontext = "[BarterMission.GetProvince.GetTitle.GetHolder]"
+							tooltip = "BW_TT_BARTEREE_REALM_TOOLTIP"
+							parentanchor = top
+							position = { -5 0}
+						}
+					}
+				}
+
+				#### BLOCKED BARTERING INFO ####
+				vbox = {
+					name = "time"
+					ignoreinvisible = yes
+					margin = { 0 3 }
+
+					expand = {
+						minimumsize = { 0 26 }
+						visible = "[Not(BarterMission.IsBlocked)]"
+					}
+
+					text_single = {
+						name = "desc"
+						text = "BARTER_BLOCKED_BY_COMBAT"
+						visible = "[BarterMission.IsBlocked]"
+					}
+				}
+			}
+		}
+
+		### BARTERING DETAILS ###
+		margin_widget = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			minimumsize = { 0 200 }
+			scissor = yes
+
+			datacontext = "[GetModifier('recently_bartered_modifier')]"
+
+			background = {
+				using = Background_Area_Dark
+				margin_left = 5
+				margin_top = 3
+			}
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					background = {
+						using = Background_Area_Dark
+					}
+
+					margin = { 15 10 }
+					
+					icon = {
+						size = { 40 40 }
+						texture = "gfx/interface/icons/map_icons/icon_barter.dds"
+					}
+					
+					text_single = {
+						margin = { 5 5 }
+
+						text = "[Province.GetBarterGoodsNeeded|V0]"
+						using = Font_Size_Medium
+						align = center|nobaseline
+
+						background = {
+							visible = "[LessThan_CFixedPoint( GetPlayer.GetCurrency('barter_goods'), Province.GetBarterGoodsNeeded )]"
+							using = Status_Bad
+							margin_bottom = -3
+						}
+					}
+
+					icon = {
+						name = "arrow_icon"
+						size = { 30 30 }
+						texture = "gfx/interface/icons/flat_icons/arrow.dds"
+					}
+
+					icon = {
+						name = "loot_icon"
+						size = { 30 30 }
+						texture = "gfx/interface/icons/icon_loot.dds"
+					}
+
+					text_single = {
+						text = "[Province.GetLoot|V0]"
+						using = Font_Size_Medium
+						align = center|nobaseline
+					}
+
+					expand = {}
+
+					icon = {
+						texture = "[StaticModifier.GetIcon]"
+						size = { 30 30 }
+
+						tooltip = "[StaticModifier.GetDescWithEffects]"
+					}
+				}
+
+				expand = {}
+
+				text_multi = {
+					text = "BARTER_WINDOW_DESC"
+					using = Font_Size_Medium
+					align = center|nobaseline
+					layoutpolicy_horizontal = expanding
+					autoresize = yes
+					max_width = 340
+				}
+
+				expand = {}
+			}
+		}
+	}
+}

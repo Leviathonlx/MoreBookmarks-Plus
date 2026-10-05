@@ -1,0 +1,61 @@
+﻿# Relies on scope:recipient from petition_head_of_faith_save_scopes_effect.
+# Trait scope: signed weight under the Head of Faith's rite (sin negative, virtue positive).
+petition_head_of_faith_trait_sin_value = {
+	scope:recipient.rite = {
+		add = "trait_base_spiritual_fulfillment(prev)"
+	}
+}
+
+# Trait scope: positive magnitude of a sinful trait (0 for virtues/neutral), for ordering gravest first.
+petition_head_of_faith_trait_sin_magnitude_value = {
+	subtract = petition_head_of_faith_trait_sin_value
+	min = 0
+}
+
+# Petitioner scope: the target's net trait fulfillment under the Head of Faith's rite
+# A negative result means they are more sinful
+petition_head_of_faith_target_net_sin_value = {
+	scope:petition_target = {
+		every_character_trait = {
+			add = petition_head_of_faith_trait_sin_value
+		}
+	}
+}
+
+# Petitioner scope: the actor's net sin under the Head of Faith's rite
+# Used for repentance, where the penitent is the actor
+petition_head_of_faith_actor_net_sin_value = {
+	scope:actor = {
+		every_character_trait = {
+			add = petition_head_of_faith_trait_sin_value
+		}
+	}
+}
+
+# Petitioner scope: success chance for the Cite Sins argument, scaled by net-sin magnitude.
+# net_sin is negative for a sinful target, so subtracting it yields the positive magnitude.
+# Grave sins (criminal traits, murderer, despoiler) guarantee success.
+# TODO_PAM (TIT-70282): ramp (0.4) and base (20) reproduce the old flat-weight curve at a typical tenet weight of 20; retune once per-trait SF magnitudes are observed in-game.
+petition_head_of_faith_cite_sins_chance_value = {
+	if = {
+		limit = { petition_head_of_faith_target_has_grave_sins_trigger = yes }
+		value = 100
+	}
+	else = {
+		subtract = petition_head_of_faith_target_net_sin_value
+		multiply = 0.4
+		add = 20
+		min = 0
+		max = 100
+	}
+}
+
+petition_head_of_faith_cite_sins_chance_inverse_value = {
+	value = 100
+	subtract = petition_head_of_faith_cite_sins_chance_value
+}
+
+# Shared by the disposition triggers and petition_head_of_faith_display_recipient_disposition_effect
+petition_head_of_faith_favorable_opinion_threshold_value = 25
+petition_head_of_faith_skeptical_opinion_threshold_value = 0
+petition_head_of_faith_hostile_opinion_threshold_value = -50

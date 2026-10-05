@@ -1,0 +1,138 @@
+﻿
+# Canonizing Saints - travel point of interest
+# A buried saint adds its own visiting reward; provinces can carry this PoI alongside poi_grand_cathedral, so cathedral and buried-saint rewards stack.
+
+poi_buried_saint = { # TODO_PAM_ALI needs a new icon, the default wheel is not very fitting - TIT-74204
+	build_province_list = {
+		every_in_global_list = {
+			variable = pam_buried_saint_poi_list
+			limit = {
+				has_travel_point_of_interest = poi_buried_saint
+			}
+			add_to_list = provinces
+		}
+	}
+
+	on_visit = {
+		visiting_poi_effect = yes
+
+		# Devotion XP and Wanderer prestige apply to any visitor.
+		if = {
+			limit = {
+				has_trait = pilgrim
+				trigger_if = {
+					limit = { exists = scope:province.saint_in_province }
+					faith = {
+						has_saint_character = scope:province.saint_in_province
+					}
+				}
+			}
+			add_trait_xp = {
+				trait = pilgrim
+				value = pilgrim_xp_gain_minor_value
+			}
+		}
+		# Prestige for Wanderers
+		wanderer_lifestyle_destination_effect = yes
+
+		if = {
+			limit = {
+				is_ai = no
+				exists = scope:province.saint_in_province
+				faith = {
+					has_saint_character = scope:province.saint_in_province
+				}
+				has_pam_dlc_trigger = yes
+			}
+			scope:province = { save_scope_as = saint_tomb_province }
+			scope:province.saint_in_province = { save_scope_as = visited_saint }
+			# Historical tombs pay out in a toast, so we only open the event when there is a relic to draw
+			if = {
+				limit = {
+					scope:saint_tomb_province = { has_variable = pam_preset_buried_saint }
+				}
+				if = {
+					limit = {
+						piety >= pam_extract_relic_piety_cost
+						gold >= pam_extract_relic_gold_cost
+						scope:saint_tomb_province = {
+							pam_can_extract_relic_from_saint_trigger = { EXTRACTOR = root SAINT = scope:visited_saint }
+						}
+					}
+					custom_tooltip = pam_poi_buried_saint_on_visit_preset_relic_tt
+					trigger_event = pam_saint_events.0007
+				}
+				else = {
+					send_interface_toast = {
+						title = poi_buried_saint.visit
+						left_icon = root
+						right_icon = scope:visited_saint
+						custom_tooltip = poi_buried_saint.preset_visit_desc
+						add_piety = point_of_interest_miniscule_piety_value
+					}
+				}
+			}
+			else = {
+				# Travel-planner preview: show the relic line only when extraction would actually be available - mirrors pam_saint_events.0007 option b's trigger.
+				if = {
+					limit = {
+						piety >= pam_extract_relic_piety_cost
+						gold >= pam_extract_relic_gold_cost
+						scope:saint_tomb_province = {
+							pam_can_extract_relic_from_saint_trigger = { EXTRACTOR = root SAINT = scope:visited_saint }
+						}
+					}
+					custom_tooltip = pam_poi_buried_saint_on_visit_relic_tt
+				}
+				else = {
+					# The direct custom_tooltip keeps visited_saint live in the key
+					custom_tooltip = pam_poi_buried_saint_on_visit_no_relic_tt
+				}
+				trigger_event = pam_saint_events.0007
+			}
+		}
+		else_if = {
+			limit = {
+				trigger_if = {
+					limit = { exists = scope:province.saint_in_province }
+					faith = {
+						has_saint_character = scope:province.saint_in_province
+					}
+				}
+			}
+			# AI travelers land here, as do tombs with no saint left to name
+			if = {
+				limit = {
+					scope:province = { has_variable = pam_preset_buried_saint }
+				}
+				send_interface_toast = {
+					title = poi_buried_saint.visit
+					left_icon = root
+					custom_tooltip = poi_buried_saint.visit_desc
+					add_piety = point_of_interest_miniscule_piety_value
+				}
+			}
+			else = {
+				send_interface_toast = {
+					title = poi_buried_saint.visit
+					left_icon = root
+					custom_tooltip = poi_buried_saint.visit_desc
+					add_piety = point_of_interest_piety_value
+					add_stress = minor_stress_loss
+				}
+			}
+		}
+		# Saints only their own faith registered, such as the Roman emperors, are worth studying rather than venerating
+		else_if = {
+			limit = { exists = scope:province.saint_in_province }
+			scope:province.saint_in_province = { save_scope_as = visited_saint }
+			send_interface_toast = {
+				title = poi_buried_saint.foreign_visit
+				left_icon = root
+				right_icon = scope:visited_saint
+				custom_tooltip = poi_buried_saint.foreign_visit_desc
+				add_learning_lifestyle_xp = travel_miniscule_lifestyle_xp
+			}
+		}
+	}
+}

@@ -1,0 +1,128 @@
+﻿### Bookmaker Tasks ###
+
+khlon_glan_assist_provisioning = {
+	court_position_types = { khlon_glan_court_position }
+
+	# Monthly cost for the task
+	cost = {
+		round = no
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = no
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					scope:liege = {
+						has_treasury = yes
+					}
+				}
+				add = {
+					value = monthly_court_position_task_cost_double
+					desc = COURT_POSITION_TASK_COST_BREAKDOWN_BASE
+					format = "BASE_VALUE_FORMAT_DECIMALS_PLUS_NEGATIVE"
+				}
+			}
+		}
+	}
+
+	employee_modifier = {
+		stress_gain_mult = 0.25
+	}
+
+	scaling_employer_modifiers = {
+		terrible = {
+			additional_fort_level = 1
+			garrison_size = 0.01
+			character_capital_county_monthly_development_growth_add = 0.05
+		}
+		poor = {
+			additional_fort_level = 1
+			garrison_size = 0.02
+			character_capital_county_monthly_development_growth_add = 0.1
+		}
+		average = {
+			additional_fort_level = 2
+			garrison_size = 0.04
+			character_capital_county_monthly_development_growth_add = 0.2
+		}
+		good = {
+			additional_fort_level = 2
+			garrison_size = 0.07
+			character_capital_county_monthly_development_growth_add = 0.35
+		}
+		excellent = {
+			additional_fort_level = 3
+			garrison_size = 0.1
+			character_capital_county_monthly_development_growth_add = 0.5
+		}
+	}
+
+	ai_will_do = {
+		value = 0
+
+		# It is wise to keep the realm and the army well-fed
+		if = { 
+			limit = {
+				has_treasury = no
+				OR = {
+					monthly_character_income < monthly_character_expenses
+					is_at_war = yes
+				}
+			}
+			add = 8
+		}
+		else_if = { 
+			limit = {
+				has_treasury = yes
+				OR = {
+					monthly_character_treasury_income < monthly_character_expenses
+					is_at_war = yes
+				}
+			}
+			add = 8
+		}
+
+		# Alas, I am poor
+		if = {
+			limit = {
+				short_term_gold < 50
+			}
+			add = -100
+		}
+		
+		if = { 
+			limit = {
+				is_at_war = no
+				current_military_strength < eighty_percent_of_max_military_strength
+			}
+			add = 1000
+		}
+		if = {
+			limit = {
+				has_treasury = no
+				monthly_character_income < monthly_court_position_task_cost_double
+			}
+			add = -1000
+		}
+		else_if = {
+			limit = {
+				has_treasury = yes
+				monthly_character_treasury_income < monthly_court_position_task_cost_double
+			}
+			add = -1000
+		}
+	}
+}

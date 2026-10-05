@@ -1,0 +1,133 @@
+﻿#is_witch_trigger
+#is_deviant_trigger
+
+
+
+is_witch_trigger = {
+	custom_description = {
+		text = is_a_witch
+		subject = this
+		OR = {
+			has_trait = witch
+			any_secret = { type = secret_witch }
+		}
+	}
+}
+
+is_witch_known_by_trigger = {
+	OR = {
+		has_trait = witch
+		custom_description = {
+			text = has_a_witch_secret_known_by_character
+			subject = this
+			object = $CHARACTER$
+			any_secret = {
+				type = secret_witch
+				is_known_by = $CHARACTER$
+			}
+		}
+	}
+}
+
+is_deviant_trigger = {
+	OR = {
+		has_trait = deviant
+		any_secret = { type = secret_deviant }
+	}
+}
+
+is_incestuous_trigger = {
+	OR = {
+		has_trait = incestuous
+		any_secret = {
+			type = secret_incest
+		}
+	}
+}
+
+is_kinslaying_crime_in_rite_trigger = {
+	trigger_if = {
+		limit = { $RITE$ = { has_doctrine_parameter = kinslaying_any_dynasty_member_crime } }
+		OR = {
+			is_close_or_extended_family_of = $CHARACTER$
+			dynasty = $CHARACTER$.dynasty
+		}
+	}
+	trigger_else_if = {
+		limit = { $RITE$ = { has_doctrine_parameter = kinslaying_extended_family_crime } }
+		is_close_or_extended_family_of = $CHARACTER$
+	}
+	trigger_else_if = {
+		limit = { $RITE$ = { has_doctrine_parameter = kinslaying_close_kin_crime } }
+		is_close_family_of = $CHARACTER$
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+is_kinslayer = {
+	OR = {
+		has_trait = kinslayer
+		any_secret = {
+			type = secret_murder
+			secret_target = { save_temporary_scope_as = victim }
+			murdering_character_is_kinslaying_in_my_or_same_dynasty_lieges_rite_trigger = { CHARACTER = scope:victim }
+		}
+	}
+}
+
+is_sodomite_trigger = {
+	OR = {
+		has_trait = sodomite
+		any_secret = { type = secret_homosexual }
+	}
+}
+
+is_adulterer_or_fornicator_trigger = {
+	OR = {
+		has_trait = adulterer
+		has_trait = fornicator
+		any_secret = { type = secret_lover }
+	}
+}
+
+sexual_activity_with_partner_is_criminal_in_rite_trigger = {
+	save_temporary_scope_as = sexual_legality_check
+	OR = {
+		#Incest (currently never illegal so commented out)
+		#AND = {
+		#	relation_with_character_is_incestuous_in_rite_trigger = { CHARACTER = $PARTNER$ RITE = $RITE$ }
+		#	trait_is_criminal_in_rite_trigger = { TRAIT = incestuous RITE = $RITE$ GENDER_CHARACTER = scope:sexual_legality_check } }
+		#}
+		#Sodomy
+		AND = {
+			relation_with_character_is_sodomy_in_rite_trigger = { CHARACTER = $PARTNER$ RITE = $RITE$ }
+			trait_is_criminal_in_rite_trigger = { TRAIT = trait:sodomite RITE = $RITE$ GENDER_CHARACTER = scope:sexual_legality_check }
+		}
+		#Adultery/fornication
+		AND = {
+			NOT = { is_consort_of = $PARTNER$ }
+			trait_is_criminal_in_rite_trigger = { TRAIT = trait:fornicator RITE = $RITE$ GENDER_CHARACTER = scope:sexual_legality_check }
+		}
+	}
+}
+
+murdering_character_is_crime_in_rite_trigger = {
+	trigger_if = {
+		limit = { $RITE$ = { rite_has_parameter = kinslaying_any_dynasty_member_crime } }
+		exists = $CHARACTER$.dynasty
+		dynasty ?= $CHARACTER$.dynasty
+	}
+	trigger_else_if = {
+		limit = { $RITE$ = { rite_has_parameter = kinslaying_extended_family_crime } }
+		is_close_or_extended_family_of = $CHARACTER$
+	}
+	trigger_else_if = {
+		limit = { $RITE$ = { rite_has_parameter = kinslaying_close_kin_crime } }
+		is_close_family_of = $CHARACTER$
+	}
+	trigger_else = {
+		always = no
+	}
+}

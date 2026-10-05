@@ -1,0 +1,120 @@
+﻿celestial_civic_governor = {
+	allowed_candidate_tier = lower_or_equal
+	cooldown = yes
+
+	level = merit
+
+	candidate_score = {
+		value = {
+			add = appointment_score_base
+			add = appointment_score_civic
+			add = appointment_score_celestial
+			add = appointment_score_governor
+			add = appointment_score_non_military
+			# Age - With age comes experience. We provide a rather small bonus for the elderly, to exist as a potential tie-breaker.
+			if = { # Too old
+				limit = {
+					age >= retirement_age_1_value
+					tgp_is_above_retirement_age_trigger = { REALM_OWNER = root }
+				}
+				add = {
+					value = {
+						value = retirement_age_current_value
+						subtract = age
+						divide = 2
+						round = yes
+					}
+					desc = is_above_retirement_age_desc
+				}
+			}
+			else_if = { # Old and experienced
+				limit = {
+					age >= 40
+				}
+				add = {
+					value = 15
+					desc = old_age_desc
+				}
+			}
+			else_if = { # Too young
+				limit = {
+					age < 30
+				}
+				add = {
+					value = -10
+					desc = young_age_desc
+				}
+			}
+			
+			# Skills
+			add = {
+				value = learning
+				multiply = 0.5
+				round = yes
+				desc = "[learning_skill|E]"
+			}
+			add = {
+				value = diplomacy
+				multiply = 0.25
+				round = yes
+				desc = "[diplomacy_skill|E]"
+			}
+			add = {
+				value = stewardship
+				multiply = 0.25
+				round = yes
+				desc = "[stewardship_skill|E]"
+			}
+			
+			# Education traits
+			if = {
+				limit = {
+					OR = {
+						has_trait = education_diplomacy_5
+						has_trait = education_stewardship_5
+						has_trait = education_learning_5
+					}
+				}
+				add = {
+					value = 10
+					desc = has_rank_5_education_desc
+				}
+			}
+
+			# Piety level
+			if = {
+				limit = {
+					piety_level != 1
+				}
+				add = {
+					value = 10
+					multiply = {
+						value = piety_level
+						subtract = 1 # Baseline is at 1, so we want the bonus to start at 2
+					}
+					desc = PIETY_LEVEL_CONCEPT
+				}
+			}
+
+			add = appointment_score_final_factors
+		}
+	}
+}
+
+celestial_military_governor = {
+	default_candidates = { direct_landed_vassal holder_close_family }
+	allowed_candidate_tier = lower_or_equal
+	cooldown = yes
+
+	level = merit
+
+	candidate_score = {
+		value = {
+			add = appointment_score_base
+			add = appointment_score_military
+			add = appointment_score_celestial
+			add = appointment_score_governor
+			add = appointment_score_final_factors
+		}
+	}
+}

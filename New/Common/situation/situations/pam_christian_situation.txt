@@ -1,0 +1,1992 @@
+﻿@saeculum_obscurum_points = 1250
+@conversion_phase_points = 1250
+@reform_phase_points = 1250
+@investiture_crisis_points = 1250
+@crusade_phase_points = 1250
+@investiture_council_outcome_points = 1250
+
+the_christian_church = {
+
+	window = christian_church
+	gui_window_name = "window_pam_christian_church"
+	gui_tooltip_group_focused = yes
+	illustration = "gfx/interface/illustrations/event_story/pam_the_christian_church_instability.dds"
+	situation_group_type = major
+
+	is_unique = yes
+	keep_full_history = yes
+	##################################################
+	# Regions
+	##################################################
+	sub_regions = {
+		core = {
+			icon = "gfx/interface/icons/faith_tenets/tenet_christian_syncretism.dds"
+		}
+	}
+	##################################################
+	# On Actions
+	##################################################
+	on_yearly = {
+		trigger_event = {
+			on_action = pam_the_christian_church_yearly_on_action
+		}
+		trigger_event = {
+			on_action = pam_cathedral_great_project_yearly_on_action
+		}
+		# Keep schism mainline/competitor rite variables current for progress hooks
+		pam_update_schism_rite_variables_effect = yes
+	}
+
+	# Timer expiry convenes the council rather than ending the phase
+	# The in-absentia fallback decides a faith's doctrine but never moves the chapter
+	on_monthly = {
+		if = {
+			limit = {
+				has_situation_top_phase_parameter = the_christian_church_investiture_controversy
+				NOT = { has_variable = investiture_awaiting_council }
+				pam_investiture_crisis_years_left_value <= 0
+			}
+			set_variable = investiture_awaiting_council
+			if = { limit = { has_variable = investiture_council_countdown } remove_variable = investiture_council_countdown }
+			# Announces 0058 per faith that actually gets a council, then nudges each host.
+			pam_start_investiture_council_effect = yes
+			pam_investiture_maybe_end_crisis_effect = yes
+		}
+		pam_investiture_end_uncontested_crisis_effect = yes
+		# Keep the panel's vote estimate current while the crisis runs.
+		if = {
+			limit = { has_situation_top_phase_parameter = the_christian_church_investiture_controversy }
+			pam_investiture_update_vote_estimate_effect = yes
+		}
+		pam_investiture_block_crisis_progress_effect = yes
+	}
+
+	##################################################
+	# Groups
+	##################################################
+	# Christian rulers: clerical vs regular. Main Power = Christian faith with most counties (var:tcc_main_power_faith, refreshed on_county_faith_change)
+	participant_groups = {
+		christian_clerical_main_power_rulers = {
+			icon = "gfx/interface/icons/the_christian_church/participant_groups/clerical_main.dds"
+			require_realm_in_sub_region = no
+
+			is_character_valid = {
+				has_religion = religion:christianity_religion
+				situation:the_christian_church = {
+					has_variable = tcc_main_power_faith
+					var:tcc_main_power_faith ?= root.faith
+				}
+				OR = {
+					AND = {
+						government_is_religious_trigger = yes
+						highest_held_title_tier >= tier_county
+					}
+					exists = clerical_elector_title
+					any_held_title = { has_clerical_region = yes }
+				}
+			}
+
+			on_join = {
+				the_christian_church_fire_correct_phase_start_event_for_player_effect = yes
+			}
+			on_leave = {
+			}
+
+			map_color = hsv{ 0.37 1.00 0.78 }
+		}
+
+		christian_regular_main_power_rulers = {
+			icon = "gfx/interface/icons/the_christian_church/participant_groups/regular_main.dds"
+			gui_tags = { secular_ruler }
+
+			is_character_valid = {
+				has_religion = religion:christianity_religion
+				situation:the_christian_church = {
+					has_variable = tcc_main_power_faith
+					var:tcc_main_power_faith ?= root.faith
+				}
+				government_is_religious_trigger = no
+				highest_held_title_tier >= tier_county
+			}
+
+			on_join = {
+				the_christian_church_fire_correct_phase_start_event_for_player_effect = yes
+			}
+			on_leave = {
+			}
+
+			map_color = hsv{ 0.32 0.95 0.72 }
+		}
+
+		# Other ecumenical Christian faiths (not Main Power).
+		christian_clerical_secondary_powers_rulers = {
+			icon = "gfx/interface/icons/the_christian_church/participant_groups/clerical_secondary.dds"
+			require_realm_in_sub_region = no
+
+			is_character_valid = {
+				has_religion = religion:christianity_religion
+				faith = {
+					OR = {
+						has_doctrine = special_doctrine_ecumenical_christian
+						has_doctrine = special_doctrine_ecumenical_miaphysite
+					}
+				}
+				NOT = {
+					situation:the_christian_church = {
+						has_variable = tcc_main_power_faith
+						var:tcc_main_power_faith ?= root.faith
+					}
+				}
+				OR = {
+					AND = {
+						government_is_religious_trigger = yes
+						highest_held_title_tier >= tier_county
+					}
+					exists = clerical_elector_title
+					any_held_title = { has_clerical_region = yes }
+				}
+			}
+
+			on_join = {
+				the_christian_church_fire_correct_phase_start_event_for_player_effect = yes
+			}
+			on_leave = {
+			}
+
+			map_color = hsv{ 0.8 0.75 0.83 }
+		}
+
+		christian_regular_secondary_powers_rulers = {
+			icon = "gfx/interface/icons/the_christian_church/participant_groups/regular_secondary.dds"
+			gui_tags = { secular_ruler }
+
+			is_character_valid = {
+				has_religion = religion:christianity_religion
+				faith = {
+					OR = {
+						has_doctrine = special_doctrine_ecumenical_christian
+						has_doctrine = special_doctrine_ecumenical_miaphysite
+					}
+				}
+				government_is_religious_trigger = no
+				highest_held_title_tier >= tier_county
+				NOT = {
+					situation:the_christian_church = {
+						has_variable = tcc_main_power_faith
+						var:tcc_main_power_faith ?= root.faith
+					}
+				}
+			}
+
+			on_join = {
+				the_christian_church_fire_correct_phase_start_event_for_player_effect = yes
+			}
+			on_leave = {
+			}
+
+			map_color = hsv{ 0.75 0.70 0.78 }
+		}
+
+		# Christian religion faiths without ecumenical doctrine (heresies).
+		christian_clerical_heretic_rulers = {
+			icon = "gfx/interface/icons/the_christian_church/participant_groups/clerical_heretic.dds"
+			require_realm_in_sub_region = no
+
+			is_character_valid = {
+				has_religion = religion:christianity_religion
+				faith = {
+					NOR = {
+						has_doctrine = special_doctrine_ecumenical_christian
+						has_doctrine = special_doctrine_ecumenical_miaphysite
+					}
+				}
+				NOT = {
+					situation:the_christian_church = {
+						has_variable = tcc_main_power_faith
+						var:tcc_main_power_faith ?= root.faith
+					}
+				}
+				OR = {
+					AND = {
+						government_is_religious_trigger = yes
+						highest_held_title_tier >= tier_county
+					}
+					exists = clerical_elector_title
+					any_held_title = { has_clerical_region = yes }
+				}
+			}
+
+			on_join = {
+				the_christian_church_fire_correct_phase_start_event_for_player_effect = yes
+			}
+			on_leave = {
+			}
+
+			map_color = hsv{ 0.55 0.85 0.55 }
+		}
+
+		christian_regular_heretic_rulers = {
+			icon = "gfx/interface/icons/the_christian_church/participant_groups/regular_heretic.dds"
+			gui_tags = { secular_ruler }
+
+			is_character_valid = {
+				has_religion = religion:christianity_religion
+				faith = {
+					NOR = {
+						has_doctrine = special_doctrine_ecumenical_christian
+						has_doctrine = special_doctrine_ecumenical_miaphysite
+					}
+				}
+				NOT = {
+					situation:the_christian_church = {
+						has_variable = tcc_main_power_faith
+						var:tcc_main_power_faith ?= root.faith
+					}
+				}
+				government_is_religious_trigger = no
+				highest_held_title_tier >= tier_county
+			}
+
+			on_join = {
+				the_christian_church_fire_correct_phase_start_event_for_player_effect = yes
+			}
+			on_leave = {
+			}
+
+			map_color = hsv{ 0.50 0.80 0.50 }
+		}
+	}
+
+	##################################################
+	# Phases
+	##################################################
+	start_phase = fragile_unity
+
+	on_start = {
+		the_christian_church_update_situation_groups_effect = yes
+		situation_sub_region:core = {
+			save_scope_as = core_region
+		}
+		religion:christianity_religion = {
+			every_faith = {
+				every_clerical_region_title = {
+					scope:core_region = {
+						add_clerical_realm_to_sub_region = prev
+					}
+				}
+			}
+		}
+		# Non-Christian province region capital exceptions
+		add_clerical_region_with_non_christian_capital_effect = { REGION_TITLE = title:d_et_jerusalem }
+		add_clerical_region_with_non_christian_capital_effect = { REGION_TITLE = title:d_et_palermo }
+		the_christian_church_add_clerical_title_holders_as_manual_participants_effect = yes
+		# Seed the schism rite variables here so the progress gates hold before the first yearly refresh
+		pam_update_schism_rite_variables_effect = yes
+	}
+
+	phases = {
+		#Fragile Unity Phase - start phase at 867
+		fragile_unity = { # INSTABILITY
+			icon = "gfx/interface/icons/the_christian_church/phase_type_icons/fragile_unity.dds"
+			texture = "gfx/interface/icons/the_christian_church/phase_type_illustrations_wide/fragile.dds"
+			illustration = "gfx/interface/icons/the_christian_church/phase_type_illustrations/fragile.dds"
+
+			on_start = {
+				the_christian_church_fire_event_for_participant_players_effect = { EVENT = pam_the_christian_church.0051 }
+				pam_tenet_popularity_situation_fragile_unity_start_effect = yes
+				pam_refire_great_schism_catalyst_effect = yes
+			}
+
+			parameters = {
+				era_type_instability = yes
+				claim_seeking_acceptance_bonus = yes
+			}
+
+			modifier_sets = {
+				the_christian_church_religious_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_faith.dds"
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_easier_sway_to_rite = yes
+							the_christian_church_free_humiliation_cb = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_easier_sway_to_rite = yes
+						}
+					}
+				}
+
+				the_christian_church_diplomacy_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_diplomacy.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_better_siphon_treasury = yes
+							# Unique to Fragile Unity / Saeculum Obscurum
+							the_christian_church_withdraw_funds_from_treasury_decision = yes
+							the_christian_church_clergy_puppeting_malus_minor = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_easier_claims_from_hof = yes
+							the_christian_church_secular_puppeting_malus_minor = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_better_siphon_treasury = yes
+							# Unique to Fragile Unity / Saeculum Obscurum
+							the_christian_church_withdraw_funds_from_treasury_decision = yes
+						}
+					}
+					christian_clerical_heretic_rulers = {
+						parameters = {
+							# Unique to Fragile Unity / Saeculum Obscurum
+							the_christian_church_withdraw_funds_from_treasury_decision = yes
+						}
+					}
+				}
+
+				the_christian_church_subject_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_subject.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Shared with other phases
+							the_christian_church_minimal_centralization = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_levy_the_tithes_decision = yes
+							# Shared with other phases
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Standard for secondary
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_levy_the_tithes_decision = yes
+							# Standard for secondary
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+				}
+			}
+
+			future_phases = {
+				saeculum_obscurum = {
+					takeover_type = points
+					takeover_points = @saeculum_obscurum_points
+					catalysts = {
+						# Great Schism
+						catalyst_the_christian_church_great_schism = 750
+						# On actions
+						catalyst_catholic_hof_weak_papal_state_control = 1000
+						catalyst_the_christian_church_papal_dynasty_capture = gargantuan_situation_catalyst_gain
+						catalyst_the_christian_church_head_of_faith_murdered = 125
+						catalyst_the_christian_church_head_of_faith_marries = massive_situation_catalyst_gain
+						catalyst_the_christian_church_head_of_faith_has_child = massive_situation_catalyst_gain
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = medium_situation_catalyst_gain
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_criminal_trait = minor_situation_catalyst_gain
+						catalyst_clergy_appointed_from_same_family = major_situation_catalyst_gain
+						catalyst_clergy_marries = minor_situation_catalyst_gain
+						catalyst_clergy_has_child = minor_situation_catalyst_gain
+						# CBs
+						catalyst_the_christian_church_humiliation_war_declared = medium_situation_catalyst_gain
+						# Activities
+						catalyst_clergy_hosted_feast = minor_situation_catalyst_gain
+						catalyst_clergy_attended_feast = minimal_situation_catalyst_gain
+						# Decisions
+						catalyst_the_christian_church_antipope_declared = monumental_plus_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_saeculum_obscurum = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_saeculum_obscurum_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_saeculum_obscurum_hof = 125
+						catalyst_the_christian_church_established_theocratic_dynasty = major_plus_situation_catalyst_gain
+						catalyst_prelate_empowered_self_with_kingdom = massive_plus_situation_catalyst_gain
+						catalyst_consecrated_kingdom_for_theocrat = major_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_appointed_monastic_cardinal = medium_situation_catalyst_gain
+						catalyst_the_christian_church_appointed_nepotistic_cardinal = major_situation_catalyst_gain
+						catalyst_the_christian_church_victory_enforced = major_situation_catalyst_gain
+						catalyst_clergy_embezzled_treasury = minor_situation_catalyst_gain
+						catalyst_clergy_withdrew_funds_from_treasury = minor_situation_catalyst_gain
+						catalyst_clergy_self_proclaimed_cardinal = medium_situation_catalyst_gain
+						catalyst_clergy_influenced_own_candidacy = minimal_situation_catalyst_gain
+						catalyst_clergy_simony = minimal_situation_catalyst_gain
+						catalyst_clergy_sold_claim = minor_situation_catalyst_gain
+						catalyst_seek_indulgences = major_situation_catalyst_gain
+						catalyst_seek_indulgences_minor = medium_situation_catalyst_gain
+						catalyst_ask_for_gold = minor_situation_catalyst_gain
+						catalyst_ask_for_gold_minor = minimal_situation_catalyst_gain
+						catalyst_hof_bestowed_title_clergy_major = monumental_plus_situation_catalyst_gain
+						catalyst_hof_bestowed_title_clergy = major_situation_catalyst_gain
+						#Clergy interactions
+						catalyst_ecclesiastical_transfer_land_interaction = minor_situation_catalyst_gain
+						catalyst_ecclesiastical_transfer_land_interaction_major = massive_situation_catalyst_gain
+					}
+				}
+
+				investiture_crisis = {
+					takeover_type = points
+					takeover_points = @investiture_crisis_points
+					catalysts = {
+						catalyst_exposed_forbidden_personal_tenet = pam_investiture_crisis_catalyst_medium_plus_value
+						catalyst_clergy_exposed_forbidden_personal_tenet = pam_investiture_crisis_catalyst_major_value
+						# Decisions
+						catalyst_shaped_the_christian_church_investiture_crisis = pam_investiture_crisis_catalyst_massive_value
+						catalyst_shaped_the_christian_church_investiture_crisis_dynasty = pam_investiture_crisis_catalyst_monumental_value
+						catalyst_shaped_the_christian_church_investiture_crisis_hof = pam_investiture_crisis_catalyst_hof_push_value
+						catalyst_the_christian_church_antipope_sponsored = pam_investiture_crisis_catalyst_monumental_plus_value
+						catalyst_the_christian_church_revoked_order_lease = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_the_christian_church_established_theocratic_dynasty = pam_investiture_crisis_catalyst_major_value
+						catalyst_the_christian_church_restored_hre_without_blessing = pam_investiture_crisis_catalyst_massive_plus_value
+						# Interactions
+						catalyst_the_christian_church_requested_realm_priest_replacement = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_the_christian_church_threatened_ecclesiastical_grant_claim = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_the_christian_church_ecclesiastical_grant_claim = pam_investiture_crisis_catalyst_major_value
+						catalyst_ask_for_influence = pam_investiture_crisis_catalyst_minor_value
+						catalyst_conditional_appointment_used = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_secular_influenced_clerical_candidacy = pam_investiture_crisis_catalyst_minor_value
+						catalyst_secular_interference_in_papal_election = pam_investiture_crisis_catalyst_major_value
+						catalyst_secular_hosted_ecumenical_council = pam_investiture_crisis_catalyst_massive_plus_value
+						catalyst_the_christian_church_stripped_cardinalate = pam_investiture_crisis_catalyst_major_value
+						catalyst_hof_bestowed_title_clergy_minor = pam_investiture_crisis_catalyst_minor_value
+						catalyst_seek_indulgences = pam_investiture_crisis_catalyst_medium_value
+						catalyst_seek_indulgences_minor = pam_investiture_crisis_catalyst_minor_value
+						catalyst_excommunicate = pam_investiture_crisis_catalyst_major_value
+						# On actions
+						catalyst_the_christian_church_papal_dynasty_capture = pam_investiture_crisis_catalyst_gargantuan_value
+						catalyst_clergy_court_chaplain_murdered = pam_investiture_crisis_catalyst_medium_value
+						catalyst_clergy_archbishop_murdered = pam_investiture_crisis_catalyst_major_value
+						catalyst_clergy_cardinal_murdered = pam_investiture_crisis_catalyst_major_value
+						catalyst_clergy_head_of_rite_murdered = pam_investiture_crisis_catalyst_major_value
+						catalyst_the_christian_church_ruler_imprisons_head_of_faith = pam_investiture_crisis_catalyst_major_plus_value
+						# A cleric was elevated to an archbishopric (Request Elevation, or a HoF grant/replacement)
+						catalyst_clergy_elevated_to_archbishopric = pam_investiture_crisis_catalyst_massive_value
+						catalyst_clergy_gained_landed_title = pam_investiture_crisis_catalyst_trickle_value
+					}
+				}
+
+				concord = {
+					takeover_type = points
+					takeover_points = @conversion_phase_points
+					catalysts = {
+						catalyst_restore_hre_with_pope_blessing = massive_situation_catalyst_gain
+
+						# On Actions
+						catalyst_the_christian_church_jerusalem_reclaimed = extreme_plus_situation_catalyst_gain
+						catalyst_the_christian_church_christian_holy_site_reclaimed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_great_holy_war_won = monumental_plus_situation_catalyst_gain
+						catalyst_the_christian_church_temple_holding_created = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_completed_pilgrimage = minor_situation_catalyst_gain
+						# Great Projects Catalysts
+						catalyst_great_project_cathedral_contribution = major_plus_situation_catalyst_gain
+						catalyst_great_project_cathedral_completed = monumental_plus_situation_catalyst_gain
+						catalyst_great_project_mass_rite_conversion_contribution = massive_situation_catalyst_gain
+						catalyst_clergy_unreformed_pagan_county_converted_to_faith = minimal_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_concord = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_hof = 125
+						catalyst_pope_declared_popular_core_tenet = major_situation_catalyst_gain
+						catalyst_the_christian_church_papal_bull_enacted = 30
+						catalyst_the_christian_church_antipope_removed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_consecrated_bloodline = medium_situation_catalyst_gain
+						catalyst_consecrated_kingdom_for_ruler = major_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_appointed_cardinal = minor_situation_catalyst_gain
+						catalyst_the_christian_church_clerical_region_created = massive_situation_catalyst_gain
+						catalyst_the_christian_church_white_peace_enforced = medium_situation_catalyst_gain
+						catalyst_lift_excommunication = medium_situation_catalyst_gain
+						catalyst_lift_excommunication_minor = minimal_situation_catalyst_gain
+						catalyst_declaration_of_repentance = medium_situation_catalyst_gain
+						catalyst_declaration_of_repentance_minor = minimal_situation_catalyst_gain
+						catalyst_hof_bestowed_title_major = massive_situation_catalyst_gain
+						catalyst_hof_bestowed_title = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_situation_catalyst_gain
+					}
+				}
+			}
+
+			on_end = {
+
+			}
+		}
+		#Saeculum Obscurum Phase - Historically ~904-964 AD
+		saeculum_obscurum = { # CRISIS
+			icon = "gfx/interface/icons/the_christian_church/phase_type_icons/saeculum_obscurum.dds"
+			texture = "gfx/interface/icons/the_christian_church/phase_type_illustrations_wide/saeculum_obscurum.dds"
+			illustration = "gfx/interface/icons/the_christian_church/phase_type_illustrations/saeculum_obscurum.dds"
+
+			on_start = {
+				pam_fire_great_schism_start_event_effect = yes
+				the_christian_church_fire_event_for_participant_players_effect = { EVENT = pam_the_christian_church.0052 }
+				pam_tenet_popularity_situation_saeculum_obscurum_start_effect = yes
+				pam_refire_great_schism_catalyst_effect = yes
+			}
+
+			parameters = {
+				era_type_crisis = yes
+				the_christian_church_cheaper_ecumenical_councils = yes
+				the_christian_church_better_indulgences = yes
+				preach_legitimacy_acceptance_bonus = yes
+				the_christian_church_great_schism = yes
+				the_christian_church_clerical_violence_less_consequential = yes
+			}
+
+			modifier_sets = {
+				the_christian_church_religious_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_faith.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Shared with Crisis phases
+							the_christian_church_reduced_elevation_request_cost = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Unique to SO
+							the_christian_church_more_likely_to_accept_seek_indulgences = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Shared with Crisis phases
+							the_christian_church_reduced_elevation_request_cost = yes
+						}
+					}
+					christian_clerical_heretic_rulers = {
+						parameters = {
+							# Shared with Crisis phases
+							the_christian_church_reduced_elevation_request_cost = yes
+						}
+					}
+				}
+
+				the_christian_church_diplomacy_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_diplomacy.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Unique to SO
+							clergy_can_marry = yes
+							the_christian_church_seduction_scheme_bonus = yes
+							# Unique to Fragile Unity / Saeculum Obscurum
+							the_christian_church_withdraw_funds_from_treasury_decision = yes
+							the_christian_church_clergy_puppeting_malus_minor = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							the_christian_church_secular_puppeting_bonus_major = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Unique to SO
+							clergy_can_marry = yes
+							the_christian_church_seduction_scheme_bonus = yes
+							# Unique to Fragile Unity / Saeculum Obscurum
+							the_christian_church_withdraw_funds_from_treasury_decision = yes
+						}
+					}
+					christian_clerical_heretic_rulers = {
+						parameters = {
+							# Unique to SO
+							clergy_can_marry = yes
+							the_christian_church_seduction_scheme_bonus = yes
+							# Unique to Fragile Unity / Saeculum Obscurum
+							the_christian_church_withdraw_funds_from_treasury_decision = yes
+						}
+					}
+				}
+
+				the_christian_church_subject_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_subject.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_minimal_centralization = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						character_modifier = {
+							# Unique to SO
+							ecclesiastical_government_tax_contribution_mult = -0.4
+						}
+						parameters = {
+							the_christian_church_personal_secular_obligations = yes
+							the_christian_church_local_secular_power = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Standard for secondary
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						character_modifier = {
+							# Unique to SO
+							ecclesiastical_government_tax_contribution_mult = -0.10
+						}
+						parameters = {
+							# Standard for secondary
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+				}
+			}
+
+			future_phases = {
+				reform_phase = {
+					takeover_type = points
+					takeover_points = @reform_phase_points
+					catalysts = {
+						# On actions
+						catalyst_county_converted_to_faith = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_main_power_faith_changed = 1000
+						catalyst_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = 20
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = 20
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_clergy_hor_short_reign = major_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_converted_to_christianity = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_reform_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_hof = 125
+						catalyst_the_christian_church_founded_monastic_order = massive_plus_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_requested_legitimacy = minor_situation_catalyst_gain
+						catalyst_the_christian_church_swayed_to_rite = 2
+						catalyst_the_christian_church_study_faith_scheme_completed = medium_situation_catalyst_gain
+						catalyst_the_christian_church_requested_realm_priest_replacement = medium_situation_catalyst_gain
+						catalyst_clergy_embezzled_treasury = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_plus_situation_catalyst_gain
+					}
+				}
+				fragile_unity = {
+					takeover_type = points
+					takeover_points = @reform_phase_points
+					catalysts = {
+						# On actions
+						catalyst_the_christian_church_head_of_faith_murdered = 125
+						catalyst_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_the_christian_church_new_rite = 20
+						catalyst_the_christian_church_new_divergent_rite = medium_situation_catalyst_gain
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = medium_situation_catalyst_gain
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_byzantine_emperor_non_christian = major_situation_catalyst_gain
+						catalyst_the_christian_church_same_faith_ruler_war_declared = medium_situation_catalyst_gain
+						catalyst_the_christian_church_civil_war_in_christian_kingdom = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_fragile_unity = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_hof = 125
+						catalyst_pope_declared_unpopular_core_tenet = massive_situation_catalyst_gain
+						catalyst_the_christian_church_established_theocratic_dynasty = medium_situation_catalyst_gain
+						catalyst_clergy_withdrew_funds_from_treasury = minor_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_strenghtened_claim = 20
+						catalyst_the_christian_church_clerical_region_split = major_plus_situation_catalyst_gain
+						catalyst_request_excommunication = major_situation_catalyst_gain
+						catalyst_request_excommunication_minor = minor_situation_catalyst_gain
+						catalyst_excommunicate = medium_situation_catalyst_gain
+						catalyst_excommunicate_minor = minor_situation_catalyst_gain
+						catalyst_the_christian_church_clerical_region_expanded = major_situation_catalyst_gain
+					}
+				}
+				conversion_phase = {
+					takeover_type = points
+					takeover_points = @conversion_phase_points
+					catalysts = {
+						# On actions
+						catalyst_county_converted_from_faith = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_converted_from_christianity = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_hired_non_christian_councillor = medium_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_married_non_christian = medium_situation_catalyst_gain
+						catalyst_neighboring_unreformed_pagan_raid_you = 2
+						# CBs
+						catalyst_the_christian_church_excommunication_war_declared = major_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_conversion_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_conversion_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_conversion_phase_hof = 125
+						catalyst_the_christian_church_founded_monastic_order = massive_plus_situation_catalyst_gain
+						catalyst_the_christian_church_staged_act_of_devotion = minor_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_swayed_to_rite = 2
+					}
+				}
+				crusade_phase = {
+					takeover_type = points
+					takeover_points = @reform_phase_points
+					catalysts = {
+						# On actions
+						catalyst_lose_jerusalem = 750
+						catalyst_lose_holy_site = monumental_plus_situation_catalyst_gain
+						catalyst_non_christian_kingdom_in_europe = monumental_situation_catalyst_gain
+						catalyst_byzantine_emperor_non_christian = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_great_holy_war_declared_on_christian = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_great_holy_war_lost = massive_plus_situation_catalyst_gain
+						catalyst_the_christian_church_non_christian_peasant_revolt_raised = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_died_in_battle_against_non_christian = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_completed_pilgrimage = minor_situation_catalyst_gain
+						catalyst_clergy_hired_holy_order = medium_situation_catalyst_gain
+						catalyst_neighboring_unreformed_pagan_raid_you = minimal_situation_catalyst_gain
+						catalyst_clergy_hired_mercenaries = minimal_situation_catalyst_gain
+						#CBs
+						catalyst_major_holy_war_incited = major_situation_catalyst_gain
+						catalyst_holy_war_incited = major_situation_catalyst_gain
+						catalyst_minor_holy_war_incited = medium_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_crusade_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_crusade_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_crusade_phase_hof = 125
+						catalyst_the_christian_church_founded_military_order = massive_plus_situation_catalyst_gain
+					}
+				}
+			}
+
+			on_end = {
+				pam_the_christian_church_saeculum_obscurum_end_clergy_divorce_effect = yes
+				# Crisis ending only splits the Church if the progress threshold is met
+				if = {
+					limit = {
+						NOT = { has_global_variable = pam_great_schism_decision_taken }
+						var:pam_great_schism_status ?= flag:ongoing
+					}
+					pam_create_great_schism_effect = yes
+				}
+			}
+		}
+		#Conversion Phase - Historically ~989 AD
+		conversion_phase = { # ZEAL
+			icon = "gfx/interface/icons/the_christian_church/phase_type_icons/conversion.dds"
+			texture = "gfx/interface/icons/the_christian_church/phase_type_illustrations_wide/conversion.dds"
+			illustration = "gfx/interface/icons/the_christian_church/phase_type_illustrations/conversion.dds"
+
+			on_start = {
+				the_christian_church_fire_event_for_participant_players_effect = { EVENT = pam_the_christian_church.0053 }
+				pam_tenet_popularity_situation_conversion_phase_start_effect = yes
+				pam_refire_great_schism_catalyst_effect = yes
+			}
+
+			parameters = {
+				era_type_zeal = yes
+				the_christian_church_mass_rite_conversion_decision = yes
+			}
+
+			modifier_sets = {
+				the_christian_church_religious_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_faith.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Shared with Zeal phases
+							the_christian_church_holy_site_poi_bonus = yes
+							# Unique to Conversion
+							the_christian_church_county_conversion_bonus = yes
+							the_christian_church_easier_faith_conversion = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Shared with Zeal phases
+							the_christian_church_holy_site_poi_bonus = yes
+							# Unique to Conversion
+							the_christian_church_county_conversion_bonus = yes
+							the_christian_church_easier_faith_conversion = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Unique to Conversion
+							the_christian_church_county_conversion_malus = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							# Unique to Conversion
+							the_christian_church_county_conversion_malus = yes
+						}
+					}
+					christian_clerical_heretic_rulers = {
+						parameters = {
+							# Unique to Conversion
+							the_christian_church_county_conversion_malus = yes
+						}
+					}
+					christian_regular_heretic_rulers = {
+						parameters = {
+							# Unique to Conversion
+							the_christian_church_county_conversion_malus = yes
+						}
+					}
+				}
+
+				the_christian_church_diplomacy_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_diplomacy.dds"
+					christian_clerical_main_power_rulers = {
+						character_modifier = {
+							# Unique to Conversion
+							max_personal_schemes_add = 1
+							max_hostile_schemes_add = 1
+						}
+						parameters = {
+							# Shared with Zeal phases
+							the_christian_church_cheaper_bulls = yes
+							the_christian_church_clergy_puppeting_bonus_major = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						character_modifier = {
+							# Unique to Conversion
+							max_personal_schemes_add = 1
+						}
+					}
+					christian_clerical_heretic_rulers = {
+						character_modifier = {
+							# Unique to Conversion
+							max_hostile_schemes_add = 1
+						}
+					}
+				}
+
+				the_christian_church_subject_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_subject.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							the_christian_church_personal_secular_obligations = yes
+							the_christian_church_local_secular_power = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Standard for secondary
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							# Standard for secondary
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+				}
+
+				the_christian_church_military_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_military.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Unique to Crusades
+							the_christian_church_incite_holy_war_interaction = yes
+						}
+					}
+				}
+			}
+
+			future_phases = {
+				fragile_unity = {
+					takeover_type = points
+					takeover_points = @saeculum_obscurum_points
+					catalysts = {
+						# On actions
+						catalyst_the_christian_church_head_of_faith_murdered = 125
+						catalyst_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_the_christian_church_new_rite = 20
+						catalyst_the_christian_church_new_divergent_rite = medium_situation_catalyst_gain
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = medium_situation_catalyst_gain
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_byzantine_emperor_non_christian = major_situation_catalyst_gain
+						catalyst_the_christian_church_same_faith_ruler_war_declared = medium_situation_catalyst_gain
+						catalyst_the_christian_church_civil_war_in_christian_kingdom = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_fragile_unity = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_hof = 125
+						catalyst_pope_declared_unpopular_core_tenet = massive_situation_catalyst_gain
+						catalyst_the_christian_church_established_theocratic_dynasty = medium_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_strenghtened_claim = 20
+						catalyst_the_christian_church_clerical_region_split = major_plus_situation_catalyst_gain
+						catalyst_request_excommunication = major_situation_catalyst_gain
+						catalyst_request_excommunication_minor = minor_situation_catalyst_gain
+						catalyst_excommunicate = medium_situation_catalyst_gain
+						catalyst_excommunicate_minor = minor_situation_catalyst_gain
+						catalyst_the_christian_church_clerical_region_expanded = major_situation_catalyst_gain
+					}
+				}
+				reform_phase = {
+					takeover_type = points
+					takeover_points = @reform_phase_points
+					catalysts = {
+						# On actions
+						catalyst_county_converted_to_faith = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_main_power_faith_changed = gargantuan_situation_catalyst_gain
+						catalyst_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = 20
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = 20
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_clergy_hor_short_reign = major_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_converted_to_christianity = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_reform_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_hof = 125
+						catalyst_the_christian_church_founded_monastic_order = massive_plus_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_requested_legitimacy = minor_situation_catalyst_gain
+						catalyst_the_christian_church_swayed_to_rite = 2
+						catalyst_the_christian_church_study_faith_scheme_completed = medium_situation_catalyst_gain
+						catalyst_the_christian_church_requested_realm_priest_replacement = medium_situation_catalyst_gain
+						catalyst_clergy_embezzled_treasury = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_plus_situation_catalyst_gain
+					}
+				}
+				concord = {
+					takeover_type = points
+					takeover_points = @reform_phase_points
+					catalysts = {
+						# On actions
+						catalyst_the_christian_church_great_holy_war_won = monumental_plus_situation_catalyst_gain
+						catalyst_the_christian_church_temple_holding_created = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_completed_pilgrimage = minor_situation_catalyst_gain
+						catalyst_the_christian_church_christian_holy_site_reclaimed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_jerusalem_reclaimed = extreme_plus_situation_catalyst_gain
+						# Great Projects Catalysts
+						catalyst_great_project_cathedral_contribution = major_plus_situation_catalyst_gain
+						catalyst_great_project_cathedral_completed = monumental_plus_situation_catalyst_gain
+						catalyst_great_project_mass_rite_conversion_contribution = massive_situation_catalyst_gain
+						catalyst_clergy_unreformed_pagan_county_converted_to_faith = minimal_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_concord = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_hof = 125
+						catalyst_pope_declared_popular_core_tenet = major_situation_catalyst_gain
+						catalyst_the_christian_church_papal_bull_enacted = 30
+						catalyst_the_christian_church_antipope_removed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_consecrated_bloodline = medium_situation_catalyst_gain
+						catalyst_consecrated_kingdom_for_ruler = major_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_appointed_cardinal = minor_situation_catalyst_gain
+						catalyst_the_christian_church_clerical_region_created = massive_situation_catalyst_gain
+						catalyst_the_christian_church_white_peace_enforced = medium_situation_catalyst_gain
+						catalyst_lift_excommunication = medium_situation_catalyst_gain
+						catalyst_lift_excommunication_minor = minimal_situation_catalyst_gain
+						catalyst_declaration_of_repentance = medium_situation_catalyst_gain
+						catalyst_declaration_of_repentance_minor = minimal_situation_catalyst_gain
+						catalyst_hof_bestowed_title_major = massive_situation_catalyst_gain
+						catalyst_hof_bestowed_title = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_situation_catalyst_gain
+					}
+				}
+			}
+
+			on_end = {
+
+			}
+		}
+		#Reform Phase - Start for 1066 - Historically ~1050–1080 AD - Reflects Gregorian Reforms
+		reform_phase = { # INSTABILITY
+			icon = "gfx/interface/icons/the_christian_church/phase_type_icons/reform.dds"
+			texture = "gfx/interface/icons/the_christian_church/phase_type_illustrations_wide/reform.dds"
+			illustration = "gfx/interface/icons/the_christian_church/phase_type_illustrations/reform.dds"
+
+			on_start = {
+				the_christian_church_fire_event_for_participant_players_effect = { EVENT = pam_the_christian_church.0054 }
+				pam_tenet_popularity_situation_reform_phase_start_effect = yes
+				pam_refire_great_schism_catalyst_effect = yes
+			}
+
+			parameters = {
+				era_type_instability = yes
+			}
+
+			modifier_sets = {
+				the_christian_church_religious_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_faith.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Unique to Reform
+							the_christian_church_cheaper_excommunications = yes
+						}
+						character_modifier = {
+							# Unique to Reform
+							rite_creation_piety_cost_mult = -0.1
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_easier_sway_to_rite = yes
+							# Unique to Reform
+							the_christian_church_more_likely_to_accept_request_excommunications = yes
+						}
+						character_modifier = {
+							# Unique to Reform
+							rite_creation_piety_cost_mult = -0.1
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						character_modifier = {
+							# Unique to Reform
+							rite_creation_piety_cost_mult = -0.1
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						character_modifier = {
+							# Unique to Reform
+							rite_creation_piety_cost_mult = -0.1
+						}
+					}
+				}
+
+				the_christian_church_diplomacy_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_diplomacy.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_clergy_puppeting_bonus_minor = yes
+						}
+					}
+
+					christian_regular_main_power_rulers = {
+						character_modifier = {
+							cultural_head_fascination_mult = 0.15
+						}
+						parameters = {
+							the_christian_church_secular_puppeting_malus_minor = yes
+						}
+					}
+				}
+
+				the_christian_church_subject_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_subject.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Unique to Reform
+							the_christian_church_legatine_mission = yes
+							the_christian_church_reform_monastic_endowment = yes
+							# Shared with others
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_levy_the_tithes_decision = yes
+							# Unique to Reform
+							the_christian_church_reform_monastic_endowment = yes
+							# Shared with other phases
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Unique to Reform
+							the_christian_church_reform_monastic_endowment = yes
+							# Standard for secondary
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							# Shared with Instability phases
+							the_christian_church_levy_the_tithes_decision = yes
+							# Unique to Reform
+							the_christian_church_reform_monastic_endowment = yes
+							# Standard for secondary
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+				}
+			}
+
+			future_phases = {
+				investiture_crisis = {
+					takeover_type = points
+					takeover_points = @investiture_crisis_points
+					catalysts = {
+						catalyst_exposed_forbidden_personal_tenet = pam_investiture_crisis_catalyst_medium_plus_value
+						catalyst_clergy_exposed_forbidden_personal_tenet = pam_investiture_crisis_catalyst_major_value
+						# Decisions
+						catalyst_shaped_the_christian_church_investiture_crisis = pam_investiture_crisis_catalyst_massive_value
+						catalyst_shaped_the_christian_church_investiture_crisis_dynasty = pam_investiture_crisis_catalyst_monumental_value
+						catalyst_shaped_the_christian_church_investiture_crisis_hof = pam_investiture_crisis_catalyst_hof_push_value
+						catalyst_the_christian_church_antipope_sponsored = pam_investiture_crisis_catalyst_monumental_plus_value
+						catalyst_the_christian_church_revoked_order_lease = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_the_christian_church_established_theocratic_dynasty = pam_investiture_crisis_catalyst_major_value
+						catalyst_the_christian_church_restored_hre_without_blessing = pam_investiture_crisis_catalyst_massive_plus_value
+						# Interactions
+						catalyst_the_christian_church_requested_realm_priest_replacement = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_the_christian_church_threatened_ecclesiastical_grant_claim = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_the_christian_church_ecclesiastical_grant_claim = pam_investiture_crisis_catalyst_major_value
+						catalyst_ask_for_influence = pam_investiture_crisis_catalyst_minor_value
+						catalyst_conditional_appointment_used = pam_investiture_crisis_catalyst_major_plus_value
+						catalyst_secular_influenced_clerical_candidacy = pam_investiture_crisis_catalyst_minor_value
+						catalyst_secular_interference_in_papal_election = pam_investiture_crisis_catalyst_major_value
+						catalyst_secular_hosted_ecumenical_council = pam_investiture_crisis_catalyst_massive_plus_value
+						catalyst_the_christian_church_stripped_cardinalate = pam_investiture_crisis_catalyst_major_value
+						catalyst_hof_bestowed_title_clergy_minor = pam_investiture_crisis_catalyst_minor_value
+						catalyst_seek_indulgences = pam_investiture_crisis_catalyst_medium_value
+						catalyst_seek_indulgences_minor = pam_investiture_crisis_catalyst_minor_value
+						catalyst_excommunicate = pam_investiture_crisis_catalyst_major_value
+						# On actions
+						catalyst_the_christian_church_papal_dynasty_capture = pam_investiture_crisis_catalyst_gargantuan_value
+						catalyst_clergy_court_chaplain_murdered = pam_investiture_crisis_catalyst_medium_value
+						catalyst_clergy_archbishop_murdered = pam_investiture_crisis_catalyst_major_value
+						catalyst_clergy_cardinal_murdered = pam_investiture_crisis_catalyst_major_value
+						catalyst_clergy_head_of_rite_murdered = pam_investiture_crisis_catalyst_major_value
+						catalyst_the_christian_church_ruler_imprisons_head_of_faith = pam_investiture_crisis_catalyst_major_plus_value
+						# A cleric was elevated to an archbishopric (Request Elevation, or a HoF grant/replacement)
+						catalyst_clergy_elevated_to_archbishopric = pam_investiture_crisis_catalyst_massive_value
+						catalyst_clergy_gained_landed_title = pam_investiture_crisis_catalyst_trickle_value
+					}
+				}
+				saeculum_obscurum = {
+					takeover_type = points
+					takeover_points = @crusade_phase_points
+					catalysts = {
+						# Great Schism
+						catalyst_the_christian_church_great_schism = 750
+						# On actions
+						catalyst_catholic_hof_weak_papal_state_control = gargantuan_situation_catalyst_gain
+						catalyst_the_christian_church_papal_dynasty_capture = gargantuan_situation_catalyst_gain
+						catalyst_the_christian_church_head_of_faith_murdered = 125
+						catalyst_the_christian_church_head_of_faith_marries = massive_situation_catalyst_gain
+						catalyst_the_christian_church_head_of_faith_has_child = massive_situation_catalyst_gain
+						catalyst_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_criminal_trait = minor_situation_catalyst_gain
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = medium_situation_catalyst_gain
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_clergy_appointed_from_same_family = major_situation_catalyst_gain
+						catalyst_clergy_marries = minor_situation_catalyst_gain
+						catalyst_clergy_has_child = minor_situation_catalyst_gain
+						# CBs
+						catalyst_the_christian_church_humiliation_war_declared = medium_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_saeculum_obscurum = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_saeculum_obscurum_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_saeculum_obscurum_hof = 125
+						catalyst_the_christian_church_antipope_declared = monumental_plus_situation_catalyst_gain
+						catalyst_the_christian_church_established_theocratic_dynasty = major_plus_situation_catalyst_gain
+						catalyst_prelate_empowered_self_with_kingdom = massive_plus_situation_catalyst_gain
+						catalyst_consecrated_kingdom_for_theocrat = major_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_appointed_monastic_cardinal = medium_situation_catalyst_gain
+						catalyst_the_christian_church_appointed_nepotistic_cardinal = major_situation_catalyst_gain
+						catalyst_the_christian_church_victory_enforced = major_situation_catalyst_gain
+						catalyst_clergy_embezzled_treasury = minor_situation_catalyst_gain
+						catalyst_clergy_withdrew_funds_from_treasury = minor_situation_catalyst_gain
+						catalyst_clergy_self_proclaimed_cardinal = medium_situation_catalyst_gain
+						catalyst_clergy_influenced_own_candidacy = minimal_situation_catalyst_gain
+						catalyst_clergy_simony = minimal_situation_catalyst_gain
+						catalyst_clergy_sold_claim = minor_situation_catalyst_gain
+						catalyst_seek_indulgences = major_situation_catalyst_gain
+						catalyst_seek_indulgences_minor = medium_situation_catalyst_gain
+						catalyst_ask_for_gold = minor_situation_catalyst_gain
+						catalyst_ask_for_gold_minor = minimal_situation_catalyst_gain
+						catalyst_hof_bestowed_title_clergy_major = monumental_plus_situation_catalyst_gain
+						catalyst_hof_bestowed_title_clergy = major_situation_catalyst_gain
+					}
+				}
+				concord = {
+					takeover_type = points
+					takeover_points = @crusade_phase_points
+					catalysts = {
+						# On actions
+						catalyst_the_christian_church_great_holy_war_won = monumental_plus_situation_catalyst_gain
+						catalyst_the_christian_church_temple_holding_created = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_completed_pilgrimage = minor_situation_catalyst_gain
+						catalyst_the_christian_church_christian_holy_site_reclaimed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_jerusalem_reclaimed = extreme_plus_situation_catalyst_gain
+						# Great Projects Catalysts
+						catalyst_great_project_cathedral_contribution = major_plus_situation_catalyst_gain
+						catalyst_great_project_cathedral_completed = monumental_plus_situation_catalyst_gain
+						catalyst_great_project_mass_rite_conversion_contribution = massive_situation_catalyst_gain
+						catalyst_clergy_unreformed_pagan_county_converted_to_faith = minimal_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_concord = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_hof = 125
+						catalyst_pope_declared_popular_core_tenet = major_situation_catalyst_gain
+						catalyst_the_christian_church_papal_bull_enacted = 30
+						catalyst_the_christian_church_antipope_removed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_consecrated_bloodline = medium_situation_catalyst_gain
+						catalyst_consecrated_kingdom_for_ruler = major_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_appointed_cardinal = minor_situation_catalyst_gain
+						catalyst_the_christian_church_clerical_region_created = massive_situation_catalyst_gain
+						catalyst_the_christian_church_white_peace_enforced = medium_situation_catalyst_gain
+						catalyst_lift_excommunication = medium_situation_catalyst_gain
+						catalyst_lift_excommunication_minor = minimal_situation_catalyst_gain
+						catalyst_declaration_of_repentance = medium_situation_catalyst_gain
+						catalyst_declaration_of_repentance_minor = minimal_situation_catalyst_gain
+						catalyst_hof_bestowed_title_major = massive_situation_catalyst_gain
+						catalyst_hof_bestowed_title = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_situation_catalyst_gain
+					}
+				}
+			}
+
+			on_end = {
+
+			}
+		}
+		#Investiture Crisis Phase - ~1076-1122AD  Low Church Authority, Lay Investiture. Similar to Pornocracy but less hedonistic, more of an inept papacy.
+		investiture_crisis = { # CRISIS
+			icon = "gfx/interface/icons/the_christian_church/phase_type_icons/investiture.dds"
+			texture = "gfx/interface/icons/the_christian_church/phase_type_illustrations_wide/crisis.dds"
+			illustration = "gfx/interface/icons/the_christian_church/phase_type_illustrations/crisis.dds"
+
+			on_start = {
+				the_christian_church_fire_event_for_participant_players_effect = { EVENT = pam_the_christian_church.0055 }
+				pam_tenet_popularity_situation_investiture_crisis_start_effect = yes
+				# Record when the timed phase began so the UI can show years remaining (pam_investiture_crisis_years_left_value).
+				set_variable = {
+					name = investiture_crisis_start_date
+					value = current_date
+				}
+				set_variable = {
+					name = investiture_council_countdown
+					value = 1
+					days = pam_investiture_crisis_duration_days
+				}
+				# The crisis can happen again
+				if = { limit = { has_variable = investiture_awaiting_council } remove_variable = investiture_awaiting_council }
+				# Seed the panel's vote estimate immediately.
+				pam_investiture_update_vote_estimate_effect = yes
+				pam_refire_great_schism_catalyst_effect = yes
+
+			}
+
+			parameters = {
+				era_type_crisis = yes
+				# Distinct from Saeculum's shared era_type_crisis
+				# This keeps conditional appointment out of the normal ecumenical council
+				the_christian_church_investiture_controversy = yes
+				# Unique to IC
+				the_christian_church_cheaper_antipope_declaration = yes
+			}
+
+			modifier_sets = {
+
+				the_christian_church_diplomacy_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_diplomacy.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_no_coronation = yes
+							the_christian_church_cheaper_clerical_appointment = yes
+							the_christian_church_clergy_puppeting_malus_major = yes
+						}
+						character_modifier = {
+							# Unique to IC
+							feudal_government_opinion = -25
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							the_christian_church_cheaper_clerical_appointment = yes
+							the_christian_church_antipope_coronations = yes
+							the_christian_church_secular_puppeting_bonus_minor = yes
+						}
+						character_modifier = {
+							# Unique to IC
+							clergy_opinion = -25
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							the_christian_church_cheaper_clerical_appointment = yes
+						}
+						character_modifier = {
+							# Unique to IC
+							feudal_government_opinion = -15
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							the_christian_church_cheaper_clerical_appointment = yes
+						}
+						character_modifier = {
+							# Unique to IC
+							clergy_opinion = -15
+						}
+					}
+				}
+
+				the_christian_church_subject_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_subject.dds"
+
+					christian_clerical_main_power_rulers = {
+						character_modifier = {
+							# Unique to IC
+							feudal_government_tax_contribution_mult = -0.25
+						}
+						parameters = {
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						character_modifier = {
+							# Unique to IC
+							ecclesiastical_government_tax_contribution_mult = -0.25
+							monthly_county_control_growth_factor = -0.5
+							monthly_county_control_decline_factor = 0.5
+						}
+						parameters = {
+							the_christian_church_personal_secular_obligations = yes
+							the_christian_church_local_secular_power = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						character_modifier = {
+							# Unique to IC
+							feudal_government_tax_contribution_mult = -0.1
+						}
+						parameters = {
+							# Standard secondary
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						character_modifier = {
+							# Unique to IC
+							ecclesiastical_government_tax_contribution_mult = -0.1
+							monthly_county_control_growth_factor = -0.25
+							monthly_county_control_decline_factor = 0.25
+						}
+						parameters = {
+							# Standard secondary
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+				}
+			}
+
+			future_phases = {
+				reform_phase = {
+					takeover_type = points
+					takeover_points = @investiture_council_outcome_points
+					catalysts = {
+						catalyst_investiture_council_settled_spiritual = @investiture_council_outcome_points
+					}
+				}
+				fragile_unity = {
+					takeover_type = points
+					takeover_points = @investiture_council_outcome_points
+					catalysts = {
+						catalyst_investiture_council_settled_temporal = @investiture_council_outcome_points
+					}
+				}
+			}
+
+			on_end = {
+			}
+		}
+		#Crusade Phase - ~1096-1192AD  (First Three) Successful Crusades result in much more Papal Legitimacy, a gradual uptick of Fervor while in Crusades, AI way more likely to choose Crusade-like tenets, etc.
+		crusade_phase = { # ZEAL
+			icon = "gfx/interface/icons/the_christian_church/phase_type_icons/crusade.dds"
+			texture = "gfx/interface/illustrations/event_story/pam_the_christian_church_crusade.dds"
+			illustration = "gfx/interface/icons/the_christian_church/phase_type_illustrations/crusade.dds"
+
+			on_start = {
+				the_christian_church_fire_event_for_participant_players_effect = { EVENT = pam_the_christian_church.0056 }
+				pam_tenet_popularity_situation_crusade_phase_start_effect = yes
+				religion:christianity_religion = {
+					every_faith = {
+						limit = { has_variable = variable_ghw_cooldown }
+						remove_variable = variable_ghw_cooldown
+					}
+				}
+				pam_refire_great_schism_catalyst_effect = yes
+			}
+
+			parameters = {
+				era_type_zeal = yes
+			}
+
+			modifier_sets = {
+				the_christian_church_religious_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_faith.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Shared with Zeal phases
+							the_christian_church_holy_site_poi_bonus = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							# Shared with Zeal phases
+							the_christian_church_holy_site_poi_bonus = yes
+						}
+					}
+				}
+
+				the_christian_church_diplomacy_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_diplomacy.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							# Shared with Zeal phases
+							the_christian_church_cheaper_bulls = yes
+							# Unique to Crusades
+							the_christian_church_can_create_kingdom_of_heaven = yes
+						}
+					}
+				}
+
+				the_christian_church_subject_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_subject.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_strong_centralization = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							the_christian_church_personal_secular_obligations = yes
+							the_christian_church_local_secular_power = yes
+						}
+					}
+
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+				}
+
+				the_christian_church_military_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_military.dds"
+					christian_clerical_main_power_rulers = {
+						character_modifier = {
+							# Unique to Crusades
+							same_culture_holy_order_hire_cost_mult = -0.33
+						}
+						parameters = {
+							# Unique to Crusades
+							the_christian_church_ghw_cooldown_reset = yes
+							the_christian_church_incite_holy_war_interaction = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						character_modifier = {
+							# Unique to Crusades
+							same_culture_holy_order_hire_cost_mult = -0.25
+							men_at_arms_recruitment_cost = -0.25
+						}
+						parameters = {
+							the_christian_church_cheaper_religious_wars = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							# Unique to Crusades
+							the_christian_church_cheaper_religious_wars = yes
+						}
+					}
+					christian_regular_heretic_rulers = {
+						parameters = {
+							# Unique to Crusades
+							the_christian_church_cheaper_religious_wars = yes
+						}
+					}
+				}
+			}
+
+			future_phases = {
+				reform_phase = {
+					takeover_type = points
+					takeover_points = @investiture_crisis_points
+					catalysts = {
+						# On actions
+						catalyst_county_converted_to_faith = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_main_power_faith_changed = gargantuan_situation_catalyst_gain
+						catalyst_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = 20
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = 20
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_clergy_hor_short_reign = major_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_converted_to_christianity = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_reform_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_hof = 125
+						catalyst_the_christian_church_founded_monastic_order = massive_plus_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_requested_legitimacy = minor_situation_catalyst_gain
+						catalyst_the_christian_church_swayed_to_rite = 2
+						catalyst_the_christian_church_study_faith_scheme_completed = medium_situation_catalyst_gain
+						catalyst_the_christian_church_requested_realm_priest_replacement = medium_situation_catalyst_gain
+						catalyst_clergy_embezzled_treasury = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_plus_situation_catalyst_gain
+					}
+				}
+				fragile_unity = {
+					takeover_type = points
+					takeover_points = @investiture_crisis_points
+					catalysts = {
+						# On actions
+						catalyst_the_christian_church_head_of_faith_murdered = 125
+						catalyst_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_the_christian_church_new_rite = 20
+						catalyst_the_christian_church_new_divergent_rite = medium_situation_catalyst_gain
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = medium_situation_catalyst_gain
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_byzantine_emperor_non_christian = major_situation_catalyst_gain
+						catalyst_the_christian_church_same_faith_ruler_war_declared = medium_situation_catalyst_gain
+						catalyst_the_christian_church_civil_war_in_christian_kingdom = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_fragile_unity = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_hof = 125
+						catalyst_pope_declared_unpopular_core_tenet = massive_situation_catalyst_gain
+						catalyst_the_christian_church_established_theocratic_dynasty = medium_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_strenghtened_claim = 20
+						catalyst_the_christian_church_clerical_region_split = major_plus_situation_catalyst_gain
+						catalyst_request_excommunication = major_situation_catalyst_gain
+						catalyst_request_excommunication_minor = minor_situation_catalyst_gain
+						catalyst_excommunicate = medium_situation_catalyst_gain
+						catalyst_excommunicate_minor = minor_situation_catalyst_gain
+						catalyst_the_christian_church_clerical_region_expanded = major_situation_catalyst_gain
+					}
+				}
+				concord = {
+					takeover_type = points
+					takeover_points = @crusade_phase_points
+					catalysts = {
+						# On actions
+						catalyst_the_christian_church_great_holy_war_won = monumental_plus_situation_catalyst_gain
+						catalyst_the_christian_church_temple_holding_created = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_completed_pilgrimage = minor_situation_catalyst_gain
+						catalyst_the_christian_church_christian_holy_site_reclaimed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_jerusalem_reclaimed = extreme_plus_situation_catalyst_gain
+						# Great Projects Catalysts
+						catalyst_great_project_cathedral_contribution = major_plus_situation_catalyst_gain
+						catalyst_great_project_cathedral_completed = monumental_plus_situation_catalyst_gain
+						catalyst_great_project_mass_rite_conversion_contribution = massive_situation_catalyst_gain
+						catalyst_clergy_unreformed_pagan_county_converted_to_faith = minimal_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_concord = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_concord_hof = 125
+						catalyst_pope_declared_popular_core_tenet = major_situation_catalyst_gain
+						catalyst_the_christian_church_papal_bull_enacted = 30
+						catalyst_the_christian_church_antipope_removed = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_consecrated_bloodline = medium_situation_catalyst_gain
+						catalyst_consecrated_kingdom_for_ruler = major_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_appointed_cardinal = minor_situation_catalyst_gain
+						catalyst_the_christian_church_clerical_region_created = massive_situation_catalyst_gain
+						catalyst_the_christian_church_white_peace_enforced = medium_situation_catalyst_gain
+						catalyst_lift_excommunication = medium_situation_catalyst_gain
+						catalyst_lift_excommunication_minor = minimal_situation_catalyst_gain
+						catalyst_declaration_of_repentance = medium_situation_catalyst_gain
+						catalyst_declaration_of_repentance_minor = minimal_situation_catalyst_gain
+						catalyst_hof_bestowed_title_major = massive_situation_catalyst_gain
+						catalyst_hof_bestowed_title = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_situation_catalyst_gain
+					}
+				}
+			}
+
+			on_end = {
+
+			}
+		}
+		# Concord phase - stable/scholasticism - ~1200–1300 Rediscovery of the Classics, Thomas Aquinas, summa style theology
+		concord = { # STABILITY
+			icon = "gfx/interface/icons/the_christian_church/phase_type_icons/concord.dds"
+			texture = "gfx/interface/icons/the_christian_church/phase_type_illustrations_wide/concord.dds"
+			illustration = "gfx/interface/icons/the_christian_church/phase_type_illustrations/concord.dds"
+
+			on_start = {
+				the_christian_church_fire_event_for_participant_players_effect = { EVENT = pam_the_christian_church.0057 }
+				pam_tenet_popularity_situation_concord_start_effect = yes
+				pam_refire_great_schism_catalyst_effect = yes
+			}
+
+			parameters = {
+				era_type_stable = yes
+				the_christian_church_faster_cathedrals = yes
+				the_christian_church_better_take_the_vows_acceptance = yes
+				the_christian_church_desire_more_cardinals = yes
+			}
+
+			modifier_sets = {
+				the_christian_church_religious_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_faith.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_increased_theocratic_heir_candidacy = yes
+							the_christian_church_more_likely_to_lift_excommunications = yes
+							the_christian_church_mending_the_schism_active = yes
+						}
+						character_modifier = {
+							church_holding_build_gold_cost = -0.10
+							church_holding_build_speed = -0.10
+							domicile_build_gold_cost = -0.20
+							domicile_build_speed = -0.20
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							the_christian_church_mending_the_schism_active = yes
+						}
+						character_modifier = {
+							church_holding_build_gold_cost = -0.15
+							church_holding_holding_build_gold_cost = -0.10
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							the_christian_church_increased_theocratic_heir_candidacy = yes
+							the_christian_church_mending_the_schism_active = yes
+						}
+						character_modifier = {
+							church_holding_build_gold_cost = -0.10
+							church_holding_build_speed = -0.10
+							domicile_build_gold_cost = -0.20
+							domicile_build_speed = -0.20
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							the_christian_church_mending_the_schism_active = yes
+						}
+						character_modifier = {
+							church_holding_build_gold_cost = -0.15
+							church_holding_holding_build_gold_cost = -0.10
+						}
+					}
+					christian_clerical_heretic_rulers = {
+						parameters = {
+							the_christian_church_seek_communion = yes
+						}
+					}
+					christian_regular_heretic_rulers = {
+						parameters = {
+							the_christian_church_seek_communion = yes
+						}
+					}
+				}
+
+				the_christian_church_diplomacy_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_diplomacy.dds"
+
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_clergy_puppeting_bonus_major = yes
+						}
+					}
+
+					christian_regular_main_power_rulers = {
+						parameters = {
+							the_christian_church_secular_puppeting_malus_minor = yes
+						}
+					}
+
+					christian_clerical_heretic_rulers = {
+						character_modifier = {
+							clergy_opinion = -20
+						}
+					}
+					christian_regular_heretic_rulers = {
+						character_modifier = {
+							clergy_opinion = -15
+						}
+					}
+				}
+
+				the_christian_church_subject_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_subject.dds"
+					christian_clerical_main_power_rulers = {
+						parameters = {
+							the_christian_church_strong_centralization = yes
+						}
+					}
+					christian_regular_main_power_rulers = {
+						parameters = {
+							the_christian_church_faster_county_control_task = yes
+							the_christian_church_fixed_secular_obligations = yes
+						}
+					}
+					christian_clerical_secondary_powers_rulers = {
+						parameters = {
+							# Standard for secondary
+							the_christian_church_mild_centralization = yes
+						}
+					}
+					christian_regular_secondary_powers_rulers = {
+						parameters = {
+							the_christian_church_faster_county_control_task = yes
+							# Standard for secondary
+							the_christian_church_personal_secular_obligations = yes
+						}
+					}
+				}
+
+				the_christian_church_military_effects = {
+					icon = "gfx/interface/icons/situations/situation_modifier_military.dds"
+
+					christian_clerical_main_power_rulers = {
+						character_modifier = {
+							army_maintenance_mult = 0.15
+							men_at_arms_maintenance = 0.1
+						}
+					}
+					christian_regular_main_power_rulers = {
+						character_modifier = {
+							army_maintenance_mult = 0.05
+							men_at_arms_maintenance = 0.05
+						}
+					}
+				}
+			}
+
+			future_phases = {
+				reform_phase = {
+					takeover_type = points
+					takeover_points = @investiture_crisis_points
+					catalysts = {
+						# On actions
+						catalyst_county_converted_to_faith = minimal_situation_catalyst_gain
+						catalyst_the_christian_church_main_power_faith_changed = gargantuan_situation_catalyst_gain
+						catalyst_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = 20
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = 20
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_clergy_hor_short_reign = major_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_converted_to_christianity = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_reform_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_reform_phase_hof = 125
+						catalyst_the_christian_church_founded_monastic_order = massive_plus_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_requested_legitimacy = minor_situation_catalyst_gain
+						catalyst_the_christian_church_swayed_to_rite = 2
+						catalyst_the_christian_church_study_faith_scheme_completed = medium_situation_catalyst_gain
+						catalyst_the_christian_church_requested_realm_priest_replacement = medium_situation_catalyst_gain
+						catalyst_clergy_embezzled_treasury = medium_situation_catalyst_gain
+						# EC
+						catalyst_hosted_ecumenical_council = massive_plus_situation_catalyst_gain
+					}
+				}
+				fragile_unity = {
+					takeover_type = points
+					takeover_points = @crusade_phase_points
+					catalysts = {
+						# On actions
+						catalyst_the_christian_church_head_of_faith_murdered = 125
+						catalyst_exposed_forbidden_personal_tenet = minor_situation_catalyst_gain
+						catalyst_clergy_exposed_forbidden_personal_tenet = medium_situation_catalyst_gain
+						catalyst_the_christian_church_new_rite = 20
+						catalyst_the_christian_church_new_divergent_rite = medium_situation_catalyst_gain
+						# PAM heresy outbreaks
+						catalyst_heresy_light_outbreak = medium_situation_catalyst_gain
+						catalyst_heresy_dangerous_rite = major_situation_catalyst_gain
+						catalyst_heresy_historical_outbreak = monumental_situation_catalyst_gain
+						catalyst_byzantine_emperor_non_christian = major_situation_catalyst_gain
+						catalyst_the_christian_church_same_faith_ruler_war_declared = medium_situation_catalyst_gain
+						catalyst_the_christian_church_civil_war_in_christian_kingdom = minor_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_fragile_unity = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_fragile_unity_hof = 125
+						catalyst_pope_declared_unpopular_core_tenet = massive_situation_catalyst_gain
+						catalyst_the_christian_church_established_theocratic_dynasty = medium_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_strenghtened_claim = 20
+						catalyst_the_christian_church_clerical_region_split = major_plus_situation_catalyst_gain
+						catalyst_request_excommunication = major_situation_catalyst_gain
+						catalyst_request_excommunication_minor = minor_situation_catalyst_gain
+						catalyst_excommunicate = medium_situation_catalyst_gain
+						catalyst_excommunicate_minor = minor_situation_catalyst_gain
+					}
+				}
+				conversion_phase = {
+					takeover_type = points
+					takeover_points = @crusade_phase_points
+					catalysts = {
+						# On actions
+						catalyst_county_converted_from_faith = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_converted_from_christianity = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_hired_non_christian_councillor = medium_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_married_non_christian = medium_situation_catalyst_gain
+						catalyst_neighboring_unreformed_pagan_raid_you = 2
+						# CBs
+						catalyst_the_christian_church_excommunication_war_declared = major_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_conversion_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_conversion_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_conversion_phase_hof = 125
+						catalyst_the_christian_church_founded_monastic_order = massive_plus_situation_catalyst_gain
+						catalyst_the_christian_church_staged_act_of_devotion = minor_situation_catalyst_gain
+						# Interactions
+						catalyst_the_christian_church_swayed_to_rite = 2
+					}
+				}
+				crusade_phase = {
+					takeover_type = points
+					takeover_points = @crusade_phase_points
+					catalysts = {
+						# On actions
+						catalyst_lose_jerusalem = 750
+						catalyst_lose_holy_site = monumental_plus_situation_catalyst_gain
+						catalyst_non_christian_kingdom_in_europe = monumental_situation_catalyst_gain
+						catalyst_byzantine_emperor_non_christian = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_great_holy_war_declared_on_christian = monumental_situation_catalyst_gain
+						catalyst_the_christian_church_great_holy_war_lost = massive_plus_situation_catalyst_gain
+						catalyst_the_christian_church_non_christian_peasant_revolt_raised = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_died_in_battle_against_non_christian = minor_situation_catalyst_gain
+						catalyst_the_christian_church_ruler_completed_pilgrimage = minor_situation_catalyst_gain
+						catalyst_clergy_hired_holy_order = medium_situation_catalyst_gain
+						catalyst_neighboring_unreformed_pagan_raid_you = minimal_situation_catalyst_gain
+						catalyst_clergy_hired_mercenaries = minimal_situation_catalyst_gain
+						#CBs
+						catalyst_major_holy_war_incited = major_situation_catalyst_gain
+						catalyst_holy_war_incited = major_situation_catalyst_gain
+						catalyst_minor_holy_war_incited = medium_situation_catalyst_gain
+						# Decisions
+						catalyst_shaped_the_christian_church_crusade_phase = massive_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_crusade_phase_dynasty = monumental_situation_catalyst_gain
+						catalyst_shaped_the_christian_church_crusade_phase_hof = 125
+						catalyst_the_christian_church_founded_military_order = massive_plus_situation_catalyst_gain
+					}
+				}
+			}
+
+			on_end = {
+
+			}
+		}
+	}
+
+	situation_decisions = {
+		pam_shape_the_christian_church_decision
+		pam_prevent_great_schism_decision
+		pam_cause_great_schism_decision
+		pam_mend_great_schism_decision
+		mend_the_great_schism_decision
+		pam_unite_miaphysite_churches_decision
+		pam_kingdom_of_heaven_decision
+		petition_head_of_faith_decision
+	}
+
+	##################################################
+	# UI
+	##################################################
+	icon = {
+		trigger = {
+			situation_current_phase = fragile_unity
+		}
+		reference = "gfx/interface/icons/the_christian_church/phase_type_icons/fragile_unity.dds"
+	}
+
+	icon = {
+		trigger = {
+			situation_current_phase = saeculum_obscurum
+		}
+		reference = "gfx/interface/icons/the_christian_church/phase_type_icons/saeculum_obscurum.dds"
+	}
+
+	icon = {
+		trigger = {
+			situation_current_phase = conversion_phase
+		}
+		reference = "gfx/interface/icons/the_christian_church/phase_type_icons/conversion.dds"
+	}
+
+	icon = {
+		trigger = {
+			situation_current_phase = reform_phase
+		}
+		reference = "gfx/interface/icons/the_christian_church/phase_type_icons/reform.dds"
+	}
+
+	icon = {
+		trigger = {
+			situation_current_phase = investiture_crisis
+		}
+		reference = "gfx/interface/icons/the_christian_church/phase_type_icons/investiture.dds"
+	}
+
+	icon = {
+		trigger = {
+			situation_current_phase = crusade_phase
+		}
+		reference = "gfx/interface/icons/the_christian_church/phase_type_icons/crusade.dds"
+	}
+
+	icon = {
+		trigger = {
+			situation_current_phase = concord
+		}
+		reference = "gfx/interface/icons/the_christian_church/phase_type_icons/concord.dds"
+	}
+}

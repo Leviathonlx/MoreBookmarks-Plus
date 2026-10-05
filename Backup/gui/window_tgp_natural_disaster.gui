@@ -1,0 +1,1059 @@
+﻿######################################################
+##################### SITUATION ######################
+######################################################
+window = {
+	name = "window_tgp_natural_disaster"
+	widgetid = "window_tgp_natural_disaster"
+	datacontext = "[SituationWindow.GetSituation]"
+	datacontext = "[Situation.GetTopSubRegion]"
+	datacontext = "[GetVariableSystem]"
+	datacontext = "[GetPlayer]"
+	parentanchor = top|right
+	layer = windows_layer
+	movable = no
+	allow_outside = yes
+
+	using = Window_Size_MainTab
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+		using = Sound_WindowShow_Standard
+		using = Window_Position_MainTab
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+		using = Sound_WindowHide_Standard
+		using = Window_Position_MainTab_Hide
+	}
+
+	margin_widget = {
+		size = { 100% 100% }
+		margin = { 0 26 }
+		margin_right = 13
+
+		widget = {
+			size = { 100% 100% }
+			datacontext = "[SituationSubRegion.GetCurrentPhase]"
+
+			vbox = {
+				using = Window_Margins
+
+				layoutpolicy_vertical = expanding
+				layoutpolicy_horizontal = expanding
+
+				# Header and illustration
+				vbox = {
+					layoutpolicy_horizontal = expanding
+
+					header_pattern = {
+						layoutpolicy_horizontal = expanding
+
+						blockoverride "header_text"
+						{
+							text = "[Situation.GetNameNoTooltip]"
+						}
+
+						blockoverride "button_back"
+						{
+							onclick = "[OpenGameView( 'situations' )]"
+						}
+
+						blockoverride "button_close"
+						{
+							onclick = "[SituationWindow.Close]"
+						}
+
+						blockoverride "extra_buttons"
+						{
+							button_go_to_my_location = {
+								visible = "[Situation.GetCenterProvince.IsValid]"
+								datacontext = "[Situation.GetCenterProvince]"
+								onclick = "[DefaultOnCoatOfArmsRightClick(Province.GetTitle.GetID)]"
+								tooltip = "GOTO_PROVINCE_TT"
+							}
+						}
+					}
+
+					# current phase header image
+					proportional_icon = {
+						name = "illustration_normal"
+						size = { 550 180 }
+						visible = "[Not( EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey ) )]"
+
+						texture = "[Situation.GetTopCurrentPhase.GetType.GetIllustration]"
+
+						using = Mask_Rough_Edges
+					}
+					proportional_icon = {
+						name = "illustration_impact"
+						size = { 550 180 }
+						visible = "[EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+
+						texture = "[Situation.GetTopCurrentPhase.GetType.GetIllustration]"
+						using = Mask_Rough_Edges
+
+						icon =	{
+							name = "event_window_widget_vfx_earthquake"
+							size = { 100% 100% }
+							texture = "gfx/interface/window_vfx/noise_01.dds"
+							gfxtype = icongfx
+							effectname = "Earthquake"
+							shaderfile = "gfx/FX/pdxgui_event_vfx.shader"
+							mipmaplodbias = -1
+							alwaystransparent = yes
+							activity_locale_vfx = {
+								size = { 100% 100% }
+								position = { 0.0% 0.0% }
+								entity_instance = "ui_earthquake"
+							}
+						}
+					}
+				}
+
+				# Severity and fatalities
+				hbox = {
+					name = "severity_and_fatalities"
+					margin = { 12 4 }
+					layoutpolicy_horizontal = expanding
+
+					visible = "[SituationSubRegion.IsValid]"
+
+					background = {
+						using = Background_Area_Dark
+						margin = { 4 4 }
+						alpha = 0.4
+					}
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						spacing = 8
+
+						text_single = {
+							text = "[Situation.GetSeverityDesc]"
+						}
+
+						hbox_severity_display = { }
+
+						expand = {}
+					}
+
+					# fatalities
+					text_single = {
+
+						text = "SITUATION_WINDOW_CURRENT_PHASE_FATALITIES"
+						default_format = "#Weak"
+						align = nobaseline
+					}
+				}
+
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					# Phases progress bars and effects
+					hbox  = {
+						layoutpolicy_horizontal = expanding
+						margin_top = 15
+
+						##########
+						# Progressbar (custom built)
+						##########
+						widget = {
+							allow_outside = yes
+							size = { 70 180 }
+
+							widget = {
+								datacontext = "[SituationWindow.GetPhaseProgressComplexBar( SituationSubRegion.Self )]"
+								parentanchor = left|vcenter
+								position = { 15 0 }
+								size = { 30 180 }
+								allow_outside = yes
+
+								icon = {
+									parentanchor = center
+									widgetanchor = center
+									size = { 20 120 }
+									texture = "gfx/interface/progressbars/progress_black.dds"
+								}
+
+								# two adjacent progress bars for the two phases progress
+								progressbar_standard = {
+									name = "impact_progress"
+									visible = "[EqualTo_string( 'warning' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+									size = { 20 40 }
+									position = { 0 34 }
+									parentanchor = top|hcenter
+									direction = vertical
+
+									progresstexture = "gfx/interface/progressbars/progress_red_bg.dds"
+									noprogresstexture = "gfx/interface/progressbars/progress_red.dds"
+
+									min = 0
+									max = 1
+									value = "[Subtract_CFixedPoint( '(CFixedPoint)1', Situation.GetTopCurrentPhase.GetRelativeProgress )]"
+								}
+
+								progressbar_standard = {
+									name = "impact_full"
+									visible = "[Or(EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey ),EqualTo_string( 'recovery' , Situation.GetTopCurrentPhase.GetType.GetKey ))]"
+									size = { 20 40 }
+									position = { 0 34 }
+									parentanchor = top|hcenter
+									direction = vertical
+
+									progresstexture = "gfx/interface/progressbars/progress_red_bg.dds"
+									noprogresstexture = "gfx/interface/progressbars/progress_red.dds"
+
+									min = 0
+									max = 1
+									value = 0
+								}
+
+								progressbar_standard = {
+									name = "recovery_progress"
+									visible = "[EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+									size = { 20 40 }
+									position = { 0 -34 }
+									parentanchor = bottom|hcenter
+									widgetanchor = bottom|hcenter
+									direction = vertical
+
+									progresstexture = "gfx/interface/progressbars/progress_blue_bg.dds"
+									noprogresstexture = "gfx/interface/progressbars/progress_blue.dds"
+
+									min = 0
+									max = 1
+									value = "[Subtract_CFixedPoint( '(CFixedPoint)1', Situation.GetTopCurrentPhase.GetRelativeProgress )]"
+								}
+
+								progressbar_standard = {
+									name = "recovery_full"
+									visible = "[EqualTo_string( 'recovery' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+									size = { 20 40 }
+									position = { 0 -34 }
+									parentanchor = bottom|hcenter
+									widgetanchor = bottom|hcenter
+									direction = vertical
+
+									progresstexture = "gfx/interface/progressbars/progress_blue_bg.dds"
+									noprogresstexture = "gfx/interface/progressbars/progress_blue.dds"
+
+									min = 0
+									max = 1
+									value = 0
+								}
+
+								# markers
+								# Warning
+								widget_level_marker = {
+									name = "warning_marker"
+									allow_outside = yes
+									parentanchor = top|hcenter
+									widgetanchor = top|hcenter
+
+									icon = {
+										name = "warning_phase_icon"
+										datacontext = "[Situation.GetType.GetPhaseType( 'warning' )]"
+										size = { 40 40 }
+										texture = "[SituationPhaseType.GetIcon]"
+										tooltipwidget = {
+											using = situation_phase_type_natural_disaster_tooltip
+										}
+										using = tooltip_se
+										parentanchor = center
+										enabled = "[EqualTo_string( 'warning' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+									}
+
+									blockoverride "highlight_addon" {
+										visible = "[EqualTo_string( 'warning' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+									}
+								}
+
+								# Impact
+								widget_level_marker = {
+									name = "impact_marker"
+									allow_outside = yes
+									parentanchor = center
+									widgetanchor = center
+
+									icon = {
+										name = "impact_phase_icon"
+										datacontext = "[Situation.GetType.GetPhaseType( 'impact' )]"
+										size = { 40 40 }
+										texture = "[SituationPhaseType.GetIcon]"
+										tooltipwidget = {
+											using = situation_phase_type_natural_disaster_tooltip
+										}
+										using = tooltip_se
+										parentanchor = center
+										enabled = "[Not( EqualTo_string( 'recovery' , Situation.GetTopCurrentPhase.GetType.GetKey ) )]"
+									}
+
+									blockoverride "highlight_addon" {
+										visible = "[EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+									}
+								}
+
+								# recovery
+								widget_level_marker = {
+									name = "recovery_marker"
+									allow_outside = yes
+									parentanchor = bottom|hcenter
+									widgetanchor = bottom|hcenter
+
+									icon = {
+										name = "recovery_phase_icon"
+										datacontext = "[Situation.GetType.GetPhaseType( 'recovery' )]"
+										size = { 40 40 }
+										texture = "[SituationPhaseType.GetIcon]"
+										tooltipwidget = {
+											using = situation_phase_type_natural_disaster_tooltip
+										}
+										using = tooltip_se
+										parentanchor = center
+									}
+
+									blockoverride "highlight_addon" {
+										visible = "[EqualTo_string( 'recovery' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+									}
+								}
+							}
+						}
+
+						# EFFECTS
+						vbox = {
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = expanding
+
+							# use a different background for each phase
+							vbox_current_phase_desc = {
+								visible = "[EqualTo_string( 'warning' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+								blockoverride "tint_color"
+								{
+									color = { 1 0.8 0 0.4 }
+								}
+							}
+
+							vbox_current_phase_desc = {
+								visible = "[EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+							}
+
+							vbox_current_phase_desc = {
+								visible = "[EqualTo_string( 'recovery' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+								blockoverride "tint_color"
+								{
+									color = { 0 0.4 0.7 0.4 }
+								}
+							}
+
+							spacer = { size = { 0 10 } }
+
+							divider_light = {
+								layoutpolicy_horizontal = expanding
+							}
+
+							spacer = { size = { 0 10 } }
+
+							# EFFECTS LIST
+							vbox = {
+								layoutpolicy_horizontal = expanding
+								text_single = {
+									margin_top = 10
+									layoutpolicy_horizontal = expanding
+
+									text = "SITUATION_WINDOW_PHASE_EFFECTS"
+									align = nobaseline
+								}
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+
+									fixedgridbox = {
+										visible = "[And(Not(EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )), DataModelHasItems(SituationSubRegion.GetCurrentPhase.GetType.GetModifierNamedSets))]"
+										name = "named_effect_sets"
+										layoutpolicy_horizontal = expanding
+
+										addcolumn = 48
+										addrow = 48
+										setitemsizefromcell = yes
+										datamodel_wrap = 6
+										maxhorizontalslots = 6
+										maxverticalslots = 2
+										flipdirection = yes
+										layoutanchor = topleft
+
+										datamodel = "[SituationSubRegion.GetCurrentPhase.GetType.GetModifierNamedSets]"
+										item = {
+											button_phase_named_set_item = {}
+										}
+									}
+
+									text_single = {
+										visible = "[IsDataModelEmpty(SituationSubRegion.GetCurrentPhase.GetType.GetModifierNamedSets)]"
+										text = "NONE"
+										default_format = "#weak"
+									}
+
+									expand = {}
+								}
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+
+									text_single = {
+										visible = "[EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+										text = "SITUATION_NATURAL_DISASTER_IMPACT_EFFECTS"
+									}
+
+									expand = {}
+								}
+
+							}
+
+							expand = {}
+						}
+
+					}
+
+					# Participant group
+					vbox = {
+						datacontext = "[Situation.GetTopCharacterParticipantGroup( GetPlayer )]"
+						datacontext = "[SituationWindow.AccessParticipantCharacterList]"
+
+						layoutpolicy_horizontal = expanding
+						margin = { 10 5 }
+
+						text_label_center = {
+							layoutpolicy_horizontal = expanding
+							text = "NATURAL_DISASTER_PARTICIPANT_HEADER"
+						}
+
+						hbox = {
+							margin_top = 4
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = expanding
+
+							icon = {
+								visible = "[SituationParticipantGroup.IsValid]"
+
+								size = { 40 40 }
+								texture = "[SituationParticipantGroup.GetType.GetIcon]"
+
+								modify_texture = {
+									texture = "gfx/interface/colors/colors_textured.dds"
+									framesize = { 96 96 }
+									frame = 7
+									alpha = 1
+								}
+
+								background = {
+									texture = "gfx/interface/icons/struggle_banners/icon_background_dark.dds"
+									margin = { 5 5 }
+								}
+							}
+
+							vbox_participant_group_summary = { }
+
+							expand = {}
+
+							button_standard = {
+								size = { 180 32 }
+								onclick = "[SituationParticipantCharacterList.Toggle]"
+								down = "[SituationParticipantCharacterList.IsVisible]"
+								text = "SITUATION_PARTICIPANT_GROUP_VIEW_ALL"
+							}
+						}
+					}
+					expand = {}
+				}
+				vbox_actionable_section = {
+					margin = { 0 12 }
+				}
+			}
+		}
+	}
+
+	window_natural_disaster_participant_groups = {
+		datacontext = "[SituationWindow.AccessParticipantCharacterList]"
+		datacontext = "[SituationParticipantCharacterList.AccessCharacterList]"
+		visible = "[SituationParticipantCharacterList.IsVisible]"
+
+		datacontext = "[SituationWindow.GetSelectedSubRegion]"
+		blockoverride "header_text"
+		{
+			text = "[SituationWindow.GetParticipationWindowHeader]"
+		}
+	}
+}
+
+types NaturalDisaster
+{
+	type hbox_severity_display = hbox
+	{
+		margin_top = 6
+
+		# first icon
+		icon_flat_standard = {
+			size = { 30 30 }
+			texture = "gfx/interface/icons/flat_icons/natural_disaster.dds"
+
+			glow = {
+				glow_radius = 3
+				using = Glow_Standard
+				using = Color_Black
+				alpha = 1
+			}
+		}
+
+		# second icon
+		icon_flat_standard = {
+			visible = "[GreaterThan_CFixedPoint(Situation.MakeScope.Var( 'severity' ).GetValue, '(CFixedPoint)1' )]"
+			size = { 30 30 }
+			texture = "gfx/interface/icons/flat_icons/natural_disaster.dds"
+
+			glow = {
+				glow_radius = 3
+				using = Glow_Standard
+				using = Color_Black
+				alpha = 1
+			}
+		}
+
+		icon_flat_standard_black = {
+			visible = "[Not( GreaterThan_CFixedPoint(Situation.MakeScope.Var( 'severity' ).GetValue, '(CFixedPoint)1' ) )]"
+			size = { 30 30 }
+			texture = "gfx/interface/icons/flat_icons/natural_disaster.dds"
+
+			glow = {
+				glow_radius = 4
+				using = Glow_Standard
+				using = Color_Grey
+				alpha = 0.4
+			}
+		}
+
+		# third icon
+		icon_flat_standard = {
+			visible = "[GreaterThan_CFixedPoint(Situation.MakeScope.Var( 'severity' ).GetValue, '(CFixedPoint)2' )]"
+			size = { 30 30 }
+			texture = "gfx/interface/icons/flat_icons/natural_disaster.dds"
+
+			glow = {
+				glow_radius = 3
+				using = Glow_Standard
+				using = Color_Black
+				alpha = 1
+			}
+		}
+
+		icon_flat_standard_black = {
+			visible = "[Not( GreaterThan_CFixedPoint(Situation.MakeScope.Var( 'severity' ).GetValue, '(CFixedPoint)2' ) )]"
+			size = { 30 30 }
+			texture = "gfx/interface/icons/flat_icons/natural_disaster.dds"
+
+			glow = {
+				glow_radius = 4
+				using = Glow_Standard
+				using = Color_Grey
+				alpha = 0.4
+			}
+		}
+	}
+
+	type vbox_actionable_section = vbox
+	{
+		layoutpolicy_horizontal = expanding
+
+		vbox = {
+			visible = "[Situation.GetGreatProject( GetPlayer ).IsValid]"
+			button_project_item = {
+				datacontext = "[Situation.GetGreatProject( GetPlayer )]"
+				layoutpolicy_horizontal = expanding
+
+				blockoverride "size_illustration"
+				{
+					position = { -2 0 }
+					size = { 500 100 }
+				}
+			}
+		}
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+
+			margin = { 5 5 }
+
+			background = {
+				using = Background_Area
+			}
+
+			text_label_center = {
+				visible = "[Or(EqualTo_string( 'warning' , Situation.GetTopCurrentPhase.GetType.GetKey ), EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey ))]"
+				layoutpolicy_horizontal = expanding
+				text = "SITUATION_RECOMMENDATIONS_HEADER"
+			}
+
+			vbox = {
+				margin_top = 4
+				spacing = 8
+				text_multi = {
+					visible = "[EqualTo_string( 'warning' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+					autoresize = yes
+					max_width = 500
+					text = "situation_disaster_warning_description"
+				}
+
+				text_multi = {
+					visible = "[EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+					autoresize = yes
+					max_width = 500
+					text = "situation_disaster_impact_description"
+				}
+
+				text_multi = {
+					visible = "[EqualTo_string( 'recovery' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+					autoresize = yes
+					max_width = 500
+					text = "situation_disaster_recovery_description"
+				}
+
+				text_multi = {
+					visible = "[EqualTo_string( 'warning' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+					autoresize = yes
+					max_width = 500
+					text = "situation_disaster_warning_recommendations"
+					default_format = "#help"
+				}
+
+				text_multi = {
+					visible = "[EqualTo_string( 'impact' , Situation.GetTopCurrentPhase.GetType.GetKey )]"
+					autoresize = yes
+					max_width = 500
+					text = "situation_disaster_impact_recommendations"
+					default_format = "#help"
+				}
+			}
+		}
+
+	}
+
+	type window_natural_disaster_participant_groups = window  {
+		name = "window_natural_disaster_participant_groups"
+		widgetanchor = right
+		position = { 30 100 }
+		size = { 740 82% }
+
+		layer = middle
+		movable = yes
+
+		using = Window_Background
+		using = Window_Decoration_Spike
+		using = Window_Size_CharacterList
+
+		state = {
+			name = _show
+			using = Animation_FadeIn_Quick
+		}
+
+		state = {
+			name = _hide
+			using = Animation_FadeOut_Quick
+		}
+
+		vbox = {
+			using = Window_Margins
+
+			header_pattern = {
+				layoutpolicy_horizontal = expanding
+
+				blockoverride "header_text"
+				{
+					layoutpolicy_horizontal = expanding
+					text = "SITUATION_NATURAL_DISASTER_PARTICIPANT_WINDOW_HEADER_SINGLE_SUBREGION"
+					max_width = 451
+				}
+
+				blockoverride "button_close"
+				{
+					onclick = "[SituationParticipantCharacterList.Close]"
+				}
+			}
+
+			text_label_left = {
+				layoutpolicy_horizontal = expanding
+				margin_left = 8
+				text = "SITUATION_NATURAL_DISASTER_PARTICIPANT_GROUPS_TITLE"
+			}
+
+			hbox = {
+				name = "participant_groups_overview"
+				layoutpolicy_horizontal = expanding
+
+				background = {
+					using = Background_Area
+					margin = { 0 4 }
+				}
+
+				flowcontainer = {
+					layoutstretchfactor_horizontal = 50
+
+					datamodel = "[SituationSubRegion.GetParticipantGroups]"
+					spacing = 10
+					margin = { 10 10 }
+
+					item = {
+						button = {
+							size = { 46 46 }
+							visible = "[SituationParticipantGroup.IsValid]"
+							onclick = "[SituationParticipantCharacterList.SetSelectedParticipantGroup( SituationParticipantGroup.Self )]"
+							tooltip = "[SituationParticipantGroup.GetName]"
+
+							icon = {
+								visible = "[SituationParticipantCharacterList.IsParticipantGroupSelected( SituationParticipantGroup.Self )]"
+								parentanchor = center
+
+								texture = "gfx/interface/buttons/button_round_frame.dds"
+								size = { 58 58 }
+								color = { 0.75 0.75 0.65 1 }
+
+								modify_texture = {
+									texture = "gfx/interface/colors/gold.dds"
+								}
+							}
+
+							icon_round_button_base = {
+								parentanchor = center
+								size = { 100% 100% }
+								enabled = "[Not( SituationParticipantCharacterList.IsParticipantGroupSelected( SituationParticipantGroup.Self ) )]"
+							}
+
+							icon = {
+								parentanchor = center
+								size = { 36 36 }
+
+								visible = "[SituationParticipantCharacterList.IsParticipantGroupSelected( SituationParticipantGroup.Self )]"
+								texture = "[SituationParticipantGroup.GetType.GetIcon]"
+								modify_texture = {
+									texture = "gfx/interface/colors/colors_textured.dds"
+									framesize = { 96 96 }
+									frame = 1
+								}
+
+							}
+
+							icon = {
+								parentanchor = center
+								size = { 36 36 }
+
+								visible = "[Not( SituationParticipantCharacterList.IsParticipantGroupSelected( SituationParticipantGroup.Self ) )]"
+								texture = "[SituationParticipantGroup.GetType.GetIcon]"
+								alpha = "[Select_float(SituationParticipantCharacterList.IsParticipantGroupSelected( SituationParticipantGroup.Self ),'(float)1.0','(float)0.6')]"
+								modify_texture = {
+									texture = "gfx/interface/colors/colors_textured.dds"
+									framesize = { 96 96 }
+									frame = 1
+								}
+
+							}
+						}
+					}
+				}
+
+				vbox_participant_group_summary = {
+					layoutpolicy_vertical = expanding
+					layoutpolicy_horizontal = expanding
+					layoutstretchfactor_horizontal = 50
+
+					datacontext = "[SituationParticipantCharacterList.GetSelectedParticipantGroup]"
+				}
+			}
+
+			vbox_character_list = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				blockoverride "sort_buttons"
+				{
+					blockoverride "filters_visible" {
+						visible = no
+					}
+
+					hbox_list_sort_buttons = {
+						layoutpolicy_horizontal = expanding
+
+						blockoverride "skill_sort_buttons" {}
+					}
+				}
+
+				blockoverride "skill_sort_buttons" {}
+
+				blockoverride "scrollbox_empty_visibility"
+				{
+					layoutpolicy_vertical = expanding
+					visible = "[Not( CharacterSelectionList.HasItems )]"
+					text = "SITUATION_PARTICIPANT_WINDOW_PARTICIPANT_EMPTY"
+				}
+
+				blockoverride "container_implementation"
+				{
+					fixedgridbox = {
+						addcolumn = 630
+						addrow = 92
+
+						name = "characters_grid"
+						datamodel_reuse_widgets = yes
+						datamodel = "[CharacterSelectionList.GetList]"
+						visible = "[Not(CharacterSelectionList.IsBuildingList)]"
+
+						item = {
+							widget_character_list_item_finder = {
+								size = { 630 94 }
+								blockoverride "character_relation" {}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	type vbox_participant_group_summary = vbox
+	{
+		margin_left = 10
+		ignoreinvisible = yes
+
+		text_single = {
+			layoutpolicy_horizontal = expanding
+			text = "[SituationParticipantGroup.GetName]"
+			align = nobaseline
+		}
+
+		text_single = {
+			layoutpolicy_horizontal = expanding
+			text = "SITUATION_PARTICIPANT_GROUP_SUBTITLE"
+			align = nobaseline
+			default_format = "#Weak"
+		}
+
+		text_single = {
+			visible = "[SituationParticipantGroup.IsCharacterParticipant( Character.Self )]"
+			layoutpolicy_horizontal = expanding
+			text = "SITUATION_PARTICIPANT_YOUR_GROUP_SUBTITLE"
+			align = nobaseline
+			default_format = "#Weak"
+		}
+
+		text_single = {
+			visible = "[Not(SituationParticipantGroup.IsCharacterParticipant( Character.Self ))]"
+			layoutpolicy_horizontal = expanding
+			text = "SITUATION_PARTICIPANT_NOT_YOUR_GROUP_SUBTITLE"
+			align = nobaseline
+			default_format = "#Weak"
+		}
+	}
+
+	type vbox_current_phase_desc = vbox
+	{
+		name = "phase_desc"
+		layoutpolicy_horizontal = expanding
+		spacing = 2
+		margin_left = 4
+
+		using = Severity_Background_Left
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			text_single = {
+				text = "SITUATION_WINDOW_CURRENT_PHASE"
+			}
+			expand = {}
+		}
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			text_single = {
+				text = "SITUATION_CURRENT_PHASE_NAME"
+				default_format = "#T"
+			}
+			expand = {}
+		}
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			text_single = {
+				text = "SITUATION_CURRENT_PHASE_ENDS"
+				align = nobaseline
+			}
+			expand = {}
+		}
+	}
+
+}
+
+template Severity_Background_Left
+{
+	background = {
+		margin_left = 12
+		margin_right = 4
+		margin_bottom = 4
+
+		texture = "gfx/interface/component_tiles/tile_title_bg_01.dds"
+		spriteType = Corneredtiled
+		spriteborder = { 40 8 }
+		texture_density = 2
+
+		modify_texture = {
+			name = "mask"
+			texture = "gfx/interface/component_masks/mask_fade_horizontal.dds"
+			spriteType = Corneredstretched
+			spriteborder = { 0 0 }
+			blend_mode = alphamultiply
+			mirror = horizontal
+		}
+
+		modify_texture = {
+			block "tint_color"
+			{
+				color = { 0.8 0 0 0.4 }
+			}
+			blend_mode = normal
+		}
+	}
+}
+template situation_phase_type_natural_disaster_tooltip {
+	container = {
+		alwaystransparent = no
+
+		object_tooltip_pop_out = {
+			blockoverride "title_text" {
+				margin = { 0 5 }
+				text = "[SituationPhaseType.GetNameNoTooltip]"
+				align = nobaseline
+				default_format = "#T"
+			}
+
+			blockoverride "main_description" {
+				vbox = {
+					name = "phase_type_desc"
+					datacontext = "[SituationPhaseType.GetParentSituationType]"
+					datacontext = "[GetSituationOfType( SituationType.Self )]"
+					layoutpolicy_horizontal = expanding
+
+					textbox = {
+						name = "main_description"
+						layoutpolicy_horizontal = expanding
+						max_width = 400
+						margin = { 0 5 }
+						using = DefaultTooltipText
+						multiline = yes
+						text = "[SituationPhaseType.GetDesc]"
+						fonttintcolor = "[TooltipInfo.GetTintColor]"
+						alwaystransparent = no
+					}
+
+					spacer = {
+						size = { 0 10 }
+					}
+
+					vbox = {
+						visible = "[And( SituationPhaseType.IsValid, Not( SituationPhaseType.GetParentSituationType.IsGuiTooltipGroupFocused ) )]"
+						layoutpolicy_horizontal = expanding
+						spacing = 8
+
+						hbox = {
+							visible = "[And(Not(EqualTo_string( 'impact' , SituationPhaseType.GetKey )), GreaterThan_int32( GetDataModelSize(SituationPhaseType.GetModifierNamedSets), '(int32)0'))]"
+							layoutpolicy_horizontal = expanding
+							text_single = {
+								text = "SITUATION_PHASE_TYPE_MODIFIERS_LABEL"
+								default_format = "#bold;italic"
+								align = nobaseline
+							}
+							expand = {}
+						}
+						hbox = {
+							visible = "[EqualTo_string( 'impact' , SituationPhaseType.GetKey )]"
+							layoutpolicy_horizontal = expanding
+							text_single = {
+								text = "SITUATION_NATURAL_DISASTER_IMPACT_EFFECTS_HEADER"
+								align = nobaseline
+							}
+							expand = {}
+						}
+
+						hbox = {
+							visible = "[EqualTo_string( 'impact' , SituationPhaseType.GetKey )]"
+							layoutpolicy_horizontal = expanding
+
+							text_single = {
+								margin_left = 8
+								max_width = 400
+								text = "SITUATION_NATURAL_DISASTER_IMPACT_EFFECTS"
+								align = nobaseline
+							}
+							expand = {}
+						}
+						fixedgridbox = {
+							visible = "[Not(EqualTo_string( 'impact' , SituationPhaseType.GetKey ))]"
+							name = "task_items"
+							layoutpolicy_horizontal = expanding
+
+							addcolumn = 56
+							addrow = 48
+							setitemsizefromcell = yes
+							datamodel_wrap = 6
+							maxhorizontalslots = 6
+							maxverticalslots = 2
+							flipdirection = yes
+							layoutanchor = topleft
+
+							datamodel = "[SituationPhaseType.GetModifierNamedSets]"
+							item = {
+								icon_situation_phase_effect_item = {}
+							}
+						}
+					}
+
+					vbox = {
+						visible = "[And( SituationPhaseType.IsValid, SituationPhaseType.GetParentSituationType.IsGuiTooltipGroupFocused )]"
+						layoutpolicy_horizontal = expanding
+						spacing = 8
+
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							text_single = {
+								text = "SITUATION_PHASE_TYPE_MODIFIERS_LABEL"
+								default_format = "#bold;italic"
+								align = nobaseline
+							}
+							expand = {}
+						}
+
+						fixedgridbox = {
+							name = "task_items"
+							layoutpolicy_horizontal = expanding
+
+							addcolumn = 56
+							addrow = 52
+							setitemsizefromcell = yes
+							datamodel_wrap = 7
+							maxhorizontalslots = 7
+							maxverticalslots = 2
+							flipdirection = yes
+							layoutanchor = topleft
+
+							datamodel = "[SituationPhaseType.GetParentSituationType.GetParticipantGroupTypes]"
+							item = {
+								icon_situation_phase_effect_participant_group_item = {
+									datacontext = "[Situation.GetTopSubRegion]"
+								}
+							}
+						}
+					}
+				}
+			}
+
+			blockoverride "concept_link" {
+				text = "SITUATION_PHASE_TYPE_CONCEPT_LINK"
+			}
+		}
+	}
+}

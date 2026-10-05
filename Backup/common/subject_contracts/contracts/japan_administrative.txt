@@ -1,0 +1,299 @@
+﻿japan_administrative_obligations = {
+	obligation_levels = {
+		default = {
+			levies = {
+				value = 0.1
+			}
+
+			tax = {
+				value = 0.1
+			}
+		}
+	}
+}
+
+### brief: administrative_themes
+# This is referenced in code. 
+#
+japan_administrative_provinces = {
+	display_mode = radiobutton
+	is_shown = {
+		scope:subject.primary_title.tier >= tier_county
+	}
+	obligation_levels = {
+		japan_administrative_province_standard = {
+			default = yes
+			position = { 0 0 }
+			icon = "gfx/interface/icons/celestial_administration_types/icon_standard_administration.dds"
+			gui_tags = { civilian }
+			
+			ai_liege_desire = {
+				value = 0
+				if = {
+					limit = {
+						scope:subject = { is_ai = yes }
+					}
+					add = 1
+					
+					# Cautious AI should tend to have a minor bias towards the default
+					if = {
+						limit = {
+							scope:liege = { ai_has_cautious_personality = yes }
+						}
+						add = 1
+					}
+				}
+			}
+			ai_subject_desire = 0
+			
+			score = 0
+			color = { 0.7 0.7 0.7 1.0 }
+			
+			enable_title_maa = no
+			
+			flag = japan_administrative_province_standard
+		}
+		japan_administrative_province_trade = {
+			position = { 1 0 }
+			icon = "gfx/interface/icons/celestial_administration_types/icon_industrial_administration.dds"
+			gui_tags = { civilian }
+			
+			ai_liege_desire = {
+				value = 0
+				if = {
+					limit = {
+						scope:subject = {
+							is_ai = yes
+							OR = {
+								has_trait = education_stewardship
+								stewardship >= very_high_skill_rating
+							}
+						}
+					}
+					add = 2
+					
+					# Economical AI wants more of civic vassals
+					if = {
+						limit = {
+							scope:liege = { ai_has_builder_or_pious_builder_personality = yes }
+						}
+						add = 1
+					}
+				}
+			}
+			ai_subject_desire = 0
+			
+			score = 0
+			color = { 0.2 0.2 0.7 1.0 }
+			
+			is_valid = {
+				trigger_if = {
+					limit = { exists = this }
+					# Only for direct vassals of the top liege
+					scope:liege.top_liege = this
+				}
+				# There can only be a limited number of industries at a time
+				custom_tooltip = {
+					text = japan_administrative_province_trade_amount_desc
+					OR = {
+						scope:liege = {
+							any_vassal = {
+								count < japan_administrative_province_trade_max_value
+								vassal_contract_has_flag = japan_administrative_province_trade
+							}
+						}
+						scope:subject = {
+							OR = {
+								vassal_contract_has_flag = japan_administrative_province_trade
+								any_sub_realm_county = { is_coastal_county = yes } # Is a coastal province
+							}
+						}
+					}
+				}
+			}
+
+			tax_factor = 0.25
+			enable_title_maa = no
+
+			subject_modifier = {
+				development_growth_factor = 0.15
+				build_gold_cost = -0.1
+				build_speed = -0.2
+			}
+			
+			flag = admin_ai_is_builder
+			flag = japan_administrative_province_trade
+			flag = obligation_high_taxes
+		}
+		japan_administrative_province_military = {
+			position = { 0 1 }
+			icon = "gfx/interface/icons/celestial_administration_types/icon_military_administration.dds"
+			gui_tags = { military }
+			
+			ai_liege_desire = {
+				value = 0
+				if = {
+					limit = {
+						scope:subject = {
+							is_ai = yes
+							OR = {
+								has_trait = education_martial
+								martial >= very_high_skill_rating
+								primary_title = {
+									any_owned_title_maa_regiment = { count >= 3 }
+								}
+								any_sub_realm_county = { # Is a border province
+									any_neighboring_county = { holder.top_liege != scope:subject.top_liege }
+								}
+							}
+						}
+					}
+					add = 2
+					
+					# Preference for vassals along the border
+					if = {
+						limit = {
+							scope:subject = {
+								any_sub_realm_county = {
+									any_neighboring_county = { holder.top_liege != scope:subject.top_liege }
+								}
+							}
+						}
+						add = 3
+					}
+					
+					# Warlike AI wants more military vassals
+					if = {
+						limit = {
+							scope:liege = { ai_has_warlike_personality = yes }
+						}
+						add = 1
+					}
+				}
+			}
+			ai_subject_desire = 0
+			
+			score = 0
+			color = { 0.7 0.2 0.2 1.0 }
+			
+			is_valid = {
+				trigger_if = {
+					limit = { exists = this }
+					# Only for direct vassals of the top liege
+					scope:liege.top_liege = this
+				}
+				# There can only be a limited number of militaries at a time
+				custom_tooltip = {
+					text = japan_administrative_province_military_amount_desc
+					OR = {
+						scope:liege = {
+							any_vassal = {
+								count < japan_administrative_province_military_max_value
+								vassal_contract_has_flag = japan_administrative_province_military
+							}
+						}
+						scope:subject = { vassal_contract_has_flag = japan_administrative_province_military }
+					}
+				}
+			}
+
+			levies_factor = 0.5
+			
+			subject_modifier = {
+				development_growth_factor = -0.2
+				monthly_county_control_growth_factor = 0.1
+				fort_level = 1
+				defender_advantage = 2
+				men_at_arms_maintenance = -0.15
+			}
+			
+			flag = japan_administrative_province_military
+			flag = japan_administrative_military_appointment
+			flag = obligation_high_levies
+		}
+	}
+}
+
+japan_administrative_salary = {
+	display_mode = tree
+	is_shown = {
+		scope:subject.primary_title.tier >= tier_duchy
+	}
+	obligation_levels = {
+		salary_very_low = {
+			position = { 0 2 }
+
+			subject_modifier = {
+				subject_salary_expense_treasury_mult = -0.5
+				subject_salary_income_gold_mult = -0.5
+			}
+
+			ai_liege_desire = 1
+			ai_subject_desire = 5
+
+			subject_opinion = -25
+
+			score = -2
+		}
+		salary_low = {
+			parent = salary_very_low
+			position = { 1 2 }
+
+			subject_modifier = {
+				subject_salary_income_gold_mult = -0.25
+
+			}
+
+			ai_liege_desire = 2
+			ai_subject_desire = 4
+
+			subject_opinion = -15
+
+			score = 1
+		}
+		salary_medium = {
+			parent = salary_low
+			default = yes
+			position = { 2 2 }
+
+			subject_modifier = {
+
+			}
+
+			ai_liege_desire = 3
+			ai_subject_desire = 3
+
+			score = 0
+		}
+		salary_high = {
+			parent = salary_medium
+			position = { 3 2 }
+
+			subject_modifier = {
+				subject_salary_income_gold_mult = 0.25
+			}
+
+			ai_liege_desire = 4
+			ai_subject_desire = 2
+
+			subject_opinion = 5
+
+			score = 1
+		}
+		salary_very_high = {
+			parent = salary_high
+			position = { 4 2 }
+
+			subject_modifier = {
+				subject_salary_income_gold_mult = 0.5
+			}
+
+			ai_liege_desire = 5
+			ai_subject_desire = 1
+
+			subject_opinion = 10
+
+			score = 2
+		}
+	}
+}

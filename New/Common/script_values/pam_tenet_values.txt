@@ -1,0 +1,316 @@
+﻿simony_yearly_gold_value = {
+    value = major_gold_value
+    if = {
+        limit = { culture = { has_cultural_era_or_later = culture_era_early_medieval } }
+        multiply = 2
+    }
+    if = {
+        limit = { culture = { has_cultural_era_or_later = culture_era_high_medieval } }
+        multiply = 2
+    }
+    if = {
+        limit = { culture = { has_cultural_era_or_later = culture_era_late_medieval } }
+        multiply = 4
+    }
+    min = 100
+    max = 2000
+}
+
+# Requires scope:recipient
+pam_acts_conversion_piety_value = {
+    value = 25
+    if = {
+        limit = { scope:recipient.highest_held_title_tier = tier_county }
+        value = 50
+    }
+    if = {
+        limit = { scope:recipient.highest_held_title_tier = tier_duchy }
+        value = 150
+    }
+    if = {
+        limit = { scope:recipient.highest_held_title_tier = tier_kingdom }
+        value = 500
+    }
+    if = {
+        limit = { scope:recipient.highest_held_title_tier >= tier_empire }
+        value = 1500
+    }
+}
+
+# Evaluated in the scope of the character who divined.
+pam_astrology_divination_duration_years = {
+	value = 10
+	if = {
+		limit = { has_personal_tenet_flag = tenet_astrology_divination_bonus }
+		add = 5
+	}
+}
+
+pam_apostolic_succession_papabile_bonus_value = 10
+
+pam_apostolic_succession_bishop_cap_value = 10
+
+pam_apostolic_succession_bishop_count_value = {
+	value = number_of_theocratic_vassals
+	max = pam_apostolic_succession_bishop_cap_value
+}
+
+celestial_hierarchy_religious_relations_percentage_value = 0.25
+
+celestial_hierarchy_religious_relations_percentage_loc = {
+	value = celestial_hierarchy_religious_relations_percentage_value
+	multiply = 100
+}
+
+pam_divine_liturgy_temple_cap_value = 10
+
+pam_divine_liturgy_temple_count_value = {
+	value = 0
+	every_directly_owned_province = {
+		limit = {
+			OR = {
+				has_holding_type = church_holding
+				has_holding_type = temple_citadel_holding
+			}
+		}
+		add = 1
+	}
+	max = pam_divine_liturgy_temple_cap_value
+}
+
+pam_divine_liturgy_chaplain_learning_cap_value = 20
+
+pam_divine_liturgy_chaplain_learning_value = {
+	value = 0
+	if = {
+		limit = {
+			cp:councillor_court_chaplain ?= {
+				faith = root.faith
+			}
+		}
+		add = cp:councillor_court_chaplain.learning
+	}
+	min = 0
+	max = pam_divine_liturgy_chaplain_learning_cap_value
+}
+
+pam_scholasticism_scholar_xp_value = 50
+
+pam_scholasticism_adult_education_cost_mult = 0.5
+
+pam_scholasticism_adult_education_discount_loc = {
+	value = 1
+	subtract = pam_scholasticism_adult_education_cost_mult
+	multiply = 100
+}
+
+pam_scholasticism_studium_inspiration_chance_value = {
+	value = scope:studium_master.learning
+	add = book_inspiration_average_skill_value
+	divide = 16
+
+	if = {
+		limit = { has_trait = lazy }
+		multiply = 0.5
+	}
+
+	if = {
+		limit = {
+			scope:studium_master.current_travel_plan ?= {
+				any_entourage_character = { exists = inspiration }
+			}
+		}
+		multiply = 0.5
+	}
+
+	min = 0
+	max = 5
+}
+
+# Ritual Hospitality makes asking for a court position less expensive, so we run it on the employer
+pam_court_position_event_cost_mult = {
+	value = 1
+	if = {
+		limit = {
+			rite = { rite_has_parameter = tenet_ritual_hospitality_court_position_event_discount }
+		}
+		multiply = 0.75
+	}
+}
+
+pam_ancestor_worship_death_renown_value = {
+	value = prestige_level
+	add = piety_level
+	multiply = miniscule_dynasty_prestige_value
+	min = 0
+}
+
+pam_ancestral_guidance_stress_loss_value = {
+	value = medium_stress_loss
+	if = {
+		limit = { scope:guiding_forebear.learning >= decent_skill_rating }
+		add = minor_stress_loss
+	}
+}
+
+pam_ancestral_guidance_lifestyle_xp_value = {
+	value = minor_lifestyle_xp
+	add = {
+		value = scope:guiding_forebear.learning
+		multiply = 3
+	}
+}
+
+pam_buy_ecclesiastical_title_gold_cost_value = {
+	value = simony_yearly_gold_value
+	if = {
+		limit = {
+			exists = scope:target
+			scope:target.tier = tier_duchy
+		}
+		multiply = 2
+	}
+	if = {
+		limit = {
+			exists = scope:target
+			scope:target.tier = tier_kingdom
+		}
+		multiply = 4
+	}
+	if = {
+		limit = {
+			exists = scope:target
+			scope:target.tier >= tier_empire
+		}
+		multiply = 8
+	}
+}
+
+pam_communal_redistribution_gold_value = {
+	value = current_gold_value
+	multiply = 0.5
+	min = 0
+}
+
+# Trait scope: signed spiritual fulfillment of this trait under root's rite.
+pam_recall_personality_trait_fulfillment_value = {
+	root.rite = {
+		add = "trait_base_spiritual_fulfillment(prev)"
+	}
+}
+
+# Trait scope: invert fulfillment so ordered_character_trait picks the least-fulfilling first.
+pam_recall_worst_personality_order_value = {
+	subtract = pam_recall_personality_trait_fulfillment_value
+}
+
+# Character scope: sum of passable natures so several fulfilling ones beat one
+pam_recallable_forebear_quality_value = {
+	every_character_trait = {
+		limit = {
+			has_trait_category = personality
+			NOT = { root = { has_trait = prev } }
+		}
+		add = pam_recall_personality_trait_fulfillment_value
+	}
+}
+
+# Same gold as ransom_interaction_effect
+pam_philanthropia_ransom_gold_value = {
+	value = 0
+	if = {
+		limit = { scope:extortionate_gold ?= yes }
+		add = scope:prisoner.increased_ransom_cost_value
+	}
+	else_if = {
+		limit = { scope:gold ?= yes }
+		add = scope:prisoner.normal_ransom_cost_value
+	}
+	else_if = {
+		limit = {
+			OR = {
+				scope:extortionate_current_gold ?= yes
+				scope:current_gold ?= yes
+			}
+		}
+		add = scope:ransom_saved_gold_value
+	}
+	min = 0
+}
+
+pam_philanthropia_ransom_piety_value = {
+	value = pam_philanthropia_ransom_gold_value
+	multiply = 0.5
+	round = yes
+	min = 0
+	max = major_piety_value
+}
+
+pam_philanthropia_ransom_fulfillment_value = {
+	value = 0
+	if = {
+		limit = { pam_philanthropia_ransom_gold_value >= 250 }
+		add = medium_spiritual_fulfillment_value
+	}
+	else_if = {
+		limit = { pam_philanthropia_ransom_gold_value >= 100 }
+		add = minor_spiritual_fulfillment_value
+	}
+	else = {
+		add = miniscule_spiritual_fulfillment_value
+	}
+}
+
+# Root is the releasing character, expects the release_from_prison_interaction scopes.
+tenet_benevolent_governance_clemency_fulfillment_value = {
+	value = 0
+	if = {
+		limit = {
+			has_execute_reason = scope:recipient
+			tenet_benevolent_governance_unconditional_release_trigger = yes
+		}
+		add = medium_spiritual_fulfillment_value
+	}
+	else = {
+		add = minor_spiritual_fulfillment_value
+	}
+}
+
+# How many of the five bonds the scoped character currently keeps, 0 to 5.
+pam_five_bonds_tally_value = {
+	value = 0
+	if = {
+		limit = { pam_five_bonds_ruler_subject_trigger = yes }
+		add = 1
+	}
+	if = {
+		limit = { pam_five_bonds_parent_child_trigger = yes }
+		add = 1
+	}
+	if = {
+		limit = { pam_five_bonds_spouse_trigger = yes }
+		add = 1
+	}
+	if = {
+		limit = { pam_five_bonds_sibling_trigger = yes }
+		add = 1
+	}
+	if = {
+		limit = { pam_five_bonds_friend_trigger = yes }
+		add = 1
+	}
+}
+
+pam_bedside_support_avert_chance_value = {
+	value = 20
+	add = {
+		value = scope:actor.learning
+		multiply = 2
+	}
+	if = {
+		limit = { scope:actor = { piety_level >= 3 } }
+		add = 10
+	}
+	min = 15
+	max = 60
+}

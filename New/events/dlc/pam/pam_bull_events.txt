@@ -1,0 +1,328 @@
+﻿namespace = pam_bull_events
+
+# HoF bull — Call a Crusade
+pam_bull_events.0001 = {
+	type = character_event
+	window = big_event_window
+	theme = christian
+	title = pam_bull_events.0001.t
+	desc = {
+		desc = pam_bull_events.desc.intro
+		desc = pam_bull_events.0001.desc
+		desc = pam_bull_events.desc.outro
+	}
+
+	override_background = { reference = holy_site_unique }
+	override_effect_2d = {
+		reference = legend_glow
+	}
+
+	left_portrait = {
+		character = scope:crusader_1
+		animation = sword_shield_aggressive
+		hide_info = yes
+	}
+	center_portrait = {
+		character = root
+		animation = preaching
+	}
+	right_portrait = {
+		character = scope:crusader_2
+		animation = celebrate_sword
+		hide_info = yes
+	}
+
+	immediate = {
+		save_scope_as = bull_issuer
+		play_music_cue = "mx_cue_crusade_starts"
+		hidden_effect = {
+			create_character = {
+				location = root.location
+				template = pam_crusader_template
+				faith = root.faith
+				rite = root.rite
+				culture = root.culture
+				save_scope_as = crusader_1
+			}
+			create_character = {
+				location = root.location
+				template = pam_crusader_template
+				faith = root.faith
+				rite = root.rite
+				culture = root.culture
+				save_scope_as = crusader_2
+			}
+			scope:crusader_1 = {
+				add_character_flag = need_military_outfit
+			}
+			scope:crusader_2 = {
+				add_character_flag = need_military_outfit
+			}
+		}
+	}
+
+	option = {
+		name = pam_bull_events.0001.a
+		flavor =  pam_bull_events.0001.a.flavor
+		set_variable = {
+			name = ghw_through_bull_var
+			years = 1
+		}
+		pam_start_bull_great_holy_war_effect = {
+			GHW_SPONSOR = root
+			FAITH = faith
+		}
+		custom_tooltip = pick_crusade_target_decision_effect_event_tt
+	}
+
+	after = {
+		pam_bull_notify_faith_rulers_effect = yes
+		pam_the_christian_church_papal_bull_enacted_catalyst_effect = yes
+		hidden_effect = {
+			scope:crusader_1 = { move_to_pool = yes }
+			scope:crusader_2 = { move_to_pool = yes }
+		}
+	}
+}
+
+# HoF bull — Permit or forbid a tenet
+pam_bull_events.0002 = {
+	type = character_event
+	window = big_event_window
+	theme = christian
+	title = pam_bull_events.0002.t
+	desc = {
+		desc = pam_bull_events.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:bull_option = flag:tenet_permitted }
+				desc = pam_bull_events.0002.desc.tenet_permitted
+			}
+			triggered_desc = {
+				trigger = { var:bull_option = flag:tenet_forbidden }
+				desc = pam_bull_events.0002.desc.tenet_forbidden
+			}
+		}
+		desc = pam_bull_events.desc.outro
+	}
+
+	override_background = { reference = holy_site_unique }
+	override_effect_2d = {
+		reference = legend_glow
+	}
+
+	widget = {
+		gui = "event_window_widget_rite"
+		container = "custom_widgets_container"
+	}
+
+	left_portrait = {
+		character = root
+		animation = preaching
+	}
+
+	immediate = {
+		save_scope_as = bull_issuer
+		play_music_cue = "mx_cue_epic_sacral_moment"
+		if = {
+			limit = { exists = scope:pam_tenet_stance_tenet }
+			scope:pam_tenet_stance_tenet = { save_scope_as = tenet_scope }
+		}
+		else_if = {
+			limit = { exists = scope:selected_item }
+			scope:selected_item = { save_scope_as = tenet_scope }
+		}
+	}
+
+	option = {
+		name = pam_bull_events.0002.a
+		flavor =  pam_bull_events.0002.a.flavor
+		switch = {
+			trigger = var:bull_option
+			flag:tenet_permitted = {
+				faith = {
+					set_tenet_status = {
+						tenet = scope:tenet_scope
+						status = permitted
+					}
+					change_fervor = {
+						value = significant_fervor_loss
+						desc = fervor_loss_pam_tenet_permitted
+					}
+					if = {
+						limit = { has_tenet_popularity_trigger = yes }
+						change_tenet_popularity = {
+							target = scope:tenet_scope
+							change = medium_tenet_popularity_gain
+						}
+					}
+					pam_faith_cleanup_forbidden_personal_tenet_secrets_effect = yes
+				}
+			}
+			flag:tenet_forbidden = {
+				faith = {
+					set_tenet_status = {
+						tenet = scope:tenet_scope
+						status = prohibited
+					}
+					change_fervor = {
+						value = notable_fervor_value
+						desc = fervor_gain_pam_tenet_prohibited
+					}
+					if = {
+						limit = { has_tenet_popularity_trigger = yes }
+						change_tenet_popularity = {
+							target = scope:tenet_scope
+							change = major_tenet_popularity_loss
+						}
+					}
+					pam_faith_grant_forbidden_personal_tenet_secrets_effect = { TENET = scope:tenet_scope }
+				}
+			}
+		}
+	}
+
+	after = {
+		pam_bull_notify_faith_rulers_effect = yes
+		pam_the_christian_church_papal_bull_enacted_catalyst_effect = yes
+	}
+}
+
+# HoF bull — Declare a rite heresy
+pam_bull_events.0003 = {
+	type = character_event
+	window = big_event_window
+	theme = christian
+	title = pam_bull_events.0003.t
+	desc = {
+		desc = pam_bull_events.desc.intro
+		desc = pam_bull_events.0003.desc
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:heresiarch }
+				desc = pam_bull_events.0003.desc.heresiarch
+			}
+			desc = pam_bull_events.0003.desc.no_heresiarch
+		}
+		desc = pam_bull_events.desc.outro
+	}
+
+	override_background = { reference = holy_site_unique }
+	override_effect_2d = {
+		reference = legend_glow
+	}
+
+	left_portrait = {
+		character = root
+		animation = preaching
+	}
+	
+	lower_right_portrait = {
+		trigger = { exists = scope:heresiarch }
+		character = scope:heresiarch
+	}
+
+	immediate = {
+		save_scope_as = bull_issuer
+		play_music_cue = "mx_cue_councils_judgement"
+		if = {
+			limit = {
+				NOT = { exists = scope:heresy_rite }
+				exists = scope:selected_item
+			}
+			scope:selected_item = { save_scope_as = heresy_rite }
+		}
+		if = {
+			limit = {
+				exists = scope:selected_item.head_of_rite
+			}
+			scope:selected_item.head_of_rite = { save_scope_as = heresiarch }
+		}
+	}
+
+	option = {
+		name = pam_bull_events.0003.a
+		flavor =  pam_bull_events.0003.a.flavor
+		pam_declare_rite_heresy_effect = yes
+	}
+
+	after = {
+		pam_bull_notify_faith_rulers_effect = yes
+		pam_the_christian_church_papal_bull_enacted_catalyst_effect = yes
+		if = {
+			limit = { exists = scope:heresy_rite }
+			hidden_effect = {
+				if = {
+					limit = {
+						scope:heresy_rite.faith.religious_head ?= {
+							NOT = { has_trait = heresiarch }
+						}
+					}
+					scope:heresy_rite.faith.religious_head = { add_trait = heresiarch }
+				}
+				else_if = {
+					limit = {
+						scope:heresy_rite.main_rite.head_of_rite ?= {
+							NOT = { has_trait = heresiarch }
+						}
+					}
+					scope:heresy_rite.main_rite.head_of_rite = { add_trait = heresiarch }
+				}
+				if = {
+					limit = {
+						scope:heresy_rite.faith = { has_doctrine = special_doctrine_ecumenical_christian }
+					}
+					scope:heresy_rite.faith = { remove_doctrine = special_doctrine_ecumenical_christian }
+				}
+			}
+		}
+	}
+}
+
+# Letter notification to rulers of the faith
+pam_bull_events.0004 = {
+	type = letter_event
+	opening = pam_bull_events.0004.opening
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:bull_issuer.var:bull_option = flag:crusade }
+				desc = pam_bull_events.0004.desc.crusade
+			}
+			triggered_desc = {
+				trigger = { scope:bull_issuer.var:bull_option = flag:heresy }
+				desc = pam_decision_events.0012.desc
+			}
+			triggered_desc = {
+				trigger = { scope:bull_issuer.var:bull_option = flag:tenet_permitted }
+				desc = pam_decision_events.0011.desc.permitted
+			}
+			triggered_desc = {
+				trigger = { scope:bull_issuer.var:bull_option = flag:tenet_forbidden }
+				desc = pam_decision_events.0011.desc.prohibited
+			}
+		}
+	}
+	sender = scope:bull_issuer
+
+	immediate = {
+		if = {
+			limit = {
+				scope:bull_issuer.var:bull_option = flag:heresy
+				has_trait = heresiarch
+			}
+			play_sound_effect = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_becomeHeretic"
+		}
+	}
+
+	option = {
+		name = pam_bull_events.0004.a
+	}
+
+	option = {
+		name = pam_bull_events.0004.c
+		trigger = {
+			scope:bull_issuer.var:bull_option = flag:crusade
+		}
+	}
+}

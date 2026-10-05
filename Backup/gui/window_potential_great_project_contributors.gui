@@ -1,0 +1,171 @@
+﻿window = {
+	name = "potential_great_project_contributors_window"
+	position = { -1240 110 }
+	parentanchor = right
+	allow_outside = yes
+	layer = middle
+
+	using = Window_Movable
+	using = Window_Background_Subwindow
+	using = Window_Size_CharacterList_Small
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+	}
+
+	vbox = {
+		margin = { 5 5 }
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text" {
+				text = "POTENTIAL_CONTRIBUTOR_HEADER"
+			}
+
+			blockoverride "button_close" {
+				onclick = "[PotentialContributorWindow.Close]"
+			}
+		}
+
+		vbox_character_list = {
+			datacontext = "[PotentialContributorWindow.GetListItems]"
+			layoutpolicy_vertical = expanding
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "skill_sort_buttons" {}
+
+			blockoverride "item_size" {
+				size = { 480 110 }
+				layoutpolicy_horizontal = expanding
+			}
+
+			blockoverride "container_implementation" {
+				fixedgridbox = {
+					name = "characters_grid"
+					datamodel = "[CharacterSelectionList.GetList]"
+					visible = "[Not(CharacterSelectionList.IsBuildingList)]"
+					addcolumn = 535
+					addrow = 110
+
+					item = {
+						widget_character_list_item = {
+							size = { 515 110 }
+
+							datacontext = "[CharacterListItem.GetCharacter]"
+
+							blockoverride "portrait_button"
+							{
+								grayscale = "[Not(CharacterListItem.IsSelectable)]"
+							}
+
+							blockoverride "widget"
+							{
+								background = {
+									visible = "[Not(CharacterListItem.IsSelectable)]"
+									using = Background_Area
+									margin_bottom = -4
+								}
+							}
+
+							blockoverride "button_content"
+							{
+								enabled = "[CharacterListItem.IsSelectable]"
+								tooltip = "REQUEST_CONTRIBUTION_TOOLTIP"
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									layoutpolicy_vertical = expanding
+
+									vbox = {
+										layoutpolicy_horizontal = expanding
+										layoutpolicy_vertical = expanding
+										margin = { 10 5 }
+
+										text_single = {
+											name = "name"
+											layoutpolicy_horizontal = expanding
+											text = "[Character.GetUINameNoTooltip]"
+											max_width = 220
+											using = Font_Size_Medium
+											alwaystransparent = yes
+										}
+
+										text_single = {
+											name = "character_relation"
+											layoutpolicy_horizontal = expanding
+											text = "[Character.GetRelationToString( GetPlayer )]"
+											default_format = "#low"
+											align = left
+											max_width = 220
+											alwaystransparent = yes
+
+											tooltip = "EXTENDED_RELATIONS_TOOLTIP"
+										}
+
+										expand = {}
+									}
+
+									vbox = {
+										datacontext = "[CharacterListItem.GetCharacter]"
+										layoutpolicy_vertical = expanding
+										layoutpolicy_horizontal = expanding
+
+										margin_top = 10
+										margin_bottom = 8
+										margin_right = 10
+
+										# Skills
+										hbox = {
+											name = "skills_grid"
+											layoutpolicy_horizontal = expanding
+
+											expand = {}
+
+											datamodel = "[CharacterListItem.GetSkillItems]"
+
+											item = {
+												widget_skill_item_no_icon = {}
+											}
+										}
+
+										expand = {}
+
+										### Acceptance
+										text_single = {
+											name = "acceptance"
+											layoutpolicy_horizontal = expanding
+
+											text = "[CharacterListItem.GetText( 'acceptance' )]"
+											align = nobaseline|right
+
+											tooltip = "[CharacterListItem.GetText( 'acceptance_desc' )]"
+											# not sure why it is needed, but without alwaystransparent, the button the text is on will not highlight
+											alwaystransparent = yes 
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	window_character_filter = {
+		datacontext = "[PotentialContributorWindow.GetListItems]"
+
+		blockoverride "addition_filter" {
+			filter_item = {
+				datacontext = "[CharacterSelectionList.GetFilter('hook_filter')]"
+				layoutpolicy_horizontal = expanding
+			}
+		}
+	}
+}

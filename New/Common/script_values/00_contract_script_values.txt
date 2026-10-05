@@ -1,0 +1,192 @@
+﻿##################################################
+# Weights
+
+# Control values.
+## For default weights.
+task_contract_weight_default_value = 50
+task_contract_weight_standard_bonus_value = 300
+task_contract_weight_slight_bonus_value = 100
+task_contract_weight_massive_bonus_value = 700
+## For contracts that are a bit shinier, but also quite a bit more specialised — stuff that won't be able to appear as often so we want to weight it up when it does.
+task_contract_weight_interesting_almost_rare_value = 100
+task_contract_weight_interesting_somewhat_rare_value = 200
+task_contract_weight_interesting_quite_rare_value = 300
+task_contract_weight_interesting_very_rare_value = 500
+## For contract employer traits.
+task_contract_weight_bonus_employer_has_associated_traits_value = 50
+task_contract_weight_malus_employer_has_associated_traits_value = -25
+task_contract_weight_employer_associated_traits_min_value = -50
+task_contract_weight_employer_associated_traits_max_value = 50
+## Change our weight by tier.
+task_contract_weight_by_tier_value = {
+	## Weight up kings and emperors, if we can get 'em.
+	if = {
+		limit = { highest_held_title_tier >= tier_kingdom }
+		add = 2
+	}
+	## And dukes somewhat.
+	else_if = {
+		limit = { highest_held_title_tier >= tier_duchy }
+		add = 1.5
+	}
+	## Weight down barons, as they're dramatically less interesting to get work from.
+	else_if = {
+		limit = { highest_held_title_tier <= tier_barony }
+		add = 0.01
+	}
+	else = { add = 1 }
+}
+## For contract employers already being your contact, has to be very high to overcome the above values
+task_contract_weight_employer_contact_list_value = {
+	if = {
+		limit = { is_contact_of = root }
+		add = 10000
+	}
+}
+
+# Government weighting values.
+## Special contracts.
+laamp_contracts_weight_up_mercenary_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_mercenary }
+		add = task_contract_weight_standard_bonus_value
+	}
+}
+laamp_contracts_weight_up_transport_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_transport }
+		add = task_contract_weight_standard_bonus_value
+	}
+	if = {
+		limit = {
+			domicile = { has_domicile_parameter = receives_more_escort_contracts }
+		}
+		add = task_contract_weight_slight_bonus_value
+	}
+}
+laamp_contracts_weight_up_criminal_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_criminal }
+		add = task_contract_weight_standard_bonus_value
+	}
+	# Otherwise, make criminal contracts a bit less likely — unless you're in dire straits...
+	else_if = {
+		limit = { gold >= 100 }
+		add = {
+			value = task_contract_weight_standard_bonus_value
+			multiply = -0.75
+		}
+	}
+}
+laamp_contracts_weight_up_criminal_massive_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_criminal }
+		add = task_contract_weight_massive_bonus_value
+	}
+	# Otherwise, make criminal contracts a bit less likely — unless you're in dire straits...
+	else_if = {
+		limit = { gold >= 100 }
+		add = {
+			value = task_contract_weight_massive_bonus_value
+			multiply = -0.75
+		}
+	}
+}
+## Diplo contracts.
+laamp_contracts_weight_up_diplomacy_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_diplomacy }
+		add = task_contract_weight_standard_bonus_value
+	}
+}
+laamp_contracts_weight_up_diplomacy_slight_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_diplomacy_slight }
+		add = task_contract_weight_slight_bonus_value
+	}
+}
+## Martial contracts.
+laamp_contracts_weight_up_martial_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_martial }
+		add = task_contract_weight_standard_bonus_value
+	}
+}
+laamp_contracts_weight_up_martial_slight_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_martial_slight }
+		add = task_contract_weight_slight_bonus_value
+	}
+}
+## Stewardship contracts.
+laamp_contracts_weight_up_stewardship_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_stewardship }
+		add = task_contract_weight_standard_bonus_value
+	}
+}
+## Intrigue contracts.
+laamp_contracts_weight_up_intrigue_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_intrigue }
+		add = task_contract_weight_standard_bonus_value
+	}
+}
+## Learning contracts.
+laamp_contracts_weight_up_learning_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_learning }
+		add = task_contract_weight_standard_bonus_value
+	}
+}
+## Prowess contracts.
+laamp_contracts_weight_up_prowess_value = {
+	if = {
+		limit = { has_realm_law_flag = laamp_contracts_weight_up_prowess }
+		add = task_contract_weight_standard_bonus_value
+	}
+}
+
+# Hygiene values.
+## Would this character unguardedly let others know what wealth they have?
+laamp_contract_would_signpost_own_prosperity_value = {
+	# Weight up.
+	## Traits that broadcast their wealth.
+	if = {
+		limit = { has_trait = arrogant }
+		add = task_contract_weight_bonus_employer_has_associated_traits_value
+	}
+	if = {
+		limit = { has_trait = ambitious }
+		add = task_contract_weight_bonus_employer_has_associated_traits_value
+	}
+	if = {
+		limit = { has_trait = improvident }
+		add = task_contract_weight_bonus_employer_has_associated_traits_value
+	}
+	if = {
+		limit = { has_trait = profligate }
+		add = task_contract_weight_bonus_employer_has_associated_traits_value
+	}
+	# Weight down.
+	## Traits that hide their prosperity.
+	if = {
+		limit = { has_trait = humble }
+		add = task_contract_weight_malus_employer_has_associated_traits_value
+	}
+	if = {
+		limit = { has_trait = content }
+		add = task_contract_weight_malus_employer_has_associated_traits_value
+	}
+	if = {
+		limit = { has_trait = greedy }
+		add = task_contract_weight_malus_employer_has_associated_traits_value
+	}
+	if = {
+		limit = { has_trait = deceitful }
+		add = task_contract_weight_malus_employer_has_associated_traits_value
+	}
+	# Restrictions.
+	min = task_contract_weight_employer_associated_traits_min_value
+	max = task_contract_weight_employer_associated_traits_max_value
+}

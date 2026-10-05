@@ -1,0 +1,216 @@
+﻿defenders_of_highgod_decision_hall_of_heroes_effect = {
+	set_variable = {
+		name = hall_of_heroes
+		value = yes
+	}
+	hidden_effect = {
+		if = {
+			limit = { has_special_building_slot = no }
+			add_special_building_slot = hall_of_heroes_01
+		}
+	}
+	add_special_building = hall_of_heroes_01
+}
+
+defenders_of_highgod_decision_effects = {
+	#Holy site building
+	#if = {
+	#	limit = {
+	#		faith = {
+	#			any_holy_site_barony = {
+	#				count = 1
+	#				county.holder = root
+	#			}
+	#		}
+	#	}
+	#	faith = {
+	#		every_holy_site_barony = {
+	#			limit = { county.holder = root }
+	#			county.title_province = { defenders_of_highgod_decision_hall_of_heroes_effect = yes }
+	#		}
+	#	}
+	#}
+	#The scope has been saved before this effect is run
+	scope:holy_site.title_province ?= { defenders_of_highgod_decision_hall_of_heroes_effect = yes }
+
+	#Fervor, modifiers and holy_warrior traits	
+	faith = {
+		save_scope_as = highgod_faith_scope
+		change_fervor = {
+			value = medium_fervor_value
+			desc = fervor_gain_defenders_of_highgod
+		}
+	}
+	add_character_modifier = {
+		modifier = defender_of_the_faith
+	}
+
+	if = {
+		limit = { number_of_commander_traits < commander_trait_limit }
+		add_trait = holy_warrior
+	}
+
+	custom_tooltip = defenders_of_highgod_decision_effects_holy_warriors_tt
+	hidden_effect = {
+		every_vassal_or_below = {
+			add_to_list = warriors
+		}
+		every_courtier = {
+			add_to_list = warriors
+		}
+		every_in_list = {
+			list = warriors
+			limit = {
+				is_adult = yes
+				is_ai = yes
+				can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = root }
+				number_of_commander_traits < commander_trait_limit
+				faith = root.faith
+			}
+			random = {
+				chance = 50
+				add_trait = holy_warrior
+			}	
+		}
+	}
+}
+
+strengthen_bloodline_decision_effects = {
+	dynasty = {
+		add_dynasty_modifier = {
+			modifier = strong_blood
+		}
+	}
+}
+
+dynasty_of_many_crowns_effects = {
+	if = {
+		limit = {
+			NOT = {
+				has_character_flag = dyn_many_crown_leg
+			}
+		}
+		add_character_flag = dyn_many_crown_leg
+	}
+	if = {
+		limit = {
+			domicile ?= {
+				has_domicile_building_or_higher = renown_gain_yurt_01
+			}
+		}
+		if = {
+			limit = {
+				domicile ?= {
+					has_domicile_parameter = nomad_yurt_dynasty_many_crowns_bonus
+				}
+			}
+			dynasty = {
+				every_dynasty_member = {
+					limit = {
+						government_has_flag = government_is_nomadic
+						highest_held_title_tier >= tier_kingdom
+					}
+					domicile ?= {
+						change_herd = {
+							value = 1000
+							multiply = prev.primary_title.tier
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				domicile ?= {
+					has_domicile_parameter = nomad_yurt_dynasty_many_khans
+				}
+			}
+			dynasty = {
+				add_dynasty_modifier = {
+					modifier = dynasty_of_many_crowns_nomad
+				}
+			}
+		}
+		
+	}
+	dynasty = {
+		add_dynasty_modifier = {
+			modifier = dynasty_of_many_crowns
+		}
+		add_dynasty_prestige = monumental_dynasty_prestige_gain
+	}
+}
+
+appoint_a_righteous_caliph_scripted_effect = {
+	# Create a HoF title & assign it appropriately.
+	hidden_effect = {
+		# Are we Malikis?
+		if = {
+			limit = { rite = rite:maliki }
+			# Transfer the title.
+			create_title_and_vassal_change = {
+				type = created
+				save_scope_as = change
+				add_claim_on_loss = no
+			}
+			title:d_muwalladi = {
+				change_title_holder = {
+					holder = scope:founder
+					change = scope:change
+				}
+			}
+			resolve_title_and_vassal_change = scope:change
+			# Set up the remaining bits'n'bobs.
+			if = {
+				limit = {
+					NOT = { has_realm_law = same_faith_succession_law }
+				}
+				add_realm_law_skip_effects = same_faith_succession_law
+			}
+			title:d_muwalladi = { add_title_law = temporal_head_of_faith_succession_law }
+			# Make it the HoF head.
+			faith = { set_religious_head_title = title:d_muwalladi }
+		}
+		# If not, follow the usual flow.
+		else = {
+			set_up_dynamic_temporal_hof_title_effect = { NEW_HOLDER = scope:founder }
+			faith = { set_religious_head_title = scope:new_title }
+		}
+	}
+	custom_tooltip = appoint_a_righteous_caliph_decision.tt.you_become_caliph
+	# Give scope:founder an extra piety level, if possible.
+	if = {
+		limit = { piety_level < max_piety_level }
+		add_piety_level = 1
+	}
+	# Try to scope:founder rivals with scope:old_caliph.
+	if = {
+		limit = {
+			can_set_relation_rival_trigger = { CHARACTER = scope:old_caliph }
+		}
+		set_relation_rival = {
+			target = scope:old_caliph
+			reason = rival_old_caliph_new_caliph
+		}
+	}
+	# If you've pulled a fast one on your HoF, they see through it.
+	if = {
+		limit = { has_character_flag = wishes_to_schism_caliphate_flag }
+		scope:old_caliph = {
+			remove_opinion = {
+				target = scope:founder
+				modifier = repentant_opinion
+			}
+		}
+		remove_hook = {
+			target = scope:old_caliph
+			type = indebted_hook
+		}
+	}
+	# And sort a bit of stress impact for the gravity of things.
+	stress_and_fulfillment_impact = {
+		base = major_stress_impact_gain
+		humble = major_stress_impact_gain
+		arrogant = medium_stress_impact_loss
+	}
+}

@@ -1,0 +1,72 @@
+﻿# Triggers for the Spread the Word activity intent (spread_personal_tenet_intent)
+
+# This = the potential convert
+pam_spread_tenet_listener_trigger = {
+	this != $PREACHER$
+	is_physically_able_ai_adult = yes
+	is_playable_character = yes
+	faith = $PREACHER$.faith
+	NOT = { has_personal_tenet = $TENET$ }
+	any_desired_tenet = {
+		only_positive = yes
+		threshold = 1
+		selection_count = 97
+		this = $TENET$
+	}
+	# Only risk-takers will entertain a belief their rite prohibits
+	trigger_if = {
+		limit = {
+			$PREACHER$.faith.main_rite = {
+				has_tenet_status = {
+					tenet = $TENET$
+					status = prohibited
+				}
+			}
+		}
+		pam_ai_can_consider_forbidden_personal_tenet_trigger = yes
+	}
+}
+
+# This = the potential convert
+pam_spread_tenet_apa_listener_trigger = {
+	is_available_quick = { advanced_ruler = yes }
+	save_temporary_scope_as = pam_spread_apa_listener
+	$PREACHER$ = {
+		is_available_quick = { advanced_ruler = yes }
+		faith.main_rite = { save_temporary_scope_as = pam_spread_apa_rite }
+		any_personal_tenet = {
+			save_temporary_scope_as = pam_spread_apa_tenet
+			scope:pam_spread_apa_rite = {
+				NOT = {
+					has_tenet_status = {
+						tenet = scope:pam_spread_apa_tenet
+						status = prohibited
+					}
+				}
+			}
+			scope:pam_spread_apa_listener = {
+				pam_spread_tenet_listener_trigger = {
+					PREACHER = $PREACHER$
+					TENET = scope:pam_spread_apa_tenet
+				}
+			}
+		}
+	}
+}
+
+# This = the character with the intent
+pam_spread_tenet_event_valid_trigger = {
+	exists = involved_activity
+	save_temporary_scope_as = pam_spread_preacher_check
+	any_personal_tenet = {
+		save_temporary_scope_as = pam_spread_tenet_check
+		scope:pam_spread_preacher_check.involved_activity = {
+			any_attending_character = {
+				pam_spread_tenet_listener_trigger = {
+					PREACHER = scope:pam_spread_preacher_check
+					TENET = scope:pam_spread_tenet_check
+				}
+			}
+		}
+	}
+}

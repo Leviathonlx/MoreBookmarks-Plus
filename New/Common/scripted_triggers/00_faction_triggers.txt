@@ -1,0 +1,407 @@
+﻿
+### TRIGGER LIST ###
+# General Triggers:
+#	-
+#
+# Popular Faction Triggers:
+#	-
+#
+
+############################
+# General Faction Triggers #
+############################
+############################
+immune_to_factions_trigger = {
+	has_variable = {
+		# Genghis Khan is immune to factions
+		name = is_temujin
+		# Seljuk leader is immune to factions too
+		name = is_seljuk
+	}
+}
+
+character_has_faction_disabling_modifier_trigger = {
+	NOR = {
+		has_character_modifier = yearly_close_watch_modifier
+		#Add any subsequent character modifiers above this line.
+	}
+}
+
+common_character_validity_trigger = {
+	custom_description = {
+		text = "FACTION_CANT_JOIN_CREATE_IMPRISONED"
+		trigger_if = {
+			limit = {
+				joined_faction ?= {
+					faction_is_at_war = yes
+				}
+			}
+		}
+		trigger_else = {
+			is_imprisoned = no
+		}
+	}
+
+	OR = {
+		$FACTION_TARGET$ = liege
+		any_character_active_contract = {
+			task_contract_target = $FACTION_TARGET$
+		}
+	}
+	highest_held_title_tier > tier_barony
+
+	#Not blocked through events
+	custom_description = {
+		text = character_blocked_from_joining
+		NOT = {
+			has_character_flag = joining_faction_block
+		}
+	}
+	
+	# You cannot start a faction against your bloc members
+	trigger_if = {
+		limit = {
+			government_is_japanese_trigger = yes
+			$FACTION_TARGET$ = { government_is_japanese_trigger = yes }
+			exists = house.house_confederation
+			exists = $FACTION_TARGET$.house.house_confederation
+		}
+		custom_tooltip = {
+			text = house_confederation_faction_blocker_tt
+			house.house_confederation != $FACTION_TARGET$.house.house_confederation
+		}
+	}
+	
+	NOT = { has_relation_blood_brother = $FACTION_TARGET$ }
+}
+
+common_can_character_join_trigger = {
+	common_character_validity_trigger = {
+		FACTION_TARGET = $FACTION_TARGET$
+	}
+	is_adult = yes
+	NOT = { has_truce = $FACTION_TARGET$ }
+	$FACTION_TARGET$ = {
+		NOT = { has_strong_hook = root }
+		NOT = { is_allied_to = root }
+	}
+
+	OR = {
+		is_ai = no
+		NOR = {
+			has_relation_lover = $FACTION_TARGET$ 
+			has_relation_friend = $FACTION_TARGET$ 
+		}
+	}
+
+	$FACTION_TARGET$.highest_held_title_tier > tier_county
+
+	custom_description = {
+		text = character_has_faction_disabling_modifier
+		character_has_faction_disabling_modifier_trigger = yes
+	}
+	
+	# You cannot join a faction against your bloc members
+	trigger_if = {
+		limit = {
+			government_is_japanese_trigger = yes
+			$FACTION_TARGET$ = { government_is_japanese_trigger = yes }
+			exists = house.house_confederation
+			exists = $FACTION_TARGET$.house.house_confederation
+		}
+		custom_tooltip = {
+			text = house_confederation_join_faction_blocker_tt
+			house.house_confederation != $FACTION_TARGET$.house.house_confederation
+		}
+	}
+}
+
+common_can_character_create_trigger = {
+	NOT = { has_truce = $FACTION_TARGET$ }
+	common_character_validity_trigger = {
+		FACTION_TARGET = $FACTION_TARGET$
+	}
+	trigger_if = {
+		limit = {
+			government_has_flag = government_has_house_blocs
+			$FACTION_TARGET$ = top_liege
+			is_confederation_member = yes
+		}
+		custom_tooltip = {
+			text = is_house_head_of_noble_family_tt
+			OR = {
+				joined_faction ?= {
+					any_faction_member = {
+						OR = {
+							this = root.house.house_confederation.leading_house.house_head
+							is_ai = no
+						}
+					}
+				}
+				AND = {
+					is_house_head = yes
+					any_held_title = { is_noble_family_title = yes }
+				}
+				AND = {
+					house.house_confederation.leading_house.house_head ?= {
+						tgp_is_ceremonial_liege_trigger = yes
+					}
+					joined_faction.faction_leader ?= {
+						is_leading_faction_type = restore_ceremonial_liege_faction
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = must_be_leading_house_of_bloc_trigger
+			OR = {
+				joined_faction ?= {
+					any_faction_member = {
+						OR = {
+							this = root.house.house_confederation.leading_house.house_head
+							is_ai = no
+						}
+					}
+				}
+				house.house_confederation.leading_house ?= house
+				AND = {
+					house.house_confederation.leading_house.house_head ?= {
+						tgp_is_ceremonial_liege_trigger = yes
+					}
+					joined_faction.faction_leader ?= {
+						is_leading_faction_type = restore_ceremonial_liege_faction
+					}
+				}
+			}
+		}
+	}
+	####
+	# BLOCKERS
+	####
+	# General Faction immunity
+	custom_description = {
+		text = character_is_immune_to_factions
+		subject = $FACTION_TARGET$
+		NOT = { $FACTION_TARGET$ = { immune_to_factions_trigger = yes } }
+	}
+}
+
+base_faction_trigger = {
+	is_incapable = no
+	NOT = { has_truce = scope:target }
+	NOT = { is_at_war_with = scope:target }
+	can_join_or_create_faction_against = {
+		who = scope:target
+		faction = $FACTION_TYPE$
+	}
+	scope:target = { NOT = { has_strong_hook = root } }
+}
+
+
+############################
+# Popular Faction Triggers #
+############################
+
+character_can_join_popular_faction_trigger = {
+	OR = {
+		NOT = { faith = $FACTION$.faction_target.faith }
+		NOT = { culture = $FACTION$.faction_target.culture }
+	}	
+}
+
+county_can_join_popular_faction_trigger = {
+	OR = {
+		NOT = { faith = $FACTION$.faction_target.faith }
+		NOT = { culture = $FACTION$.faction_target.culture }
+	}	
+}
+
+has_active_diarch_for_factions_trigger = {
+	exists = $TARGET$.diarch
+	NOT = { $TARGET$.faith = $TARGET$.diarch.faith }
+}
+
+#factions with only landless adventurers cannot exist
+has_valid_faction_members_trigger = {
+	trigger_if = {
+		limit = {
+			is_landless_adventurer = yes
+		}
+		scope:faction = {
+			OR = {
+				any_faction_member = {
+					is_landless_adventurer = no
+					is_forced_into_faction = no
+				}
+				any_faction_county_member = { }
+			}
+		}
+	}
+}
+
+############################
+# Liberty Faction Triggers #
+############################
+
+has_valid_realm_laws_for_liberty_faction_trigger = {
+	trigger_if = {
+		limit = { $TARGET$ = { realm_law_use_nomadic_authority = yes } }
+		$TARGET$ = {
+			realm_law_use_nomadic_authority = no
+		}
+	}
+	trigger_else_if = {
+		limit = { realm_law_use_government_authority = yes }
+		custom_description = {
+			text = has_lowest_government_authority
+			subject = $TARGET$
+			$TARGET$ = {
+				realm_law_authority_level_0 = no
+			}
+		}
+	}
+	trigger_else = {
+		$TARGET$ = {
+			realm_law_use_government_authority = yes
+		}
+	}
+}
+
+#############################
+# Japanese Faction Triggers #
+#############################
+can_become_leader_of_faction_trigger = {
+	is_playable_character = yes
+	trigger_if = {
+		limit = {
+			government_has_flag = government_has_house_blocs
+		}
+		OR = {
+			is_confederation_member = no
+			house.house_confederation.leading_house.house_head ?= this
+			AND = {
+				house.house_confederation.leading_house.house_head ?= {
+					tgp_is_ceremonial_liege_trigger = yes
+				}
+				joined_faction.faction_leader ?= {
+					is_leading_faction_type = restore_ceremonial_liege_faction
+				}
+			}
+			NOT = { exists = joined_faction.faction_leader }
+		}
+	}
+}
+
+vassal_would_join_rebel_faction_base_trigger = {
+	highest_held_title_tier > tier_barony
+	this != scope:rebel_temp
+	is_available_quick = {
+		ai = yes
+		incapable = no
+		imprisoned = no
+	}
+	NOR = {
+		is_at_war_with = scope:rebel_temp
+		is_at_war_with = scope:liege_temp
+		opinion = { # People who really, really like you will still back you
+			target = scope:liege_temp
+			value >= 80
+		}
+		dread_modified_ai_boldness = { #Too scared to do anything.
+			dreaded_character = scope:liege_temp
+			value <= -50
+		}
+	}
+}
+
+vassal_would_join_rebel_faction_relation_trigger = {
+	OR = {
+		has_relation_lover = scope:rebel_temp
+		has_relation_friend = scope:rebel_temp
+	}
+	NOR = {
+		has_relation_lover = scope:liege_temp
+		has_relation_friend = scope:liege_temp
+	}
+}
+
+vassal_would_join_rebel_faction_tyranny_trigger = {
+	NOR = {
+		# Isn't lover of liege
+		has_relation_lover = scope:liege_temp
+		# Isn't friend of liege
+		has_relation_friend = scope:liege_temp
+		# Isn't ally of liege
+		is_allied_to = scope:liege_temp
+		# Isn't heir of liege
+		is_primary_heir_of = scope:liege_temp
+		# Isn't hooked by liege
+		scope:liege_temp = { has_strong_hook = prev }
+		# Not cowed
+		has_dread_level_towards = {
+			target = scope:liege_temp
+			level = 2
+		}
+		# Doesn't hate rebel's faith
+		faith = {
+			faith_hostility_level = {
+				target = scope:rebel_temp.faith
+				value >= faith_hostile_level
+			}
+		}
+	}
+	OR = {
+		# it's not legal!
+		ai_honor >= high_positive_ai_value
+		# who cares? I believe this will not happen on me
+		scope:liege_temp = {
+			has_trait = kinslayer
+		}
+		trigger_if = {
+			limit = { is_child_of = scope:liege_temp }
+			is_child_of = scope:rebel_temp
+		}
+		trigger_else_if = {
+			limit = { is_close_family_of = scope:liege_temp }
+			is_close_family_of = scope:rebel_temp
+		}
+		trigger_else_if = {
+			limit = { exists = house scope:liege_temp.house ?= house }
+			scope:rebel_temp.house ?= house
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+	OR = {
+		# Is an honorable person
+		ai_honor >= 25
+		# Doesn't hate the rebel
+		trigger_if = {
+			limit = {
+				has_game_rule = very_hard_difficulty
+				scope:liege_temp = { is_ai = no }
+			}
+			opinion = {
+				target = scope:rebel_temp
+				value >= 0
+			}
+		}
+		trigger_else_if = {
+			limit = {
+				has_game_rule = hard_difficulty
+				scope:liege_temp = { is_ai = no }
+			}
+			opinion = {
+				target = scope:rebel_temp
+				value >= 20
+			}
+		}
+		trigger_else = {
+			opinion = {
+				target = scope:rebel_temp
+				value >= 40
+			}
+		}
+	}
+}

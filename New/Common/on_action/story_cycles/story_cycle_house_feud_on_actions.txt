@@ -1,0 +1,94 @@
+﻿#On actions handling the Family Feud Story Cycle
+
+ongoing_house_feud_events = {
+	trigger = {
+		#DLC check
+		has_bp1_dlc_trigger = yes
+		#Standard checks
+		is_available_adult = yes
+		# House Head events
+		is_house_head = yes
+		house = {
+			any_house_relation = { has_house_relation_level = feud }
+		}
+	}
+	random_events = {
+		50 = bp1_house_feud.0100 # jealous of higher rank
+		50 = bp1_house_feud.0110 # scorning lower rank
+		50 = bp1_house_feud.0200 # feud house has killed more members than we have
+		50 = bp1_house_feud.0210 # losing, end it?
+		50 = bp1_house_feud.0220 # winning, end it?
+		25 = bp1_house_feud.0300 # end long running feud?
+		50 = bp1_house_feud.0410 # friendly house members pleading to stop feud
+		25 = bp1_house_feud.0420 # liege tries to stop feud betwen vassals
+		5000 = bp1_house_feud.0830 # No enemies left
+		100 = bp1_house_feud.0840 # Not rival heads
+	}
+}
+
+house_feud_inheritance_events = {
+	random_events = {
+		chance_to_happen = 25
+		100 = bp1_house_feud.9001 # 0009 setup
+		100 = bp1_house_feud.9002 # 0004 setup
+	}
+}
+
+house_feud_ai_scheme_pulse = {
+	trigger = {
+		is_adult = yes
+		is_ai = yes
+		NOT = { has_trait = forgiving }
+		ai_honor < medium_positive_ai_value
+		intrigue >= mediocre_skill_rating
+		house ?= {
+			save_temporary_scope_as = house_temp
+			any_house_relation = {
+				NOT = { exists = var:recent_ai_feud_scheme }
+				has_house_relation_parameter = members_more_likely_to_scheme_hostile
+			}
+			# Try to stop crazy numbers of concurrent ai murder schemes
+			any_house_member = {
+				count <= 3
+				is_ai = yes
+				any_scheme = {
+					is_hostile = yes
+					scheme_target_character.house ?= {
+						any_house_relation = {
+							has_house_relation_parameter = members_more_likely_to_scheme_hostile
+							any_relation_house = { this = scope:house_temp }
+						}
+					}
+				}
+			}
+		}
+	}
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = deceitful
+		}
+		modifier = {
+			factor = 2
+			has_trait = vengeful
+		}
+		modifier = {
+			factor = 2
+			has_trait = schemer
+		}
+		modifier = {
+			factor = 2
+			ai_honor <= high_negative_ai_value
+		}
+		modifier = {
+			factor = 2
+			ai_honor <= medium_negative_ai_value
+		}
+	}
+	random_events = {
+		100 = bp1_house_feud.9500 # Join existing murder
+		25 = bp1_house_feud.9501 # Start murder
+		25 = bp1_house_feud.9502  # Start cuckoldry
+	}
+}

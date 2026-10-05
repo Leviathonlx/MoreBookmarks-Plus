@@ -1,0 +1,321 @@
+types RoyalCourtWindowTypes
+{
+    type dropdown_court_camera = dropDown {
+        size = { 250 33 }
+
+        datamodel = "[RoyalCourtScreenshotWindow.GetCameras]"
+
+        active_item = {
+            widget = {
+                alwaystransparent = no
+                size = { 100% 100% }
+
+                button_drop = {
+                    block "text_button_drop" {
+                        text = "[CameraItem.GetCameraName]"
+                    }
+                }
+            }
+        }
+
+        item = {
+            widget = {
+                alwaystransparent = no
+                block "size_dropdown" {
+                    size = { 250 33 }
+                }
+
+                button_normal = {
+                    size = { 100% 30 }
+                    button_trigger = none
+                    gfxtype = framedbuttongfx
+                    effectname = "NoHighlight"
+                    shaderfile = "gfx/FX/pdxgui_pushbutton.shader"
+                    upframe = 1
+                    overframe = 2
+                    downframe = 3
+                    disableframe = 1
+                    texture = "gfx/interface/buttons/button_interaction_menu.dds"
+                    framesize = { 317 30 }
+                }
+
+                button_dropdown = {
+                    block "size_dropdown" {
+                        size = { 215 33 }
+                    }
+                    block "text_button_drop" {
+                        text = "[CameraItem.GetCameraName]"
+                    }
+
+                    default_format = "#clickable"
+                }
+            }
+        }
+
+        list = {
+            scrollarea = {
+                position = { 5 33 }
+                maximumsize = { 250 170 }
+                autoresizescrollarea = yes
+                scrollbarpolicy_horizontal = always_off
+
+                using = Background_DropDown
+
+                scrollwidget = {
+                    dynamicgridbox = {
+                        alwaystransparent = no
+                    }
+                }
+
+                scrollbar_vertical = {
+                    using = Scrollbar_Vertical
+                }
+            }
+        }
+    }
+
+    type widget_royal_court_screenshot_window = widget
+    {
+        name = "royal_court_screenshot_window"
+        size = { 100% 100% }
+        filter_mouse = all
+
+        flowcontainer = {
+            name = "screenshot_buttons"
+            visible = "[RoyalCourtScreenshotWindow.IsUiShown]"
+            parentanchor = bottom|hcenter
+            position = { 0 -20 }
+            direction = vertical
+
+            using = Animation_ShowHide_Quick
+
+            flowcontainer = {
+                visible = "[RoyalCourtScreenshotWindow.HasCameras]"
+                parentanchor = hcenter
+                margin_bottom = 10
+
+                background = {
+                    using = Background_Area_Dark
+                    margin_top = 7
+                    margin_bottom = -5
+                    alpha = 0.7
+                }
+
+                button_play = {
+                    parentanchor = vcenter
+                    size = { 50 50 }
+                    mirror = horizontal
+                    shortcut = "royal_court_prev_screenshot_camera"
+                    onclick = "[RoyalCourtScreenshotWindow.UsePreviousCamera]"
+                    tooltip = ROYAL_COURT_SCREENSHOT_PREV_CAM_TT
+                    using = tooltip_ws
+                }
+
+                flowcontainer = {
+                    direction = vertical
+                    spacing = 2
+                    margin_bottom = 5
+
+
+                    flowcontainer = {
+                        datamodel = "[RoyalCourtScreenshotWindow.GetCameras]"
+                        parentanchor = hcenter
+
+                        item = {
+                            button_radio = {
+                                size = { 15 15 }
+                                onclick = "[CameraItem.Activate]"
+                                frame = "[BoolTo1And2( CameraItem.IsSelected )]"
+                            }
+                        }
+                    }
+
+                    dropdown_court_camera = {
+                        parentanchor = hcenter
+                        onselectionchanged = "[RoyalCourtScreenshotWindow.SetActiveCameraByIndex]"
+                        selectedindex = "[RoyalCourtScreenshotWindow.GetCameraActiveIndex]"
+                    }
+                }
+
+                button_play = {
+                    parentanchor = vcenter
+                    size = { 50 50 }
+                    shortcut = "royal_court_next_screenshot_camera"
+                    onclick = "[RoyalCourtScreenshotWindow.UseNextCamera]"
+                    tooltip = ROYAL_COURT_SCREENSHOT_NEXT_CAM_TT
+                }
+            }
+
+            flowcontainer = {
+                visible = "[RoyalCourtScreenshotWindow.HasCameras]"
+                parentanchor = hcenter
+                spacing = 20
+
+                button_tertiary = {
+                    parentanchor = vcenter
+                    text = "ROYAL_COURT_SCREENSHOT_HIDE_CHARACTERS"
+                    tooltip = "ROYAL_COURT_SCREENSHOT_HIDE_CHARACTERS_TOOLTIP"
+                    shortcut = "royal_court_hide_characters"
+                    onclick = "[RoyalCourtScreenshotWindow.ToggleCharacters]"
+                    using = tooltip_ws
+                }
+
+                button_round  = {
+                    size = { 80 80 }
+                    shortcut = "royal_court_take_screenshot"
+                    onclick = "[VariableSystem.Set( 'royal_court_notification_take_screenshot', 'yes' )]"
+                    onclick = "[RoyalCourtScreenshotWindow.TakeScreenshot]"
+                    tooltip = "ROYAL_COURT_SCREENSHOT_TAKE_SCREENSHOT_TOOLTIP"
+
+                    button_capture = {
+                        parentanchor = center
+                        alwaystransparent = yes
+                    }
+                }
+
+                button_tertiary = {
+                    parentanchor = vcenter
+                    text = "ROYAL_COURT_SCREENSHOT_HIDE_UI"
+                    shortcut = "royal_court_hide_ui"
+                    tooltip = "ROYAL_COURT_SCREENSHOT_HIDE_UI_TOOLTIP"
+                    onclick = "[VariableSystem.Set( 'royal_court_notification_hide_ui', 'yes' )]"
+                    onclick = "[RoyalCourtScreenshotWindow.ToggleUi]"
+                }
+            }
+
+            flowcontainer = {
+                visible = "[And(Not(RoyalCourtScreenshotWindow.HasCameras), InDebugMode)]"
+
+                text_label_center = {
+                    raw_text = "#D There is no configured screenshot camera. Set them in editor#!"
+                }
+            }
+
+            spacer = {
+                size = { 0 30 }
+            }
+
+            button_tertiary = {
+                name = "back_button"
+                parentanchor = hcenter
+                shortcut = "close_window"
+                text = "ROYAL_COURT_SCREENSHOT_EXIT"
+                tooltip = "ROYAL_COURT_SCREENSHOT_EXIT_TOOLTIP"
+
+                onclick = "[VariableSystem.Clear('royal_court_screenshot_window')]"
+                onclick = "[VariableSystem.Clear('royal_court_hide_all_ui')]"
+                onclick = "[RoyalCourtScreenshotWindow.Close]"
+            }
+        }
+
+
+		
+		
+		widget = {
+			size = { -10 -10 }
+			visible = "[Not(RoyalCourtScreenshotWindow.IsUiShown)]"
+			
+			button_normal = {
+				size = { -10 -10 }
+				shortcut = "royal_court_take_screenshot"
+
+				onclick = "[VariableSystem.Set( 'royal_court_notification_take_screenshot', 'yes' )]"
+				onclick = "[RoyalCourtScreenshotWindow.TakeScreenshot]"
+			}
+			button_play = {
+				parentanchor = vcenter
+				size = { -10 -10 }
+				shortcut = "royal_court_next_screenshot_camera"
+				onclick = "[RoyalCourtScreenshotWindow.UseNextCamera]"
+				tooltip = ROYAL_COURT_SCREENSHOT_NEXT_CAM_TT
+			}
+			
+			button_play = {
+				parentanchor = vcenter
+				size = { -10 -10 }
+				mirror = horizontal
+				shortcut = "royal_court_prev_screenshot_camera"
+				onclick = "[RoyalCourtScreenshotWindow.UsePreviousCamera]"
+				tooltip = ROYAL_COURT_SCREENSHOT_PREV_CAM_TT
+				using = tooltip_ws
+			}
+		}
+
+        button_normal = {
+            visible = "[Not(RoyalCourtScreenshotWindow.IsUiShown)]"
+            size = { 100% 100% }
+            shortcut = "close_window"
+            shortcut = "royal_court_hide_ui"
+            onclick = "[VariableSystem.Clear( 'royal_court_notification_hide_ui' )]"
+            onclick = "[RoyalCourtScreenshotWindow.ToggleUi]"
+        }
+
+        widget_royal_court_screenshot_window_notification = {
+            size = { 100% 100% }
+
+            blockoverride "visibility" {
+                visible = "[And(VariableSystem.Exists( 'royal_court_notification_take_screenshot' ), RoyalCourtScreenshotWindow.IsNotificationShown)]"
+            }
+
+            blockoverride "pending_animation_clear" {
+                on_finish = "[RoyalCourtScreenshotWindow.HideNotification]"
+                on_finish = "[VariableSystem.Clear( 'royal_court_notification_take_screenshot' )]"
+            }
+
+            blockoverride "text_widget" {
+                text = "SCREENSHOT_TAKEN"
+                position = { 0 -20 }
+            }
+        }
+
+        widget_royal_court_screenshot_window_notification = {
+            size = { 100% 100% }
+
+            blockoverride "visibility" {
+                visible = "[VariableSystem.Exists( 'royal_court_notification_hide_ui' )]"
+            }
+
+            blockoverride "pending_animation_clear" {
+                on_finish = "[VariableSystem.Clear( 'royal_court_notification_hide_ui' )]"
+            }
+
+            blockoverride "text_widget" {
+                text = "ROYAL_COURT_SCREENSHOT_HIDE_UI_NOTIFICATION"
+                position = { 0 -320 }
+            }
+        }
+    }
+
+    type widget_royal_court_screenshot_window_notification = widget
+    {
+        layer = confirmation
+        block "visibility" {}
+
+        state = {
+            name = _show
+            next = pending
+            using = Animation_FadeIn_Standard
+        }
+
+        state = {
+            name = pending
+            next = hide
+            block "pending_animation_duration" {
+                duration = 2
+            }
+
+            block "pending_animation_clear" { }
+        }
+
+        state = {
+            name = _hide
+            using = Animation_FadeOut_Standard
+        }
+
+        text_label_center = {
+            name = "screenshot_text"
+            parentanchor = center
+            block "text_widget" {}
+        }
+    }
+}

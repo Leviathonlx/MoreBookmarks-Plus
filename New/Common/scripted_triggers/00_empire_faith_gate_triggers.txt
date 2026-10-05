@@ -1,0 +1,325 @@
+﻿# Empire Faith Gate -- Scripted Triggers
+# Root = character for all triggers unless otherwise noted.
+
+# The empire_faith_gate rule is on in either form
+# Fully on, or on with faiths that have no Head of Faith exempt from needing approval
+empire_faith_gate_enabled_trigger = {
+	OR = {
+		has_game_rule = empire_faith_gate_on
+		has_game_rule = empire_faith_gate_no_hof_exempt
+	}
+}
+
+# Yes when the faith has a spiritual or temporal head and that head is alive
+efg_faith_has_hof_trigger = {
+	OR = {
+		AND = {
+			faith = { has_doctrine = doctrine_spiritual_head }
+			exists = faith.religious_head
+		}
+		AND = {
+			faith = { has_doctrine = doctrine_temporal_head }
+			exists = faith.religious_head
+		}
+	}
+}
+
+# Subject governments: feudal, clan, tribal, Japan feudal and Soryo
+# Not theocratic, ecclesiastical, adventurer, or republic
+government_subject_to_faith_empire_trigger = {
+	OR = {
+		government_has_flag = government_is_feudal
+		government_has_flag = government_is_clan
+		government_has_flag = government_is_tribal
+		government_has_flag = government_is_japan_feudal
+	}
+}
+
+faith_allows_empire_trigger = {
+	NOT = { faith = { has_doctrine_parameter = unreformed } }
+}
+
+# Rulers subject to the rule must have an organized faith, and other governments pass
+can_create_empire_faith_gate_trigger = {
+	trigger_if = {
+		limit = {
+			empire_faith_gate_enabled_trigger = yes
+			government_subject_to_faith_empire_trigger = yes
+		}
+		custom_tooltip = {
+			text = empire_faith_gate_organized_faith_required
+			faith_allows_empire_trigger = yes
+		}
+	}
+}
+
+# We use efg_empire_holders instead of a world scan
+faith_has_existing_empire_holder_trigger = {
+	highest_held_title_tier = tier_empire
+	is_independent_ruler = yes
+	government_subject_to_faith_empire_trigger = yes
+	faith_allows_empire_trigger = yes
+	NOT = {
+		any_in_global_list = {
+			variable = efg_empire_holders
+			is_independent_ruler = yes
+			highest_held_title_tier >= tier_hegemony
+			faith = prev.faith
+		}
+	}
+	any_in_global_list = {
+		variable = efg_empire_holders
+		NOT = { this = prev }
+		is_independent_ruler = yes
+		highest_held_title_tier = tier_empire
+		government_subject_to_faith_empire_trigger = yes
+		faith = prev.faith
+	}
+}
+
+# Title-window check: creating scope:landed_title would apply contested legitimacy
+empire_creation_will_gain_contested_legitimacy_trigger = {
+	empire_faith_gate_enabled_trigger = yes
+	scope:landed_title = { tier = tier_empire }
+	highest_held_title_tier < tier_empire
+	is_independent_ruler = yes
+	government_subject_to_faith_empire_trigger = yes
+	faith_allows_empire_trigger = yes
+	trigger_if = {
+		limit = { has_global_variable_list = efg_empire_holders }
+		NOT = {
+			any_in_global_list = {
+				variable = efg_empire_holders
+				is_independent_ruler = yes
+				highest_held_title_tier >= tier_hegemony
+				faith = root.faith
+			}
+		}
+		any_in_global_list = {
+			variable = efg_empire_holders
+			NOT = { this = root }
+			is_independent_ruler = yes
+			highest_held_title_tier = tier_empire
+			government_subject_to_faith_empire_trigger = yes
+			faith_allows_empire_trigger = yes
+			faith = root.faith
+			count >= 1
+		}
+	}
+	trigger_else = {
+		NOT = {
+			any_independent_ruler = {
+				highest_held_title_tier >= tier_hegemony
+				faith = root.faith
+			}
+		}
+		any_independent_ruler = {
+			highest_held_title_tier = tier_empire
+			government_subject_to_faith_empire_trigger = yes
+			faith_allows_empire_trigger = yes
+			faith = root.faith
+			count >= 1
+		}
+	}
+}
+
+# Shared contested-legitimacy check for title creation.
+# Parameter COUNT = minimum number of other same-faith independent empire holders.
+empire_creation_will_gain_contested_legitimacy_count_trigger = {
+	empire_creation_will_gain_contested_legitimacy_trigger = yes
+	trigger_if = {
+		limit = { has_global_variable_list = efg_empire_holders }
+		any_in_global_list = {
+			variable = efg_empire_holders
+			NOT = { this = root }
+			is_independent_ruler = yes
+			highest_held_title_tier = tier_empire
+			government_subject_to_faith_empire_trigger = yes
+			faith_allows_empire_trigger = yes
+			faith = root.faith
+			count >= $COUNT$
+		}
+	}
+	trigger_else = {
+		any_independent_ruler = {
+			highest_held_title_tier = tier_empire
+			government_subject_to_faith_empire_trigger = yes
+			faith_allows_empire_trigger = yes
+			faith = root.faith
+			count >= $COUNT$
+		}
+	}
+}
+
+# Other same-faith empires: exactly 1 => tier 1, exactly 2 => tier 2, 3+ => tier 3
+empire_creation_will_gain_contested_legitimacy_tier_1_trigger = {
+	empire_creation_will_gain_contested_legitimacy_count_trigger = { COUNT = 1 }
+	NOT = { empire_creation_will_gain_contested_legitimacy_count_trigger = { COUNT = 2 } }
+}
+
+empire_creation_will_gain_contested_legitimacy_tier_2_trigger = {
+	empire_creation_will_gain_contested_legitimacy_count_trigger = { COUNT = 2 }
+	NOT = { empire_creation_will_gain_contested_legitimacy_count_trigger = { COUNT = 3 } }
+}
+
+empire_creation_will_gain_contested_legitimacy_tier_3_trigger = {
+	empire_creation_will_gain_contested_legitimacy_count_trigger = { COUNT = 3 }
+}
+
+ai_only_check_stronger_same_faith_empire_exists_trigger = {
+	is_ai = yes
+	highest_held_title_tier < tier_empire
+	any_in_global_list = {
+		variable = efg_empire_holders
+		highest_held_title_tier >= tier_empire
+		faith = root.faith
+		current_military_strength > root.current_military_strength
+	}
+}
+
+# Yearly pulse/list scans: root = list member, scope:efg_ruler = reference ruler
+efg_same_faith_empire_holder_trigger = {
+	highest_held_title_tier = tier_empire
+	is_independent_ruler = yes
+	government_subject_to_faith_empire_trigger = yes
+	faith_allows_empire_trigger = yes
+	NOT = {
+		any_in_global_list = {
+			variable = efg_empire_holders
+			is_independent_ruler = yes
+			highest_held_title_tier >= tier_hegemony
+			faith = scope:efg_ruler.faith
+		}
+	}
+	faith = scope:efg_ruler.faith
+}
+
+# The character holds two or more empire-tier titles themselves
+efg_holds_multiple_empires_trigger = {
+	any_held_title = {
+		tier >= tier_empire
+		count >= 2
+	}
+}
+
+# Any tier of Contested Empire Legitimacy counts
+has_contested_empire_trigger = {
+	OR = {
+		has_character_modifier = multi_empire_same_faith_penalty_1
+		has_character_modifier = multi_empire_same_faith_penalty_2
+		has_character_modifier = multi_empire_same_faith_penalty_3
+	}
+}
+
+# The AI has no grace, while we give players a short window after creating a new empire
+efg_contested_empire_grace_period_elapsed_trigger = {
+	trigger_if = {
+		limit = {
+			OR = {
+				NOT = { has_contested_empire_trigger = yes }
+				NOT = { faith_has_existing_empire_holder_trigger = yes }
+			}
+		}
+		always = yes
+	}
+	trigger_else = {
+		trigger_if = {
+			limit = { is_ai = yes }
+			always = yes
+		}
+		trigger_else = {
+			# Player with contested empire: grace period elapsed if no variable (legacy) or current year >= end year.
+			OR = {
+				NOT = { exists = var:efg_grace_period_end_year }
+				current_year >= var:efg_grace_period_end_year
+			}
+		}
+	}
+}
+
+
+# Head-of-faith requirements for empire creation.
+# Three variants: a spiritual head, a temporal head, or no head at all
+empire_creation_hof_requirements_trigger = {
+	trigger_if = {
+		limit = {
+			empire_faith_gate_enabled_trigger = yes
+			government_subject_to_faith_empire_trigger = yes
+			faith_allows_empire_trigger = yes
+		}
+		# Spiritual head path
+		trigger_if = {
+			limit = {
+				faith = { has_doctrine = doctrine_spiritual_head }
+				exists = faith.religious_head
+			}
+			custom_tooltip = {
+				text = empire_faith_gate_hof_spiritual_good_terms
+				faith.religious_head = {
+					opinion = {
+						target = root
+						value > 0
+					}
+				}
+			}
+			custom_tooltip = {
+				text = empire_faith_gate_powerful_vassals_approve
+				any_powerful_vassal = {
+					percent >= 0.5
+					opinion = {
+						target = root
+						value > 0
+					}
+				}
+			}
+		}
+		# Temporal head path
+		trigger_else_if = {
+			limit = {
+				faith = { has_doctrine = doctrine_temporal_head }
+				exists = faith.religious_head
+			}
+			OR = {
+				custom_tooltip = {
+					text = empire_faith_gate_hof_temporal_is_hof
+					this = faith.religious_head
+				}
+				custom_tooltip = {
+					text = empire_faith_gate_hof_temporal_good_terms
+					faith.religious_head = {
+						opinion = {
+							target = root
+							value > 0
+						}
+					}
+				}
+			}
+			custom_tooltip = {
+				text = empire_faith_gate_powerful_vassals_approve
+				any_powerful_vassal = {
+					percent >= 0.5
+					opinion = {
+						target = root
+						value > 0
+					}
+				}
+			}
+		}
+		# Path for faiths with no head, where the exempt rule setting lets them skip approval entirely
+		trigger_else = {
+			trigger_if = {
+				limit = { has_game_rule = empire_faith_gate_on }
+				custom_tooltip = {
+					text = empire_faith_gate_powerful_vassals_approve
+					any_powerful_vassal = {
+						percent >= 0.5
+						opinion = {
+							target = root
+							value > 0
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,342 @@
+﻿story_slavic_rite = {
+	# by Ali Kara
+	visible = yes
+
+	icon = {
+		trigger = {
+			always = yes
+		}
+		reference = "gfx/interface/icons/artifact/artifact_chronicle.dds"
+	}
+
+	visualization = {
+		character = { variable_name = "slavic_rite_cyril" }
+		character = { variable_name = "slavic_rite_methodius" }
+		basic_counter = {
+			variable_name = "slavic_rite_progress_var"
+			min = 0
+			max = 13 # Number of counties inside the archdiocese, this field won't accept variables
+			label = "SLAVIC_RITE_PROGRESS_LABEL"
+			min_label = "SLAVIC_RITE_PROGRESS_MIN_LABEL"
+			max_label = "SLAVIC_RITE_PROGRESS_MAX_LABEL"
+		}
+	}
+
+	background = {
+		reference = "gfx/interface/illustrations/event_scenes/pam_simple_church_western_interior.dds"
+	}
+
+	on_setup = {
+		story_owner = {
+			trigger_event = {
+				id = slavic_rite.1000
+				days = { 30 90 } # The realm priest introduces the backstory of the brothers, and that we may expect them soon.
+			}
+			trigger_event = {
+				id = slavic_rite.0001
+				days = 630 # This way, we receive the event that spawns the rite in 869, and Cyril dies at the exact month and year he died in real life afte travelling to rome
+			}
+		}
+		set_variable = {
+			name = slavic_rite_story_initiated
+			value = yes
+		}
+		if = {
+			limit = {
+				exists = var:slavic_rite_story_initiated # Error suppression
+			}
+		}
+	}
+
+	on_owner_death = { # pass on the story
+		# if  still exists, and the ruler is christian, pass the story to him
+		story_owner = {
+			if = {
+				limit = {
+					any_child = { # if the heir is a child
+						is_primary_heir_of = scope:story.story_owner
+						faith.religion = religion:christianity_religion
+					}
+				}
+				random_child = {
+					limit = {
+						is_primary_heir_of = scope:story.story_owner		
+					}
+					save_scope_as = new_story_owner
+				}
+			}
+			else_if = {
+				limit = {
+					dynasty = {
+						any_dynasty_member = { # if the heir is non-family
+							is_primary_heir_of = scope:story.story_owner
+							faith.religion = religion:christianity_religion
+						}
+					}
+				}				
+				dynasty = {
+					random_dynasty_member = {
+						limit = {
+							is_primary_heir_of = scope:story.story_owner
+						}
+						save_scope_as = new_story_owner 
+					}
+				}
+			}
+			else_if = { # if the heir is a grandchild
+				limit = {
+					primary_heir = {
+						is_grandchild_of = scope:story.story_owner
+						faith.religion = religion:christianity_religion
+					}
+				}
+				primary_heir = {
+					save_scope_as = new_story_owner
+				}
+			}
+			else_if = { # If the heir is non-family
+				limit = {
+					NOT = {
+						dynasty = {
+							any_dynasty_member = { 
+								is_primary_heir_of = scope:story.story_owner
+							}
+						}
+					}
+					scope:story.story_owner.primary_heir = {
+						faith.religion = religion:christianity_religion
+					}
+				}
+				scope:story.story_owner.primary_heir = {
+					save_scope_as = new_story_owner
+				}
+			}
+		}
+		if = {
+			limit = { exists = scope:new_story_owner }
+			make_story_owner = scope:new_story_owner
+		}
+		else = {
+			end_story = yes
+		}
+	}
+
+	effect_group = { # Validations
+		days = 30
+		triggered_effect = { # Cyril and Methodius are both dead before the rite and the title are established.
+			trigger = {
+				character:slavic_rite_methodius_1 ?= { is_alive = no }
+				character:slavic_rite_cyril_1 ?= { is_alive = no }
+				story_owner = {
+					NOT = { has_global_variable = slavic_rite_initiated }
+				}
+			}
+			effect = {
+				story_owner = {
+					set_variable = slavic_rite_brothers_are_dead
+					trigger_event = slavic_rite.0006
+				}
+				end_story = yes
+			}
+		}
+	
+		triggered_effect = { # Story owner is no longer a christian
+			trigger = {
+				story_owner.faith.religion != religion:christianity_religion
+			}
+			effect = {
+				story_owner = {
+					set_variable = slavic_rite_no_longer_christian
+					trigger_event = slavic_rite.0006
+				}
+				end_story = yes
+			}
+		}
+	
+		triggered_effect = { # Story owner is no longer a king
+			trigger = {
+				story_owner.primary_title = { tier < tier_kingdom }
+			}
+			effect = {
+				story_owner = {
+					set_variable = slavic_rite_no_longer_king
+					trigger_event = slavic_rite.0006
+				}
+				end_story = yes
+			}
+		}
+
+		triggered_effect = { # Story owner is no longer has a Slavic heritage
+			trigger = {
+				story_owner.culture = {
+					NOR = {
+						has_cultural_pillar = heritage_west_slavic
+						has_cultural_pillar = heritage_east_slavic
+						has_cultural_pillar = heritage_south_slavic
+					}
+				}
+			}
+			effect = {
+				story_owner = {
+					set_variable = slavic_rite_no_longer_slav
+					trigger_event = slavic_rite.0006
+				}
+				end_story = yes
+			}
+		}
+	}
+
+	effect_group = { # Initiate the Rite
+		days = 30
+		chance = 100
+		triggered_effect = {
+			trigger = {
+				character:slavic_rite_methodius_1 = {
+					has_character_flag = methodius_visited_rome
+					is_travelling = no
+				}
+				story_owner = {
+					NOT = {
+						has_global_variable = slavic_rite_initiated
+					}
+				}
+			}
+			effect = {
+				story_owner = {
+					trigger_event = slavic_rite.0005 # Holder of Moravia receives the creation event
+					set_global_variable = slavic_rite_initiated
+					every_vassal = {
+						trigger_event = {
+							id = slavic_rite.0004
+							days = 3
+						}
+					}
+				}
+				title:d_et_salzburg.holder ?= {
+					trigger_event = {
+						id = slavic_rite.0003
+						days = 3
+					}
+				}
+				title:c_brno.clerical_region_title ?= { # The clerical region is created by the deferred slavic_rite.0005 and may not exist yet on this pulse
+					every_county_in_clerical_region = {
+						limit = {
+							rite = rite:slavic_rite
+						}
+						add_to_list = slavic_rite_converted_counties
+					}
+				}
+				set_variable = {
+					name = slavic_rite_progress_var
+					value = {
+						value = 0
+						every_in_list = {
+							list = slavic_rite_converted_counties
+							add = 1
+						}
+					}
+				}
+			}
+		}
+	}
+
+	effect_group = { # Progress refresher
+		days = 10
+		chance = 100
+		triggered_effect = {
+			trigger = {
+				story_owner = {
+					has_global_variable = methodius_returns_from_rome_var
+				}
+			}
+			effect = {
+				title:c_brno.clerical_region_title = {
+					every_county_in_clerical_region = {
+						limit = {
+							rite = rite:slavic_rite
+						}
+						add_to_list = slavic_rite_converted_counties
+					}
+				}
+				set_variable = {
+					name = slavic_rite_progress_var
+					value = {
+						value = 0
+						every_in_list = {
+							list = slavic_rite_converted_counties
+							add = 1
+						}
+					}
+				}
+				if = {
+					limit = { exists = var:slavic_rite_progress_var } # Error suppression
+				}
+			}
+		}
+	}
+
+	effect_group = { # if all validations are checked, trigger event pulses
+		years = 1
+		chance = 50
+		triggered_effect = {
+			trigger = {
+				story_owner = {
+					has_global_variable = methodius_returns_from_rome_var
+				}
+			}
+			effect = {
+				random_list = {
+					1 = {
+						story_owner = {
+							trigger_event = slavic_rite.0010
+						}
+					}
+					1 = {
+						story_owner = {
+							trigger_event = slavic_rite.0020
+						}
+					}
+					1 = {
+						story_owner = {
+							trigger_event = slavic_rite.0030
+						}
+					}
+				}
+			}
+		}
+	}
+
+	effect_group = { # End
+		days = 30
+		chance = 100
+		triggered_effect = { # Refresh current Slavic Rite counties inside the archdiocese
+			trigger = {
+				story_owner = { # Gate before the title context switch: the clerical region only exists once methodius_returns_from_rome_var is set in slavic_rite.0005
+					has_global_variable = methodius_returns_from_rome_var
+				}
+				exists = title:c_brno.clerical_region_title
+				title:c_brno.clerical_region_title = {
+					any_county_in_clerical_region = {
+						rite = rite:slavic_rite
+						count = all
+					}
+				}
+			}
+			effect = {
+				story_owner = {
+					trigger_event = slavic_rite.0007
+				}
+				end_story = yes
+			}
+		}
+
+		triggered_effect = { # End if it has been 100 years from game start
+			trigger = {
+				years_from_game_start >= 100
+			}
+			effect = {
+				end_story = yes
+			}
+		}
+	}
+}

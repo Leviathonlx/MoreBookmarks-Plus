@@ -1,0 +1,57 @@
+# Morpheme stripping rules for localization formatters.
+# Used via |:rule_name in loc strings (e.g. [Character.GetName|:english_rite_ism]ism).
+#
+# seek_from: "head" or "tail" (default "tail"). Controls the direction of matching
+# and stripping. "tail" matches/strips from the end; "head" from the start.
+#
+# Each entry defines ordered rules evaluated top-to-bottom (first match wins).
+# Within a rule, "match" blocks are character sets tested from the seek_from end
+# inward: first match = outermost char, second match = next char in, etc.
+# All match blocks must pass for the rule to fire. "strip" is how many characters
+# to remove from the seek_from end.
+#
+# If no rule matches, the input string is unchanged.
+#
+# Usage in localization:
+#   "$VALUE|:demo_tail$"    # applies tail rules
+#   "$VALUE|:demo_head$"    # applies head rules
+#   "$VALUE|U:demo_tail$"   # can be combined: uppercase-first, then strip
+#
+# Example inputs/outputs:
+#   demo_tail: "Marcus"   -> "Marc"     (rule: ...us)
+#   demo_tail: "Yohannas" -> "Yohann"   (rule: ...as)
+#   demo_tail: "Gaspare"  -> "Gaspar"   (rule: ...e)
+#   demo_head: "d'Artagnan" -> "Artagnan" (rule: d')
+#   demo_head: "McLeod"     -> "Leod"     (rule: Mc)
+#
+demo_tail = {
+	seek_from = tail
+	# Multi-character tail match (two match blocks): strips "-us" / "-as" / "-os"
+	# (first match is outermost char, so for tail this reads right-to-left)
+	rule = {
+		match = { "s" }
+		match = { "u" "a" "o" }
+		strip = 2
+	}
+	# Single-character tail match: strips terminal vowel (including accented)
+	rule = {
+		match = { "a" "e" "i" "o" "u" "y" "á" "é" "í" "ó" "ú" "à" "è" "ì" "ò" "ù" "ä" "ë" "ï" "ö" "ü" }
+		strip = 1
+	}
+}
+#
+demo_head = {
+	seek_from = head
+	# Multi-character head match (two match blocks): strips leading "d'"
+	rule = {
+		match = { "d" }
+		match = { "'" }
+		strip = 2
+	}
+	# Multi-character head match: strips leading "Mc"
+	rule = {
+		match = { "m" }
+		match = { "c" }
+		strip = 2
+	}
+}

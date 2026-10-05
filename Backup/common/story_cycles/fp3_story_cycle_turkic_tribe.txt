@@ -1,0 +1,132 @@
+﻿turkic_tribe_story = {
+
+
+	on_setup = {
+		### Scopes
+		save_scope_as = turkic_tribe_story
+		story_owner = {
+			add_character_flag = had_turkic_tribe_story
+		}
+
+		### Tracking variables
+		
+		set_variable = {
+			name = turkic_leader
+			value = story_owner.var:turkic_leader
+		}
+		set_variable = {
+			name = upset_vassal
+			value = story_owner.var:upset_vassal 
+		}
+		set_variable = {
+			name = nomads_county
+			value = story_owner.var:nomads_county 
+		}
+		set_variable = {
+			name = nomads_new_county 
+			value = story_owner.var:nomads_new_county
+		}
+		story_owner = {
+			remove_variable = turkic_leader
+			remove_variable = upset_vassal
+			remove_variable = nomads_county
+			remove_variable = nomads_new_county
+		}
+	}
+
+	on_owner_death = {
+		scope:story = { end_story = yes }
+	}
+
+	# nomad leader is dead
+	effect_group = {
+		days = 200
+
+		trigger = {
+			trigger_if = {
+				limit = { exists = var:turkic_leader }
+				var:turkic_leader = {
+					OR = {
+						is_alive = no
+						NOR = {
+							is_courtier_of = scope:story.story_owner
+							is_vassal_of = scope:story.story_owner
+						}
+					}
+				}
+			}
+			trigger_else = { always = yes }
+		}
+		
+
+		first_valid = {
+			triggered_effect = {
+				trigger = { always = yes }
+				effect = { end_story = yes }
+			}
+		}
+	}
+
+
+
+	# Something happens - random events
+	effect_group = {
+		days = { 200 350 } #lower these values to test the story cycle
+		chance = 50
+
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				story_owner = {
+					trigger_event = {
+						on_action = ongoing_turkic_tribe_events
+					}
+				}
+			}
+		}
+	}
+
+	effect_group = { #the nomad chain's end
+		years = { 5 10 } #lower these values to test the story cycle
+		chance = 100
+
+		trigger = {
+			story_owner = {
+				is_available = yes
+			}
+		}
+	
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				story_owner = {
+					add_character_flag = {
+						flag = turkic_tribe_story_end
+						days = 200
+					}
+					trigger_event = {
+						on_action = turkic_tribe_story_end
+					}
+				}
+			}
+		}
+	}
+
+	#Maintenance group
+	effect_group = {
+		days = 1
+		trigger = {
+			story_owner = { is_landed = no }
+		}
+		triggered_effect = {
+			trigger = { always = yes }
+			effect = {
+				#You became a landless adventurer/administrative! Ending story prematurely.
+				story_owner = { save_scope_as = story_owner }
+				debug_log = "Nomads invalidated"
+				debug_log_scopes = yes
+				end_story = yes
+			}
+		}
+	}
+}

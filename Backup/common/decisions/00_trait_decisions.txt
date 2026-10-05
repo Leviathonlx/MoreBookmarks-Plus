@@ -1,0 +1,283 @@
+﻿################
+####   VALUES  ####
+###################
+
+@deceitful_progress_hostile_schemes_cooldown_time = 1095
+@diligent_development_focus_cooldown_time = 3650
+@impatient_rushing_all_schemes_cooldown_time = 1825
+@vengeful_fabricate_hook_rivals_cooldown_time = 3665
+
+###################
+#### DECISIONS ####
+###################
+
+#Deceitful improving hostile schemes
+### Study the Art of Scheming ###
+deceitful_progress_hostile_schemes_decision = {
+	ai_check_interval = 0
+	picture = {
+		trigger = {
+			culture = {
+				has_graphical_east_asia_culture_group_trigger = yes
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/tgp_poet.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	}
+	sort_order = 60
+
+	desc = deceitful_progress_hostile_schemes_decision_desc
+
+	selection_tooltip = deceitful_progress_hostile_schemes_decision_tooltip
+
+	cooldown = { days = @deceitful_progress_hostile_schemes_cooldown_time }
+
+	is_shown = {
+		OR = {
+			has_trait = deceitful
+			any_character_struggle = {
+				has_struggle_phase_parameter = unlocks_expedite_scheme_decision
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		custom_description = {
+			stress_level >= 1
+			text = not_enough_stress
+		}
+		custom_description = {
+			text = "deceitful_progress_hostile_schemes_decision_missing_scheme"
+			any_scheme = {
+				hostile_scheme_trigger = yes
+			}
+		}
+	}
+
+
+	effect = {
+		if = {
+			limit = {
+				any_scheme = {
+					hostile_scheme_trigger = yes
+					count > 0
+				}
+			}
+			send_interface_toast = {
+				type = event_toast_effect_good
+				title = msg_deceitful_progress_hostile_schemes
+				left_icon = root
+
+				every_scheme = {
+					limit = {
+						hostile_scheme_trigger = yes
+					}
+					add_scheme_modifier = {
+						type = deceitful_progress_hostile_schemes_modifier
+					}
+				}
+			}
+		}
+		else = {
+			custom_tooltip = deceitful_progress_hostile_schemes_decision_missing_scheme_effect
+		}
+		
+	}
+	
+	ai_potential = {
+		OR = {
+			has_trait = deceitful
+			has_trait = vengeful
+			has_trait = sadistic
+			has_trait = schemer
+			has_trait = impatient
+			has_trait = ambitious
+			has_trait = diligent
+			has_trait = arbitrary
+		}
+		NOR = {
+			has_trait = calm
+			has_trait = patient
+		}
+		any_scheme = {
+			is_hostile = yes
+			save_temporary_scope_as = current_hostile_scheme
+		}
+		exists = scope:current_hostile_scheme
+		has_relation_rival = scope:current_hostile_scheme.scheme_target_character
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+#Diligent overwork
+### Develop Capital ###
+diligent_development_focus_decision = {
+	ai_check_interval = 0
+
+	picture = {
+		trigger = { government_has_flag = government_is_japan_feudal }
+		reference = "gfx/interface/illustrations/holding_types/tgp_castle_japan.dds"
+	}
+	picture = {
+		trigger = { government_has_flag = government_is_japan_administrative }
+		reference = "gfx/interface/illustrations/holding_types/tgp_city_japan.dds"
+	}
+	picture = {
+		trigger = { culture = { has_graphical_east_asia_culture_group_trigger = yes } }
+		reference = "gfx/interface/illustrations/decisions/tgp_great_project.dds"
+	}
+	picture = {
+		trigger = { culture = { has_graphical_india_culture_group_trigger = yes } }
+		reference = "gfx/interface/illustrations/holding_types/tgp_castle_se_asia.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	}
+	sort_order = 60
+
+	desc = diligent_development_focus_decision_desc
+
+	selection_tooltip = diligent_development_focus_decision_tooltip
+
+	cooldown = { days = @diligent_development_focus_cooldown_time }
+
+	is_shown = {
+		OR = {
+			has_trait = diligent
+			top_participant_group:dynastic_cycle ?= {
+				participant_group_type = advancement_movement
+			}
+		}
+		is_landed = yes
+		NOT = { government_has_flag = government_is_nomadic } # They use develop_fertility_decision
+	}
+
+	is_valid_showing_failures_only = {
+		is_at_war = no
+		is_adult = yes
+	}
+
+	effect = {
+
+		send_interface_toast = {
+			type = event_toast_effect_neutral
+			title = msg_diligent_development_focus
+			left_icon = root
+			
+			if = {
+				limit = {
+					government_allows = merit
+				}
+				change_merit = medium_merit_gain
+			}
+
+			add_character_modifier = {
+ 				modifier = diligent_development_focus
+				years = 10
+			}
+		}
+		
+		if = {
+			limit = {
+				has_trait = diligent
+			}
+			stress_impact = {
+				diligent = medium_stress_impact_gain
+			}
+		}
+		else = {
+			stress_impact = {
+				base = medium_stress_impact_gain
+			}
+		}
+	}
+	
+	ai_potential = {
+		has_trait = diligent
+		NOT = {
+			has_trait = temperate
+		}
+	}
+
+	ai_will_do = {
+		base = 100
+
+		modifier = {
+			factor = 0
+			stress >= 50
+		}
+	}
+}
+
+#Impatient rushing all schemes
+### Expedite Schemes ###
+impatient_rushing_all_schemes_decision = {
+	ai_check_interval = 0
+	picture = {
+		trigger = {
+			OR = {
+				culture = { has_graphical_east_asia_culture_group_trigger = yes }
+				culture = { has_graphical_india_culture_group_trigger = yes }
+			}
+		}
+		reference = "gfx/interface/illustrations/decisions/tgp_retire.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	}
+	sort_order = 60
+
+	desc = impatient_rushing_all_schemes_decision_desc
+
+	selection_tooltip = impatient_rushing_all_schemes_decision_tooltip
+
+	cooldown = { days = @impatient_rushing_all_schemes_cooldown_time }
+
+	is_shown = {
+		has_trait = impatient
+	}
+
+	is_valid_showing_failures_only = {
+		custom_description = {
+			stress_level >= 1
+			text = not_enough_stress
+		}
+		custom_description = {
+			text = "impatient_rushing_all_schemes_decision_missing_scheme"
+			any_scheme = { }
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				any_scheme = { }
+			}
+			send_interface_toast = {
+				type = event_toast_effect_neutral
+				title = msg_impatient_rushing_all_schemes
+				left_icon = root
+
+				every_scheme = {
+					change_opportunities = 2
+				}
+			}
+		}
+		else = {
+			custom_tooltip = impatient_rushing_all_schemes_decision_missing_scheme_effect
+		}		
+	}
+	
+	ai_potential = {
+		has_trait = impatient
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}

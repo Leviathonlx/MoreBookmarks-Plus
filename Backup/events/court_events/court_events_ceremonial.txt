@@ -1,0 +1,1074 @@
+﻿namespace = court_ceremonial
+
+scripted_effect court_ceremonial_select_bribes_effect = {
+	if = { # Spend favor
+		limit = {
+			scope:petition_vassal = { has_hook = scope:petition_liege }
+		}
+		save_scope_value_as = { name = repay_favor value = yes }
+	}
+	else = {
+		if = { # Blocs
+			limit = {
+				needs_more_valid_compensation_options_trigger = yes
+				exists = house.house_confederation
+				NOT = { scope:petition_vassal.house.house_confederation ?= house.house_confederation }
+			}
+			save_scope_value_as = { name = bribe_bloc value = yes }
+		}
+		if = { # Favor hook counter
+			limit = {
+				needs_more_valid_compensation_options_trigger = yes
+				can_add_hook = { target = scope:petition_vassal type = favor_hook }
+			}
+			save_scope_value_as = { name = bribe_favor value = yes }
+		}
+		if = { # Gold
+			limit = {
+				needs_more_valid_compensation_options_trigger = yes
+				scope:petition_vassal.gold >= scope:petition_vassal.medium_gold_value
+			}
+			save_scope_value_as = { name = bribe_gold value = yes }
+		}
+		if = { # Knight
+			limit = {
+				needs_more_valid_compensation_options_trigger = yes
+				scope:petition_vassal = {
+					any_close_family_member = { petition_liege_knight_trigger = yes }
+				}
+			}
+			scope:petition_vassal = {
+				random_close_family_member = {
+					limit = { petition_liege_knight_trigger = yes }
+					weight = {
+						base = 100
+						modifier = {
+							add = {
+								value = prowess
+								multiply = 2
+							}
+						}
+						modifier = {
+							add = {
+								value = age
+								multiply = -1
+							}
+						}
+						modifier = {
+							factor = 2
+							is_child_of = scope:petition_vassal
+						}
+					}
+					save_scope_as = knight
+				}
+			}
+			save_scope_value_as = { name = bribe_knight value = yes }
+		}
+		if = { # Vow
+			limit = {
+				needs_more_valid_compensation_options_trigger = yes
+				scope:petition_vassal = {
+					any_close_family_member = { petition_liege_vows_trigger = yes  }
+				}
+			}
+			scope:petition_vassal = {
+				random_close_family_member = {
+					limit = { petition_liege_vows_trigger = yes }
+					weight = {
+						base = 100
+						modifier = {
+							add = {
+								value = learning
+								multiply = 2
+							}
+						}
+						modifier = {
+							add = {
+								value = age
+								multiply = -1
+							}
+						}
+						modifier = {
+							factor = 2
+							is_child_of = scope:petition_vassal
+						}
+					}
+					save_scope_as = monk
+				}
+				save_scope_value_as = { name = bribe_vows value = yes }
+			}
+		}
+	}
+}
+
+scripted_effect court_ceremonial_petition_vassal_effect = {
+	save_scope_as = petition_vassal
+	set_variable = {
+		name = petition_type
+		value = flag:$TYPE$
+	}
+	add_character_flag = {
+		flag = petition_ceremonial_liege_cooldown
+		years = 10
+	}
+	court_event_character_flag_effect = yes
+}
+
+scripted_effect court_ceremonial_repay_favor_effect = {
+	scope:petition_vassal = {
+		remove_hook = { target = root }
+	}
+	petition_liege_0121_$TYPE$_effect = yes
+	petition_pos_grandeur_renown_effect = yes
+}
+
+scripted_effect court_ceremonial_bloc_bribe_effect = {
+	random_list = {
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_given
+			scope:petition_vassal.house = {
+				tgp_join_house_bloc_effect = {
+					INVITER = root.house
+					OPINION = flag:yes
+				}
+			}
+			petition_liege_0121_$TYPE$_effect = yes
+			petition_pos_grandeur_renown_effect = yes
+		}
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_refused
+			reverse_add_opinion = {
+				modifier = disappointed_opinion
+				target = scope:petition_vassal
+				opinion = -25
+			}
+		}
+	}
+	stress_impact = {
+		vengeful = miniscule_stress_impact_loss
+		arbitrary = miniscule_stress_impact_loss
+		irritable = minor_stress_impact_loss
+		forgiving = medium_stress_impact_gain
+		just = major_stress_impact_gain
+	}
+}
+
+scripted_effect court_ceremonial_favor_bribe_effect = {
+	random_list = {
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_given
+			add_hook = {
+				type = favor_hook
+				target = scope:petition_vassal
+			}
+			petition_liege_0121_$TYPE$_effect = yes
+			petition_pos_grandeur_renown_effect = yes
+		}
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_refused
+			modifier = {
+				add = {
+					value = scope:petition_vassal.ai_rationality
+					multiply = -0.25
+				}
+			}
+			reverse_add_opinion = {
+				modifier = disappointed_opinion
+				target = scope:petition_vassal
+				opinion = -25
+			}
+		}
+	}
+	stress_impact = {
+		trusting = miniscule_stress_impact_loss
+		lazy = miniscule_stress_impact_loss
+		arbitrary = medium_stress_impact_gain
+	}
+}
+
+scripted_effect court_ceremonial_gold_bribe_effect = {
+	random_list = {
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_given
+			scope:petition_vassal = {
+				pay_short_term_gold = {
+					gold = scope:petition_vassal.medium_gold_value
+					target = root
+				}
+			}
+			petition_liege_0121_$TYPE$_effect = yes
+			petition_pos_grandeur_renown_effect = yes
+		}
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_refused
+			modifier = {
+				add = {
+					value = scope:petition_vassal.ai_greed
+					multiply = -0.25
+				}
+			}
+			reverse_add_opinion = {
+				modifier = disappointed_opinion
+				target = scope:petition_vassal
+				opinion = -25
+			}
+		}
+	}
+	stress_impact = {
+		trusting = miniscule_stress_impact_loss
+		lazy = miniscule_stress_impact_loss
+		arbitrary = medium_stress_impact_gain
+	}
+}
+
+scripted_effect court_ceremonial_knight_bribe_effect = {
+	random_list = {
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_given
+			petition_liege_0101_petitioner_knight_effect = yes
+			petition_liege_0121_$TYPE$_effect = yes
+			petition_pos_grandeur_renown_effect = yes
+		}
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_refused
+			opinion_modifier = {
+				who = scope:petition_vassal
+				opinion_target = scope:knight
+				multiplier = 0.25
+			}
+			reverse_add_opinion = {
+				modifier = disappointed_opinion
+				target = scope:petition_vassal
+				opinion = -25
+			}
+		}
+	}
+	stress_impact = {
+		trusting = miniscule_stress_impact_loss
+		craven = miniscule_stress_impact_loss
+		paranoid = medium_stress_impact_gain
+	}
+}
+
+scripted_effect court_ceremonial_vow_bribe_effect = {
+	random_list = {
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_given
+			petition_liege_0101_petitioner_vows_effect = yes
+			petition_liege_0121_$TYPE$_effect = yes
+			petition_pos_grandeur_renown_effect = yes
+		}
+		10 = {
+			show_chance = no
+			desc = petition_liege.0101.bribe_refused
+			opinion_modifier = {
+				who = scope:petition_vassal
+				opinion_target = scope:monk
+				multiplier = 0.25
+			}
+			reverse_add_opinion = {
+				modifier = disappointed_opinion
+				target = scope:petition_vassal
+				opinion = -25
+			}
+		}
+	}
+	stress_impact = {
+		zealous = miniscule_stress_impact_loss
+		fickle = miniscule_stress_impact_loss
+		cynical = medium_stress_impact_gain
+	}
+}
+
+scripted_effect court_ceremonial_accept_effect = {
+	reverse_add_opinion = {
+		modifier = respect_opinion
+		target = scope:petition_vassal
+		opinion = 25
+	}
+	petition_liege_0121_$TYPE$_effect = yes
+	stress_impact = {
+		greedy = miniscule_stress_impact_gain
+		arrogant = miniscule_stress_impact_gain
+	}
+}
+
+scripted_effect court_ceremonial_reject_effect = {
+	reverse_add_opinion = {
+		modifier = disappointed_opinion
+		target = scope:petition_vassal
+		opinion = -25
+	}
+	stress_impact = {
+		generous = miniscule_stress_impact_gain
+		fickle = miniscule_stress_impact_gain
+	}
+}
+
+scripted_trigger court_ceremonial_1000_vassal_trigger = {
+	has_court_event_flag = no
+	is_ai = yes
+	government_allows = administrative
+	is_house_head = yes
+	any_held_title = { is_noble_family_title = yes }
+	has_succession_appointment_investors = top_liege.primary_title
+	NOR = {
+		house = root.house
+		this = top_liege.primary_title.current_heir
+		has_any_bad_relationship_with_character_trigger = { CHARACTER = root }
+		has_character_flag = petition_ceremonial_liege_cooldown
+		exists = house.var:petition_liege_regent_support
+	}
+}
+
+court_ceremonial.1000 = {
+	type = court_event
+	title = court_ceremonial.1000.t
+	desc = {
+		desc = court_ceremonial.1000.opening
+		desc = court_ceremonial.1000.desc
+	}
+	theme = court
+	cooldown = { years = 1 }
+	court_scene = {
+		button_position_character = scope:petition_vassal
+		roles = {
+			scope:petition_vassal = {
+				group = petitioners_group
+				animation = throne_room_bow_1
+			}
+		}
+	}
+
+	trigger = {
+		# DLC check.
+		has_royal_court = yes
+		# Standard checks.
+		is_available_adult = yes
+		# Ceremonial Liege
+		tgp_is_ceremonial_liege_trigger = yes
+		top_liege = {
+			tgp_is_ceremonial_regent_trigger = yes # Not 'actual' ruler
+			primary_title = {
+				any_title_heir = { court_ceremonial_1000_vassal_trigger = yes }
+			}
+		}
+	}
+
+	immediate = {
+		save_scope_as = petition_liege
+		top_liege = {
+			primary_title = {
+				save_scope_as = title
+				random_title_heir = {
+					limit = { court_ceremonial_1000_vassal_trigger = yes }
+					weight = {
+						base = 1
+						modifier = {
+							add = 2
+							save_temporary_scope_as = petitioner_temp
+							"scope:title.place_in_line_of_succession(scope:petitioner_temp)" = 2
+						}
+						modifier = {
+							add = 1
+							save_temporary_scope_as = petitioner_temp
+							"scope:title.place_in_line_of_succession(scope:petitioner_temp)" = 3
+						}
+					}
+					court_ceremonial_petition_vassal_effect = { TYPE = regent }
+				}
+			}
+		}
+		court_ceremonial_select_bribes_effect = yes
+		save_scope_value_as = {
+			name = petition_ceremonial_liege_regent
+			value = flag:yes
+		}
+	}
+
+	option = { # Accept
+		name = court_ceremonial.1000.a
+		court_ceremonial_accept_effect = { TYPE = regent }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Repay favor
+		name = court_ceremonial.1000.h
+		trigger = { exists = scope:repay_favor }
+		court_ceremonial_repay_favor_effect = { TYPE = regent }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Bloc bribe
+		name = court_ceremonial.1000.b
+		trigger = { exists = scope:bribe_bloc }
+		court_ceremonial_bloc_bribe_effect = { TYPE = regent }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = -0.25
+				ai_compassion = -0.25
+				ai_boldness = 0.5
+			}
+		}
+	}
+
+	option = { # Favor bribe
+		name = court_ceremonial.1000.c
+		trigger = { exists = scope:bribe_favor }
+		court_ceremonial_favor_bribe_effect = { TYPE = regent }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_energy = -0.25
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	option = { # Gold bribe
+		name = court_ceremonial.1000.d
+		trigger = { exists = scope:bribe_gold }
+		court_ceremonial_gold_bribe_effect = { TYPE = regent }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.25
+				ai_greed = 0.5
+			}
+		}
+	}
+
+	option = { # Knight bribe
+		name = court_ceremonial.1000.f
+		trigger = { exists = scope:bribe_knight }
+		court_ceremonial_knight_bribe_effect = { TYPE = regent }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_rationality = -0.25
+				ai_sociability = 0.5
+			}
+		}
+	}
+
+	option = { # Vow bribe
+		name = court_ceremonial.1000.g
+		trigger = { exists = scope:bribe_vows }
+		court_ceremonial_vow_bribe_effect = { TYPE = regent }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_greed = -0.25
+				ai_zeal = 0.5
+			}
+		}
+	}
+
+	option = { # Refuse
+		name = court_ceremonial.1000.e
+		court_ceremonial_reject_effect = yes
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.5
+				ai_energy = -0.25
+			}
+		}
+	}
+
+	after = {
+		scope:petition_vassal = {	
+			clear_court_event_participation = yes
+			remove_variable = petition_type
+		}
+	}
+}
+
+scripted_trigger court_ceremonial_1100_vassal_trigger = {
+	is_ai = yes
+	government_allows = administrative
+	is_house_head = yes
+	any_held_title = { is_noble_family_title = yes }
+	save_temporary_scope_as = appointee_temp
+	any_heir_title = {
+		save_temporary_scope_as = appointment_temp
+		NOR = {
+			this = scope:appointee_temp.top_liege.primary_title
+			current_heir = scope:appointee_temp
+		}
+		holder = { is_governor = yes }
+	}
+	NOR = {
+		house = root.house
+		this = top_liege.primary_title.current_heir
+		has_any_bad_relationship_with_character_trigger = { CHARACTER = root }
+		has_character_flag = petition_ceremonial_liege_cooldown
+		exists = house.var:petition_liege_appointment_support
+	}
+}
+
+court_ceremonial.1100 = { # Appointment
+	type = court_event
+	title = court_ceremonial.1100.t
+	desc = {
+		desc = court_ceremonial.1000.opening
+		desc = court_ceremonial.1100.desc
+	}
+	theme = court
+	cooldown = { years = 1 }
+	court_scene = {
+		button_position_character = scope:petition_vassal
+		roles = {
+			scope:petition_vassal = {
+				group = petitioners_group
+				animation = throne_room_bow_1
+			}
+		}
+	}
+
+	trigger = {
+		# DLC check.
+		has_royal_court = yes
+		# Standard checks.
+		is_available_adult = yes
+		# Ceremonial Liege
+		tgp_is_ceremonial_liege_trigger = yes
+		top_liege = {
+			any_noble_family = {
+				holder = { court_ceremonial_1100_vassal_trigger = yes }
+			}
+		}
+	}
+
+	immediate = {
+		save_scope_as = petition_liege
+		top_liege = {
+			random_noble_family = {
+				limit = {
+					holder = { court_ceremonial_1100_vassal_trigger = yes }
+				}
+				weight = {
+					base = 1
+					modifier = { add = holder.house.house_power_score }
+				}
+				holder = {
+					court_ceremonial_petition_vassal_effect = { TYPE = appointment }
+				}
+			}
+		}
+		court_ceremonial_select_bribes_effect = yes
+		save_scope_value_as = {
+			name = petition_ceremonial_liege_appointment
+			value = flag:yes
+		}
+	}
+
+	option = {
+		name = court_ceremonial.1000.a
+		court_ceremonial_accept_effect = { TYPE = appointment }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Repay favor
+		name = court_ceremonial.1000.h
+		trigger = { exists = scope:repay_favor }
+		court_ceremonial_repay_favor_effect = { TYPE = appointment }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Bloc bribe
+		name = court_ceremonial.1000.b
+		trigger = { exists = scope:bribe_bloc }
+		court_ceremonial_bloc_bribe_effect = { TYPE = appointment }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = -0.25
+				ai_compassion = -0.25
+				ai_boldness = 0.5
+			}
+		}
+	}
+
+	option = { # Favor bribe
+		name = court_ceremonial.1000.c
+		trigger = { exists = scope:bribe_favor }
+		court_ceremonial_favor_bribe_effect = { TYPE = appointment }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_energy = -0.25
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	option = { # Gold bribe
+		name = court_ceremonial.1000.d
+		trigger = { exists = scope:bribe_gold }
+		court_ceremonial_gold_bribe_effect = { TYPE = appointment }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.25
+				ai_greed = 0.5
+			}
+		}
+	}
+
+	option = { # Knight bribe
+		name = court_ceremonial.1000.f
+		trigger = { exists = scope:bribe_knight }
+		court_ceremonial_knight_bribe_effect = { TYPE = appointment }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_rationality = -0.25
+				ai_sociability = 0.5
+			}
+		}
+	}
+
+	option = { # Vow bribe
+		name = court_ceremonial.1000.g
+		trigger = { exists = scope:bribe_vows }
+		court_ceremonial_vow_bribe_effect = { TYPE = appointment }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_greed = -0.25
+				ai_zeal = 0.5
+			}
+		}
+	}
+
+	option = { # Refuse
+		name = court_ceremonial.1000.e
+		court_ceremonial_reject_effect = yes
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.5
+				ai_energy = -0.25
+			}
+		}
+	}
+
+	after = {
+		scope:petition_vassal = {	
+			clear_court_event_participation = yes
+			remove_variable = petition_type
+		}
+	}
+}
+
+scripted_trigger court_ceremonial_1200_vassal_trigger = {
+	is_ai = yes
+	is_house_head = yes
+	any_held_title = { is_noble_family_title = yes }
+	NOR = {
+		any_spouse = { house = root.house }
+		house = root.house
+		has_any_bad_relationship_with_character_trigger = { CHARACTER = root }
+		has_character_flag = petition_ceremonial_liege_cooldown
+	}
+}
+
+court_ceremonial.1200 = { # Marriage
+	type = court_event
+	title = court_ceremonial.1200.t
+	desc = {
+		desc = court_ceremonial.1000.opening
+		desc = court_ceremonial.1200.desc
+	}
+	theme = court
+	cooldown = { years = 1 }
+	court_scene = {
+		button_position_character = scope:petition_vassal
+		roles = {
+			scope:petition_vassal = {
+				group = petitioners_group
+				animation = throne_room_bow_1
+			}
+		}
+	}
+
+	trigger = {
+		# DLC check.
+		has_royal_court = yes
+		# Standard checks.
+		is_available_adult = yes
+		# Ceremonial Liege
+		tgp_is_ceremonial_liege_trigger = yes
+		top_liege = {
+			any_noble_family = {
+				holder = { court_ceremonial_1200_vassal_trigger = yes }
+			}
+		}
+	}
+
+	immediate = {
+		save_scope_as = petition_liege
+		top_liege = {
+			random_noble_family = {
+				limit = {
+					holder = { court_ceremonial_1200_vassal_trigger = yes }
+				}
+				weight = {
+					base = 1
+					modifier = { add = holder.house.house_power_score }
+				}
+				holder = {
+					court_ceremonial_petition_vassal_effect = { TYPE = wedding }
+				}
+			}
+		}
+		court_ceremonial_select_bribes_effect = yes
+		save_scope_value_as = {
+			name = petition_ceremonial_liege_wedding
+			value = flag:yes
+		}
+	}
+
+	option = {
+		name = court_ceremonial.1000.a
+		court_ceremonial_accept_effect = { TYPE = wedding }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Repay favor
+		name = court_ceremonial.1000.h
+		trigger = { exists = scope:repay_favor }
+		court_ceremonial_repay_favor_effect = { TYPE = wedding }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Bloc bribe
+		name = court_ceremonial.1000.b
+		trigger = { exists = scope:bribe_bloc }
+		court_ceremonial_bloc_bribe_effect = { TYPE = wedding }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = -0.25
+				ai_compassion = -0.25
+				ai_boldness = 0.5
+			}
+		}
+	}
+
+	option = { # Favor bribe
+		name = court_ceremonial.1000.c
+		trigger = { exists = scope:bribe_favor }
+		court_ceremonial_favor_bribe_effect = { TYPE = wedding }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_energy = -0.25
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	option = { # Gold bribe
+		name = court_ceremonial.1000.d
+		trigger = { exists = scope:bribe_gold }
+		court_ceremonial_gold_bribe_effect = { TYPE = wedding }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.25
+				ai_greed = 0.5
+			}
+		}
+	}
+
+	option = { # Knight bribe
+		name = court_ceremonial.1000.f
+		trigger = { exists = scope:bribe_knight }
+		court_ceremonial_knight_bribe_effect = { TYPE = wedding }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_rationality = -0.25
+				ai_sociability = 0.5
+			}
+		}
+	}
+
+	option = { # Vow bribe
+		name = court_ceremonial.1000.g
+		trigger = { exists = scope:bribe_vows }
+		court_ceremonial_vow_bribe_effect = { TYPE = wedding }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_greed = -0.25
+				ai_zeal = 0.5
+			}
+		}
+	}
+
+	option = { # Refuse
+		name = court_ceremonial.1000.e
+		court_ceremonial_reject_effect = yes
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.5
+				ai_energy = -0.25
+			}
+		}
+	}
+
+	after = {
+		scope:petition_vassal = {	
+			clear_court_event_participation = yes
+			remove_variable = petition_type
+		}
+	}
+}
+
+scripted_trigger court_ceremonial_1300_vassal_trigger = {
+	is_ai = yes
+	is_house_head = yes
+	any_held_title = { is_noble_family_title = yes }
+	NOR = {
+		house = root.house
+		has_any_bad_relationship_with_character_trigger = { CHARACTER = root }
+		has_character_flag = petition_ceremonial_liege_cooldown
+	}
+}
+
+court_ceremonial.1300 = { # Dignity
+	type = court_event
+	title = court_ceremonial.1300.t
+	desc = {
+		desc = court_ceremonial.1000.opening
+		desc = court_ceremonial.1300.desc
+	}
+	theme = court
+	cooldown = { years = 1 }
+	court_scene = {
+		button_position_character = scope:petition_vassal
+		roles = {
+			scope:petition_vassal = {
+				group = petitioners_group
+				animation = throne_room_bow_1
+			}
+		}
+	}
+
+	trigger = {
+		# DLC check.
+		has_royal_court = yes
+		# Standard checks.
+		is_available_adult = yes
+		# Ceremonial Liege
+		tgp_is_ceremonial_liege_trigger = yes
+		top_liege = {
+			any_noble_family = {
+				holder = { court_ceremonial_1300_vassal_trigger = yes }
+			}
+		}
+	}
+
+	immediate = {
+		save_scope_as = petition_liege
+		top_liege = {
+			random_noble_family = {
+				limit = {
+					holder = { court_ceremonial_1300_vassal_trigger = yes }
+				}
+				weight = {
+					base = 1
+					modifier = { add = holder.house.house_power_score }
+				}
+				holder = {
+					court_ceremonial_petition_vassal_effect = { TYPE = privilege }
+				}
+			}
+		}
+		court_ceremonial_select_bribes_effect = yes
+		save_scope_value_as = {
+			name = petition_ceremonial_liege_privilege
+			value = flag:yes
+		}
+	}
+
+	option = {
+		name = court_ceremonial.1000.a
+		court_ceremonial_accept_effect = { TYPE = privilege }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Repay favor
+		name = court_ceremonial.1000.h
+		trigger = { exists = scope:repay_favor }
+		court_ceremonial_repay_favor_effect = { TYPE = privilege }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_vengefulness = -0.5
+				ai_compassion = 0.5
+			}
+		}
+	}
+
+	option = { # Bloc bribe
+		name = court_ceremonial.1000.b
+		trigger = { exists = scope:bribe_bloc }
+		court_ceremonial_bloc_bribe_effect = { TYPE = privilege }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_rationality = -0.25
+				ai_compassion = -0.25
+				ai_boldness = 0.5
+			}
+		}
+	}
+
+	option = { # Favor bribe
+		name = court_ceremonial.1000.c
+		trigger = { exists = scope:bribe_favor }
+		court_ceremonial_favor_bribe_effect = { TYPE = privilege }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_energy = -0.25
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	option = { # Gold bribe
+		name = court_ceremonial.1000.d
+		trigger = { exists = scope:bribe_gold }
+		court_ceremonial_gold_bribe_effect = { TYPE = privilege }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.25
+				ai_greed = 0.5
+			}
+		}
+	}
+
+	option = { # Knight bribe
+		name = court_ceremonial.1000.f
+		trigger = { exists = scope:bribe_knight }
+		court_ceremonial_knight_bribe_effect = { TYPE = privilege }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_rationality = -0.25
+				ai_sociability = 0.5
+			}
+		}
+	}
+
+	option = { # Vow bribe
+		name = court_ceremonial.1000.g
+		trigger = { exists = scope:bribe_vows }
+		court_ceremonial_vow_bribe_effect = { TYPE = privilege }
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -0.25
+				ai_greed = -0.25
+				ai_zeal = 0.5
+			}
+		}
+	}
+
+	option = { # Refuse
+		name = court_ceremonial.1000.e
+		court_ceremonial_reject_effect = yes
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_sociability = -0.25
+				ai_rationality = -0.5
+				ai_energy = -0.25
+			}
+		}
+	}
+
+	after = {
+		scope:petition_vassal = {	
+			clear_court_event_participation = yes
+			remove_variable = petition_type
+		}
+	}
+}

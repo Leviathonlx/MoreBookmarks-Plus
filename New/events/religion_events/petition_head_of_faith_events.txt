@@ -1,0 +1,1820 @@
+﻿namespace = petition_head_of_faith
+
+#####################################################################
+# SHARED DESC/OPTION BLOCKS
+# Written as inline scripted desc/triggers so both character_event
+# and court_event variants use identical logic and loc keys.
+# The engine has no shared desc/option database, so every
+# character/court twin duplicates those blocks verbatim.
+# EDIT BOTH VARIANTS IN LOCKSTEP.
+#####################################################################
+
+petition_head_of_faith.0601 = {
+	type = character_event
+	title = petition_head_of_faith.0601.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					NOT = { exists = var:petition_head_of_faith_recipient }
+				}
+				desc = petition_head_of_faith.0601.desc.no_head
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_recipient = { is_alive = no }
+				}
+				desc = petition_head_of_faith.0601.desc.head_dead
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_recipient = { is_imprisoned = yes }
+				}
+				desc = petition_head_of_faith.0601.desc.head_imprisoned
+			}
+			triggered_desc = {
+				trigger = {
+					OR = {
+						NOT = { petition_head_of_faith_has_religious_authority_trigger = yes }
+						AND = {
+							exists = var:petition_head_of_faith_recipient
+							NOT = {
+								petition_head_of_faith_religious_authority_is_trigger = { CHARACTER = var:petition_head_of_faith_recipient }
+							}
+						}
+					}
+				}
+				desc = petition_head_of_faith.0601.desc.head_changed
+			}
+			triggered_desc = {
+				trigger = {
+					exists = var:petition_head_of_faith_recipient
+					is_at_war_with = var:petition_head_of_faith_recipient
+				}
+				desc = petition_head_of_faith.0601.desc.at_war
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_type = flag:repentance
+					NOT = { has_trait = excommunicated }
+				}
+				desc = petition_head_of_faith.0601.desc.repentance_resolved
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_type = flag:repentance
+					has_character_modifier = recent_excommunication
+				}
+				desc = petition_head_of_faith.0601.desc.repentance_too_soon
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_type = flag:request_excommunication
+					exists = var:petition_head_of_faith_target_character
+					var:petition_head_of_faith_target_character = { is_alive = no }
+				}
+				desc = petition_head_of_faith.0601.desc.target_dead
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_type = flag:request_excommunication
+					exists = var:petition_head_of_faith_target_character
+					var:petition_head_of_faith_target_character = { faith != root.faith }
+				}
+				desc = petition_head_of_faith.0601.desc.target_wrong_faith
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_type = flag:request_excommunication
+					exists = var:petition_head_of_faith_target_character
+					var:petition_head_of_faith_target_character = { highest_held_title_tier < tier_kingdom }
+				}
+				desc = petition_head_of_faith.0601.desc.target_too_low
+			}
+			triggered_desc = {
+				trigger = {
+					var:petition_head_of_faith_type = flag:request_excommunication
+					exists = var:petition_head_of_faith_target_character
+					var:petition_head_of_faith_target_character = { has_trait = excommunicated }
+				}
+				desc = petition_head_of_faith.0601.desc.target_already_excommunicated
+			}
+			desc = petition_head_of_faith.0601.desc.fallback
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:petition_hof_piety_refunded }
+				desc = petition_head_of_faith.0601.desc.refund.piety
+			}
+			desc = petition_head_of_faith.0601.desc.refund.none
+		}
+	}
+	theme = realm
+
+	left_portrait = { character = root animation = personality_rational }
+	right_portrait = {
+		character = var:petition_head_of_faith_recipient
+		animation = personality_honorable
+		trigger = { exists = var:petition_head_of_faith_recipient }
+	}
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		# We save first because the refund effect clears petition_head_of_faith_reserved_piety_value
+		if = {
+			limit = { has_variable = petition_head_of_faith_reserved_piety_value }
+			save_scope_value_as = {
+				name = petition_hof_piety_refunded
+				value = yes
+			}
+		}
+		petition_head_of_faith_refund_reserved_costs_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.0601.a
+		current_travel_plan ?= {
+			if = {
+				limit = { can_cancel = yes }
+				cancel_travel_plan = yes
+			}
+		}
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+petition_head_of_faith.9000 = {
+	hidden = yes
+	immediate = {
+		current_travel_plan ?= { pause_travel_plan = yes }
+		if = {
+			limit = { petition_head_of_faith_valid_trigger = no }
+			trigger_event = petition_head_of_faith.0601
+		}
+		else_if = {
+			limit = {
+				var:petition_head_of_faith_recipient = {
+					has_royal_court = yes
+				}
+			}
+			trigger_event = petition_head_of_faith.3000
+		}
+		else = {
+			trigger_event = petition_head_of_faith.1000
+		}
+	}
+}
+
+#####################################################################
+# ARRIVAL EVENTS: 1000 (character) / 3000 (court)
+# Shows disposition, routes to argument duel or human Head of Faith decision event.
+#####################################################################
+
+scripted_trigger petition_head_of_faith_arrival_recipient_sinful_trigger = {
+	var:petition_head_of_faith_recipient = {
+		num_sinful_traits >= 1
+	}
+}
+
+scripted_trigger petition_head_of_faith_arrival_recipient_poor_health_trigger = {
+	var:petition_head_of_faith_recipient = {
+		OR = {
+			has_trait = infirm
+			health <= poor_health
+			has_any_debilitating_illness = yes
+		}
+	}
+}
+
+scripted_trigger petition_head_of_faith_arrival_recipient_reputable_trigger = {
+	var:petition_head_of_faith_recipient = {
+		OR = {
+			num_virtuous_traits > num_sinful_traits
+			num_sinful_traits = 0
+		}
+	}
+}
+
+scripted_trigger petition_head_of_faith_arrival_recipient_virtuous_trigger = {
+	var:petition_head_of_faith_recipient = {
+		num_virtuous_traits >= 1
+	}
+}
+
+# Arrival (no royal court)
+petition_head_of_faith.1000 = {
+	type = character_event
+	title = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:repentance }
+				desc = petition_head_of_faith.1000.t.repentance
+			}
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:request_excommunication }
+				desc = petition_head_of_faith.1000.t.excommunication
+			}
+		}
+	}
+	desc = {
+		desc = petition_head_of_faith.1000.desc.intro
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_sinful_trigger = yes
+				exists = scope:petition_hof_gravest_sin
+			}
+			desc = petition_head_of_faith.1000.desc.recipient_sinful
+		}
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_virtuous_trigger = yes
+				exists = scope:petition_hof_gravest_virtue
+			}
+			desc = petition_head_of_faith.1000.desc.recipient_virtuous
+		}
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_poor_health_trigger = yes
+				petition_head_of_faith_arrival_recipient_reputable_trigger = yes
+			}
+			desc = petition_head_of_faith.1000.desc.health_noble
+		}
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_poor_health_trigger = yes
+				NOT = { petition_head_of_faith_arrival_recipient_reputable_trigger = yes }
+			}
+			desc = petition_head_of_faith.1000.desc.health_excess
+		}
+		desc = petition_head_of_faith.1000.desc.address
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:repentance }
+				desc = petition_head_of_faith.1000.desc.repentance
+			}
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:request_excommunication }
+				desc = petition_head_of_faith.1000.desc.excommunication
+			}
+		}
+		# Disposition indicators in arrival desc (favorable/hostile/skeptical/neutral).
+		first_valid = {
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_favorable_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_favorable
+			}
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_neutral_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_neutral
+			}
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_skeptical_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_skeptical
+			}
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_hostile_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_hostile
+			}
+		}
+		desc = petition_head_of_faith.1000.desc.conclusion
+	}
+	theme = realm
+	left_portrait = { character = root animation = throne_room_bow_1 }
+	right_portrait = { character = var:petition_head_of_faith_recipient animation = holding_hu }
+	override_background = { reference = throne_room_scope }
+
+	immediate = {
+		remove_character_flag = petition_head_of_faith_in_courtroom
+		petition_head_of_faith_save_scopes_effect = yes
+		if = {
+			limit = { petition_head_of_faith_arrival_recipient_sinful_trigger = yes }
+			scope:recipient = {
+				random_character_trait = {
+					limit = {
+						scope:recipient.rite = {
+							trait_is_sin_rite = prev
+						}
+					}
+					save_scope_as = petition_hof_gravest_sin
+				}
+			}
+		}
+		if = {
+			limit = { petition_head_of_faith_arrival_recipient_virtuous_trigger = yes }
+			scope:recipient = {
+				random_character_trait = {
+					limit = {
+						scope:recipient.rite = {
+							trait_is_virtue_rite = prev
+						}
+					}
+					save_scope_as = petition_hof_gravest_virtue
+				}
+			}
+		}
+		var:petition_head_of_faith_recipient = {
+			save_scope_as = background_throne_room_scope
+		}
+	}
+
+	# All petition types: route to argument duel (AI) or human Head of Faith decision event.
+	option = {
+		name = petition_head_of_faith.1000.a.argue
+		custom_tooltip = petition_head_of_faith.1000.a.argue_tt
+		if = {
+			limit = { var:petition_head_of_faith_recipient = { is_ai = yes } }
+			# Route to type-specific argument event
+			if = {
+				limit = { var:petition_head_of_faith_type = flag:request_excommunication }
+				trigger_event = petition_head_of_faith.2000
+			}
+			else_if = {
+				limit = { var:petition_head_of_faith_type = flag:repentance }
+				trigger_event = petition_head_of_faith.5000
+			}
+		}
+		else = {
+			var:petition_head_of_faith_recipient = {
+				set_variable = {
+					name = petition_head_of_faith_petitioner
+					value = root
+				}
+				if = {
+					limit = { root.var:petition_head_of_faith_type = flag:repentance }
+					trigger_event = petition_head_of_faith.1310
+				}
+				else_if = {
+					limit = { root.var:petition_head_of_faith_type = flag:request_excommunication }
+					trigger_event = petition_head_of_faith.1320
+				}
+			}
+		}
+	}
+}
+
+# Arrival (with royal court)
+petition_head_of_faith.3000 = {
+	type = court_event
+	title = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:repentance }
+				desc = petition_head_of_faith.1000.t.repentance
+			}
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:request_excommunication }
+				desc = petition_head_of_faith.1000.t.excommunication
+			}
+		}
+	}
+	desc = {
+		triggered_desc = {
+			trigger = {
+				var:petition_head_of_faith_recipient = {
+					court_grandeur_current_level <= low_court_grandeur_level
+				}
+			}
+			desc = petition_head_of_faith.1000.desc.court_low_grandeur
+		}
+		triggered_desc = {
+			trigger = {
+				var:petition_head_of_faith_recipient = {
+					court_grandeur_current_level >= high_court_grandeur_level
+				}
+			}
+			desc = petition_head_of_faith.1000.desc.court_high_grandeur
+		}
+		desc = petition_head_of_faith.1000.desc.intro
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_sinful_trigger = yes
+				exists = scope:petition_hof_gravest_sin
+			}
+			desc = petition_head_of_faith.1000.desc.recipient_sinful
+		}
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_virtuous_trigger = yes
+				exists = scope:petition_hof_gravest_virtue
+			}
+			desc = petition_head_of_faith.1000.desc.recipient_virtuous
+		}
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_poor_health_trigger = yes
+				petition_head_of_faith_arrival_recipient_reputable_trigger = yes
+			}
+			desc = petition_head_of_faith.1000.desc.health_noble
+		}
+		triggered_desc = {
+			trigger = {
+				petition_head_of_faith_arrival_recipient_poor_health_trigger = yes
+				NOT = { petition_head_of_faith_arrival_recipient_reputable_trigger = yes }
+			}
+			desc = petition_head_of_faith.1000.desc.health_excess
+		}
+		desc = petition_head_of_faith.1000.desc.address
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:repentance }
+				desc = petition_head_of_faith.1000.desc.repentance
+			}
+			triggered_desc = {
+				trigger = { var:petition_head_of_faith_type = flag:request_excommunication }
+				desc = petition_head_of_faith.1000.desc.excommunication
+			}
+		}
+		# Disposition indicators in arrival desc (favorable/hostile/skeptical/neutral).
+		first_valid = {
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_favorable_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_favorable
+			}
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_neutral_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_neutral
+			}
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_skeptical_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_skeptical
+			}
+			triggered_desc = {
+				trigger = { petition_head_of_faith_disposition_hostile_trigger = yes }
+				desc = petition_head_of_faith.1000.desc.disposition_hostile
+			}
+		}
+		desc = petition_head_of_faith.1000.desc.conclusion
+	}
+	theme = realm
+	court_scene = {
+		button_position_character = root
+		court_owner = var:petition_head_of_faith_recipient
+		court_event_force_open = no
+		show_timeout_info = yes
+		should_pause_time = yes
+		roles = {
+			root = {
+				group = petitioners_group
+				animation = throne_room_kneel_1
+			}
+		}
+	}
+
+	immediate = {
+		add_character_flag = petition_head_of_faith_in_courtroom
+		petition_head_of_faith_save_scopes_effect = yes
+		if = {
+			limit = { petition_head_of_faith_arrival_recipient_sinful_trigger = yes }
+			scope:recipient = {
+				random_character_trait = {
+					limit = {
+						scope:recipient.rite = {
+							trait_is_sin_rite = prev
+						}
+					}
+					save_scope_as = petition_hof_gravest_sin
+				}
+			}
+		}
+		if = {
+			limit = { petition_head_of_faith_arrival_recipient_virtuous_trigger = yes }
+			scope:recipient = {
+				random_character_trait = {
+					limit = {
+						scope:recipient.rite = {
+							trait_is_virtue_rite = prev
+						}
+					}
+					save_scope_as = petition_hof_gravest_virtue
+				}
+			}
+		}
+		var:petition_head_of_faith_recipient = {
+			open_view_data = {
+				view = royal_court
+				secondary_actor = root
+				player = root
+			}
+		}
+	}
+
+	# All petition types: route to court argument duel (AI) or human Head of Faith decision event.
+	option = {
+		name = petition_head_of_faith.1000.a.argue
+		custom_tooltip = petition_head_of_faith.1000.a.argue_tt
+		if = {
+			limit = { var:petition_head_of_faith_recipient = { is_ai = yes } }
+			# Stay in courtroom; route to type-specific court argument event.
+			if = {
+				limit = { var:petition_head_of_faith_type = flag:request_excommunication }
+				trigger_event = petition_head_of_faith.4000
+			}
+			else_if = {
+				limit = { var:petition_head_of_faith_type = flag:repentance }
+				trigger_event = petition_head_of_faith.7000
+			}
+		}
+		else = {
+			# Human Head of Faith: close court view and fire decision event.
+			close_view = {
+				view = royal_court
+				player = root
+			}
+			remove_character_flag = petition_head_of_faith_in_courtroom
+			var:petition_head_of_faith_recipient = {
+				set_variable = {
+					name = petition_head_of_faith_petitioner
+					value = root
+				}
+				if = {
+					limit = { root.var:petition_head_of_faith_type = flag:repentance }
+					trigger_event = petition_head_of_faith.1310
+				}
+				else_if = {
+					limit = { root.var:petition_head_of_faith_type = flag:request_excommunication }
+					trigger_event = petition_head_of_faith.1320
+				}
+			}
+		}
+	}
+}
+
+#####################################################################
+# EXCOMMUNICATION ARGUMENT: 2000 (character) / 4000 (court)
+# Duel event for excommunication petitions (AI Head of Faith path).
+# Same desc, options, and logic; different presentation.
+#####################################################################
+
+# Excommunication argument (no royal court): 2000
+petition_head_of_faith.2000 = {
+	type = character_event
+	title = petition_head_of_faith.2000.t
+	desc = {
+		# Tenet-conditional atmosphere desc blocks.
+		random_valid = {
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_aniconism } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_aniconism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_khachkar } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_khachkar
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_hyperdulia } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_hyperdulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_divine_liturgy } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_divine_liturgy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_transubstantiation } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_transubstantiation
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_communion } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_communion
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_confession } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_confession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_purgatory } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_purgatory
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_apostolic_succession } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_apostolic_succession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_scholasticism } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_scholasticism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_peace_of_god } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_peace_of_god
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_armed_pilgrimages } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_armed_pilgrimages
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_pentarchy } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_pentarchy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_dulia } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_dulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_ora_et_labora } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_ora_et_labora
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_original_sin } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_original_sin
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_mendicant_preachers } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_mendicant_preachers
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_vows_of_poverty } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_vows_of_poverty
+			}
+			triggered_desc = {
+				trigger = {
+					faith = { has_tenet = tenet_miles_christi }
+					petition_head_of_faith_target_has_faith_warrior_trigger = yes
+				}
+				desc = petition_head_of_faith.2000.desc.atmosphere_miles_christi
+			}
+			desc = petition_head_of_faith.2000.desc.atmosphere_fallback
+		}
+		desc = petition_head_of_faith.2000.desc.judgment_seat
+		triggered_desc = {
+			trigger = { petition_head_of_faith_target_cite_sins_available_trigger = yes }
+			desc = petition_head_of_faith.2000.desc.target_sinful
+		}
+		triggered_desc = {
+			trigger = {
+				NOT = { petition_head_of_faith_target_cite_sins_available_trigger = yes }
+			}
+			desc = petition_head_of_faith.2000.desc.target_clean
+		}
+	}
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+	right_portrait = {
+		character = var:petition_head_of_faith_target_character
+		animation = personality_bold
+		trigger = { exists = var:petition_head_of_faith_target_character }
+	}
+	lower_left_portrait = {
+		character = var:petition_head_of_faith_recipient
+		animation = personality_honorable
+	}
+	override_background = { reference = throne_room_scope }
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		var:petition_head_of_faith_recipient = {
+			save_scope_as = background_throne_room_scope
+		}
+	}
+
+	option = {
+		name = {
+			text = {
+				triggered_desc = {
+					trigger = { exists = scope:petition_gravest_sin }
+					desc = petition_head_of_faith.2000.a.cite_sins
+				}
+				triggered_desc = {
+					trigger = { NOT = { exists = scope:petition_gravest_sin } }
+					desc = petition_head_of_faith.2000.a.cite_sins_fallback
+				}
+			}
+		}
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+			custom_tooltip = {
+				text = petition_head_of_faith_target_cite_sins_unavailable_tt
+				petition_head_of_faith_target_cite_sins_available_trigger = yes
+			}
+		}
+		show_as_unavailable = {
+			OR = {
+				has_character_flag = petition_head_of_faith_use_hook
+				NOT = { petition_head_of_faith_target_cite_sins_available_trigger = yes }
+			}
+		}
+		petition_head_of_faith_cite_sins_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.b.finesse
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+			gold >= major_gold_value
+		}
+		show_as_unavailable = {
+			OR = {
+				has_character_flag = petition_head_of_faith_use_hook
+				gold < major_gold_value
+			}
+		}
+		skill = diplomacy
+		petition_head_of_faith_excommunication_offer_gold_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.c.learning_duel
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = learning
+		petition_head_of_faith_excommunication_scholastic_debate_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.d.hook
+		trigger = { has_character_flag = petition_head_of_faith_use_hook }
+		show_as_unavailable = { NOT = { has_character_flag = petition_head_of_faith_use_hook } }
+		petition_head_of_faith_invoke_hook_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.e.withdraw
+		petition_head_of_faith_withdraw_effect = yes
+	}
+}
+
+# Excommunication argument (with royal court): 4000
+petition_head_of_faith.4000 = {
+	type = court_event
+	title = petition_head_of_faith.2000.t
+	desc = {
+		# Tenet-conditional atmosphere desc blocks.
+		random_valid = {
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_aniconism } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_aniconism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_khachkar } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_khachkar
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_hyperdulia } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_hyperdulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_divine_liturgy } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_divine_liturgy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_transubstantiation } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_transubstantiation
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_communion } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_communion
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_confession } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_confession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_purgatory } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_purgatory
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_apostolic_succession } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_apostolic_succession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_scholasticism } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_scholasticism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_peace_of_god } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_peace_of_god
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_armed_pilgrimages } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_armed_pilgrimages
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_pentarchy } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_pentarchy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_dulia } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_dulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_ora_et_labora } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_ora_et_labora
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_original_sin } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_original_sin
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_mendicant_preachers } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_mendicant_preachers
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_vows_of_poverty } }
+				desc = petition_head_of_faith.2000.desc.atmosphere_vows_of_poverty
+			}
+			triggered_desc = {
+				trigger = {
+					faith = { has_tenet = tenet_miles_christi }
+					petition_head_of_faith_target_has_faith_warrior_trigger = yes
+				}
+				desc = petition_head_of_faith.2000.desc.atmosphere_miles_christi
+			}
+			desc = petition_head_of_faith.2000.desc.atmosphere_fallback
+		}
+		desc = petition_head_of_faith.2000.desc.judgment_seat
+		triggered_desc = {
+			trigger = { petition_head_of_faith_target_cite_sins_available_trigger = yes }
+			desc = petition_head_of_faith.2000.desc.target_sinful
+		}
+		triggered_desc = {
+			trigger = {
+				NOT = { petition_head_of_faith_target_cite_sins_available_trigger = yes }
+			}
+			desc = petition_head_of_faith.2000.desc.target_clean
+		}
+	}
+	theme = realm
+	court_scene = {
+		button_position_character = root
+		court_owner = var:petition_head_of_faith_recipient
+		court_event_force_open = no
+		show_timeout_info = yes
+		should_pause_time = yes
+		roles = {
+			root = {
+				group = petitioners_group
+				animation = personality_zealous
+			}
+		}
+	}
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+	}
+
+	option = {
+		name = {
+			text = {
+				triggered_desc = {
+					trigger = { exists = scope:petition_gravest_sin }
+					desc = petition_head_of_faith.2000.a.cite_sins
+				}
+				triggered_desc = {
+					trigger = { NOT = { exists = scope:petition_gravest_sin } }
+					desc = petition_head_of_faith.2000.a.cite_sins_fallback
+				}
+			}
+		}
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+			custom_tooltip = {
+				text = petition_head_of_faith_target_cite_sins_unavailable_tt
+				petition_head_of_faith_target_cite_sins_available_trigger = yes
+			}
+		}
+		show_as_unavailable = {
+			OR = {
+				has_character_flag = petition_head_of_faith_use_hook
+				NOT = { petition_head_of_faith_target_cite_sins_available_trigger = yes }
+			}
+		}
+		petition_head_of_faith_cite_sins_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.b.finesse
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+			gold >= major_gold_value
+		}
+		show_as_unavailable = {
+			OR = {
+				has_character_flag = petition_head_of_faith_use_hook
+				gold < major_gold_value
+			}
+		}
+		skill = diplomacy
+		petition_head_of_faith_excommunication_offer_gold_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.c.learning_duel
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = learning
+		petition_head_of_faith_excommunication_scholastic_debate_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.d.hook
+		trigger = { has_character_flag = petition_head_of_faith_use_hook }
+		show_as_unavailable = { NOT = { has_character_flag = petition_head_of_faith_use_hook } }
+		petition_head_of_faith_invoke_hook_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.e.withdraw
+		petition_head_of_faith_withdraw_effect = yes
+	}
+}
+
+#####################################################################
+# EXCOMMUNICATION RESULT EVENTS: 2020/4020 (success), 2030/4030 (failure)
+# Presentational only. Game effects already applied by duel outcomes. Cleanup in after block.
+#####################################################################
+
+# Excommunication success (no royal court): 2020
+petition_head_of_faith.2020 = {
+	type = character_event
+	title = petition_head_of_faith.2020.t
+	desc = petition_head_of_faith.2020.desc
+	theme = realm
+	left_portrait = { character = root animation = happiness }
+	right_portrait = { character = var:petition_head_of_faith_recipient animation = personality_honorable }
+	lower_right_portrait = {
+		character = var:petition_head_of_faith_target_character
+		animation = shame
+		trigger = { exists = var:petition_head_of_faith_target_character }
+	}
+	override_background = { reference = throne_room_scope }
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		var:petition_head_of_faith_recipient = {
+			save_scope_as = background_throne_room_scope
+		}
+	}
+
+	option = {
+		name = petition_head_of_faith.2020.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+# Excommunication success (with royal court): 4020
+petition_head_of_faith.4020 = {
+	type = court_event
+	title = petition_head_of_faith.2020.t
+	desc = petition_head_of_faith.2020.desc
+	theme = realm
+	court_scene = {
+		button_position_character = root
+		court_owner = var:petition_head_of_faith_recipient
+		court_event_force_open = no
+		show_timeout_info = yes
+		should_pause_time = yes
+		roles = {
+			root = {
+				group = petitioners_group
+				animation = happiness
+			}
+		}
+	}
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2020.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+# Excommunication failure (no royal court): 2030
+petition_head_of_faith.2030 = {
+	type = character_event
+	title = petition_head_of_faith.2030.t
+	desc = {
+		desc = petition_head_of_faith.2030.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_cite_sins }
+				desc = petition_head_of_faith.2030.desc.cite_sins
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_finesse }
+				desc = petition_head_of_faith.2030.desc.finesse
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_learning }
+				desc = petition_head_of_faith.2030.desc.learning_duel
+			}
+			desc = petition_head_of_faith.2030.desc.fallback
+		}
+	}
+	theme = realm
+	left_portrait = { character = root animation = disapproval }
+	right_portrait = { character = var:petition_head_of_faith_recipient animation = personality_bold }
+	override_background = { reference = throne_room_scope }
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		var:petition_head_of_faith_recipient = {
+			save_scope_as = background_throne_room_scope
+		}
+		show_as_tooltip = {
+			petition_head_of_faith_excommunication_failure_tooltip_effect = yes
+		}
+	}
+
+	option = {
+		name = petition_head_of_faith.2030.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+# Excommunication failure (with royal court): 4030
+petition_head_of_faith.4030 = {
+	type = court_event
+	title = petition_head_of_faith.2030.t
+	desc = {
+		desc = petition_head_of_faith.2030.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_cite_sins }
+				desc = petition_head_of_faith.2030.desc.cite_sins
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_finesse }
+				desc = petition_head_of_faith.2030.desc.finesse
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_learning }
+				desc = petition_head_of_faith.2030.desc.learning_duel
+			}
+			desc = petition_head_of_faith.2030.desc.fallback
+		}
+	}
+	theme = realm
+	court_scene = {
+		button_position_character = root
+		court_owner = var:petition_head_of_faith_recipient
+		court_event_force_open = no
+		show_timeout_info = yes
+		should_pause_time = yes
+		roles = {
+			root = {
+				group = petitioners_group
+				animation = grief
+			}
+		}
+	}
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		show_as_tooltip = {
+			petition_head_of_faith_excommunication_failure_tooltip_effect = yes
+		}
+	}
+
+	option = {
+		name = petition_head_of_faith.2030.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+#####################################################################
+# HUMAN HEAD OF FAITH DECISION EVENTS: 1310/1320
+#####################################################################
+
+petition_head_of_faith.1310 = {
+	type = character_event
+	title = petition_head_of_faith.1310.t
+	desc = {
+		desc = petition_head_of_faith.1310.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:actor = {
+						petition_head_of_faith_disposition_favorable_trigger = yes
+					}
+				}
+				desc = petition_head_of_faith.1310.desc.disposition_favorable
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = {
+						petition_head_of_faith_disposition_neutral_trigger = yes
+					}
+				}
+				desc = petition_head_of_faith.1310.desc.disposition_neutral
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = {
+						petition_head_of_faith_disposition_skeptical_trigger = yes
+					}
+				}
+				desc = petition_head_of_faith.1310.desc.disposition_skeptical
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = {
+						petition_head_of_faith_disposition_hostile_trigger = yes
+					}
+				}
+				desc = petition_head_of_faith.1310.desc.disposition_hostile
+			}
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:petition_gravest_sin }
+				desc = petition_head_of_faith.1310.desc.penitent_sinful
+			}
+			desc = petition_head_of_faith.1310.desc.penitent_clean
+		}
+	}
+	theme = faith
+
+	trigger = {
+		exists = var:petition_head_of_faith_petitioner
+		var:petition_head_of_faith_petitioner = {
+			petition_head_of_faith_valid_trigger = yes
+		}
+	}
+
+	on_trigger_fail = {
+		var:petition_head_of_faith_petitioner ?= {
+			trigger_event = petition_head_of_faith.0601
+		}
+		remove_variable = petition_head_of_faith_petitioner
+	}
+
+	immediate = {
+		var:petition_head_of_faith_petitioner = {
+			petition_head_of_faith_save_scopes_effect = yes
+		}
+	}
+
+	left_portrait = {
+		character = root
+		animation = acknowledging
+		camera = camera_event_horse_left
+	}
+	right_portrait = {
+		character = scope:actor
+		animation = throne_room_kneel_1
+		camera = camera_event_center_away_pointing_left_fov25
+	}
+
+	option = {
+		name = petition_head_of_faith.1310.a
+		var:petition_head_of_faith_petitioner = {
+			if = {
+				limit = { has_character_flag = petition_head_of_faith_use_hook }
+				use_hook = var:petition_head_of_faith_recipient
+			}
+			petition_head_of_faith_grant_repentance_effect = yes
+			petition_head_of_faith_route_to_repentance_success_effect = yes
+		}
+	}
+
+	option = {
+		name = petition_head_of_faith.1310.b
+		var:petition_head_of_faith_petitioner = {
+			petition_head_of_faith_deny_effect = yes
+			petition_head_of_faith_route_to_repentance_failure_effect = yes
+		}
+	}
+
+	after = {
+		remove_variable = petition_head_of_faith_petitioner
+	}
+}
+
+petition_head_of_faith.1320 = {
+	type = character_event
+	title = petition_head_of_faith.1320.t
+	desc = {
+		desc = petition_head_of_faith.1320.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:actor = { petition_head_of_faith_disposition_favorable_trigger = yes }
+				}
+				desc = petition_head_of_faith.1320.desc.disposition_favorable
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = { petition_head_of_faith_disposition_neutral_trigger = yes }
+				}
+				desc = petition_head_of_faith.1320.desc.disposition_neutral
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = { petition_head_of_faith_disposition_skeptical_trigger = yes }
+				}
+				desc = petition_head_of_faith.1320.desc.disposition_skeptical
+			}
+			triggered_desc = {
+				trigger = {
+					scope:actor = { petition_head_of_faith_disposition_hostile_trigger = yes }
+				}
+				desc = petition_head_of_faith.1320.desc.disposition_hostile
+			}
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = scope:petition_gravest_sin }
+				desc = petition_head_of_faith.1320.desc.target_sinful
+			}
+			desc = petition_head_of_faith.1320.desc.target_clean
+		}
+		desc = petition_head_of_faith.1320.desc.finish
+	}
+	theme = faith
+
+	left_portrait = {
+		character = root
+		animation = acknowledging
+		camera = camera_event_horse_left
+	}
+	right_portrait = {
+		character = scope:actor
+		animation = throne_room_kneel_1
+		camera = camera_event_center_away_pointing_left_fov25
+	}
+	lower_left_portrait = {
+		character = scope:petition_target
+		trigger = { exists = scope:petition_target }
+	}
+
+	trigger = {
+		exists = var:petition_head_of_faith_petitioner
+		var:petition_head_of_faith_petitioner = { petition_head_of_faith_valid_trigger = yes }
+	}
+
+	on_trigger_fail = {
+		var:petition_head_of_faith_petitioner ?= { trigger_event = petition_head_of_faith.0601 }
+		remove_variable = petition_head_of_faith_petitioner
+	}
+
+	immediate = {
+		var:petition_head_of_faith_petitioner = {
+			petition_head_of_faith_save_scopes_effect = yes
+		}
+	}
+
+	# Grant the excommunication
+	option = {
+		name = petition_head_of_faith.1320.a
+		hof_request_accept_consequences_effect = {
+			HOF = root
+		}
+		var:petition_head_of_faith_petitioner = {
+			if = {
+				limit = { has_character_flag = petition_head_of_faith_use_hook }
+				use_hook = var:petition_head_of_faith_recipient
+			}
+			petition_head_of_faith_grant_excommunication_effect = yes
+			petition_head_of_faith_route_to_excommunication_success_effect = yes
+		}
+	}
+
+	# Refuse the excommunication
+	option = {
+		name = petition_head_of_faith.1320.b
+		hof_request_refuse_consequences_effect = {
+			HOF = root
+			REQUESTER = scope:actor
+		}
+		var:petition_head_of_faith_petitioner = {
+			petition_head_of_faith_deny_effect = yes
+			petition_head_of_faith_route_to_excommunication_failure_effect = yes
+		}
+	}
+
+	after = {
+		remove_variable = petition_head_of_faith_petitioner
+	}
+}
+
+#####################################################################
+# REPENTANCE ARGUMENT: 5000 (character) / 7000 (court)
+#####################################################################
+
+# Repentance argument (no royal court): 5000
+petition_head_of_faith.5000 = {
+	type = character_event
+	title = petition_head_of_faith.5000.t
+	desc = {
+		random_valid = {
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_aniconism } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_aniconism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_khachkar } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_khachkar
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_hyperdulia } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_hyperdulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_divine_liturgy } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_divine_liturgy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_transubstantiation } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_transubstantiation
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_communion } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_communion
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_confession } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_confession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_purgatory } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_purgatory
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_apostolic_succession } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_apostolic_succession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_scholasticism } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_scholasticism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_peace_of_god } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_peace_of_god
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_armed_pilgrimages } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_armed_pilgrimages
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_pentarchy } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_pentarchy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_dulia } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_dulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_ora_et_labora } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_ora_et_labora
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_original_sin } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_original_sin
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_mendicant_preachers } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_mendicant_preachers
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_vows_of_poverty } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_vows_of_poverty
+			}
+			triggered_desc = {
+				trigger = {
+					faith = { has_tenet = tenet_miles_christi }
+					has_trait = faith_warrior
+				}
+				desc = petition_head_of_faith.5000.desc.atmosphere_miles_christi
+			}
+			desc = petition_head_of_faith.5000.desc.atmosphere_fallback
+		}
+		desc = petition_head_of_faith.5000.desc.judgment_seat
+		triggered_desc = {
+			trigger = { exists = scope:petition_gravest_sin }
+			desc = petition_head_of_faith.5000.desc.penitent_sinful
+		}
+		triggered_desc = {
+			trigger = { NOT = { exists = scope:petition_gravest_sin } }
+			desc = petition_head_of_faith.5000.desc.penitent_clean
+		}
+	}
+	theme = realm
+	left_portrait = { character = root animation = shame }
+	right_portrait = { character = var:petition_head_of_faith_recipient animation = personality_honorable }
+	override_background = { reference = throne_room_scope }
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		var:petition_head_of_faith_recipient = {
+			save_scope_as = background_throne_room_scope
+		}
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.a.confess
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = diplomacy
+		petition_head_of_faith_repentance_confess_duel_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.b.canon_law
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = learning
+		petition_head_of_faith_repentance_canon_law_duel_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.c.weep
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = diplomacy
+		petition_head_of_faith_repentance_weep_duel_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.d.hook
+		trigger = { has_character_flag = petition_head_of_faith_use_hook }
+		show_as_unavailable = { NOT = { has_character_flag = petition_head_of_faith_use_hook } }
+		petition_head_of_faith_repentance_invoke_hook_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.e.withdraw
+		petition_head_of_faith_withdraw_effect = yes
+	}
+}
+
+# Repentance argument (with royal court): 7000
+petition_head_of_faith.7000 = {
+	type = court_event
+	title = petition_head_of_faith.5000.t
+	desc = {
+		random_valid = {
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_aniconism } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_aniconism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_khachkar } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_khachkar
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_hyperdulia } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_hyperdulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_divine_liturgy } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_divine_liturgy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_transubstantiation } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_transubstantiation
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_communion } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_communion
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_confession } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_confession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_purgatory } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_purgatory
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_apostolic_succession } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_apostolic_succession
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_scholasticism } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_scholasticism
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_peace_of_god } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_peace_of_god
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_armed_pilgrimages } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_armed_pilgrimages
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_pentarchy } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_pentarchy
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_dulia } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_dulia
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_ora_et_labora } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_ora_et_labora
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_original_sin } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_original_sin
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_mendicant_preachers } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_mendicant_preachers
+			}
+			triggered_desc = {
+				trigger = { faith = { has_tenet = tenet_vows_of_poverty } }
+				desc = petition_head_of_faith.5000.desc.atmosphere_vows_of_poverty
+			}
+			triggered_desc = {
+				trigger = {
+					faith = { has_tenet = tenet_miles_christi }
+					has_trait = faith_warrior
+				}
+				desc = petition_head_of_faith.5000.desc.atmosphere_miles_christi
+			}
+			desc = petition_head_of_faith.5000.desc.atmosphere_fallback
+		}
+		desc = petition_head_of_faith.5000.desc.judgment_seat
+		triggered_desc = {
+			trigger = { exists = scope:petition_gravest_sin }
+			desc = petition_head_of_faith.5000.desc.penitent_sinful
+		}
+		triggered_desc = {
+			trigger = { NOT = { exists = scope:petition_gravest_sin } }
+			desc = petition_head_of_faith.5000.desc.penitent_clean
+		}
+	}
+	theme = realm
+	court_scene = {
+		button_position_character = root
+		court_owner = var:petition_head_of_faith_recipient
+		court_event_force_open = no
+		show_timeout_info = yes
+		should_pause_time = yes
+		roles = {
+			root = {
+				group = petitioners_group
+				animation = shame
+			}
+		}
+	}
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.a.confess
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = diplomacy
+		petition_head_of_faith_repentance_confess_duel_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.b.canon_law
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = learning
+		petition_head_of_faith_repentance_canon_law_duel_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.c.weep
+		trigger = {
+			custom_tooltip = {
+				text = petition_head_of_faith_hook_committed_tt
+				NOT = { has_character_flag = petition_head_of_faith_use_hook }
+			}
+		}
+		show_as_unavailable = { has_character_flag = petition_head_of_faith_use_hook }
+		skill = diplomacy
+		petition_head_of_faith_repentance_weep_duel_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.2000.d.hook
+		trigger = { has_character_flag = petition_head_of_faith_use_hook }
+		show_as_unavailable = { NOT = { has_character_flag = petition_head_of_faith_use_hook } }
+		petition_head_of_faith_repentance_invoke_hook_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5000.e.withdraw
+		petition_head_of_faith_withdraw_effect = yes
+	}
+}
+
+#####################################################################
+# REPENTANCE RESULT EVENTS: 5020/7020 (success), 5030/7030 (failure)
+#####################################################################
+
+# Repentance success (no royal court): 5020
+petition_head_of_faith.5020 = {
+	type = character_event
+	title = petition_head_of_faith.5020.t
+	desc = petition_head_of_faith.5020.desc
+	theme = realm
+	left_portrait = { character = root animation = happiness }
+	right_portrait = { character = var:petition_head_of_faith_recipient animation = personality_honorable }
+	override_background = { reference = throne_room_scope }
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		var:petition_head_of_faith_recipient = {
+			save_scope_as = background_throne_room_scope
+		}
+	}
+
+	option = {
+		name = petition_head_of_faith.5020.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+# Repentance success (with royal court): 7020
+petition_head_of_faith.7020 = {
+	type = court_event
+	title = petition_head_of_faith.5020.t
+	desc = petition_head_of_faith.5020.desc
+	theme = realm
+	court_scene = {
+		button_position_character = root
+		court_owner = var:petition_head_of_faith_recipient
+		court_event_force_open = no
+		show_timeout_info = yes
+		should_pause_time = yes
+		roles = {
+			root = {
+				group = petitioners_group
+				animation = happiness
+			}
+		}
+	}
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5020.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+# Repentance failure (no royal court): 5030
+petition_head_of_faith.5030 = {
+	type = character_event
+	title = petition_head_of_faith.5030.t
+	desc = {
+		desc = petition_head_of_faith.5030.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_confess }
+				desc = petition_head_of_faith.5030.desc.confess
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_canon_law }
+				desc = petition_head_of_faith.5030.desc.canon_law
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_weep }
+				desc = petition_head_of_faith.5030.desc.weep
+			}
+			desc = petition_head_of_faith.5030.desc.fallback
+		}
+		desc = petition_head_of_faith.5030.desc.conclusion
+	}
+	theme = realm
+	left_portrait = { character = root animation = disapproval }
+	right_portrait = { character = var:petition_head_of_faith_recipient animation = personality_bold }
+	override_background = { reference = throne_room_scope }
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+		var:petition_head_of_faith_recipient = {
+			save_scope_as = background_throne_room_scope
+		}
+	}
+
+	option = {
+		name = petition_head_of_faith.5030.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}
+
+# Repentance failure (with royal court): 7030
+petition_head_of_faith.7030 = {
+	type = court_event
+	title = petition_head_of_faith.5030.t
+	desc = {
+		desc = petition_head_of_faith.5030.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_confess }
+				desc = petition_head_of_faith.5030.desc.confess
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_canon_law }
+				desc = petition_head_of_faith.5030.desc.canon_law
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = petition_head_of_faith_argument_weep }
+				desc = petition_head_of_faith.5030.desc.weep
+			}
+			desc = petition_head_of_faith.5030.desc.fallback
+		}
+		desc = petition_head_of_faith.5030.desc.conclusion
+	}
+	theme = realm
+	court_scene = {
+		button_position_character = root
+		court_owner = var:petition_head_of_faith_recipient
+		court_event_force_open = no
+		show_timeout_info = yes
+		should_pause_time = yes
+		roles = {
+			root = {
+				group = petitioners_group
+				animation = grief
+			}
+		}
+	}
+
+	immediate = {
+		petition_head_of_faith_save_scopes_effect = yes
+	}
+
+	option = {
+		name = petition_head_of_faith.5030.a
+	}
+
+	after = {
+		petition_head_of_faith_cleanup_effect = yes
+	}
+}

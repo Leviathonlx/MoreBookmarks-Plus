@@ -1,0 +1,209 @@
+﻿@months_before_overdue = 24
+
+story_cycle_pledge_loyalty_to_liege_overdue = {
+
+	on_setup = {
+		set_variable = {
+			name = pledge_loyalty_to_liege_overdue_months
+			value = {
+				value = 0
+				if = { # inherit the time your predecessor was found overdue by
+					limit = { has_variable = pledge_loyalty_to_liege_found_overdue_years }
+					add = {
+						add = var:pledge_loyalty_to_liege_found_overdue_years
+						min = 1
+						multiply = 12
+					}
+				}
+			}
+		}
+		set_variable = {
+			name = owed_liege
+			value = story_owner.liege
+		}
+	}
+
+	on_end = {
+		story_owner = {
+			remove_variable = pledge_loyalty_to_liege_found_overdue_years
+		}
+	}
+
+	on_owner_death = {
+		# Save info about the failure to pay homage on primary heir
+		if = {
+			story_owner.player_heir ?= {
+				set_variable = { # make your heir inherit your sins
+					name = pledge_loyalty_to_liege_found_overdue_years
+					value = {
+						add = root.var:pledge_loyalty_to_liege_overdue_months
+						divide = 12
+						min = 1
+					}
+				}
+			}
+		}
+		scope:story = { end_story = yes }
+	}
+	
+	# If you have already Pledged Loyalty to your Liege, end the story here
+	effect_group = {
+		months = 1
+
+		triggered_effect = {
+			trigger = { story_owner.var:pledge_loyalty_to_liege_grace ?= { this = liege } }
+			effect = {
+				end_story = yes
+			}
+		}
+	}
+
+	# Count up the months we're overdue by unless we're already on our way to pay homage or our liege is unable to meet
+	effect_group = {
+		months = 1
+
+		trigger = {
+			has_variable = pledge_loyalty_to_liege_overdue_months
+			NOT = { story_owner.var:pledge_loyalty_to_liege_grace ?= { this = liege } }
+			story_owner.liege = { is_available = yes }
+		}
+
+		# Reset the story if we have a new liege
+		triggered_effect = {
+			trigger = { root.var:owed_liege != story_owner.liege } 
+			effect = {
+				remove_variable = pledge_loyalty_to_liege_found_overdue_years
+				set_variable = {
+					name = owed_liege
+					value = story_owner.liege
+				}
+				set_variable = {
+					name = pledge_loyalty_to_liege_overdue_months
+					value = 0
+				}
+				remove_variable = pledge_loyalty_to_liege_overdue_received_intro_event
+			}
+		}
+
+		triggered_effect = {
+			trigger = { # we only increment the time if the vassal would actually be capable of executing the decision at the time
+				story_owner = { can_execute_decision = pledge_loyalty_to_liege_decision }
+			}
+			effect = {
+				change_variable = {
+					name = pledge_loyalty_to_liege_overdue_months
+					add = 1
+				}
+			}
+		}
+	}
+
+	effect_group = {
+		days = { 30 90 }
+
+		trigger = {
+			has_variable = pledge_loyalty_to_liege_overdue_months
+			story_owner = {
+				NOT = { var:pledge_loyalty_to_liege_grace ?= { this = liege } }
+				liege = { is_available = yes }
+			}
+		}
+
+		# if time has run out, your liege might send a letter demanding your presence
+		triggered_effect = {
+			trigger = {
+				var:pledge_loyalty_to_liege_overdue_months > @months_before_overdue
+				story_owner = {
+					NOT = {
+						has_variable = pledge_loyalty_to_liege_found_overdue_years
+						var:pledge_loyalty_to_liege_grace ?= { this = liege }
+						liege = { has_variable = pledge_loyalty_to_liege_found_overdue_cooldown }
+					}
+				}
+			}
+			effect = {
+				story_owner = {
+					set_variable = { # this variable acts both as nice localization and a blocker to ensure the event only fires once
+						name = pledge_loyalty_to_liege_found_overdue_years
+						value = {
+							add = root.var:pledge_loyalty_to_liege_overdue_months
+							divide = 12
+							min = 1
+						}
+					}
+					save_scope_as = pledge_loyalty_to_liege_offender
+					liege = {
+						set_variable = { # limit spam to only one overdue bow discovered per month
+							name = pledge_loyalty_to_liege_found_overdue_cooldown
+							days = 30
+						}
+						trigger_event = pledge_loyalty_to_liege_overdue.1000
+					}
+				}
+			}
+		}
+
+		# if the liege has not heard from their vassal after twice the time it takes them to be overdue, they may revoke their titles
+		triggered_effect = {
+			trigger = {
+				var:pledge_loyalty_to_liege_overdue_months > @[ months_before_overdue * 2 ]
+				story_owner = {
+					NOT = { 
+						var:pledge_loyalty_to_liege_grace ?= { this = liege } 
+						liege = {
+							has_opinion_modifier = { # don't trigger this effect again if the opinion modifier is already active
+								target = root.story_owner
+						 		modifier = refused_pledge_loyalty_to_liege_opinion
+							}
+						}
+					}
+				}
+			}
+			effect = {
+				story_owner = {
+					save_scope_as = pledge_loyalty_to_liege_offender
+					liege = {
+						add_opinion = {
+					 		target = root.story_owner
+					 		modifier = refused_pledge_loyalty_to_liege_opinion
+					 	}
+						send_interface_toast = {
+							type = msg_refused_pledge_loyalty_to_liege
+							left_icon = this
+							right_icon = scope:pledge_loyalty_to_liege_offender
+							custom_tooltip = msg_refused_pledge_loyalty_to_liege.liege.desc
+						}
+					}
+					send_interface_toast = {
+						type = msg_refused_pledge_loyalty_to_liege
+						left_icon = this
+						right_icon = liege
+						custom_tooltip = msg_refused_pledge_loyalty_to_liege.subject.desc
+					}
+				}
+			}
+		}
+	}
+
+	effect_group = {
+		days = { 30 90 }
+
+		trigger = {
+			story_owner = { is_ai = no }
+			has_variable = pledge_loyalty_to_liege_overdue_months
+			var:pledge_loyalty_to_liege_overdue_months > 0
+			NOT = { has_variable = pledge_loyalty_to_liege_overdue_received_intro_event }
+			NOT = { story_owner.var:pledge_loyalty_to_liege_grace ?= { this = liege } }
+		}
+
+		triggered_effect = {
+			effect = {
+				set_variable = pledge_loyalty_to_liege_overdue_received_intro_event
+				story_owner = {
+					save_scope_as = pledge_loyalty_to_liege_offender
+					trigger_event = pledge_loyalty_to_liege_overdue.1010
+				}
+			}
+		}
+	}
+}

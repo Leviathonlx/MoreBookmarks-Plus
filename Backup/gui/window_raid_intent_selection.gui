@@ -1,0 +1,229 @@
+window = {
+	name = "raid_intent_selection_window"
+	datacontext = "[GetVariableSystem]"
+	datacontext = "[RaidIntentSelectionWindow.GetSelectedIntent]"
+	layer = middle
+	allow_outside = yes
+	size = { 500 520 }
+	position = { 26% 120 }
+
+	using = Window_Movable
+	using = Window_Background
+	using = Window_Decoration
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+		position_y = 80
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+		position_y = 200
+	}
+
+	vbox = {
+		
+		size = { 100% 100% }
+
+		using = Window_Margins
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = "RAID_INTENT_SELECTION_HEADER"
+			}
+			blockoverride "button_close"
+			{
+				onclick = "[RaidIntentSelectionWindow.Close]"
+			}
+		}
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			background = {
+				alpha = 0.3
+				fittype = centercrop
+
+				using = Mask_Rough_Edges
+
+				modify_texture = {
+					texture = "gfx/interface/component_masks/mask_fade_horizontal_extended.dds"
+					blend_mode = alphamultiply
+				}
+			}
+
+
+			vbox = {
+				name = "intent_selection"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin_top = 8
+
+				background = {
+					using = Background_Area_Dark
+					alpha = 0.8
+
+					margin_left = 100
+
+					modify_texture = {
+						texture = "gfx/interface/component_masks/mask_fade_horizontal_extended.dds"
+						blend_mode = alphamultiply
+						mirror = horizontal
+					}
+				}
+
+				text_single = {
+					layoutpolicy_horizontal = expanding
+
+					text = "RAID_INTENT_SELECTION_TEXT"
+					default_format = "#I"
+					align = center|nobaseline
+
+					margin = { 16 8 }
+				}
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					divider_light = {
+						layoutpolicy_horizontal = expanding
+
+						modify_texture = {
+							texture = "gfx/interface/component_masks/mask_fade_horizontal_middle.dds"
+							blend_mode = alphamultiply
+						}
+					}
+				}
+
+				scrollbox = {
+					name = "raid_intents"
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+
+					minimumsize = { 0 100 }
+
+					blockoverride "scrollbox_content"
+					{
+						vbox = {
+							datamodel = "[RaidIntentSelectionWindow.GetPotentialIntents]"
+							layoutpolicy_horizontal = expanding
+							spacing = 4
+
+							item = {
+								button_standard = {
+									layoutpolicy_horizontal = expanding
+									size = { 0 50 }
+
+									onclick = "[RaidIntentSelectionWindow.SelectIntent( RaidIntent.Self )]"
+									down = "[ObjectsEqual( RaidIntentData.GetType, RaidIntent.Self )]"
+									enabled = "[RaidIntentSelectionWindow.CanPickIntent( RaidIntent.Self )]"
+
+									tooltip = "RAID_CHANGE_INTENT_TOOLTIP"
+
+									hbox = {
+										size = { 100% 100% }
+										margin = { 8 0 }
+										spacing = 8
+
+										highlight_icon = {
+											size = { 40 40 }
+											texture = "[RaidIntent.GetIcon]"
+
+											modify_texture = {
+												texture = "gfx/interface/colors/colors_textured.dds"
+												blend_mode = normal
+												framesize = { 96 96 }
+
+												block "master_color_frame" {
+													frame = 1
+												}
+											}
+										}
+
+										text_single = {
+											text = "[RaidIntent.GetName]"
+											align = nobaseline
+											default_format = "#clickable"
+											using = Font_Size_Medium
+										}
+
+										expand = {}
+									}
+								}
+							}
+						}
+					}
+
+					blockoverride "scrollbox_background" {}
+
+					blockoverride "scrollbox_background_fade" {}
+				}
+
+				hbox = {
+					layoutpolicy_horizontal = expanding
+
+					divider_light = {
+						layoutpolicy_horizontal = expanding
+
+						modify_texture = {
+							texture = "gfx/interface/component_masks/mask_fade_horizontal_middle.dds"
+							blend_mode = alphamultiply
+						}
+					}
+				}
+			}
+		}
+
+		hbox = {
+			name = "cancel_or_confirm"
+			layoutpolicy_horizontal = expanding
+			datacontext = "[RaidIntentSelectionWindow.GetArmy]"
+			datacontext = "[RaidIntentSelectionWindow.GetCharacter]"
+
+			margin = {16 16}
+			spacing = 16
+
+			background = {
+				using = Background_Area
+			}
+
+			expand = {}
+
+			button_standard = {
+				text = "CANCEL"
+
+				onclick = "[RaidIntentSelectionWindow.Close]"
+				shortcut = "close_window"
+			}
+
+			button_primary = {
+				text = "CONFIRM"
+				visible = "[Not(RaidIntentSelectionWindow.IsArmyWindow)]"
+
+				onclick = "[PostCommand( Character.SetDefaultRaidIntent( RaidIntentData.GetType.Self ) )]"
+				enabled = "[IsValidCommand( Character.SetDefaultRaidIntent( RaidIntentData.GetType.Self ) )]"
+
+				onclick = "[RaidIntentSelectionWindow.Close]"
+			}
+			button_primary = {
+				text = "CONFIRM"
+				visible = "[RaidIntentSelectionWindow.IsArmyWindow]"
+
+				onclick = "[PostCommand( Character.SetDefaultRaidIntent( RaidIntentData.GetType.Self ) )]"
+				onclick = "[PostCommand( Character.SetRaidIntent( Army.Self, RaidIntentData.GetType.Self ) )]"
+
+				enabled = "[And(IsValidCommand(Character.SetDefaultRaidIntent(RaidIntentData.GetType.Self)), IsValidCommand(Character.SetRaidIntent(Army.Self, RaidIntentData.GetType.Self)))]"
+
+				onclick = "[RaidIntentSelectionWindow.Close]"
+			}
+
+			expand = {}
+		}
+	}
+}

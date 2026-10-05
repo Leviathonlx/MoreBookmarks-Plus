@@ -1,0 +1,458 @@
+﻿namespace = coerce_and_leverage_contribution_ongoing
+
+#########################################
+# coerce_and_leverage_contribution_ongoing.0001 - Visit the local market and ask for coins
+# coerce_and_leverage_contribution_ongoing.0010 - Court Chaplain offers extra blessings to those who contribute
+# coerce_and_leverage_contribution_ongoing.0020 - Promise a Hook on yourself to Leverage Contribution
+#########################################
+
+# Visit the local market and ask for coins
+coerce_and_leverage_contribution_ongoing.0001 = {
+	type = character_event
+	title = coerce_and_leverage_contribution_ongoing.0001.t
+	desc = {
+		desc = coerce_and_leverage_contribution_ongoing.0001.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:target_county.development_level >= medium_development_level
+				}
+				desc = coerce_and_leverage_contribution_ongoing.0001.desc.high_dev
+			}
+			triggered_desc = {
+				trigger = {
+					scope:target_county.development_level <= terrible_development_level
+				}
+				desc = coerce_and_leverage_contribution_ongoing.0001.desc.low_dev
+				desc = coerce_and_leverage_contribution_ongoing.0001.desc.low_dev
+			}
+			desc = coerce_and_leverage_contribution_ongoing.0001.desc.regular_dev
+		}
+		desc = coerce_and_leverage_contribution_ongoing.0001.desc.outro
+	}
+	theme = intrigue
+	override_background = { reference = market } 
+	cooldown = { years = 5 }
+	
+	left_portrait = {
+		character = root
+		animation = interested
+	}
+	right_portrait = {
+		character = scope:peasant
+		animation = betting
+	}
+	widget = {
+		gui = "event_window_widget_scheme"
+		container = "custom_widgets_container"
+	}
+	
+	trigger = {
+		is_available_adult = yes
+		any_scheme = {
+			type = coerce_contribution
+		}
+	}
+
+	immediate = {
+		location = { select_root_vegetable_effect = yes } # For loc
+		random_scheme = {
+			type = coerce_contribution
+			save_scope_as = my_scheme
+			scheme_target_title = { save_scope_as = target_title }
+		}
+		if = {
+			limit = { scope:target_title.tier != tier_county }
+			scope:target_title.title_capital_county ?= { save_scope_as = target_county }
+		}
+		else = {
+			scope:target_title ?= { save_scope_as = target_county }
+		}
+		if = {
+			limit = {
+				scope:target_county.development_level <= terrible_development_level
+			}
+			hidden_effect = {
+				create_character = {
+					template = peasant_character
+					dynasty = none
+					location = root.location
+					culture = root.location.culture
+					faith = root.location.faith
+					gender_female_chance = 50
+					save_scope_as = peasant
+				}
+			}
+		}
+		else = {
+			hidden_effect = {
+				create_character = {
+					template = merchant_template
+					dynasty = none
+					location = root.location
+					culture = root.location.culture
+					faith = root.location.faith
+					gender_female_chance = 50
+					save_scope_as = peasant
+				}
+			}
+		}
+	}
+
+	# Tithe away
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0001.a
+		scope:target_county = { 
+			add_county_modifier = {
+				modifier = coerced_contribution_county_modifier
+				years = 20
+			}
+		}
+		scope:my_scheme = {
+			add_scheme_modifier = {
+				type = scheme_coerced_subjects_modifier
+			}
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_loss
+			compassionate = medium_stress_impact_gain
+			just = medium_stress_impact_gain 
+		}
+		ai_chance = {
+			base = 100 
+			modifier = {
+				factor = 2
+				has_trait = greedy 
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = compassionate
+					has_trait = just
+				}
+			}
+		}
+	}
+	
+	# I don't want to upset my subjects :)
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0001.b
+		scope:target_county = { 
+			add_county_modifier = {
+				modifier = spared_contribution_county_modifier
+				years = 15
+			}
+		}
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+			just = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100 
+			modifier = {
+				factor = 2
+				has_trait = just 
+			}
+			modifier = {
+				factor = 0
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+# Court Chaplain offers extra blessings to those who contribute
+coerce_and_leverage_contribution_ongoing.0010 = {
+	type = character_event
+	title = coerce_and_leverage_contribution_ongoing.0010.t
+	desc = coerce_and_leverage_contribution_ongoing.0010.desc
+	
+	theme = intrigue
+	override_background = { reference = garden }
+	cooldown = { years = 5 }
+	
+	left_portrait = {
+		character = root
+		animation = fanning
+	}
+	right_portrait = {
+		character = scope:court_chaplain
+		animation = chaplain
+	}
+	widget = {
+		gui = "event_window_widget_scheme"
+		container = "custom_widgets_container"
+	}
+
+	trigger = {
+		is_available_adult = yes
+		exists = cp:councillor_court_chaplain
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_scheme = { type = coerce_contribution }
+			}
+			random_scheme = {
+				type = coerce_contribution
+				save_scope_as = my_scheme
+				scheme_target_title = { save_scope_as = target_title }
+			}
+		}
+		else = {
+			random_scheme = {
+				type = leverage_contribution
+				save_scope_as = my_scheme
+				scheme_target_title = { save_scope_as = target_title }
+			}
+		}
+		if = {
+			limit = { scope:target_title.tier != tier_county }
+			scope:target_title.title_capital_county ?= { save_scope_as = target_county }
+		}
+		else = {
+			scope:target_title ?= { save_scope_as = target_county }
+		}
+		cp:councillor_court_chaplain = {
+			assign_quirk_effect = yes
+			save_scope_as = court_chaplain
+		}
+	}
+	
+	# Why don't you extra bless _me_
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0010.aa
+		trigger = { has_trait = zealous }
+		add_piety = medium_piety_gain
+		stress_impact = {
+			base = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = zealous 
+			}
+		}
+	}
+
+	# Do it
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0010.a
+		scope:my_scheme = {
+			add_scheme_progress = 90
+		}
+		stress_impact = {
+			greedy = minor_stress_impact_loss
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100 
+			modifier = {
+				factor = 2
+				has_trait = greedy 
+			}
+			modifier = {
+				factor = 0
+				has_trait = just
+			}
+		}
+	}
+
+	# Focus on your duties
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0010.b
+		add_piety = minor_piety_gain
+		random = {
+			chance = 25
+			scope:court_chaplain = {
+				add_learning_skill = 1
+			}
+		}
+		stress_impact = {
+			just = minor_stress_impact_loss
+			greedy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100 
+			modifier = {
+				factor = 2
+				has_trait = just 
+			}
+			modifier = {
+				factor = 0
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+# Promise a Hook on yourself to Leverage Contribution
+scripted_trigger coerce_and_leverage_contribution_ongoing_0020_valid_courtier = {
+	is_available_ai_adult = yes
+	is_lowborn = yes
+	diplomacy >= decent_skill_rating
+}
+
+coerce_and_leverage_contribution_ongoing.0020 = {
+	type = character_event
+	title = coerce_and_leverage_contribution_ongoing.0020.t
+	desc = coerce_and_leverage_contribution_ongoing.0020.desc
+	
+	theme = intrigue
+	override_background = { reference = council_chamber }
+	cooldown = { years = 5 }
+	
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	right_portrait = {
+		character = scope:servant
+		animation = holding_scrolls
+	}
+	lower_right_portrait = scope:target
+	widget = {
+		gui = "event_window_widget_scheme"
+		container = "custom_widgets_container"
+	}
+
+	trigger = {
+		is_available_adult = yes
+		any_scheme = {
+			type = leverage_contribution
+			scheme_target_character = {
+				can_add_hook = {
+					target = root
+					type = favor_hook
+				}
+			}
+		}
+	}
+
+	immediate = {
+		random_scheme = {
+			type = leverage_contribution
+			save_scope_as = my_scheme
+			scheme_target_character = { save_scope_as = target }
+		}
+		if = {
+			limit = { exists = cp:councillor_chancellor }
+			cp:councillor_chancellor = { save_scope_as = servant }
+		}
+		else_if = {
+			limit = {
+				any_courtier = {
+					coerce_and_leverage_contribution_ongoing_0020_valid_courtier = yes
+				}
+			}
+			random_courtier = {
+				limit = { coerce_and_leverage_contribution_ongoing_0020_valid_courtier = yes }
+				save_scope_as = servant
+			}
+		}
+		else = {
+			hidden_effect = {
+				create_character = {
+					template = scribe_travel_option_character
+					dynasty = none
+					location = root.location
+					culture = root.location.culture
+					faith = root.location.faith
+					gender_female_chance = 50
+					save_scope_as = servant
+				}
+				add_courtier = scope:servant
+				set_variable = coerce_and_leverage_contribution_ongoing_0020_created_courtier_var
+			}
+		}
+		scope:servant = { assign_quirk_effect = yes }
+	}
+	
+	# _Pretend_ to promise a hook
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0020.aa
+		trigger = {
+			has_focus_or_focus_trait_trigger = { FOCUS = intrigue_skulduggery_focus }
+		}
+		scope:my_scheme = {
+			add_scheme_modifier = {
+				type = scheme_promised_hook_modifier
+			}
+		}
+		add_intrigue_lifestyle_xp = medium_lifestyle_xp
+		stress_impact = {
+			deceitful = minor_stress_impact_loss
+			honest = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100 
+			modifier = {
+				factor = 2
+				has_trait = deceitful
+			}
+			modifier = {
+				factor = 0
+				has_trait = honest
+			}
+		}
+	}
+
+	# Promise hook
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0020.a
+		trigger = {
+			NOT = {
+				has_focus_or_focus_trait_trigger = { FOCUS = intrigue_skulduggery_focus }
+			}
+		}
+		scope:target = {
+			add_hook = {
+				type = favor_hook
+				target = root
+			}
+		}
+		scope:my_scheme = {
+			add_scheme_modifier = {
+				type = scheme_promised_hook_modifier
+			}
+		}
+		stress_impact = {
+			shy = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_trait = shy
+			}
+		}
+	}
+
+	# Nah
+	option = {
+		name = coerce_and_leverage_contribution_ongoing.0020.b
+		scope:target = {
+			add_opinion = {
+				target = root
+				modifier = flattered_opinion
+				opinion = 10
+			}
+		}
+		ai_chance = {
+			base = 100 
+		}
+	}
+	
+	after = {
+		if = {
+			limit = {
+				is_ai = yes
+				has_variable = coerce_and_leverage_contribution_ongoing_0020_created_courtier_var
+			}
+			remove_variable = coerce_and_leverage_contribution_ongoing_0020_created_courtier_var
+			scope:servant = { silent_disappearance_effect = yes }
+		}
+	}	
+}

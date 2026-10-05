@@ -1,0 +1,114 @@
+﻿
+#####################################################################
+# EFFECT LIST
+#####################################################################
+# All effects below determine if a marriage should be matrilineal or not
+# marry_on_realm_law - Marry two characters based on Spouse 1's realm law
+# marry_spouse_1_dominant - Marry two characters and make Spouse 1 dominant
+#####################################################################
+# EFFECTS
+#####################################################################
+
+
+marry_on_realm_law = {
+	if = {
+		limit = {
+			$SPOUSE_1$ = { is_ruler = yes }
+			$SPOUSE_1$ = {
+				OR = {
+					has_realm_law = male_only_law
+					has_realm_law = male_preference_law
+				}
+			}
+		}
+		$SPOUSE_1$ = { marry = $SPOUSE_2$ }
+	}
+	else_if = {
+		limit = {
+			$SPOUSE_1$ = { is_ruler = no }
+			$SPOUSE_1$.liege ?= {
+				OR = {
+					has_realm_law = male_only_law
+					has_realm_law = male_preference_law
+				}
+			}
+		}
+		$SPOUSE_1$ = { marry = $SPOUSE_2$ }
+	}
+	else_if = {
+		limit = {
+			$SPOUSE_1$ = { is_ruler = yes }
+			$SPOUSE_1$ = {
+				OR = {
+					has_realm_law = female_only_law
+					has_realm_law = female_preference_law
+				}
+			}
+		}
+		$SPOUSE_1$ = { marry_matrilineal = $SPOUSE_2$ }
+	}
+	else_if = {
+		limit = {
+			$SPOUSE_1$ = { is_ruler = no }
+			$SPOUSE_1$.liege ?= {
+				OR = {
+					has_realm_law = female_only_law
+					has_realm_law = female_preference_law
+				}
+			}
+		}
+		$SPOUSE_1$ = { marry_matrilineal = $SPOUSE_2$ }
+	}
+	else = {
+		marry_spouse_1_dominant = {
+			SPOUSE_1 = $SPOUSE_1$
+			SPOUSE_2 = $SPOUSE_2$
+		}
+	}
+}
+
+
+marry_spouse_1_dominant = {
+	if = {
+		limit = {
+			$SPOUSE_1$ = { is_male = yes }
+		}
+		$SPOUSE_1$ = { marry = $SPOUSE_2$ }
+	}
+	else = {
+		$SPOUSE_1$ = { marry_matrilineal = $SPOUSE_2$ }
+	}
+}
+
+vassals_dislike_marry_lowborn_effect = {
+	$RULER$ = {
+		if = {
+			limit = {
+				is_lowborn = no
+				$SPOUSE$ = { is_lowborn = yes }
+				OR = {
+					NOT = { exists = primary_spouse }
+					primary_spouse ?= $SPOUSE$
+				}
+			}
+			every_vassal_or_below = {
+				limit = { has_vassal_stance = courtly }
+				custom = every_courtly_vassal
+				add_opinion = {
+					modifier = married_lowborn_opinion
+					target = $RULER$
+					opinion = -50
+				}
+			}
+			every_vassal_or_below = {
+				limit = { has_vassal_stance = glory_hound }
+				custom = every_glory_hound_vassal
+				add_opinion = {
+					modifier = married_lowborn_opinion
+					target = $RULER$
+					opinion = -30
+				}
+			}			
+		}
+	}
+}
