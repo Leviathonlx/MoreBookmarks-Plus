@@ -1037,6 +1037,10 @@ tenet_mendicant_preachers = {
 			text = incompatible_tenet_hedonistic_trigger
 			NOT = { tenet:tenet_hedonistic = { is_in_list = selected_doctrines } }
 		}
+		custom_description = { ## ME Addition ##
+			text = incompatible_tenet_closed_faith_trigger
+			NOT = { tenet:tenet_me_closed_faith = { is_in_list = selected_doctrines } }
+		}
 	}
 
 	parameters = {
@@ -1476,6 +1480,16 @@ tenet_vows_of_poverty = {
 		if = {
 			limit = { rite_has_tenet = tenet_vows_of_poverty }
 			multiply = faith_unchanged_doctrine_cost_mult
+		}
+	}
+	
+	name = { ## ME Addition ##
+		first_valid = {
+			triggered_desc = {
+				trigger = { rite_religion_tag = islam_religion }
+				desc = tenet_faqr_name
+			}
+			desc = tenet_vows_of_poverty_name
 		}
 	}
 
@@ -4355,6 +4369,7 @@ tenet_fp3_fedayeen = {
 			text = fedayeen_required_doctrines_trigger
 			OR = {
 				tenet:tenet_warmonger = { is_in_list = selected_doctrines }
+				tenet:tenet_puritanical_islam = { is_in_list = selected_doctrines } ## ME Addition ##
 				tenet:tenet_unrelenting_faith = { is_in_list = selected_doctrines }
 				tenet:tenet_consolamentum = { is_in_list = selected_doctrines }
 				tenet:tenet_armed_pilgrimages = { is_in_list = selected_doctrines }
@@ -5710,7 +5725,8 @@ mz_tenet_ekeraa = {
 }
 
 tenet_puritanical_islam = {
-	icon = core_tenet_armed_pilgrimages
+	icon = tenet_unrelenting_faith
+
 	piety_cost = {
 		if = {
 			limit = { rite_religion_tag = islam_religion }
@@ -5719,18 +5735,17 @@ tenet_puritanical_islam = {
 		else = {
 			value = faith_tenet_cost_high
 		}
-
 		# Multiplier for keeping same tenet
 		if = {
-			limit = { has_doctrine = tenet_puritanical_islam }
+			limit = { rite_has_tenet = tenet_puritanical_islam }
 			multiply = faith_unchanged_doctrine_cost_mult
 		}
 	}
 
 	is_shown = {
-		rite_religion_tag = islam_religion
+		religion = religion:islam_religion
+		NOT = { doctrine:muhammad_succession_berberist_doctrine = { is_in_list = selected_doctrines } }
 	}
-
 	can_pick = {
 		custom_description = {
 			text = doctrine_inverted_pluralism_fundamentalist_trigger
@@ -5739,19 +5754,102 @@ tenet_puritanical_islam = {
 				doctrine:doctrine_pluralism_righteous = { is_in_list = selected_doctrines }
 			}
 		}
-	}
+		custom_description = {
+			text = incompatible_tenet_pacifism_trigger
+			NOT = { tenet:tenet_pacifism = { is_in_list = selected_doctrines } }
+		}
+		custom_description = {
+			text = incompatible_tenet_dharmic_pacifism_trigger
+			NOT = { tenet:tenet_dharmic_pacifism = { is_in_list = selected_doctrines } }
+		}
+		custom_description = {
+			text = incompatible_tenet_warmonger_trigger
+			NOT = { tenet:tenet_warmonger = { is_in_list = selected_doctrines } }
+		}
 
-	traits = {
-		virtues = {
-			zealous = { weight = 10 scale = 1 }
+		custom_description = {
+			text = doctrine_puritanical_islam_sect_trigger
+			OR = {
+				doctrine:islam_secondary_group_sunni_puritanical_doctrine = { is_in_list = selected_doctrines }
+				doctrine:islam_secondary_group_shia_puritanical_doctrine = { is_in_list = selected_doctrines }
+				doctrine:islam_secondary_group_muhakkima_puritanical_doctrine = { is_in_list = selected_doctrines }
+			}
 		}
 	}
 
 	parameters = {
-		hostility_override_special_doctrine_is_islamic_faith = hostile
 		legalism_reduced_faction_virtues
 		legalism_increased_faction_sins
-		bonus_holy_war_piety_active
-		cheaper_holy_wars_active
+		warmonger
+		conquest_cb_enabled
+		invasion_cb_enabled
+		great_holy_wars_active_if_reformed
+		clergy_can_fight
+	}
+
+	special_parameters = {
+		warmonger = yes
+		hostility_levels = {
+			same_religion = evil
+		}
+	}
+
+	character_modifier = {
+		ai_war_chance = 0.5
+		ai_war_cooldown = -0.25
+		different_faith_county_opinion_mult = 0.3
+		different_faith_liege_opinion = -15
+		opinion_of_different_faith_liege = -15
+	}
+
+	personal_tenet_parameters = {
+		clergy_can_fight_personal
+	}
+
+	traits = {
+		virtues = {
+			wrathful = { weight = 20 scale = 1 }
+		}
+	}
+}
+
+tenet_me_closed_faith = {
+	icon = tenet_me_closed_faith
+
+	piety_cost = {
+		value = faith_tenet_cost_mid
+
+		# Multiplier for keeping same tenet
+		if = {
+			limit = { rite_has_tenet = tenet_me_closed_faith }
+			multiply = faith_unchanged_doctrine_cost_mult
+		}
+	}
+
+	can_pick = {
+		custom_description = {
+			text = incompatible_tenet_mendicant_preachers_trigger
+			NOT = { tenet:tenet_mendicant_preachers = { is_in_list = selected_doctrines } }
+		}
+		custom_description = {
+			text = incompatible_tenet_communal_identity_trigger
+			NOT = { tenet:tenet_communal_identity = { is_in_list = selected_doctrines } }
+		}
+	}
+
+	# A closed faith does not proselytise: nobody takes this up as a personal belief.
+	can_pick_as_personal_tenet = {
+		always = no
+	}
+
+	parameters = {
+		me_tenet_conversion_blocked
+		me_tenet_closed_faith_conversion_resistance
+		same_faith_promote_culture_bonus_active
+	}
+
+	character_modifier = {
+		same_faith_opinion = 30
+		monthly_county_control_growth_factor = 0.25
 	}
 }
