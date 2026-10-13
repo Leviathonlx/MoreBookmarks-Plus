@@ -1,145 +1,194 @@
-﻿#mz_fix_religions_effect = {
-#	if = {
-#		limit = { # Double-check to make certain this has not already happened
-#			NOT = { exists = global_var:mz_flag_fix_religion_decision }	
-#		}
-#		set_global_variable = { # Add global variable to prevent this from happening more than once
-#			name = mz_flag_fix_religion_decision
-#			value = yes
-#		}
-#		# Begin process of replacing doctrines and tenets
-#		every_religion_global = {
-#			every_faith = {
-#				## Add Holy Matrimony to all valid faiths
-#				if = {
-#					limit = { 
-#						NOR = { 
-#							has_doctrine = doctrine_mz_monogamy
-#							has_doctrine = tenet_polyamory
-#						} 
-#					}
-#					add_doctrine = doctrine_mz_monogamy
-#				}
-#	
-#				## Nudity doctrines fix
-#				#if = { # Faiths that have natural primitivism have Full Nudity doctrine
-#				#	limit = { 
-#				#		has_doctrine = tenet_natural_primitivism
-#				#		NOT = { has_doctrine = doctrine_mz_full_nudity }
-#				#	}
-#				#	if = {
-#				#		limit = { has_doctrine = special_doctrine_naked_priests }
-#				#		remove_doctrine = special_doctrine_naked_priests
-#				#	}
-#				#	if = {
-#				#		limit = { has_doctrine = doctrine_mz_no_nudity }
-#				#		remove_doctrine = doctrine_mz_no_nudity
-#				#	}
-#				#	add_doctrine = doctrine_mz_full_nudity
-#				#}
-#				if = { # All other faiths that lack Full Nudity or Naked Priests have No Nudity doctrine
-#					limit = { 
-#						NOR = { 
-#							has_doctrine = doctrine_mz_no_nudity
-#							has_doctrine = doctrine_mz_full_nudity
-#							has_doctrine = special_doctrine_naked_priests
-#						}
-#					}
-#					add_doctrine = doctrine_mz_no_nudity
-#				}
-#			}	
-#		}
-#		### Fixing individual Faiths
-#		## For Divine Marriage
-#		# Messalian
-#		faith:messalian = {
-#				if = { 
-#					limit = { has_doctrine = doctrine_consanguinity_unrestricted }
-#					remove_doctrine = doctrine_consanguinity_unrestricted
-#				}
-#				if = { 
-#					limit = { 
-#						NOT = { has_doctrine = tenet_divine_marriage }
-#					}
-#					add_doctrine = tenet_divine_marriage
-#				}
-#				if = { 
-#					limit = { 
-#						NOT = { has_doctrine = tenet_asceticism }
-#					}
-#					add_doctrine = tenet_asceticism
-#				}
-#		}	
-#		# Zoroastrianism
-#		faith:mazdayasna = {
-#			if = { 
-#				limit = { has_doctrine = doctrine_consanguinity_unrestricted }
-#				remove_doctrine = doctrine_consanguinity_unrestricted
-#			}
-#			if = { 
-#				limit = { 
-#					NOT = { has_doctrine = tenet_divine_marriage }
-#				}
-#				add_doctrine = tenet_divine_marriage
-#			}
-#			if = { 
-#				limit = { 
-#					NOT = { has_doctrine = tenet_communal_identity }
-#				}
-#				add_doctrine = tenet_communal_identity
-#			}
-#		}	
-#		faith:zurvanism = {
-#			if = { 
-#				limit = { 
-#					NOT = { has_doctrine = tenet_communal_identity }
-#				}
-#				add_doctrine = tenet_communal_identity
-#			}
-#		}
-#		faith:zurvanism = {
-#			if = { 
-#				limit = { 
-#					has_doctrine = doctrine_pluralism_righteous 
-#				}
-#				remove_doctrine = doctrine_pluralism_righteous
-#				add_doctrine = doctrine_pluralism_pluralistic
-#			}
-#		}
-#		## Sycnretism Edge Cases
-#		# Yazidi
-#		faith:yazidi = {
-#			if = { 
-#				limit = { 
-#					NOT = { has_doctrine = tenet_ritual_celebrations }
-#				}
-#				add_doctrine = tenet_ritual_celebrations
-#			}
-#		}
-#		faith:meshefaresism = {
-#			if = { 
-#				limit = { 
-#					NOT = { has_doctrine = tenet_literalism }
-#				}
-#				add_doctrine = tenet_literalism
-#			}
-#		}
-#		faith:kitebacilweism = {
-#			if = { 
-#				limit = { 
-#					NOT = { has_doctrine = tenet_communal_identity }
-#				}
-#				add_doctrine = tenet_communal_identity
-#			}
-#		}
-#		# Dualism
-#		faith:mandeaism = {
-#			if = {
-#				limit = { 
-#					NOT = { has_doctrine = tenet_communal_identity }
-#				}
-#				add_doctrine = tenet_communal_identity				
-#			}
-#		}
-#	}
-#}
+﻿### Global effect that affects every Rite in the game, adding missing doctrines for newly-created slots
+mz_fix_religions_effect = {
+	if = {
+		limit = { # Double-check to make certain this has not already happened
+			NOT = { exists = global_var:mz_flag_fix_religion_decision }	
+		}
+		set_global_variable = { # Add global variable to prevent this from happening more than once
+			name = mz_flag_fix_religion_decision
+			value = yes
+		}
+		# Begin process of replacing doctrines and tenets
+		every_religion_global = {
+			every_faith = {
+				every_faith_rite = {
+					### Syncretism Doctrines
+					#if = { # If we have a Syncretic Tenet, become Syncretized
+					#	limit = { mz_rite_has_syncretic_tenet = yes }
+					#	change_rite_doctrine = mz_doctrine_is_syncretized
+					#}
+					#else = { change_rite_doctrine = mz_doctrine_no_syncretism } # Otherwise get One Faith
+
+					## Nudity Doctrines
+					if = { # Faiths that have Natural Primitivism have Full Nudity doctrine
+						limit = { 
+							rite_has_tenet = tenet_natural_primitivism
+							NOT = { rite_has_doctrine = mz_doctrine_full_nudity }
+						}
+						change_rite_doctrine = mz_doctrine_full_nudity
+					}
+					if = { # All other faiths that lack Full Nudity or Naked Priests have No Nudity doctrine
+						limit = { 
+							NOR = { 
+								rite_has_doctrine = mz_doctrine_full_nudity
+								rite_has_doctrine = mz_doctrine_no_nudity
+								rite_has_doctrine = special_doctrine_naked_priests
+							}
+						}
+						change_rite_doctrine = mz_doctrine_no_nudity
+					}
+					
+					## Marital Relations
+					if = {
+						limit = { 
+							rite_has_tenet = tenet_polyamory
+							NOT = { rite_has_doctrine = mz_doctrine_polyamory }
+						}
+						change_rite_doctrine = mz_doctrine_polyamory
+					}
+					else_if = {
+						limit = {
+							rite_has_parameter = adultery_female_accepted
+							rite_has_parameter = adultery_male_accepted
+							NOT = { rite_has_doctrine = mz_doctrine_polyamory }
+						}
+						change_rite_doctrine = mz_doctrine_polyamory
+					}
+					else = { change_rite_doctrine = mz_doctrine_matrimony }
+				}
+			}
+		}
+	}
+}
+
+### Discover any doctrine that has an associated tenet, as long as you know the tenet, Character Scope
+mz_learn_doctrines_from_tenets = {
+	if = {
+		limit = { is_playable_character = yes } # This only works for playable characters anyway.
+		# Syncretism
+		if = {
+			limit = { 
+				NOT = {
+					knows_doctrine = mz_doctrine_no_syncretism
+				}
+			}
+			add_known_doctrine = mz_doctrine_no_syncretism
+		}
+		if = {
+			limit = { 
+				NOT = {
+					knows_doctrine = mz_doctrine_is_syncretized
+				}
+				OR = {
+					knows_tenet = tenet_sinitic_syncretism
+					knows_tenet = tenet_eastern_syncretism
+					knows_tenet = tenet_unreformed_syncretism
+					knows_tenet = tenet_christian_syncretism
+					knows_tenet = tenet_islamic_syncretism
+					knows_tenet = tenet_jewish_syncretism
+				}				
+			}
+			add_known_doctrine = mz_doctrine_is_syncretized
+		}
+		if = {
+			limit = { 
+				knows_tenet = tenet_sinitic_syncretism
+				NOT = {
+					knows_doctrine = mz_doctrine_sinitic_syncretism
+				}
+			}
+			add_known_doctrine = mz_doctrine_sinitic_syncretism
+		}
+		if = {
+			limit = { 
+				knows_tenet = tenet_eastern_syncretism
+				NOT = {
+					knows_doctrine = mz_doctrine_eastern_syncretism
+				}
+			}
+			add_known_doctrine = mz_doctrine_eastern_syncretism
+		}
+		if = {
+			limit = { 
+				knows_tenet = tenet_unreformed_syncretism
+				NOT = {
+					knows_doctrine = mz_doctrine_unreformed_syncretism
+				}
+			}
+			add_known_doctrine = mz_doctrine_unreformed_syncretism
+		}
+		if = {
+			limit = { 
+				knows_tenet = tenet_christian_syncretism
+				NOT = {
+					knows_doctrine = mz_doctrine_christian_syncretism
+				}
+			}
+			add_known_doctrine = mz_doctrine_christian_syncretism
+		}
+		if = {
+			limit = { 
+				knows_tenet = tenet_islamic_syncretism
+				NOT = {
+					knows_doctrine = mz_doctrine_islamic_syncretism
+				}
+			}
+			add_known_doctrine = mz_doctrine_islamic_syncretism
+		}
+		if = {
+			limit = { 
+				knows_tenet = tenet_jewish_syncretism
+				NOT = {
+					knows_doctrine = mz_doctrine_jewish_syncretism
+				}
+			}
+			add_known_doctrine = mz_doctrine_jewish_syncretism
+		}
+		# Nudity
+		if = {
+			limit = { 
+				NOT = {
+					knows_doctrine = mz_doctrine_no_nudity
+				}
+			}
+			add_known_doctrine = mz_doctrine_no_nudity
+		}	
+		if = {
+			limit = { 
+				knows_tenet = tenet_natural_primitivism
+				NOT = {
+					knows_doctrine = mz_doctrine_full_nudity
+				}
+			}
+			add_known_doctrine = mz_doctrine_full_nudity
+		}
+		# Divine Marriage
+		if = {
+			limit = { 
+				knows_tenet = tenet_divine_marriage
+				NOT = {
+					knows_doctrine = mz_doctrine_divine_marriage
+				}
+			}
+			add_known_doctrine = mz_doctrine_divine_marriage
+		}
+		# Polyamory
+		if = {
+			limit = { 
+				knows_tenet = tenet_polyamory
+				NOT = {
+					knows_doctrine = mz_doctrine_polyamory
+				}
+			}
+			add_known_doctrine = mz_doctrine_polyamory
+		}
+		if = {
+			limit = { 
+				NOT = {
+					knows_doctrine = mz_doctrine_matrimony
+				}
+			}
+			add_known_doctrine = mz_doctrine_matrimony
+		}	
+	}	
+}

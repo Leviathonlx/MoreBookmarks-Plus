@@ -1,0 +1,60 @@
+﻿#How likely a character is to accept sexual/romantic advances from someone they're related to. Should be used in the scope of TARGET.
+incest_acceptance_modifier = {
+	
+	#Basic willingness modifier
+	modifier = {
+		#Only do calculation if SEDUCER is a family member and target isn't 100% fine with incest with SEDUCER
+		is_close_or_extended_family_of = $SEDUCER$
+		NOT = { accepts_incest_with_trigger = { CHARACTER = $SEDUCER$ } }
+		factor = {
+			value = 1
+
+			## NEGATIVE FACTORS ##
+
+			#Is this seen as incestuous? Norms & consequences
+			if = {
+				limit = { relation_with_character_is_incestuous_in_my_or_lieges_rite_trigger = { CHARACTER = $SEDUCER$ } }
+				add = -0.8
+			}
+
+			# "Reverse sexual imprinting"
+			if = {
+				limit = { is_close_family_of = $SEDUCER$ }
+				add = -0.9
+			}
+			else_if = {
+				limit = { is_extended_family_of = $SEDUCER$ }
+				add = -0.3
+			}
+
+			min = 0
+
+			## POSITIVE FACTORS ##
+			if = {
+				limit = { is_deviant_trigger = yes }
+				add = 0.3
+			}
+
+			if = {
+				limit = {
+					faith ?= { trait_is_virtue = incestuous }
+					faith ?= { trait_is_virtue = pure_blooded }
+				}
+				add = 3
+			}
+
+			max = 1
+
+			## HARD REJECT ##
+			if = {
+				limit = {
+					guaranteed_under_20_incest_rejection_trigger = {
+						TARGET = $TARGET$
+						SEDUCER = $SEDUCER$
+					}
+				}
+				value = 0
+			}
+		}
+	}
+}
