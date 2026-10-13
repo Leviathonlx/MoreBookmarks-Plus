@@ -1,0 +1,231 @@
+﻿revoke_leased_title_interaction = {
+	category = interaction_category_uncategorized
+	hidden = yes
+
+	desc = revoke_leased_title_interaction_desc
+
+	target_type = title
+	target_filter = recipient_lessee_titles
+	
+	auto_accept = yes
+
+	is_available = {
+		trigger_if = {
+			limit = { is_ai = yes }
+			piety >= cancel_holy_order_piety_cost #Prevent AI to go into negative piety
+			is_playable_character = yes
+		}
+	}
+
+	is_shown = {
+		scope:actor = {
+			any_sub_realm_barony = {
+				lessee ?= scope:recipient
+				barony_is_valid_for_holy_order_lease_cancellation_trigger = { ACTOR = scope:actor }
+			}
+		}
+	}
+
+	#is_valid = {
+	#	scope:actor = {
+	#		piety >= holy_order_revoke_lease_piety_cost
+	#	}
+	#}
+	cost = {
+		piety = {
+			value = 0
+			if = {
+				limit = {
+					exists = scope:recipient.faith
+				}
+				if = {
+					limit = { scope:actor.faith = scope:recipient.faith }
+					add = cancel_holy_order_piety_cost
+				}
+				else_if = {
+					limit = {
+						scope:actor.faith = {
+							faith_hostility_level = {
+								target = scope:recipient.faith
+								value <= faith_astray_level
+							}
+						}
+					}
+					add = cancel_astray_holy_order_piety_cost
+				}
+			}
+		}
+	}
+	
+	has_valid_target_showing_failures_only = {
+		NOT = { scope:actor = { is_at_war_with = scope:recipient } }
+		#scope:target = {
+		#	NOT = {
+		#		recent_history = {
+		#			type = leased_out
+		#			years = 1
+		#		}
+		#	}
+		#}
+		scope:target = {
+			has_revokable_lease = yes
+			lessee = scope:recipient
+			county.holder = {
+				target_is_same_character_or_above = scope:actor
+				OR = {
+					any_liege_or_above = {
+						count = 0
+						is_ai = no
+						is_vassal_or_below_of = scope:actor
+					}
+					this = scope:actor
+				}
+			}
+		}
+		scope:recipient = { NOT = { has_strong_hook = scope:actor } }
+	}
+
+	on_accept = {
+		scope:actor = {
+			save_scope_as = cost_paid
+		}
+		revoke_holy_order_lease_effect = {
+			CHARACTER = scope:actor
+			TARGET = scope:recipient
+			BARONY = scope:target
+		}
+	}
+
+	# AI
+	ai_targets = {
+		ai_recipients = vassals
+	}
+	ai_frequency_by_tier = {
+		barony = 0
+		county = 60
+		duchy = 12
+		kingdom = 12
+		empire = 12
+		hegemony = 12
+	}
+
+	ai_will_do = {
+		base = 0
+
+		# revoke titles leased to Orders of the wrong rite
+		modifier = {
+			add = 10
+			scope:recipient = {
+				government_has_flag = government_is_holy_order
+				rite != scope:actor.rite
+				rite = {
+					"divergence(scope:actor.rite)" >= minor_rite_divergence_value
+				}
+			}
+		}
+		modifier = {
+			add = 20
+			scope:recipient = {
+				government_has_flag = government_is_holy_order
+				rite != scope:actor.rite
+				rite = {
+					"divergence(scope:actor.rite)" >= major_rite_divergence_value
+				}
+			}
+		}
+		#Of wrong faith
+		modifier = {
+			add = 20
+			scope:recipient = {
+				government_has_flag = government_is_holy_order
+				faith != scope:actor.faith
+			}
+		}
+		modifier = {
+			add = 25
+			scope:recipient = {
+				government_has_flag = government_is_holy_order
+				faith != scope:actor.faith
+			}
+			scope:actor.faith = {
+				faith_hostility_level = {
+					target = scope:recipient.faith
+					value >= faith_hostile_level
+				}
+			}
+		}
+		modifier = {
+			add = 50
+			scope:recipient = {
+				government_has_flag = government_is_holy_order
+				faith != scope:actor.faith
+			}
+			scope:actor.faith = {
+				faith_hostility_level = {
+					target = scope:recipient.faith
+					value >= faith_evil_level
+				}
+			}
+		}
+		#Greedy will revoke from same-faith
+		modifier = {
+			add = {
+				value = ai_greed
+				multiply = 0.5
+				if = {
+					limit = {
+						scope:target.county ?= scope:recipient.capital_county
+					}
+					multiply = 0.5
+				}
+			}
+			ai_greed > 0
+			NOT = {
+				scope:actor = {
+					any_patroned_holy_order = {
+						this = scope:recipient.holy_order
+					}
+					#Won't arbitrarily destroy order they founded recently or are puppeting
+					OR = {
+						has_character_modifier = founded_monastic_order_modifier
+						has_character_modifier = founded_holy_order_modifier
+						scope:recipient.puppeteer ?= scope:actor
+					}
+				}
+			}
+		}
+		#Compassion/generosity makes you not want to evict monks I guess
+		modifier = {
+			factor = 0.5
+			OR = {
+				ai_compassion > 0
+				ai_greed < 0
+			}
+			scope:recipient = {
+				government_has_flag = government_is_monastic_holy_order
+			}
+		}
+		modifier = {
+			factor = 0.1
+			OR = {
+				ai_compassion > medium_positive_ai_value
+				ai_greed < medium_negative_ai_value
+			}
+			scope:recipient = {
+				government_has_flag = government_is_monastic_holy_order
+			}
+		}
+		modifier = {
+			factor = 2
+			ai_zeal >= medium_positive_ai_value
+			scope:recipient.rite != scope:actor.rite
+		}
+		#Military orders are obviously much more compelling to revoke
+		modifier = {
+			factor = 10
+			scope:recipient = {
+				government_has_flag = government_is_military_holy_order
+			}
+		}
+	}
+}

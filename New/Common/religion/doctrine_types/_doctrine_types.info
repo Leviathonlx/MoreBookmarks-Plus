@@ -19,6 +19,15 @@ key = {
 	#
 	name = { ... }
 
+	### brief: descriptive_name ( optional dynamic description )
+	# Dynamic description selecting the descriptive name of doctrine (e.g. "Encourage Monasticism" instead of "Encouraged").
+	# Defaults to: <doctrine_key> + "_descriptive_name" if that localization key exists, otherwise falls back to the name
+	#
+	# Supported scopes:
+	#	root ( Faith )
+	#
+	descriptive_name = { ... }
+
 	### brief: desc ( optional dynamic description )
 	# Dynamic description selecting description of doctrine.
 	# Defaults to: <doctrine_key> + "_desc"
@@ -27,6 +36,15 @@ key = {
 	#	root ( Faith )
 	#
 	desc = { ... }
+
+	### brief: historical_glossary ( optional dynamic description )
+	# Dynamic description selecting the historical glossary of doctrine (e.g. a Glossary link to its historical background).
+	# Defaults to: empty (no historical glossary)
+	#
+	# Supported scopes:
+	#	root ( Faith )
+	#
+	historical_glossary = { ... }
 
 	### brief: visible ( bool )
 	# Will this doctrine show up in gui views?
@@ -59,14 +77,14 @@ key = {
 	#
 	index = 0
 
-	### Brief: piety_cost ( optional scripted cost )
+	### Brief: piety_cost ( optional script value )
 	# How much does this doctrine cost?
 	#
 	# Supported scopes:
 	#	root ( Rite )
 	#
 	piety_cost = {
-		<scripted_cost>
+		<script_value>
 	}
 
 	### Brief: is_shown ( trigger )
@@ -82,8 +100,8 @@ key = {
 	### Brief: can_pick ( trigger )
 	# When can this doctrine be picked when choosing doctrines?
 	# When doctrines should refer to other selected doctrines when creating a new faith (e.g. for mutually exclusive doctrines), use:
-	#	 flag:required_doctrine = { is_in_list = selected_doctrines }
-	# The "selected_doctrines" list is the list of doctrines currently selected in the UI. (It might be different from the doctrines in
+	#	 doctrine:required_doctrine = { is_in_list = selected_doctrines }
+	# The "selected_doctrines" list is the list of core tenets and doctrines currently selected in the UI. (It might be different from the doctrines in
 	# the faith, since the player can change multiple doctrines when creating a faith.)
 	#
 	# Supported scopes:
@@ -95,10 +113,17 @@ key = {
 	}
 
 	### Brief: character_modifier ( modifiers )
-	# All characters of this faith get this modifier.
+	# All characters whose rite has this doctrine get this modifier.
 	# Ex: { monthly_piety_gain_mult = -0.25, same_faith_opinion = -5 }
 	#
 	character_modifier = {
+		<modifier>
+	}
+
+	### Brief: clergy_modifier ( modifiers )
+	# All clergy characters whose rite has this doctrine get this modifier.
+	#
+	clergy_modifier = {
 		<modifier>
 	}
 
@@ -182,10 +207,11 @@ key = {
 			unrelated = evil
 		}
 
-		# hostility override map depending on whether the target faith has the given doctrine
+		# hostility override map depending on whether the target faith has the given doctrine or tenet
+		# If several entries match, the most hostile level is used. Takes precedence over hostility_levels.
 		#
 		hostility_level_override = {
-			doctrine_key = astray
+			doctrine_or_tenet_key = astray
 		}
 
 		# How hostile is this faith towards faith who they share Head of Faith with? Takes precedence over other hostility overrides.
@@ -193,7 +219,8 @@ key = {
 		#
 		same_hof_hostility_override = righteous
 
-		# hostility override map depending on whether the target faith has the given parameter
+		# opinion override map depending on whether the target faith has the given parameter
+		# Opinion values must be positive integers; 0 is ignored
 		#
 		parameter_opinion_override = {
 			# Has this opinion apply to people with faiths with the given doctrine parameter.
@@ -204,6 +231,7 @@ key = {
 		# hostility_towards_us_mult: float
 		# Multiplies the hostility opinion defined in HOSTILITY_OPINION_EFFECTS (defines.txt).
 		# Does not work as an additive multiplier - writing '1' means the opinion is unchanged, not doubled.
+		# Values below 1 are treated as 1 (it can only increase hostility opinion, not reduce it).
 		# default = 1
 		#
 		hostility_towards_us_mult = 1
@@ -264,8 +292,9 @@ key = {
 #	* hostile	(2)
 #	* evil		(3)
 #
-# A rite always has a 'righteous' hostility level towards itself.
+# A rite always has a 'righteous' hostility level towards itself and towards other rites of the same faith.
 # If no override is defined the target rite will be considered to be righteous
+# If the divergence between the two rites is at or below RITE_DIVERGENCE_HOSTILITY_THRESHOLD, the resulting level is lowered by one.
 #
 # The opinion effect of hostility is defined by the define HOSTILITY_OPINION_EFFECTS.
 # The multiplier applied to tolerance_advantage_mod is defined by the define HOSTILITY_COMBAT_MOD_MULT.
@@ -286,7 +315,14 @@ key = {
 # 	* divine_marriage_opinion
 # 	* minimum_fervor
 # 	* fervor_per_holy_site
+#	* bonus_fervor_gain
+#	* bonus_heresy_protection
+#	* divergence_protection
 #	* hostility_towards_us_mult
+#
+#	heresy_threshold is additive between all doctrines and core tenets
+#
+#	piety_from_long_peace and the increased_dynasty_prestige_*_mult values: the latest non-zero definition wins
 #
 #	Allowed Holding Types and all maps are merged (but if multiple values are defined for the same entry the latest wins)
 #

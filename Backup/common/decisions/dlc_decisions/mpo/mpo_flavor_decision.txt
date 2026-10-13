@@ -9,19 +9,40 @@ mpo_pleasure_dome_decision = {
 	sort_order = 80
 
 	is_shown = {
-		has_mpo_dlc_trigger = yes
         OR = {
 	       	government_has_flag = government_is_nomadic
             has_trait = nomadic_philosophy
         }
-        NOT = { has_global_variable = devised_pleasure_dome }
-        culture = {
+        culture ?= {
             OR = {
-                has_cultural_pillar = heritage_mongolic
                 has_cultural_pillar = heritage_turkic
+                has_cultural_pillar = heritage_mongolic
             }
         }
+        NOT = { has_global_variable = devised_pleasure_dome }
+		has_mpo_dlc_trigger = yes
 	}
+
+    widget = {
+        controller = create_holy_order
+        title_valid = {
+            trigger_if = {
+                limit = { exists = this }
+                title_province = {
+                    trigger_if = {
+                        limit = { scope:ruler = { is_ai = yes } }
+                        has_special_building_slot = no
+                    }
+                    trigger_else = {
+                        has_special_building = no
+                    }
+                }
+                is_capital_barony = yes
+                holder = scope:ruler
+                is_leased_out = no
+            }
+        }
+    }
 
 	is_valid_showing_failures_only = {
 		custom_tooltip = {
@@ -29,7 +50,13 @@ mpo_pleasure_dome_decision = {
 			any_held_title = {
 				tier = tier_barony
 				title_province = {
-                    has_special_building_slot = no
+                    trigger_if = {
+                        limit = { root = { is_ai = yes } }
+                        has_special_building_slot = no
+                    }
+                    trigger_else = {
+                        has_special_building = no
+                    }
                 }
 				is_capital_barony = yes
 				holder = root
@@ -41,7 +68,7 @@ mpo_pleasure_dome_decision = {
 
 	is_valid = {
 		prestige_level >= very_high_prestige_level
-		highest_held_title_tier = tier_empire
+		highest_held_title_tier >= tier_empire
         trigger_if = {
             limit = {
                 government_has_flag = government_is_nomadic
@@ -93,20 +120,6 @@ mpo_pleasure_dome_decision = {
         }
 	}
 
-    widget = {
-        controller = create_holy_order
-        barony_valid = {
-            trigger_if = {
-                limit = { exists = this }
-                title_province = {
-                    has_special_building_slot = no
-                }
-                is_capital_barony = yes
-                holder = scope:ruler
-                is_leased_out = no
-            }
-        }
-    }
     effect = {
         send_interface_toast = {
             type = event_toast_effect_good
@@ -157,19 +170,19 @@ mpo_establish_paiza_system_decision = {
     sort_order = 80
 
     is_shown = {
-		has_mpo_dlc_trigger = yes
-        government_has_flag = government_is_nomadic
-        NOT = { has_character_flag = established_paiza_system }
-		exists = situation:the_great_steppe
 		any_character_situation = {
 			this = situation:the_great_steppe
 		}
+        government_has_flag = government_is_nomadic
 		OR = {
             has_realm_law = nomadic_authority_2
             has_realm_law = nomadic_authority_3
 			has_realm_law = nomadic_authority_4
 			has_realm_law = nomadic_authority_5
 		}
+		has_mpo_dlc_trigger = yes
+        NOT = { has_character_flag = established_paiza_system }
+		exists = situation:the_great_steppe
     }
 
     is_valid = {
@@ -283,9 +296,9 @@ mpo_call_for_merchants_decision = {
     sort_order = 80
 
     is_shown = {
-		has_mpo_dlc_trigger = yes
-        government_has_flag = government_is_nomadic
         has_character_flag = established_paiza_system
+        government_has_flag = government_is_nomadic
+		has_mpo_dlc_trigger = yes
     }
 
     is_valid = {
@@ -392,11 +405,11 @@ mpo_call_for_merchants_small_decision = {
     sort_order = 80
 
     is_shown = {
-        has_mpo_dlc_trigger = yes
         government_has_flag = government_is_nomadic
         NOT = {
             has_character_flag = established_paiza_system
         }   
+        has_mpo_dlc_trigger = yes
     }
 
     is_valid = {
@@ -488,14 +501,14 @@ mpo_abuse_authority_paiza_decision = {
     sort_order = 80
 
     is_shown = {
-		has_mpo_dlc_trigger = yes
         is_imprisoned = no
+		has_mpo_dlc_trigger = yes
         any_character_artifact = {
             root = { can_benefit_from_artifact = prev }
             exists = var:paiza_patron 
             NOT = {
                 root = var:paiza_patron
-                var:paiza_patron = {
+                var:paiza_patron ?= {
                     is_at_war_with = root
                 }
             }                    
@@ -596,10 +609,12 @@ mpo_abuse_authority_paiza_decision = {
         }
         modifier = {
             add = {
-                value = max_herd
-                subtract = herd
-                divide = max_herd
-                multiply = 20
+                domicile ?= {
+                    value = max_herd
+                    subtract = herd
+                    divide = max_herd
+                    multiply = 20
+                }
             }
             domicile ?= {
                 herd <= max_herd

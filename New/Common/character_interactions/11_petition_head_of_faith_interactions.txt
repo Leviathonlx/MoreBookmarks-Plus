@@ -1,0 +1,146 @@
+﻿# Players enter via petition_head_of_faith_decision, which opens these hidden setup interactions
+# AI bypasses petitions and uses the standard character interactions instead
+
+petition_head_of_faith_repentance_setup_interaction = {
+	hidden = yes
+	icon = religious
+	category = interaction_category_religion
+	show_two_characters = yes
+
+	desc = petition_head_of_faith_repentance_setup_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			petition_head_of_faith_religious_authority_is_trigger = { CHARACTER = scope:recipient }
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			petition_head_of_faith_repentance_available_trigger = yes
+			NOT = {
+				has_character_modifier = promised_pilgrimage_to_clergy_modifier
+			}
+		}
+		trigger_if = {
+			limit = { NOT = { scope:repentance_hook = yes } }
+			scope:actor = { piety >= major_piety_value }
+		}
+	}
+
+	send_option = {
+		is_valid = {
+			scope:actor = { has_usable_hook = scope:recipient }
+		}
+		flag = repentance_hook
+		localization = EXCOMMUNICATION_HOOK
+	}
+	should_use_extra_icon = {
+		scope:actor = { has_usable_hook = scope:recipient }
+	}
+	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
+	send_options_exclusive = no
+
+	# Recipient cannot accept or refuse here; outcome is decided at the audience event.
+	auto_accept = yes
+
+	on_accept = {
+		custom_tooltip = petition_head_of_faith_repentance_setup_interaction_accept_tt
+		petition_head_of_faith_prepare_petition_effect = {
+			TYPE = repentance
+			HOOK = repentance_hook
+			PIETY_VALUE = major_piety_value
+		}
+	}
+}
+
+petition_head_of_faith_excommunication_setup_interaction = {
+	hidden = yes
+	category = interaction_category_hostile
+	icon = excommunication
+
+	desc = request_excommunication_interaction_desc
+
+	populate_recipient_list = {
+		scope:actor.faith = {
+			every_faith_playable_ruler = {
+				limit = {
+					petition_head_of_faith_excommunication_target_eligible_trigger = { ACTOR = scope:actor }
+					NOR = {
+						this = scope:actor
+						this = scope:recipient
+					}
+				}
+				add_to_list = characters
+			}
+		}
+	}
+
+	is_shown = {
+		scope:actor = { petition_head_of_faith_excommunication_decision_available_trigger = yes }
+		scope:actor = {
+			petition_head_of_faith_religious_authority_is_trigger = { CHARACTER = scope:recipient }
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = {
+				has_character_modifier = promised_pilgrimage_to_clergy_modifier
+			}
+		}
+		trigger_if = {
+			limit = {
+				scope:actor = { petition_head_of_faith_excommunication_decision_available_trigger = no }
+			}
+			custom_tooltip = request_excommunication_interaction_not_available
+		}
+		trigger_if = {
+			limit = { 
+				NOT = {
+					scope:actor = {
+						has_usable_hook = scope:recipient
+					} 
+				}
+			}
+			custom_tooltip = {
+				text = request_excommunication_interaction_no_hook
+				scope:actor = { piety >= massive_piety_value }
+			}
+		}
+		trigger_if = {
+			limit = { NOT = { scope:excommunication_hook = yes } }
+			scope:actor = { piety >= massive_piety_value }
+		}
+		scope:secondary_recipient = {
+			petition_head_of_faith_excommunication_target_eligible_trigger = { ACTOR = scope:actor }
+		}
+	}
+
+	send_option = {
+		is_valid = {
+			scope:actor = {
+				has_usable_hook = scope:recipient
+			}
+		}
+		flag = excommunication_hook
+		localization = EXCOMMUNICATION_HOOK
+	}
+	should_use_extra_icon = {
+		scope:actor = { has_usable_hook = scope:recipient }
+	}
+	extra_icon = "gfx/interface/icons/character_interactions/hook_icon.dds"
+	send_options_exclusive = no
+
+	# Recipient cannot accept or refuse here; outcome is decided at the audience event.
+	auto_accept = yes
+
+	on_accept = {
+		custom_tooltip = petition_head_of_faith_excommunication_setup_interaction_accept_tt
+		petition_head_of_faith_prepare_petition_effect = {
+			TYPE = request_excommunication
+			HOOK = excommunication_hook
+			PIETY_VALUE = massive_piety_value
+		}
+	}
+}

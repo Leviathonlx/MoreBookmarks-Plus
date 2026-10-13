@@ -42,9 +42,9 @@ on_marriage = { # Will not fire from historical marriages
 					is_female = yes
 					OR = {
 						AND = {
-							OR = {
-								has_character_flag = unmarried_bastard_pregnancy
-								has_character_flag = bastard_pregnancy
+							has_variable = {
+								name = unmarried_bastard_pregnancy
+								name = bastard_pregnancy
 							}
 							pregnancy_real_father = { this = root }
 						}
@@ -157,6 +157,59 @@ on_marriage = { # Will not fire from historical marriages
 				}
 			}
 		}
+		#The Christian Church catalysts
+		if = {
+			limit = {
+				has_pam_dlc_trigger = yes
+				is_clergy = yes
+				rite = { rite_has_doctrine = doctrine_clerical_marriage_disallowed }
+				any_character_situation = { 
+					situation_type = the_christian_church
+				}
+			}
+			if = {
+				limit = {
+					any_held_title = { is_head_of_faith = yes }
+					any_character_situation = {
+						situation_type = the_christian_church
+						situation_top_has_catalyst = catalyst_the_christian_church_head_of_faith_marries
+					}
+				}
+				situation:the_christian_church = {
+					trigger_situation_catalyst = catalyst_the_christian_church_head_of_faith_marries
+				}
+			}
+			else_if = {
+				limit = {
+					any_character_situation = {
+						situation_type = the_christian_church
+						situation_top_has_catalyst = catalyst_clergy_marries
+					}
+				}
+				situation:the_christian_church = {
+					trigger_situation_catalyst = {
+						catalyst = catalyst_clergy_marries
+						character = root 
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_pam_dlc_trigger = yes
+				highest_held_title_tier >= tier_kingdom
+				scope:spouse = {
+					NOT = { religion = religion:christianity_religion }
+				}
+				any_character_situation = {
+					situation_type = the_christian_church
+					situation_top_has_catalyst = catalyst_the_christian_church_ruler_married_non_christian
+				}
+			}
+			situation:the_christian_church = {
+				trigger_situation_catalyst = catalyst_the_christian_church_ruler_married_non_christian
+			}
+		}
 	}
 
 	events = {
@@ -255,6 +308,20 @@ on_divorce = { # Will not fire from historical divorces
 				}
 			}
 		}
+		create_character_memory = {
+			type = divorced_actor
+			participants = {
+				spouse = scope:spouse
+			}
+		}
+		scope:spouse = {
+			create_character_memory = {
+				type = divorced_recipient
+				participants = {
+					spouse = root
+				}
+			}
+		}
 	}
 }
 
@@ -269,9 +336,9 @@ on_concubinage = {
 					is_female = yes
 					OR = {
 						AND = {
-							OR = {
-								has_character_flag = unmarried_bastard_pregnancy
-								has_character_flag = bastard_pregnancy
+							has_variable = {
+								name = unmarried_bastard_pregnancy
+								name = bastard_pregnancy
 							}
 							pregnancy_real_father = { this = scope:concubine }
 						}
@@ -300,9 +367,9 @@ on_concubinage = {
 					is_female = yes
 					OR = {
 						AND = {
-							OR = {
-								has_character_flag = unmarried_bastard_pregnancy
-								has_character_flag = bastard_pregnancy
+							has_variable = {
+								name = unmarried_bastard_pregnancy
+								name = bastard_pregnancy
 							}
 							pregnancy_real_father = { this = root }
 						}

@@ -18,18 +18,15 @@ create_outremer_empire_decision = {
 	}
 
 	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
 		#Visible to dukes and kings.
 		highest_held_title_tier >= tier_duchy
+		faith ?= faith:catholic
+		is_playable_character = yes
 		highest_held_title_tier <= tier_kingdom
 		#Must be in the right area.
-		capital_province = { geographical_region = world_middle_east }
-		#Must have the correct religion, and support from the rest of Catholicism.
-		religion = { exists = var:variable_ghw_unlocked } #The era of the Crusades must have started.
-		faith = faith:catholic
+		capital_province ?= { geographical_region = world_middle_east }
 		#Exempt Byzantine group: this is such a huge slap in the face to _anyone_ even vaguely in the Greek sphere.
-		culture = {
+		culture ?= {
 			NOR = {
 				has_cultural_pillar = heritage_byzantine
 				has_cultural_pillar = heritage_caucasian
@@ -43,12 +40,16 @@ create_outremer_empire_decision = {
 				target = flag:flag_created_outremer_empire
 			}
 		}
+		is_ruler = yes
+		#Must have the correct religion, and support from the rest of Catholicism.
+		religion ?= { exists = var:variable_ghw_unlocked } #The era of the Crusades must have started.
 	}
 
 	is_valid = {
 		prestige_level >= max_prestige_level
 		highest_held_title_tier = tier_kingdom
 		completely_controls_region = custom_outremer
+		rule_title_creation_imperial_power_projection_title_creation_trigger = yes
 	}
 
 	is_valid_showing_failures_only = {
@@ -92,7 +93,7 @@ create_outremer_empire_decision = {
 ### Restore the Ash'ari Caliphate ###
 restore_sunni_caliphate_decision = {
 	picture = {
-		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
 	}
 	desc = restore_sunni_caliphate_decision_desc
 	selection_tooltip = restore_sunni_caliphate_decision_tooltip
@@ -108,11 +109,11 @@ restore_sunni_caliphate_decision = {
 	}
 
 	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
-		faith = faith:ashari
-		NOT = { faith = { exists = religious_head } }
 		highest_held_title_tier > 3 #Only Kings and Emperors
+		faith ?= faith:sunni
+		NOT = { faith = { exists = religious_head } }
+		is_playable_character = yes
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -176,36 +177,36 @@ embrace_outremer_culture_decision = {
 	}
 
 	is_shown = {
-		is_ruler = yes
 		is_playable_character = yes
-		faith:catholic.religion = { exists = var:variable_ghw_unlocked } #The era of the Crusades must have started.
-		NOR = {
-			root.culture = culture:roman
-			root.culture = {
-				any_parent_culture = {
-					has_cultural_pillar = heritage_arabic
-				}
-			}
-		}
-		OR = {
-			faith.religion = faith:catholic.religion
-			top_liege ?= { faith.religion = faith:catholic.religion }
-		}
-		capital_province = {
-			OR = {
-				geographical_region = world_middle_east
-				geographical_region = world_persian_empire
-				geographical_region = world_africa
-			}
-		}
-		top_liege = {
-			culture != root.culture
-		}
-		top_liege.culture = {
+		top_liege.culture ?= {
 			any_parent_culture = {
 				has_cultural_pillar = heritage_arabic
 			}
 		}
+		NOR = {
+			root.culture ?= {
+				any_parent_culture = {
+					has_cultural_pillar = heritage_arabic
+				}
+			}
+			root.culture ?= culture:roman
+		}
+		OR = {
+			faith.religion ?= faith:catholic.religion
+			top_liege ?= { faith.religion = faith:catholic.religion }
+		}
+		capital_province ?= {
+			OR = {
+				geographical_region = world_middle_east
+				geographical_region = world_africa
+				geographical_region = world_persian_empire
+			}
+		}
+		top_liege ?= {
+			culture != root.culture
+		}
+		is_ruler = yes
+		faith:catholic.religion ?= { exists = var:variable_ghw_unlocked } #The era of the Crusades must have started.
 	}
 
 	is_valid = {
@@ -227,7 +228,7 @@ embrace_outremer_culture_decision = {
 			}
 		}
 	}
-	
+
 	is_valid_showing_failures_only = {
 		is_landed = yes
 	}
@@ -299,18 +300,17 @@ create_israel_kingdom_decision = {
 	}
 
 	is_shown = {
-		is_ruler = yes
+		faith.religion ?= faith:rabbinic_faith.religion
 		is_playable_character = yes
-		faith.religion = faith:rabbinism.religion
-		NOT = {
+		NOR = {
 			exists = title:k_israel.holder
-		}
-		NOT = {  #Can only do it once.
+			#Can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:create_israel_kingdom
 			}
 		}
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -382,17 +382,17 @@ jewish_restore_high_priesthood_decision = {
 	}
 
 	is_shown = {
-		is_ruler = yes
+		religion ?= religion:judaism_religion
 		is_playable_character = yes
 		NOT = {  #Can be redone if somehow the High Priest title is destroyed
 			exists = faith.religious_head
 		}
-		religion = religion:judaism_religion
-		faith = {
+		faith ?= {
 			NOT = {
 				has_doctrine_parameter = no_head_of_faith
 			}
 		}
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -400,7 +400,7 @@ jewish_restore_high_priesthood_decision = {
 		custom_description = {
 			text = "restore_high_priesthood_holy_sites"
 			faith = {
-				any_holy_site = {
+				any_holy_site_barony = {
 					OR = {
 						county.holder = root
 						county.holder.top_liege = { this = root }
@@ -435,7 +435,7 @@ jewish_restore_high_priesthood_decision = {
 }
 
 ### Restore the [ROOT.Char.GetFaith.AltPriestTermPlural] ###
-zoroastrian_restore_high_priesthood_decision = { #Updated for FP3 by Ola 
+zoroastrian_restore_high_priesthood_decision = { #Updated for FP3 by Ola
 	picture = {
 		reference = "gfx/interface/illustrations/decisions/fp3/fp3_decision_foundation.dds"
 	}
@@ -454,23 +454,23 @@ zoroastrian_restore_high_priesthood_decision = { #Updated for FP3 by Ola
 	}
 
 	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
 		NOR = {  #Can be redone if somehow the High Priest title is destroyed
 			exists = faith.religious_head
-			faith = { has_doctrine = doctrine_no_head } #Only if Faith is meant to have one.
-			faith = { has_doctrine = doctrine_temporal_head } #Cannot be done if you have taken the "Destroy the Magi" decision
+			faith ?= { has_doctrine = doctrine_no_head } #Only if Faith is meant to have one.
+			faith ?= { has_doctrine = doctrine_temporal_head } #Cannot be done if you have taken the "Destroy the Magi" decision
 		}
+		is_playable_character = yes
 		OR = {
-			faith = faith:mazdayasna
-			faith = faith:zurvanism
-			faith = faith:gayomarthianism
-			faith = faith:khurmazta
-			faith = faith:mazdakism
-			faith = faith:khurramism
-			faith = faith:urartuism
-			faith = faith:afridunism
+			faith ?= faith:zurvanism
+			faith ?= faith:mazdayasna
+			faith ?= faith:afridunism
+			faith ?= faith:urartuism
+			faith ?= faith:khurramism
+			faith ?= faith:mazdakism
+			faith ?= faith:khurmazta
+			faith ?= faith:gayomarthianism
 		}
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -478,7 +478,7 @@ zoroastrian_restore_high_priesthood_decision = { #Updated for FP3 by Ola
 		custom_description = {
 			text = "restore_high_priesthood_holy_sites"
 			faith = {
-				any_holy_site = {
+				any_holy_site_barony = {
 					OR = {
 						county.holder = root
 						county.holder.top_liege = { this = root }
@@ -521,7 +521,7 @@ become_saoshyant_decision = {
 	desc = become_saoshyant_decision_desc
 	selection_tooltip = become_saoshyant_decision_tooltip
 	decision_group_type = major
-	sort_order = 100 #FP3 change; this is an extremely epic decision, we want it to appear on top. 
+	sort_order = 100 #FP3 change; this is an extremely epic decision, we want it to appear on top.
 
 	ai_check_interval_by_tier = {
 		barony = 0
@@ -533,15 +533,15 @@ become_saoshyant_decision = {
 	}
 
 	is_shown = {
-		is_ruler = yes
+		faith.religion ?= faith:mazdayasna.religion
 		is_playable_character = yes
-		faith.religion = faith:mazdayasna.religion
 		NOT = {  #Can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:flag_became_saoshyant
 			}
 		}
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -596,24 +596,24 @@ create_armenian_empire_decision = {
 
 	is_shown = {
 		is_playable_character = yes # Normally this will always be true, but if in DEBUG mode and playing as an unlanded ruler this will cause error spam without it.
-		highest_held_title_tier <= tier_kingdom
-		capital_province = { geographical_region = custom_greater_armenia }
 		OR = {
-			faith = faith:armenian_apostolic
-			culture = culture:armenian
+			government_has_flag = government_is_republic
+			government_has_mechanic = administrative
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_clan
+			government_has_flag = government_is_landless_adventurer
 		}
+		OR = {
+			culture ?= culture:armenian
+			rite ?= rite:armenian_rite
+		}
+		capital_province ?= { geographical_region = custom_greater_armenia }
+		highest_held_title_tier <= tier_kingdom
 		NOT = {  #Can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:flag_created_armenian_empire
 			}
-		}
-		OR = {
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_republic
-			government_has_flag = government_is_clan
-			government_allows = administrative
-			government_has_flag = government_is_landless_adventurer
 		}
 	}
 
@@ -621,6 +621,7 @@ create_armenian_empire_decision = {
 		top_liege = this
 		highest_held_title_tier = tier_kingdom
 		completely_controls_region = custom_greater_armenia
+		rule_title_creation_imperial_power_projection_title_creation_trigger = yes
 	}
 
 	is_valid_showing_failures_only = {
@@ -672,7 +673,7 @@ create_armenian_empire_decision = {
 
 #################################
 # Found the Empire of Beth Nahrain
-# by Anna Johansson				
+# by Anna Johansson
 #################################
 
 ### Found Empire Of Beth Nahrain Decision ###
@@ -698,21 +699,21 @@ found_empire_of_beth_nahrain_decision = {
 	is_shown = {
 		is_ruler = yes
 		is_playable_character = yes
-		capital_province = { geographical_region = world_middle_east }
-
 		any_sub_realm_county = {
 			OR = {
-				faith = faith:nestorian
-				culture = {
+				faith ?= faith:nestorian
+				culture ?= {
 					OR = {
-						this = culture:assyrian
 						any_parent_culture_or_above = {
 							this = culture:assyrian
 						}
+						this = culture:assyrian
 					}
 				}
 			}
 		}
+
+		capital_province ?= { geographical_region = world_middle_east }
 
 		#Can only do it once
 		NOT = {
@@ -745,9 +746,10 @@ found_empire_of_beth_nahrain_decision = {
 			custom_tooltip = {
 				text = has_title_and_completely_control_syria_tt
 				has_title = title:k_syria
-				completely_controls = title:k_syria		
+				completely_controls = title:k_syria
 			}
 		}
+		rule_title_creation_imperial_power_projection_title_creation_trigger = yes
 	}
 
 	is_valid_showing_failures_only = {
@@ -774,7 +776,7 @@ found_empire_of_beth_nahrain_decision = {
 			title:k_mesopotamia = {
 				set_de_jure_liege_title = title:e_beth_nahrain
 			}
-	
+
 			if = {
 				limit = {
 					has_title = title:k_jerusalem
@@ -784,7 +786,7 @@ found_empire_of_beth_nahrain_decision = {
 					set_de_jure_liege_title = title:e_beth_nahrain
 				}
 			}
-	
+
 			if = {
 				limit = {
 					has_title = title:k_syria
@@ -817,15 +819,15 @@ found_empire_of_beth_nahrain_decision = {
 		save_scope_as = suppress_tooltips
 
 		trigger_event = { id = middle_east_decisions.1020 }
-		
+
 		show_as_tooltip = {
 			random_list = {
-				100 = { 
+				100 = {
 					show_chance = no
 					desc = middle_east_major_decisions.1020.learning.desc
 					learning_beth_nahrain_scripted_effect = yes
 				}
-				100 = { 
+				100 = {
 					show_chance = no
 					desc = middle_east_major_decisions.1020.martial.desc
 					martial_beth_nahrain_scripted_effect = yes
@@ -878,22 +880,22 @@ create_dar_al_islam_decision = {
 
 	desc = create_dar_al_islam_decision_desc
 	selection_tooltip = create_dar_al_islam_decision_tt
-	
+
 	sort_order = 1000 # Should be at the very top
 
 	is_shown = {
 		# Only for Islamic head of faiths
-		faith = { religious_head ?= root }
-		faith.religion = religion:islam_religion
+		faith.religion ?= religion:islam_religion
 		# And only if it hasn't been created yet
 		NOT = { has_global_variable = created_dar_al_islam }
 	}
 	is_valid = {
 		# The basics
 		is_independent_ruler = yes
+		faith.religious_head ?= root
 		any_held_title = {
 			count >= 2
-			tier = tier_empire
+			tier >= tier_empire
 		}
 		faith = { has_doctrine = doctrine_temporal_head }
 		# Must be very pious

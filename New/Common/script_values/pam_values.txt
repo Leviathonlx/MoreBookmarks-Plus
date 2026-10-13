@@ -2637,7 +2637,8 @@ gain_personal_tenet_sf_change = {
 #	root: character changing tenets
 #	tenet: the personal tenet being removed
 lose_personal_tenet_sf_change = {
-	value = 0
+	value = gain_personal_tenet_sf_change
+	multiply = -1
 }
 
 # General but used by Ecumenical council
@@ -2752,9 +2753,83 @@ activity_tenet_pick_score = {
 
 # Costs of the Ecumenical Council sway options
 
+# How big the debated change is, from 0 (minor) to 3 (radical)
+# Tenets by how far their standing moves, doctrines by the divergence the change adds; one tier more for what Christians hold an abomination
+ecumenical_council_sway_change_tier_value = {
+	value = 0
+	if = {
+		limit = {
+			scope:activity = { has_current_phase = ecumenical_council_phase_third_debate }
+		}
+		if = {
+			limit = {
+				exists = scope:activity.var:current_topic
+				exists = scope:activity.var:third_debate_proposal
+			}
+			scope:activity.var:current_topic = { save_temporary_scope_as = ec_step_from }
+			scope:activity.var:third_debate_proposal = {
+				save_temporary_scope_as = ec_step_to
+				save_temporary_scope_as = doctrine
+			}
+			add = ecumenical_council_doctrine_change_divergence_value
+			divide = 10
+			floor = yes
+			if = {
+				limit = { ecumenical_council_doctrine_christian_offence_delta_value > 0 }
+				add = 1
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			exists = scope:activity.var:current_topic
+			exists = scope:activity.var:current_debate_proposal
+		}
+		scope:activity.var:current_topic = { save_temporary_scope_as = tenet }
+		add = ecumenical_council_proposal_change_magnitude_value
+		subtract = 1
+		if = {
+			limit = {
+				pam_ec_tenet_is_christian_abomination_trigger = yes
+				ecumenical_council_proposal_direction_value > 0
+			}
+			add = 1
+		}
+	}
+	min = 0
+	max = 3
+}
+
+# Swaying attendees toward the change costs half a base cost more per tier
+ecumenical_council_sway_change_cost_multiplier_value = {
+	value = scope:ec_sway_change_tier
+	multiply = 0.5
+	add = 1
+}
+
+# Free trait-based sways toward the change win over a quarter fewer attendees per tier
+ecumenical_council_sway_free_max_conservatives_value = {
+	value = 1
+	subtract = {
+		value = scope:ec_sway_change_tier
+		multiply = 0.25
+	}
+	multiply = scope:feature_conservatives_size
+	ceiling = yes
+}
+
+# Duels to sway attendees toward the change get harder from tier 2
+ecumenical_council_sway_duel_penalty_value = {
+	value = scope:ec_sway_change_tier
+	subtract = 1
+	min = 0
+	multiply = 8
+}
+
 ecumenical_council_sway_piety_cost_conservatives_value = {
 	value = 40
 	multiply = scope:feature_conservatives_size
+	multiply = ecumenical_council_sway_change_cost_multiplier_value
 }
 
 ecumenical_council_sway_piety_cost_innovators_value = {
@@ -2765,6 +2840,7 @@ ecumenical_council_sway_piety_cost_innovators_value = {
 ecumenical_council_sway_prestige_cost_conservatives_value = {
 	value = 40
 	multiply = scope:feature_conservatives_size
+	multiply = ecumenical_council_sway_change_cost_multiplier_value
 }
 
 ecumenical_council_sway_prestige_cost_innovators_value = {
@@ -2775,6 +2851,7 @@ ecumenical_council_sway_prestige_cost_innovators_value = {
 ecumenical_council_sway_dread_cost_conservatives_value = {
 	value = 1
 	multiply = scope:feature_conservatives_size
+	multiply = ecumenical_council_sway_change_cost_multiplier_value
 }
 
 # Acceptance level of the debated tenet's current standing in the host faith's main rite
@@ -3552,6 +3629,53 @@ ecumenical_council_doctrine_attendee_support_value = {
 			min = -30
 			max = 30
 		}
+	}
+}
+
+# Divergence a change from scope:ec_step_from to scope:ec_step_to adds to a rite
+ecumenical_council_doctrine_change_divergence_value = {
+	value = 0
+	scope:ec_step_to = {
+		add = "doctrine_divergence(scope:ec_step_from)"
+	}
+}
+
+# Desire at or above this lets an AI propose a doctrine past the nearest step
+ecumenical_council_doctrine_extremist_desire_value = 75
+
+# AI host weight for proposing scope:doctrine in the third debate
+# Only the nearest step from the held doctrine counts, unless the host is an extremist or wants this doctrine badly
+ecumenical_council_doctrine_host_pick_value = {
+	value = ecumenical_council_doctrine_desire_value
+	if = {
+		limit = { exists = scope:ec_debate_topic_3 }
+		scope:doctrine = { save_temporary_scope_as = ec_step_to }
+		scope:ec_debate_topic_3 = { save_temporary_scope_as = ec_step_from }
+		if = {
+			limit = {
+				ecumenical_council_doctrine_desire_value < ecumenical_council_doctrine_extremist_desire_value
+				pam_ec_doctrine_is_nearest_step_trigger = no
+				pam_ec_doctrine_extremist_proposer_trigger = no
+			}
+			add = -1000
+		}
+	}
+}
+
+# activity_doctrine_pick_score only: desire for scope:ec_desire_target, counted only if the planner would propose it from the held scope:ec_pick_candidate
+ecumenical_council_doctrine_pick_step_desire_value = {
+	value = 0
+	scope:ec_desire_target = { save_temporary_scope_as = ec_step_to }
+	scope:ec_pick_candidate = { save_temporary_scope_as = ec_step_from }
+	if = {
+		limit = {
+			OR = {
+				pam_ec_doctrine_is_nearest_step_trigger = yes
+				pam_ec_doctrine_extremist_proposer_trigger = yes
+				ecumenical_council_doctrine_desire_core_value >= ecumenical_council_doctrine_extremist_desire_value
+			}
+		}
+		add = ecumenical_council_doctrine_desire_core_value
 	}
 }
 
@@ -6036,9 +6160,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_polygamy = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_concubines = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monogamy = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6052,9 +6176,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_monogamy = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_concubines = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_polygamy = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6068,9 +6192,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_monogamy = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_polygamy = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_concubines = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6084,9 +6208,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_divorce_approval = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_divorce_allowed = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_divorce_disallowed = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6100,9 +6224,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_divorce_disallowed = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_divorce_allowed = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_divorce_approval = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6116,9 +6240,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_divorce_disallowed = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_divorce_approval = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_divorce_allowed = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6132,9 +6256,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_bastardry_legitimization = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_bastardry_all = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_bastardry_none = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6148,9 +6272,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_bastardry_none = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_bastardry_all = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_bastardry_legitimization = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6164,9 +6288,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_bastardry_none = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_bastardry_legitimization = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_bastardry_all = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6180,9 +6304,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_homosexuality_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_homosexuality_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_homosexuality_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6196,9 +6320,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_homosexuality_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_homosexuality_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_homosexuality_shunned = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6212,9 +6336,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_homosexuality_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_homosexuality_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_homosexuality_accepted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6228,11 +6352,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_deviancy_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_virtuous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6246,11 +6370,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_deviancy_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_virtuous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_shunned = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6264,11 +6388,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_deviancy_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_virtuous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_accepted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6282,11 +6406,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_deviancy_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_deviancy_virtuous = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6300,9 +6424,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_adultery_men_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_men_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_men_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6316,9 +6440,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_adultery_men_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_men_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_men_shunned = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6332,9 +6456,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_adultery_men_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_men_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_men_accepted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6348,9 +6472,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_adultery_women_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_women_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_women_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6364,9 +6488,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_adultery_women_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_women_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_women_shunned = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6380,9 +6504,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_adultery_women_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_women_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_adultery_women_accepted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6396,13 +6520,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_kinslaying_extended_family_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_close_kin_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_any_dynasty_member_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6416,13 +6540,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_kinslaying_any_dynasty_member_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_close_kin_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_extended_family_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6436,13 +6560,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_kinslaying_any_dynasty_member_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_extended_family_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_close_kin_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6456,13 +6580,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_kinslaying_any_dynasty_member_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_extended_family_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_close_kin_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_shunned = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6476,13 +6600,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_kinslaying_any_dynasty_member_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_extended_family_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_close_kin_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_kinslaying_accepted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6496,11 +6620,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_witchcraft_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_virtuous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_crime = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6514,11 +6638,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_witchcraft_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_virtuous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_shunned = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6532,11 +6656,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_witchcraft_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_virtuous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_accepted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6550,11 +6674,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_witchcraft_crime = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_shunned = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_witchcraft_virtuous = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6568,9 +6692,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_gender_equal = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_gender_female_dominated = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_gender_male_dominated = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6584,9 +6708,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_gender_male_dominated = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_gender_female_dominated = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_gender_equal = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6600,9 +6724,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_gender_male_dominated = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_gender_equal = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_gender_female_dominated = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6616,13 +6740,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_consanguinity_restricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_cousins = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_aunt_nephew_and_uncle_niece = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_unrestricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_dynastic = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6636,13 +6760,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_consanguinity_dynastic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_cousins = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_aunt_nephew_and_uncle_niece = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_unrestricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_restricted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6656,13 +6780,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_consanguinity_dynastic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_restricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_aunt_nephew_and_uncle_niece = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_unrestricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_cousins = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6676,13 +6800,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_consanguinity_dynastic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_restricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_cousins = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_unrestricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_aunt_nephew_and_uncle_niece = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6696,13 +6820,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_consanguinity_dynastic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_restricted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_cousins = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_aunt_nephew_and_uncle_niece = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_consanguinity_unrestricted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6716,9 +6840,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pluralism_righteous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pluralism_pluralistic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pluralism_fundamentalist = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6732,9 +6856,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pluralism_fundamentalist = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pluralism_pluralistic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pluralism_righteous = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6748,9 +6872,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pluralism_fundamentalist = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pluralism_righteous = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pluralism_pluralistic = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6765,7 +6889,7 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_theocracy_temporal = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_theocracy_lay_clergy = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6779,9 +6903,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_spiritual_head = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_temporal_head = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_no_head = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6795,9 +6919,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_no_head = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_temporal_head = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_spiritual_head = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6811,9 +6935,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_no_head = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_spiritual_head = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_temporal_head = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6827,9 +6951,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_function_alms_and_pacification = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_function_recruitment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_function_taxation = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6843,9 +6967,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_function_taxation = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_function_recruitment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_function_alms_and_pacification = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6859,9 +6983,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_function_taxation = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_function_alms_and_pacification = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_function_recruitment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6875,9 +6999,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_gender_female_only = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_gender_either = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_gender_male_only = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6891,9 +7015,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_gender_male_only = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_gender_either = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_gender_female_only = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6907,9 +7031,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_gender_male_only = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_gender_female_only = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_gender_either = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6923,7 +7047,7 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_marriage_disallowed = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_marriage_allowed = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6937,7 +7061,7 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_marriage_allowed = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_marriage_disallowed = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6951,11 +7075,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_succession_spiritual_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_temporal_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_spiritual_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_temporal_appointment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6969,11 +7093,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_succession_temporal_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_temporal_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_spiritual_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_spiritual_appointment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -6987,11 +7111,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_succession_temporal_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_spiritual_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_spiritual_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_temporal_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7005,11 +7129,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_clerical_succession_temporal_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_spiritual_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_temporal_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_clerical_succession_spiritual_fixed_appointment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7024,13 +7148,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pilgrimage_encouraged = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_local_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory_hajj = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_forbidden = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7044,13 +7168,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pilgrimage_forbidden = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_local_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory_hajj = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_encouraged = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7064,13 +7188,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pilgrimage_forbidden = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_encouraged = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory_hajj = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_local_rites = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7084,13 +7208,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pilgrimage_forbidden = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_encouraged = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_local_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory_hajj = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7104,13 +7228,13 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_pilgrimage_forbidden = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_encouraged = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_local_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_pilgrimage_mandatory_hajj = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7124,15 +7248,15 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_funeral_bewailment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_cremation = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_sky_burial = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_mummification = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_family_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_stoic = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7146,15 +7270,15 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_funeral_stoic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_cremation = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_sky_burial = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_mummification = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_family_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_bewailment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7168,15 +7292,15 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_funeral_stoic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_bewailment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_sky_burial = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_mummification = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_family_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_cremation = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7190,15 +7314,15 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_funeral_stoic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_bewailment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_cremation = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_mummification = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_family_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_sky_burial = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7212,15 +7336,15 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_funeral_stoic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_bewailment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_cremation = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_sky_burial = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_family_rites = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_mummification = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7234,15 +7358,15 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_funeral_stoic = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_bewailment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_cremation = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_sky_burial = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_funeral_mummification = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_family_rites = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7256,9 +7380,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_anointment_permitted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_imperial_anointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_no_anointment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7272,9 +7396,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_no_anointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_imperial_anointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_anointment_permitted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7288,9 +7412,9 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_no_anointment = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_anointment_permitted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_imperial_anointment = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7304,7 +7428,7 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_polytheist = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monotheist = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7318,7 +7442,7 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_monotheist = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_polytheist = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7332,11 +7456,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_monasticism_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_absent = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_forbidden = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_encouraged = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7350,11 +7474,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_monasticism_encouraged = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_absent = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_forbidden = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_accepted = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7368,11 +7492,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_monasticism_encouraged = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_forbidden = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_absent = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7386,11 +7510,11 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_monasticism_encouraged = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_accepted = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_absent = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_monasticism_forbidden = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7404,7 +7528,7 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_sacraments_absent = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_sacraments_central = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -7418,7 +7542,7 @@ activity_doctrine_pick_score = {
 		add = {
 			value = 0
 			doctrine:doctrine_sacraments_central = { save_temporary_scope_as = ec_desire_target }
-			add = ecumenical_council_doctrine_desire_core_value
+			add = ecumenical_council_doctrine_pick_step_desire_value
 			doctrine:doctrine_sacraments_absent = { save_temporary_scope_as = ec_desire_target }
 			subtract = ecumenical_council_doctrine_desire_core_value
 		}
@@ -8791,24 +8915,24 @@ clergy_land_refusal_large_piety_value = {
 				limit = {
 					has_realm_law = church_authority_1
 				}
+				multiply = 1.25
 			}
-			multiply = 1.25
 		}
 		scope:secondary_recipient = {
 			if = {
 				limit = {
 					has_realm_law = church_authority_2
 				}
+				multiply = 1.5
 			}
-			multiply = 1.5
 		}
 		scope:secondary_recipient = {
 			if = {
 				limit = {
 					has_realm_law = church_authority_3
 				}
+				multiply = 2
 			}
-			multiply = 2
 		}
 	}
 }
@@ -8823,24 +8947,24 @@ clergy_land_refusal_large_legitimacy_value = {
 				limit = {
 					has_realm_law = church_authority_1
 				}
+				multiply = 1.25
 			}
-			multiply = 1.25
 		}
 		scope:secondary_recipient = {
 			if = {
 				limit = {
 					has_realm_law = church_authority_2
 				}
+				multiply = 1.5
 			}
-			multiply = 1.5
 		}
 		scope:secondary_recipient = {
 			if = {
 				limit = {
 					has_realm_law = church_authority_3
 				}
+				multiply = 2
 			}
-			multiply = 2
 		}
 	}
 }
@@ -8855,24 +8979,24 @@ clergy_land_refusal_large_prestige_value = {
 				limit = {
 					has_realm_law = church_authority_1
 				}
+				multiply = 1.25
 			}
-			multiply = 1.25
 		}
 		scope:secondary_recipient = {
 			if = {
 				limit = {
 					has_realm_law = church_authority_2
 				}
+				multiply = 1.5
 			}
-			multiply = 1.5
 		}
 		scope:secondary_recipient = {
 			if = {
 				limit = {
 					has_realm_law = church_authority_3
 				}
+				multiply = 2
 			}
-			multiply = 2
 		}
 	}
 }
@@ -9049,6 +9173,13 @@ ecumenical_council_sort_value = {
 		add = 100
 	}
 
+}
+
+# Picks the AI Conservative who leads the opposition at an Ecumenical Council: rank first, then learning
+ecumenical_council_counterplayer_sort_value = {
+	value = highest_held_title_tier
+	multiply = 100
+	add = learning
 }
 
 # Used to pick the top 3 innovators at an Ecumenical Council
@@ -9623,6 +9754,17 @@ pam_ask_subordinates_for_gold_value = {
 			max = 150
 		}
 	}
+}
+
+pam_ask_subordinates_for_gold_piety_cost_value = {
+	value = medium_piety_value
+	multiply = {
+		value = scope:recipient.pam_ask_subordinates_for_gold_value
+		divide = scope:actor.minor_treasury_or_gold_value
+	}
+	min = medium_piety_value
+	max = major_piety_value
+	round = yes
 }
 
 pam_strengthen_claim_cost_value = {
@@ -10364,4 +10506,24 @@ monastic_order_movement_prestige_value = {
 
 pam_knows_rite_level = {
 	value = "knows_rite_level(scope:rite)"
+}
+
+schism_mainline_supporters_gui = {
+	every_situation_group_participant = {
+		limit = {
+			has_variable = pam_schism_stance
+			var:pam_schism_stance = flag:mainline
+		}
+		add = 1
+	}
+}
+
+schism_competitor_supporters_gui = {
+	every_situation_group_participant = {
+		limit = {
+			has_variable = pam_schism_stance
+			var:pam_schism_stance = flag:competitor
+		}
+		add = 1
+	}
 }

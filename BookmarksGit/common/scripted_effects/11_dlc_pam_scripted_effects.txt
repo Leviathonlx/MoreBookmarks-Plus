@@ -326,6 +326,29 @@ grant_cardinal_title_effect = {
 			change_government = ecclesiastical_government
 			add_character_flag = cardinal_flag
 			if = {
+				limit = { rite = { rite_has_doctrine = doctrine_clerical_marriage_disallowed } }
+				hidden_effect = {
+					if = {
+						limit = {
+							is_married = yes
+							is_ai = yes
+						}
+						every_spouse = {
+							limit = { is_ai = yes }
+							save_temporary_scope_as = cardinal_divorcee
+							less_verbose_divorce_effect = {
+								DIVORCER = prev
+								DIVORCEE = scope:cardinal_divorcee
+							}
+						}
+					}
+					if = {
+						limit = { exists = betrothed }
+						break_betrothal = betrothed
+					}
+				}
+			}
+			if = {
 				limit = {
 					any_held_title = {
 						tier = tier_duchy
@@ -345,6 +368,17 @@ grant_cardinal_title_effect = {
 				add_manual_participant = prev
 			}
 		}
+	}
+}
+
+pam_notify_player_became_cardinal_effect = {
+	if = {
+		limit = {
+			is_ai = no
+			exists = scope:head_of_faith
+			exists = clerical_elector_title
+		}
+		trigger_event = pam_clergy_events.0043
 	}
 }
 
@@ -480,6 +514,7 @@ pam_seed_cardinals_effect = {
 					this != scope:pam_seed_hof
 					pam_can_hold_cardinalate_trigger = yes
 					pam_pope_is_head_of_faith_or_rite_trigger = yes
+					pam_ai_cardinal_candidate_is_immersive_trigger = yes
 				}
 			}
 			order_by = holder.piety_level
@@ -492,6 +527,14 @@ pam_seed_cardinals_effect = {
 					}
 					grant_cardinal_title_effect = {
 						CARDINAL_COUNTY = capital_county
+					}
+					if = {
+						limit = {
+							is_ai = no
+							NOT = { current_date_is_start_date_trigger = yes }
+						}
+						scope:pam_seed_hof = { save_scope_as = head_of_faith }
+						pam_notify_player_became_cardinal_effect = yes
 					}
 					add_to_list = pam_seeded_cardinals
 				}
@@ -691,6 +734,14 @@ the_christian_church_recalculate_participant_groups_effect = {
 	}
 }
 
+the_christian_church_mass_recalculate_participant_groups_effect = {
+	situation:the_christian_church ?= {
+		every_participant_group = {
+			mass_recalculate_participant_groups = yes
+		}
+	}
+}
+
 # used by code, do not rename or remove. DO NOT CHANGE THE GAME STATE OR ADD ARGUMENTS - only set tenet_to_add and tenet_to_remove in scope.
 head_of_faith_set_up_change_core_tenet_effect = {
 	save_scope_as = actor
@@ -708,6 +759,7 @@ head_of_faith_set_up_change_core_tenet_effect = {
 			limit = {
 				save_temporary_scope_as = tenet_check
 				scope:actor.rite = { rite_can_choose_tenet = scope:tenet_check }
+				pam_tenet_ai_may_permit_trigger = { CHARACTER = scope:actor }
 				NOR = {
 					scope:actor.rite = { rite_has_tenet = scope:tenet_check }
 					scope:actor.faith.main_rite = {
@@ -730,6 +782,7 @@ head_of_faith_set_up_change_core_tenet_effect = {
 				NOT = { exists = scope:tenet_to_add }
 				save_temporary_scope_as = tenet_check
 				scope:actor.rite = { rite_can_choose_tenet = scope:tenet_check }
+				pam_tenet_ai_may_permit_trigger = { CHARACTER = scope:actor }
 				NOR = {
 					scope:actor.rite = { rite_has_tenet = scope:tenet_check }
 					scope:actor.faith.main_rite = {
@@ -764,6 +817,10 @@ head_of_faith_set_up_change_core_tenet_effect = {
 				limit = {
 					save_temporary_scope_as = tenet_check
 					scope:actor.rite = { rite_can_choose_tenet = scope:tenet_check }
+					trigger_if = {
+						limit = { scope:tenet_patron = scope:actor }
+						pam_tenet_ai_may_permit_trigger = { CHARACTER = scope:actor }
+					}
 					NOR = {
 						scope:actor.rite = { rite_has_tenet = scope:tenet_check }
 						scope:actor.faith.main_rite = {
@@ -786,6 +843,10 @@ head_of_faith_set_up_change_core_tenet_effect = {
 					NOT = { exists = scope:tenet_to_add }
 					save_temporary_scope_as = tenet_check
 					scope:actor.rite = { rite_can_choose_tenet = scope:tenet_check }
+					trigger_if = {
+						limit = { scope:tenet_patron = scope:actor }
+						pam_tenet_ai_may_permit_trigger = { CHARACTER = scope:actor }
+					}
 					NOR = {
 						scope:actor.rite = { rite_has_tenet = scope:tenet_check }
 						scope:actor.faith.main_rite = {
@@ -807,6 +868,7 @@ head_of_faith_set_up_change_core_tenet_effect = {
 				NOT = { exists = scope:tenet_to_add }
 				save_temporary_scope_as = tenet_check
 				scope:actor.rite = { rite_can_choose_tenet = scope:tenet_check }
+				pam_tenet_ai_may_permit_trigger = { CHARACTER = scope:actor }
 				NOR = {
 					scope:actor.rite = { rite_has_tenet = scope:tenet_check }
 					scope:actor.faith.main_rite = {
@@ -825,6 +887,7 @@ head_of_faith_set_up_change_core_tenet_effect = {
 			limit = {
 				save_temporary_scope_as = tenet_check
 				scope:actor.rite = { rite_can_choose_tenet = scope:tenet_check }
+				pam_tenet_ai_may_permit_trigger = { CHARACTER = scope:actor }
 				NOR = {
 					scope:actor.rite = { rite_has_tenet = scope:tenet_check }
 					scope:actor.faith.main_rite = {
@@ -893,14 +956,21 @@ head_of_faith_set_up_change_core_tenet_effect = {
 head_of_faith_change_core_tenet_effect = {
 	head_of_faith_set_up_change_core_tenet_effect = yes # Decoupled so it can also be used in the UI
 
+	rite = { save_scope_as = pam_recast_rite }
 	if = {
 		limit = {
 			exists = scope:tenet_to_add
 			exists = scope:tenet_to_remove
+			# The new Pope is already head of the rite here, so we look for the edit marker on the players
+			NOT = {
+				any_player = {
+					rite = scope:pam_recast_rite
+					exists = var:has_edited_a_rite
+				}
+			}
 		}
 		save_scope_as = pam_recast_pope
-		rite = {
-			save_scope_as = pam_recast_rite
+		scope:pam_recast_rite = {
 			remove_rite_tenet = scope:tenet_to_remove
 			add_rite_tenet = scope:tenet_to_add
 		}

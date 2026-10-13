@@ -15,7 +15,7 @@ form_portugal_decision = {
 	desc = form_portugal_decision_desc
 
 	is_shown = {
-		culture = { has_cultural_pillar = heritage_iberian }
+		culture ?= { has_cultural_pillar = heritage_iberian }
 		NOT = {
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
@@ -156,7 +156,7 @@ unite_the_spanish_thrones_decision = {
 	desc = unite_the_spanish_thrones_decision_desc
 
 	is_shown = {
-		culture = { has_cultural_pillar = heritage_iberian }
+		culture ?= { has_cultural_pillar = heritage_iberian }
 		game_start_date >= 1000.1.1
 		OR = {
 			calc_true_if = { #At least 2 of the titles has de jure land
@@ -295,36 +295,36 @@ unite_africa_decision = {
 	}
 
 	is_shown = {
+		capital_province ?= { geographical_region = world_africa }
 		OR = {
 			culture_has_african_heritage_pillar_trigger = yes
-			culture = {
+			culture ?= {
 				OR = {
 					this = culture:egyptian # Arabic, not ancient
 					any_parent_culture_or_above = {
 						OR = {
-							# Central
-							has_cultural_pillar = heritage_central_african
 							# North
 							has_cultural_pillar = heritage_berber
-							has_cultural_pillar = heritage_egyptian
-							this = culture:egyptian # Arabic, not ancient
-							# West
-							has_cultural_pillar = heritage_akan
-							has_cultural_pillar = heritage_akan
-							has_cultural_pillar = heritage_sahelian
-							has_cultural_pillar = heritage_senegambian
-							has_cultural_pillar = heritage_west_african
-							has_cultural_pillar = heritage_yoruba
+							has_cultural_pillar = heritage_somalian
 							# East
 							has_cultural_pillar = heritage_bantu
+							has_cultural_pillar = heritage_west_african
+							this = culture:egyptian # Arabic, not ancient
+							has_cultural_pillar = heritage_yoruba
+							has_cultural_pillar = heritage_akan
 							has_cultural_pillar = heritage_east_african
-							has_cultural_pillar = heritage_somalian
+							has_cultural_pillar = heritage_senegambian
+							# West
+							has_cultural_pillar = heritage_akan
+							has_cultural_pillar = heritage_sahelian
+							has_cultural_pillar = heritage_egyptian
+							# Central
+							has_cultural_pillar = heritage_central_african
 						}
 					}
 				}
 			}
 		}
-		capital_province ?= { geographical_region = world_africa }
 		NOT = {
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
@@ -395,13 +395,13 @@ avenge_the_battle_of_tours_decision = {
 	desc = avenge_the_battle_of_tours_decision_desc
 
 	is_shown = {
-		faith = { religion_tag = islam_religion }
+		faith ?= { religion_tag = islam_religion }
 		capital_province ?= {
 			OR = {
-				geographical_region = world_europe_west_francia
 				geographical_region = world_europe_west_iberia
-				geographical_region = custom_south_francia
+				geographical_region = world_europe_west_francia
 				geographical_region = world_africa_north_west
+				geographical_region = custom_south_francia
 			}
 		}
 		NOT = {
@@ -427,22 +427,13 @@ avenge_the_battle_of_tours_decision = {
 
 		#Christian penalty scope save
 		title:e_france = {
-			random_de_jure_county_holder = { #If there's a big christian presence in France
+			ordered_de_jure_county_holder = { #If there's a big christian presence in France
 				limit = {
 					faith = { religion_tag = christianity_religion }
 					culture = { has_cultural_pillar = heritage_frankish }
-					highest_held_title_tier = tier_empire
+					highest_held_title_tier >= tier_duchy
 				}
-				alternative_limit = {
-					faith = { religion_tag = christianity_religion }
-					culture = { has_cultural_pillar = heritage_frankish }
-					highest_held_title_tier = tier_kingdom
-				}
-				alternative_limit = {
-					faith = { religion_tag = christianity_religion }
-					culture = { has_cultural_pillar = heritage_frankish }
-					highest_held_title_tier = tier_duchy
-				}
+				order_by = primary_title.tier
 				faith = {
 					save_scope_as = frankish_christian_faith
 				}
@@ -492,8 +483,8 @@ declare_canarias_decision = {
 
 	is_shown = {
 		OR = {
-			culture = { has_cultural_pillar = heritage_iberian }
-			faith = faith:north_african_acham_pagan
+			culture ?= { has_cultural_pillar = heritage_iberian }
+			faith ?= faith:north_african_acham_pagan
 			has_primary_title = title:d_canarias
 		}
 		any_sub_realm_county = {
@@ -640,13 +631,8 @@ form_the_kingdom_of_aragon_decision = {
 	selection_tooltip = form_the_kingdom_of_aragon_decision_tooltip
 
 	is_shown = {
-		is_playable_character = yes # Redundancy check
 		# Can't form Aragon if Aragon already formed.
 		game_start_date < 1035.10.18
-		# Not relevant for characters who are already kings.
-		highest_held_title_tier <= tier_duchy
-		# Cast a broad net for folks who might like to try this.
-		capital_province = { geographical_region = dlc_fp2_form_aragon_region }
 		# Aaaaand it can't have happened already.
 		NOT = {
 			is_target_in_global_variable_list = {
@@ -654,6 +640,11 @@ form_the_kingdom_of_aragon_decision = {
 				target = flag:flag_formed_kingdom_of_aragon
 			}
 		}
+		# Cast a broad net for folks who might like to try this.
+		capital_province ?= { geographical_region = dlc_fp2_form_aragon_region }
+		# Not relevant for characters who are already kings.
+		highest_held_title_tier <= tier_duchy
+		is_playable_character = yes # Redundancy check
 	}
 
 	is_valid = {
@@ -782,412 +773,6 @@ form_the_kingdom_of_aragon_decision = {
 }
 
 ##################################################
-# Bind the Faith to Rome
-# by Ewan Cowhig Croft
-##################################################
-### Bind the Faith to Rome ###
-mozarabic_bind_the_faith_to_rome_decision = {
-	picture = {
-		trigger = {
-			NOR = {
-				government_has_flag = government_is_tribal
-				government_has_flag = government_is_theocracy
-				top_liege ?= { government_has_flag = government_is_tribal }
-				top_liege ?= { government_has_flag = government_is_theocracy }
-			}
-			OR = {
-				culture = { has_cultural_pillar = heritage_byzantine }
-				top_liege ?= {
-					OR = {
-						culture = { has_cultural_pillar = heritage_byzantine }
-						capital_barony ?= title:b_constantinople
-						is_roman_emperor_primary_title_trigger = yes
-					}
-				}
-			}
-		}
-		reference = "gfx/interface/illustrations/decisions/ep3_cerimonial_decision.dds"
-	}
-	picture = {
-		reference = "gfx/interface/illustrations/decisions/decision_knight_kneeling.dds"
-	}
-	decision_group_type = major
-
-	ai_check_interval_by_tier = {
-		barony = 0
-		county = 120
-		duchy = 120
-		kingdom = 120
-		empire = 120
-		hegemony = 120
-	}
-
-	desc = mozarabic_bind_the_faith_to_rome_decision_desc
-	selection_tooltip = mozarabic_bind_the_faith_to_rome_decision_tooltip
-
-	is_shown = {
-		# Standard filter checks.
-		is_playable_character = yes
-		exists = dynasty
-		# Must be Mozarabic, and neither decision has been taken yet.
-		faith = faith:mozarabic_church
-		NOR = {
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:mozarabic_bound_to_rome
-			}
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:mozarabic_broke_with_rome
-			}
-		}
-		# The Pope must exist.
-		exists = faith.religious_head
-	}
-
-	is_valid = {
-		OR = {
-			AND = {
-				# Requires a solid piety level.
-				piety_level >= high_piety_level
-				# Needs a solid chunk of Mozarabic counties.
-				custom_description = {
-					text = mozarabic_fate_county_count.need_at_least_twenty_same_faith_counties
-					any_sub_realm_county = {
-						count >= mozarabic_fate_county_count
-						faith = root.faith
-					}
-				}
-				# The Pope's gotta be a big fan of yours.
-				faith.religious_head = {
-					opinion = {
-						target = root
-						value >= very_high_positive_opinion
-					}
-				}
-			}
-			AND = {
-				trigger_if = {
-					limit = { is_ai = yes }
-					ai_honor <= 0
-					ai_zeal <= 0
-				}
-				has_strong_usable_hook = faith.religious_head
-			}
-		}
-	}
-
-	is_valid_showing_failures_only = {
-		is_available_at_peace_adult = yes
-		# If you piss off the Pope badly enough, he'll just refuse your overtures.
-		NOR = {
-			has_relation_rival = faith.religious_head
-			has_relation_nemesis = faith.religious_head
-		}
-	}
-
-	effect = {
-		save_scope_as = religious_leader
-		faith.religious_head = { save_scope_as = pope }
-
-		if = {
-			limit = {
-				NAND = { # Explicit, necessary
-					# Requires a solid piety level.
-					piety_level >= high_piety_level
-					# Needs a solid chunk of Mozarabic counties.
-					custom_description = {
-						text = mozarabic_fate_county_count.need_at_least_twenty_same_faith_counties
-						any_sub_realm_county = {
-							count >= mozarabic_fate_county_count
-							faith = root.faith
-						}
-					}
-					# The Pope's gotta be a big fan of yours.
-					faith.religious_head = {
-						opinion = {
-							target = root
-							value >= very_high_positive_opinion
-						}
-					}
-				}
-				has_strong_usable_hook = scope:pope
-			}
-			custom_tooltip = mozarabic_bind_the_faith_to_rome_decision.threaten_pope
-			
-			send_interface_toast = {
-				type = event_toast_effect_bad
-				title = mozarabic_bind_the_faith_to_rome_decision
-				left_icon = scope:pope
-				right_icon = scope:pope.primary_title
-			
-				use_hook = scope:pope
-				reverse_add_opinion = {
-					modifier = fabricate_hook_threatened_me
-					target = scope:pope
-				}
-			}
-			hidden_effect = { # You made powerful enemies!
-				scope:pope = {
-					if = {
-						limit = { NOT = { has_trait = craven } }
-						progress_towards_rival_effect = {
-							CHARACTER = root
-							REASON = rival_generic_coerced_with_strong_hook
-							OPINION = 0
-						}
-					}
-				}
-			}
-		}
-
-		# Keep the Pope forever, but stay ecumenical.
-		custom_tooltip = mozarabic_bind_the_faith_to_rome_decision.tt.hof_and_ecumenism_warning
-		# Display the various paths.
-		show_as_tooltip = {
-			random_list = {
-				100 = {
-					show_chance = no
-					desc = mozarabic_bind_the_faith_to_rome_decision.path_fundamentalist
-					mozarabic_bind_the_faith_to_rome_decision_fundamentalist_path_scripted_effect = yes
-				}
-				100 = {
-					show_chance = no
-					desc = mozarabic_bind_the_faith_to_rome_decision.path_righteous
-					mozarabic_bind_the_faith_to_rome_decision_righteous_path_scripted_effect = yes
-				}
-				100 = {
-					show_chance = no
-					desc = mozarabic_bind_the_faith_to_rome_decision.path_pluralist
-					mozarabic_bind_the_faith_to_rome_decision_pluralist_path_scripted_effect = yes
-				}
-			}
-		}
-		# If we're inside the Iberian Struggle, switch the phase.
-		if = {
-			limit = { any_character_struggle = { is_struggle_type = iberian_struggle } }
-			random_character_struggle = {
-				limit = { is_struggle_type = iberian_struggle }
-				change_struggle_phase = struggle_iberia_phase_opportunity
-			}
-		}
-		# Send the event.
-		trigger_event = iberia_north_africa.0101
-		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:mozarabic_bound_to_rome
-			}
-		}
-	}
-
-	cost = { piety = 1000 }
-
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 0
-
-		# The AI will only consider this if they match certain trait requirements.
-		modifier = {
-			add = 25
-			has_trait = zealous
-		}
-		modifier = {
-			add = 25
-			has_trait = theologian
-		}
-		modifier = {
-			add = 25
-			has_trait = scholar
-		}
-		# Or else they're just sufficiently nerdy.
-		modifier = {
-			add = 25
-			learning >= extremely_high_skill_rating
-		}
-		# Plus, relations with the Pope are clinchers...
-		## ... either positively...
-		modifier = {
-			add = 100
-			AND = {
-				exists = faith.religious_head
-				faith.religious_head = { has_any_good_relationship_with_root_trigger = yes }
-			}
-		}
-		## ... or negatively.
-		modifier = {
-			add = -100
-			AND = {
-				exists = faith.religious_head
-				faith.religious_head = { has_any_bad_relationship_with_root_trigger = yes }
-			}
-		}
-	}
-}
-
-##################################################
-# Break with Rome
-# by Ewan Cowhig Croft
-##################################################
-
-### Break with Rome ###
-mozarabic_break_with_rome_decision = {
-	picture = {
-		reference = "gfx/interface/illustrations/decisions/decision_invite_knights.dds"
-	}
-	decision_group_type = major
-
-	ai_check_interval_by_tier = {
-		barony = 0
-		county = 120
-		duchy = 120
-		kingdom = 120
-		empire = 120
-		hegemony = 120
-	}
-
-	desc = mozarabic_break_with_rome_decision_desc
-	selection_tooltip = mozarabic_break_with_rome_decision_tooltip
-
-	is_shown = {
-		# Standard filter checks.
-		is_playable_character = yes
-		exists = dynasty
-		# Must be Mozarabic, and neither decision has been taken yet.
-		faith = faith:mozarabic_church
-		NOR = {
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:mozarabic_broke_with_rome
-			}
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:mozarabic_bound_to_rome
-			}
-		}
-		# The Pope must exist.
-		exists = faith.religious_head
-	}
-
-	is_valid = {
-		# Requires a solid piety level.
-		piety_level >= very_high_piety_level
-		# Needs a solid chunk of Mozarabic counties.
-		custom_description = {
-			text = mozarabic_fate_county_count.need_at_least_twenty_same_faith_counties
-			any_sub_realm_county = {
-				count >= mozarabic_fate_county_count
-				faith = root.faith
-			}
-		}
-		faith.religious_head = {
-			opinion = {
-				target = root
-				value < 0
-			}
-		}
-	}
-
-	is_valid_showing_failures_only = {
-		is_available_at_peace_adult = yes
-	}
-
-	effect = {
-		save_scope_as = religious_leader
-		faith.religious_head = { save_scope_as = pope }
-		# Keep the Pope forever, but stay ecumenical.
-		custom_tooltip = mozarabic_break_with_rome_decision.tt.hof_and_ecumenism_warning
-		# Display the various paths.
-		show_as_tooltip = {
-			random_list = {
-				100 = {
-					show_chance = no
-					desc = mozarabic_break_with_rome_decision.path_fundamentalist
-					mozarabic_break_with_rome_decision_fundamentalist_path_scripted_effect = yes
-				}
-				100 = {
-					show_chance = no
-					desc = mozarabic_break_with_rome_decision.path_righteous
-					mozarabic_break_with_rome_decision_righteous_path_scripted_effect = yes
-				}
-				100 = {
-					show_chance = no
-					desc = mozarabic_break_with_rome_decision.path_pluralist
-					mozarabic_break_with_rome_decision_pluralist_path_scripted_effect = yes
-				}
-			}
-		}
-		# If we're inside the Iberian Struggle, switch the phase.
-		if = {
-			limit = {
-				any_character_struggle = { is_struggle_type = iberian_struggle }
-			}
-			random_character_struggle = {
-				limit = { is_struggle_type = iberian_struggle }
-				change_struggle_phase = struggle_iberia_phase_opportunity
-			}
-		}
-		# Send the event.
-		trigger_event = iberia_north_africa.0111
-		hidden_effect = {
-			add_to_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:mozarabic_broke_with_rome
-			}
-		}
-	}
-
-	cost = { piety = 1500 }
-
-	ai_potential = {
-		always = yes
-	}
-
-	ai_will_do = {
-		base = 0
-
-		# The AI will only consider this if they match certain trait requirements.
-		modifier = {
-			add = 25
-			has_trait = zealous
-		}
-		modifier = {
-			add = 25
-			has_trait = theologian
-		}
-		modifier = {
-			add = 25
-			has_trait = scholar
-		}
-		# Or else they're just sufficiently nerdy.
-		modifier = {
-			add = 25
-			learning >= extremely_high_skill_rating
-		}
-		# Plus, relations with the Pope are clinchers...
-		## ... either positively...
-		modifier = {
-			add = 100
-			AND = {
-				exists = faith.religious_head
-				faith.religious_head = { has_any_good_relationship_with_root_trigger = yes }
-			}
-		}
-		## ... or negatively.
-		modifier = {
-			add = -100
-			AND = {
-				exists = faith.religious_head
-				faith.religious_head = { has_any_bad_relationship_with_root_trigger = yes }
-			}
-		}
-	}
-}
-
-##################################################
 # Champion the Faith of the Country Basques
 # by Ewan Cowhig Croft
 ##################################################
@@ -1233,8 +818,6 @@ favour_the_countryside_basques_decision = {
 	selection_tooltip = favour_the_countryside_basques_decision_tooltip
 
 	is_shown = {
-		# Standard filter checks.
-		is_playable_character = yes
 		exists = dynasty
 		# Must either have a Basque county or be Basque/recently Basque (in some form).
 		OR = {
@@ -1244,6 +827,8 @@ favour_the_countryside_basques_decision = {
 				favour_the_countryside_basques_counts_as_basque_trigger = yes
 			}
 		}
+		# Standard filter checks.
+		is_playable_character = yes
 		# And we're before 1200 or so, so there's enough non-Christianised ways left to try and forge something meaningful out of it.
 		current_date <= 1200.1.1
 		# Plus, we're at least vaguely within the area that'll need to be held.
@@ -1285,7 +870,10 @@ favour_the_countryside_basques_decision = {
 			favour_the_countryside_basques_rationale_excommunicated_trigger = yes
 			# AI need to be cynical to access the decision, so we require a little something extra from them first.
 			favour_the_countryside_basques_rationale_naked_cynicism_trigger = yes
-			favour_the_countryside_basques_rationale_hof_rivalry_trigger = yes
+			custom_description = {
+				text = favour_the_countryside_basques_decision.rival_of_your_head_of_faith
+				favour_the_countryside_basques_rationale_hof_rivalry_trigger = yes
+			}
 		}
 		# You must completely control at least X counties from within the (generously diasporic) region of Old Vasconia.
 		custom_description = {
@@ -1466,28 +1054,28 @@ restore_old_vasconia_decision = {
 	selection_tooltip = restore_old_vasconia_decision_tooltip
 
 	is_shown = {
-		is_ruler = yes
 		is_landed = yes
+		OR = {
+			government_has_flag = government_is_republic
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_clan
+		}
 		exists = dynasty # Everyone should have a dynasty, but in case they don't...
 		OR = {
-			culture = culture:basque	#Must be Basque
-			culture = {
-				any_parent_culture_or_above = { this = culture:basque }
+			culture ?= culture:basque	#Must be Basque
+			culture ?= {
 				has_cultural_pillar = heritage_iberian
+				any_parent_culture_or_above = { this = culture:basque }
 			}
 		}
+		highest_held_title_tier <= tier_kingdom
 		NOT = {	#You can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:flag_restored_old_vasconia
 			}
 		}
-		OR = {
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_republic
-			government_has_flag = government_is_clan
-		}
-		highest_held_title_tier <= tier_kingdom
+		is_ruler = yes
 	}
 
 	is_valid = {

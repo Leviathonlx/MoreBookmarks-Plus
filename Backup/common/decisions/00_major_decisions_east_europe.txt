@@ -23,7 +23,7 @@ unite_the_western_slavs_decision = {
 	desc = unite_the_western_slavs_decision_desc
 
 	is_shown = {
-		culture = { has_cultural_pillar = heritage_west_slavic }
+		culture ?= { has_cultural_pillar = heritage_west_slavic }
 		NOT = {
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
@@ -49,7 +49,7 @@ unite_the_western_slavs_decision = {
 			custom_description = {
 				text = unite_the_western_slavs_decision_tt_2
 				AND = {
-					highest_held_title_tier = tier_empire
+					highest_held_title_tier >= tier_empire
 					OR = {
 						has_title = title:k_poland
 						has_title = title:k_pomerania
@@ -60,8 +60,9 @@ unite_the_western_slavs_decision = {
 				}
 			}
 		}
+		rule_title_creation_imperial_power_projection_title_creation_trigger = yes
 	}
-	
+
 	is_valid_showing_failures_only = {
 		is_landed = yes
 	}
@@ -100,7 +101,7 @@ unite_the_western_slavs_decision = {
 			player = root
 		}
 	}
-	
+
 
 	ai_potential = {
 		always = yes
@@ -129,7 +130,7 @@ unite_the_southern_slavs_decision = {
 	desc = unite_the_southern_slavs_decision_desc
 
 	is_shown = {
-		culture = { has_cultural_pillar = heritage_south_slavic }
+		culture ?= { has_cultural_pillar = heritage_south_slavic }
 		NOR = {
 			has_culture = culture:vlach # Not technically Slavic despite being in the South Slavic group.
 			is_target_in_global_variable_list = {
@@ -151,7 +152,7 @@ unite_the_southern_slavs_decision = {
 			has_primary_title = title:k_bosnia
 		}
 	}
-	
+
 	is_valid_showing_failures_only = {
 		is_landed = yes
 	}
@@ -186,7 +187,7 @@ unite_the_southern_slavs_decision = {
 			value = scope:southern_slav_uniter.primary_title
 		}
 	}
-	
+
 
 	ai_potential = {
 		always = yes
@@ -216,9 +217,9 @@ unite_the_slavs_decision = {
 
 	is_shown = {
 		OR = {
-			culture = { has_cultural_pillar = heritage_west_slavic }
-			culture = { has_cultural_pillar = heritage_east_slavic }
-			culture = { has_cultural_pillar = heritage_south_slavic }
+			culture ?= { has_cultural_pillar = heritage_west_slavic }
+			culture ?= { has_cultural_pillar = heritage_east_slavic }
+			culture ?= { has_cultural_pillar = heritage_south_slavic }
 			}
 		NOR = {
 			has_culture = culture:vlach # Not technically Slavic despite being in the South Slavic group.
@@ -236,8 +237,9 @@ unite_the_slavs_decision = {
 			culture = { has_cultural_pillar = heritage_south_slavic }
 		}
 		completely_controls_region = custom_slavia
+		rule_title_creation_imperial_power_projection_title_creation_trigger = yes
 	}
-	
+
 	is_valid_showing_failures_only = {
 		is_landed = yes
 	}
@@ -318,32 +320,48 @@ defenders_of_highgod_decision = {
 
 	is_shown = {
 		OR = {
-			faith = faith:baltic_pagan
-			faith = faith:slavic_pagan
-			faith = faith:finnish_pagan
+			faith ?= faith:finnish_pagan
+			faith ?= faith:baltic_pagan
+			faith ?= faith:slavic_pagan
 		}
 		#Only once per faith
 		NOR = {
 			AND = {
-				faith = faith:baltic_pagan
 				is_target_in_global_variable_list = {
 					name = unavailable_unique_decisions
 					target = flag:defenders_of_highgod_baltic_decision
 				}
+				faith ?= faith:baltic_pagan
 			}
 			AND = {
-				faith = faith:slavic_pagan
 				is_target_in_global_variable_list = {
 					name = unavailable_unique_decisions
 					target = flag:defenders_of_highgod_slavic_decision
 				}
+				faith ?= faith:slavic_pagan
 			}
 			AND = {
-				faith = faith:finnish_pagan
 				is_target_in_global_variable_list = {
 					name = unavailable_unique_decisions
 					target = flag:defenders_of_highgod_finnish_decision
 				}
+				faith ?= faith:finnish_pagan
+			}
+		}
+	}
+
+	widget = {
+		controller = create_holy_order
+		title_valid = {
+			trigger_if = {
+				limit = { exists = this }
+				county.holder = scope:ruler
+				title_province = {
+					has_holding = yes
+					has_special_building = no
+				}
+				is_holy_site_of = county.holder.faith
+				is_leased_out = no
 			}
 		}
 	}
@@ -351,47 +369,22 @@ defenders_of_highgod_decision = {
 	is_valid = {
 		#Holds a holy site
 		faith = {
-			any_holy_site = {
-				county = {
-					holder = root
-					title_province = { has_special_building = no  }
+			any_holy_site_barony = {
+				county.holder = root
+				title_province = {
+					has_holding = yes
+					has_special_building = no
 				}
 			}
 		}
 		piety_level >= 3
- 		#Have loyal powerful vassals
 		trigger_if = {
-			limit = {
-				OR = {
-					highest_held_title_tier = tier_county
-					highest_held_title_tier = tier_duchy
-				}
-			}
+			limit = { any_vassal = { is_powerful_vassal = yes } }
 			any_vassal = {
-				count >= 3 #Counts/dukes need 3
-				is_powerful_vassal = yes
-				opinion = {
-					target = root
-					value >= high_positive_opinion
+				filter = {
+					is_powerful_vassal = yes
 				}
-			}
-		}
-		trigger_if = {
-			limit = { highest_held_title_tier = tier_kingdom }
-			any_vassal = {
-				count >= 4 #Kings need 4
-				is_powerful_vassal = yes
-				opinion = {
-					target = root
-					value >= high_positive_opinion
-				}
-			}
-		}
-		trigger_if = {
-			limit = { highest_held_title_tier = tier_empire }
-			any_vassal = {
-				count >= 5 #Emperor need 5
-				is_powerful_vassal = yes
+				count = all
 				opinion = {
 					target = root
 					value >= high_positive_opinion
@@ -407,35 +400,13 @@ defenders_of_highgod_decision = {
 
 
 	effect = {
+		scope:barony = { save_scope_as = holy_site }
 		save_scope_as = defender_of_highgod
 
 		show_as_tooltip = { defenders_of_highgod_decision_effects = yes } #Actually applied in east_europe.0010 - prestige, laws, title, innovation effects
 
 		#Events
-		if = {
-			limit = {
-				faith = {
-					any_holy_site = {
-						count > 1
-						county.holder = root
-						title_province = { has_special_building = no  }
-					}
-				}
-			}	
-			trigger_event = east_europe.0015
-		}
-		else = {
-			faith = {
-				random_holy_site = {
-					limit = {
-						county.holder = root
-						title_province = { has_special_building = no  }
-					}
-					save_scope_as = holy_site
-				}
-			}
-			trigger_event = east_europe.0016
-		}
+		trigger_event = east_europe.0016
 		#Event to every player (east_europe.0017) is actually send through east_europe.0016 to make sure the right holy site scope is set
 
 		#Can only happen once per faith
@@ -504,42 +475,45 @@ promote_hungarian_settlement_decision = {
 	ai_goal = yes
 
 	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
 		game_start_date < 1066.1.1
-		culture = { has_cultural_pillar = heritage_magyar }
-		NOT = {  #Can only do it once.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_promoted_hungarian_settlement
-			}
-		}
-		NOT = {  #Can only do either or.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_revived_magyar_paganism
-			}
+		any_neighboring_top_liege_realm_owner = { #There are same reli neighboring Realms/Empires to take people from.
+			religion = religion:christianity_religion
+			count >= 2
 		}
 		OR = {
 			has_title = title:k_hungary
 			has_title = title:e_carpathia
 		}
-		any_neighboring_top_liege_realm_owner = { #There are same reli neighboring Realms/Empires to take people from.
-			religion = religion:christianity_religion
-			count >= 2
+		NOR = {
+			#Can only do either or.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_revived_magyar_paganism
+			}
+			#Can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_promoted_hungarian_settlement
+			}
 		}
+		culture ?= { has_cultural_pillar = heritage_magyar }
+		is_playable_character = yes
+		is_ruler = yes
 	}
-	
+
 	is_valid = {
 		# Must be an Ecumenical Christian
 		custom_description = {
   			text = promote_hungarian_settlement_decision_ecumenical_christian
 			faith = { #Denomination of Faith must not be a heresy and must have some degree of control over its core regions.
 				religion = religion:christianity_religion
-				has_doctrine = special_doctrine_ecumenical_christian	
+				OR = {
+					has_doctrine = special_doctrine_ecumenical_christian
+					has_doctrine = special_doctrine_ecumenical_miaphysite
+				}
 			}
 		}
-		
+
 		#Must completely control the Carpathian Basin (Hungary De Jure)
 		completely_controls = title:k_hungary
 
@@ -574,7 +548,7 @@ promote_hungarian_settlement_decision = {
 			}
 		}
 	}
-	
+
 	ai_potential = {
 		always = yes
 	}
@@ -603,9 +577,17 @@ revive_magyar_paganism_decision = {
 	ai_check_interval = 0
 
 	is_shown = {
-		is_landed = yes
 		#Must be some flavour of Magyar.
-		culture = { has_cultural_pillar = heritage_magyar }
+		culture ?= { has_cultural_pillar = heritage_magyar }
+		#Must be feudalised.
+		OR = {
+			government_has_mechanic = administrative
+			government_has_flag = government_is_feudal
+		}
+		#Must be the ruler of the Carpathian Basin.
+		any_sub_realm_county = {
+			title_province = { geographical_region = custom_hungary }
+		}
 		#Should be done early.
 		custom_tooltip = {
 			text = revive_taltoism_decision_before_last_date
@@ -618,15 +600,6 @@ revive_magyar_paganism_decision = {
 				target = flag:flag_revived_magyar_paganism
 			}
 		}
-		#Must be the ruler of the Carpathian Basin.
-		any_sub_realm_county = {
-			title_province = { geographical_region = custom_hungary }
-		}
-		#Must be feudalised.
-		OR = {
-			government_has_flag = government_is_feudal
-			government_allows = administrative
-		}
 		#Must be something other than pagan.
 		NOT = {
 			faith.religion = { is_in_family = rf_pagan }
@@ -638,8 +611,9 @@ revive_magyar_paganism_decision = {
 				has_doctrine_parameter = unreformed
 			}
 		}
+		is_landed = yes
 	}
-	
+
 	is_valid = {
 		#Must be suitably prestigious.
 		prestige_level >= high_prestige_level
@@ -691,7 +665,7 @@ revive_magyar_paganism_decision = {
 			}
 		}
 	}
-	
+
 	ai_potential = {
 		always = no
 	}
@@ -721,34 +695,38 @@ found_kingdom_of_bosnia_decision = {
 	selection_tooltip = found_kingdom_of_bosnia_decision_tooltip
 
 	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
 		exists = dynasty
+		highest_held_title_tier <= tier_duchy
 		OR = {
+			#Or just be Bosnian.
+			culture ?= culture:bosnian
 			#Must be a Serb or Croat within the Bosnian highlands.
 			AND = {
 				OR = {
-					culture = culture:serbian
-					culture = culture:croatian
+					culture ?= culture:serbian
+					culture ?= culture:croatian
 				}
-				capital_county = {
+				capital_county ?= {
 					OR = {
+						this = title:c_zachlumia
+						this = title:c_rama
+						this = title:c_zavrsje
+						this = title:c_vhrbosna
+						this = title:c_usora
+						this = title:c_soli
+						this = title:c_vrbas
+						this = title:c_pagania
 						this = title:c_vodica
 						this = title:c_pset
-						this = title:c_vrbas
 						this = title:c_donjikraji
-						this = title:c_usora
-						this = title:c_rama
-						this = title:c_soli
-						this = title:c_vhrbosna
-						this = title:c_zavrsje
-						this = title:c_zachlumia
-						this = title:c_pagania
 					}
 				}
 			}
-			#Or just be Bosnian.
-			culture = culture:bosnian
+		}
+		is_playable_character = yes
+		NOR = {
+			government_has_flag = government_is_mercenary
+			government_has_flag = government_is_holy_order
 		}
 		NOT = {	#You can only do it once.
 			is_target_in_global_variable_list = {
@@ -756,11 +734,7 @@ found_kingdom_of_bosnia_decision = {
 				target = flag:flag_founded_kingdom_of_bosnia
 			}
 		}
-		NOR = {
-			government_has_flag = government_is_mercenary
-			government_has_flag = government_is_holy_order
-		}
-		highest_held_title_tier <= tier_duchy
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -846,6 +820,115 @@ found_kingdom_of_bosnia_decision = {
 }
 
 #################################
+# Found the Kingdom of Albania	#
+#################################
+### Found Kingdom of Albania ###
+found_kingdom_of_albania_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = found_kingdom_of_albania_decision_desc
+	selection_tooltip = found_kingdom_of_albania_decision_tooltip
+
+	is_shown = {
+		culture ?= { has_cultural_pillar = heritage_albanian }
+		NOR = {
+			government_has_flag = government_is_mercenary
+			government_has_flag = government_is_holy_order
+		}
+		is_playable_character = yes
+		faith ?= { religion_tag = christianity_religion }
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_albania
+			}
+		}
+		highest_held_title_tier <= tier_duchy
+		is_ruler = yes
+	}
+
+	is_valid = {
+		top_liege = this
+
+		OR = {
+			capital_county = title:c_arbanon
+			capital_county = title:c_dyrrachion
+			capital_county = title:c_antipatreia
+		}
+		capital_county = {
+			culture = culture:albanian
+		}
+
+		has_title = title:d_dyrrachion
+		completely_controls = title:d_dyrrachion
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_available_adult = yes
+	}
+
+	effect = {
+		save_scope_as = founder
+		found_kingdom_of_albania_decision_scripted_effect = yes
+		gain_heroic_legend_seed_tooltip_effect = yes
+		hidden_effect = {
+			if = {
+				limit = { has_dlc_feature = legends }
+				send_interface_toast = {
+					type = msg_legend_seed_created
+					title = heroic_legend_seed_drop.t
+					left_icon = root
+					create_legend_seed = {
+						type = heroic
+						quality = famed
+						chronicle = new_title
+						properties = {
+							title = root.primary_title
+							founder = root
+						}
+					}
+				}
+			}
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_albania
+			}
+		}
+	}
+
+	cost = {
+		treasury_or_gold = {
+			value = 300
+		}
+		prestige = 200
+	}
+
+	ai_potential = {
+		is_independent_ruler = yes
+		treasury_or_gold = {
+			value = 300
+		}
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+
+#################################
 # Accuse the Krstjani of Heresy	#
 # by Ewan Cowhig Croft			#
 #################################
@@ -869,34 +952,37 @@ accuse_krstjani_of_heresy_decision = {
 	selection_tooltip = accuse_krstjani_of_heresy_decision_tooltip
 
 	is_shown = {
-		top_liege = this
-		is_landed_or_landless_administrative = yes
-		exists = dynasty
+		top_liege ?= this
 		#Gotta be an ecumenical Christian...
-		faith = {
+		faith ?= {
+			OR = {
+				has_doctrine = special_doctrine_ecumenical_christian
+				has_doctrine = special_doctrine_ecumenical_miaphysite
+			}
 			religion_tag = christianity_religion
-			has_doctrine = special_doctrine_ecumenical_christian
 		}
-		#... with an existing Head of Faith.
-		exists = faith.religious_head
-		#Shouldn't be possible, but, just in case: you also can't be a Krstjani yourself.
-		NOT = { faith = faith:bosnian_church }
-		#The world mustn't already consider the Krstjani to be heretics.
-		faith:bosnian_church = { has_doctrine = special_doctrine_ecumenical_christian }
+		#Should always be a playable government, ideally.
+		OR = {
+			government_has_mechanic = administrative
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_clan
+		}
 		#Aaaaand you need an independent Krstjani neighbour of at least a notable level (i.e., at least the size of a fully-independent d_bosnia).
 		any_neighboring_top_liege_realm_owner = { accuse_krstjani_of_heresy_decision_suitable_krstjani_realm_owner_trigger = yes }
+		#... with an existing Head of Faith.
+		exists = faith.religious_head
 		NOT = {	#It mustn't have been done recently (this is removed in a hidden cooldown event after the chain is finished, if it fails).
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:flag_krstjani_accused_of_heresy
 			}
 		}
-		#Should always be a playable government, ideally.
-		OR = {
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_clan
-			government_allows = administrative
-		}
+		#The world mustn't already consider the Krstjani to be heretics.
+		faith:bosnian_church = { has_doctrine = special_doctrine_ecumenical_christian }
+		#Shouldn't be possible, but, just in case: you also can't be a Krstjani yourself.
+		NOT = { faith = faith:bosnian_church }
+		is_landed_or_landless_administrative_or_theocratic = yes
+		exists = dynasty
 	}
 
 	is_valid = {
@@ -1031,38 +1117,36 @@ launch_hungarian_migration_decision = {
 	selection_tooltip = launch_hungarian_migration_decision_tooltip
 
 	is_shown = {
-		is_ruler = yes
-		is_landed = yes
-		exists = dynasty
-		#Either be independent, or else not beneath another Mogyer.
-		OR = {
-			top_liege = this
-			NOT = { liege = { culture = culture:mogyer } }
-		}
-		#Must be a steppe Hungarian.
-		culture = culture:mogyer
-		#Must not already control a large chunk of Pannonia.
-		NOT = {
-			any_county_in_region = {
-				region = custom_hungary
-				count >= 12
-				OR = {
-					holder = root
-					holder = {
-						any_liege_or_above = { this = root }
-					}
-				}
-			}
-		}
-		#You can only do it once.
-		NOT = {
+		#And the moment for the migration must not have passed.
+		current_date <= 911.1.1
+		NOR = {
+			#You can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:flag_launched_hungarian_migration
 			}
+			#Must not already control a large chunk of Pannonia.
+			any_county_in_region = {
+				OR = {
+					holder ?= root
+					holder ?= {
+						any_liege_or_above = { this = root }
+					}
+				}
+				count >= 12
+				region = custom_hungary
+			}
 		}
-		#And the moment for the migration must not have passed.
-		current_date <= 911.1.1
+		#Must be a steppe Hungarian.
+		culture ?= culture:mogyer
+		#Either be independent, or else not beneath another Mogyer.
+		OR = {
+			top_liege ?= this
+			NOT = { liege = { culture = culture:mogyer } }
+		}
+		exists = dynasty
+		is_landed = yes
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -1135,32 +1219,33 @@ found_kingdom_of_livonia_decision = {
 
 	is_shown = {
 		is_ruler = yes
-		is_playable_character = yes
 		exists = dynasty
+		highest_held_title_tier <= tier_duchy
+		is_playable_character = yes
 		OR = {
+			#Or just be Latvian.
+			culture ?= culture:latgalian
 			#Must be a Latvian or Christian in Livonia
 			AND = {
+				OR = {
+					#Is a Crusader founding the Kingdom
+					root.faith ?= {
+						NOT = { has_doctrine_parameter = unreformed }
+						NOT = { religion_tag = baltic_religion }
+					}
+					#Considers themselves to be a "Balt"
+					root.culture ?= { has_cultural_pillar = heritage_baltic }
+					root.faith ?= {
+						religion_tag = baltic_religion
+					}
+				}
+				capital_province ?= {
+					geographical_region = ghw_region_baltic
+				}
 				NOT = {
 					culture = culture:estonian #Estonians already have their Kingdom.
 				}
-				OR = {
-					#Considers themselves to be a "Balt"
-					root.culture = { has_cultural_pillar = heritage_baltic }
-					root.faith = {
-						religion_tag = baltic_religion
-					}
-					#Is a Crusader founding the Kingdom
-					root.faith = {
-						NOT = { religion_tag = baltic_religion }
-						NOT = { has_doctrine_parameter = unreformed }
-					}
-				}
-				capital_province = {
-					geographical_region = ghw_region_baltic
-				}
 			}
-			#Or just be Latvian.
-			culture = culture:latgalian
 		}
 		NOT = {	#You can only do it once.
 			is_target_in_global_variable_list = {
@@ -1168,7 +1253,6 @@ found_kingdom_of_livonia_decision = {
 				target = flag:flag_founded_kingdom_of_livonia
 			}
 		}
-		highest_held_title_tier <= tier_duchy
 	}
 
 	is_valid = {

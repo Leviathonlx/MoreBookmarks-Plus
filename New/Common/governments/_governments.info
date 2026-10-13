@@ -6,10 +6,6 @@
 	# The example value is the default assigned value for the flag.
 	# All of these are referenced in code.
 	#
-	# Note: these are also supported outside of this data structure for
-	# the duration of Roads to Power, but this functionality is
-	# deprecated.
-	#
 	government_rules = {
 
 		### brief: create_cadet_branches ( bool )
@@ -46,7 +42,7 @@
 		### brief: legitimacy ( bool )
 		# Rulers can have legitimacy if there's one valid for them
 		#
-		legitimacy = yes
+		legitimacy = no
 
 		### brief: admin_allows_holding_multiple_primary_tier_titles ( bool )
 		# Allows administrative rulers to hold multiple primary tier titles
@@ -306,6 +302,48 @@
 		# This government will consider the religious subordinates to be in the distribution group
 		# for Treasury budgets.
 		add_religious_subordinates_for_treasury = no
+
+		### brief: gain_legitimacy_becoming_tributary ( bool )
+		# Rulers of this government gain monthly legitimacy based on their
+		# suzerain's radiance while they are a tributary of a suzerain that uses radiance.
+		# Default is no
+		#
+		gain_legitimacy_becoming_tributary = no
+
+		### brief: regiments_use_barter_goods_as_gold ( bool )
+		# Is this government type using barter goods instead of gold to buy and
+		# reinforce MaA Regiments?
+		# Default is no
+		#
+		regiments_use_barter_goods_as_gold = no
+
+		### brief: dynasty_named_non_independent_landed_rulers ( bool )
+		# Allows non-independent house heads of this government to use their dynasty
+		# name as the name of their primary title (any landed tier, except noble family titles).
+		# Only used if dynasty_named_realms is not enabled.
+		# Default is no
+		#
+		dynasty_named_non_independent_landed_rulers = no
+
+		### brief: government_ignores_rightful_liege_penalties ( bool )
+		# Vassals of a liege with this government always count the liege as their
+		# rightful (de jure) liege.
+		# Default is no
+		#
+		government_ignores_rightful_liege_penalties = no
+
+		### brief: allow_as_base_for_baronies ( bool )
+		# Can this government be used as the base government for characters becoming
+		# rulers through a barony (see use_as_base_on_landed)?
+		# Default is yes
+		#
+		allow_as_base_for_baronies = yes
+
+		### brief: allow_accolades ( bool )
+		# Can rulers of this government use accolades?
+		# Default is no
+		#
+		allow_accolades = no
 	}
 
 	### mechanic_type ( government type )
@@ -411,7 +449,7 @@
 
 	### brief: primary_heritages ( array of database keys )
 	# A list of heritages for which this government type is valid and
-	# preferred. If both primary_cultures and primary_heritages are
+	# preferred. If primary_heritages is
 	# empty, there are no cultural restrictions or preferences. Keys
 	# are mapped to all entries within common/culture/pillars with the
 	# heritage type.
@@ -436,6 +474,12 @@
 	# applied to the supply limit
 	#
 	supply_limit_mult_for_others = 0
+
+	### brief: max_dread ( fixed point )
+	# Maximum dread for rulers of this government type.
+	# Default: NCharacter::MAX_DREAD define
+	#
+	max_dread = 100
 
 	### brief: prestige_opinion_override ( array of int )
 	# Override for the opinion bonus that prestige levels gain, number
@@ -478,24 +522,22 @@
 	#
 	minimum_provincial_maa_tier = county / duchy / kingdom
 
-	### brief: title_maa_setup ( enum )
+	### brief: administrative_title_maa_setup ( enum )
 	# Which titles within the Administrative government type can create title troops
-	#   main_administrative_tier_and_top_liege - (default) Main administrative tier (see above) titles, and the top liege primary title
+	#   main_tier_and_top_liege - (default) Main administrative tier (see above) titles, and the top liege primary title
 	#   vassals_and_top_liege - Titles that are the main administrative tier or above, and the top liege primary title
 	#   top_vassals_and_top_liege - Titles that are directly under the top liege, and the top liege primary title
-	title_maa_setup = main_administrative_tier_and_top_liege
+	administrative_title_maa_setup = main_tier_and_top_liege
 
-	### brief: vassal_contract ( array of database keys )
+	### brief: vassal_contract_group ( database key )
 	# Vassal obligations, how much does the vassal give to their liege.
-	# The vassal's government type determines which contract type is
-	# used.Note that the values can be changed with the
+	# The vassal's government type determines which contract group is
+	# used. Note that the values can be changed with the
 	# vassal_tax_contribution_add and vassal_levy_contribution_add
-	# modifiers. Key are mapped to the vassal contracts database:
-	# common/vassal_contracts/
+	# modifiers. Key is mapped to the subject contract groups database:
+	# common/subject_contracts/groups/
 	#
-	vassal_contract = {
-		# List of vassal contract types
-	}
+	vassal_contract_group = subject_contract_group_key
 
 	### brief: house_unity ( database key, optional )
 	# Database key pointing to a configuration of house unity this
@@ -511,6 +553,12 @@
 	# common/domiciles
 	#
 	domicile_type = domicile type key
+
+	### brief: tax_slot_type ( database key, optional )
+	# Database key pointing to the tax slot type this government uses
+	# if applicable. Key is mapped to common/tax_slots/types
+	#
+	tax_slot_type = tax_slot_type_key
 
 
 	### brief: opinion_of_liege ( scripted value, optional )
@@ -626,11 +674,6 @@
 		### brief: perform_religious_reformation ( flag )
 		#
 		perform_religious_reformation = yes
-
-		### brief: use_great_projects (flag)
-		# Will evaluate founding new Great Projects and contributing to existing ones
-		#
-		use_great_projects = no
 	}
 
 	### brief: character_modifier ( modifiers )
@@ -648,6 +691,18 @@
 	# Color for map mode
 	#
 	color = { 100 100 100 }
+
+	### brief: realm_mask_offset ( vector 2 )
+	# Offset of the realm mask texture used for this government's coat of arms
+	# Default: { 0 0 }
+	#
+	realm_mask_offset = { 0.0 0.0 }
+
+	### brief: realm_mask_scale ( vector 2 )
+	# Scale of the realm mask texture used for this government's coat of arms
+	# Default: { 1 1 }
+	#
+	realm_mask_scale = { 1.0 1.0 }
 
 	##############
 	### AI

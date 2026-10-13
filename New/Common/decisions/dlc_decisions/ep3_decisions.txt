@@ -111,7 +111,7 @@ restore_backwater_counties_decision = {
 		county = 0
 		duchy = 120
 		kingdom = 120
-		empire = 0
+		empire = 120
 		hegemony = 0
 	}
 
@@ -126,6 +126,7 @@ restore_backwater_counties_decision = {
 			OR = {
 				tier = tier_duchy
 				tier = tier_kingdom
+				tier = tier_empire
 			}
 		}
 		any_sub_realm_county = {
@@ -248,24 +249,34 @@ restore_backwater_counties_decision = {
 					has_county_modifier = backwater_county_modifier
 				}
 			}
-			# Event for the Governor if all counties are restored
-			trigger_event = {
-				id = ep3_decisions_event.3000
-				days = 1
-			}
-
-			# Once all the counties have been brought up to speed, we notify the emperor
-			liege = {
-				send_interface_message = {
-					type = event_generic_good_text
-					title = ep3_theme_not_backwater.t
-					desc = ep3_theme_not_backwater.desc
-					left_icon = root
+			if = {
+				limit = { is_independent_ruler = no }
+				# Event for the Governor if all counties are restored
+				trigger_event = {
+					id = ep3_decisions_event.3000
+					days = 1
 				}
-				# Trigger the event for the emperor to see if all the counties have been cleared
+
+				# Once all the counties have been brought up to speed, we notify the emperor
+				liege = {
+					send_interface_message = {
+						type = event_generic_good_text
+						title = ep3_theme_not_backwater.t
+						desc = ep3_theme_not_backwater.desc
+						left_icon = root
+					}
+					# Trigger the event for the emperor to see if all the counties have been cleared
+					trigger_event = ep3_decisions_event.3001
+				}
+			}
+			else = {
 				trigger_event = ep3_decisions_event.3001
 			}
 		}
+	}
+
+	ai_will_do = {
+		base = 100
 	}
 }
 
@@ -1983,7 +1994,15 @@ adopt_state_faith = {
 			}
 		}
 
-		set_character_rite_with_conversion = top_liege.primary_title.state_rite
+		# Changing rite into another faith costs piety and can fail silently, so we change the faith first
+		if = {
+			limit = { NOT = { faith = top_liege.primary_title.state_rite.faith } }
+			set_character_faith_with_conversion = top_liege.primary_title.state_rite.faith
+		}
+		if = {
+			limit = { NOT = { rite = top_liege.primary_title.state_rite } }
+			set_character_rite_with_conversion = top_liege.primary_title.state_rite
+		}
 
 		if = {
 			limit = { NOT = { has_character_flag = adopted_state_faith } }
@@ -2382,6 +2401,7 @@ commission_icon_decision = {
     	gui = "decision_view_widget_commission_artifact"
 		controller = decision_option_list_controller
 		decision_to_second_step_button = "COMMISSION_ARTIFACT_DECISION_NEXT_STEP_BUTTON"
+		show_from_start = yes
 
 		# Personal Artifacts are always valid to commission
 		item = {

@@ -19,17 +19,17 @@ reclaim_britannia_decision = {
 
 	is_shown = {
 		OR = {
-			culture = { has_cultural_pillar = heritage_goidelic }
-			culture = { has_cultural_pillar = heritage_brythonic }
+			culture ?= { has_cultural_pillar = heritage_goidelic }
+			culture ?= { has_cultural_pillar = heritage_brythonic }
 		}
 
 		is_landed_or_landless_administrative = yes
 		any_sub_realm_county = {
-			title_province = {  geographical_region = world_europe_west_britannia }
 			NOR = {
-				culture = { has_cultural_pillar = heritage_goidelic }
-				culture = { has_cultural_pillar = heritage_brythonic }
+				culture ?= { has_cultural_pillar = heritage_goidelic }
+				culture ?= { has_cultural_pillar = heritage_brythonic }
 			}
+			title_province ?= {  geographical_region = world_europe_west_britannia }
 		}
 		NOT = {
 			is_target_in_global_variable_list = {
@@ -45,7 +45,7 @@ reclaim_britannia_decision = {
 		# You can have no more than 1 powerful vassal with the "wrong" culture
 		custom_description = {
 			text = reclaim_britannia_custom_decision
-			
+
 			trigger_if = {
 				limit = {
 					any_vassal = {
@@ -98,7 +98,7 @@ reclaim_britannia_decision = {
 			trigger_event = british_isles.0002
 		}
 	}
-	
+
 	ai_potential = {
 		always = yes
 	}
@@ -127,13 +127,12 @@ embrace_english_culture_decision = {
 	desc = embrace_english_culture_decision_desc
 
 	is_shown = {
-		game_start_date < 1178.1.1
-		culture = {
+		culture ?= {
 			OR = {
+				has_cultural_pillar = heritage_frankish
 				any_parent_culture = {
 					this = culture:norman
 				}
-				has_cultural_pillar = heritage_frankish
 			}
 			NOT = {
 				this = culture:english
@@ -141,27 +140,28 @@ embrace_english_culture_decision = {
 		}
 		OR = {
 			any_claim = {
-				this = title:e_britannia
-			}
-			any_claim = {
 				this = title:k_england
 			}
-			OR = {	
+			OR = {
 				title:k_england = {
 					any_in_de_jure_hierarchy = {
 						root.primary_title = this
 					}
 				}
-				root.primary_title = title:e_britannia
+				root.primary_title ?= title:e_britannia
+			}
+			any_claim = {
+				this = title:e_britannia
 			}
 		}
-		
 		NOT = {
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:embrace_english_culture_decision
 			}
 		}
+
+		game_start_date < 1178.1.1
 	}
 
 	is_valid = {
@@ -246,7 +246,7 @@ embrace_english_culture_decision = {
 
 		trigger_event = british_isles.2001
 	}
-	
+
 	ai_potential = {
 		is_playable_character = yes
 		culture = {
@@ -315,49 +315,48 @@ england_request_laudabiliter_decision = {
 	decision_group_type = major
 
 	is_shown = {
-		government_has_flag = government_is_feudal
-		is_landed_or_landless_administrative = yes
-		root.faith = faith:catholic
 		highest_held_title_tier >= 4 # Kings and Emperors only.
-		faith:catholic.religious_head ?= {
-			has_title = title:k_papal_state
+		government_has_flag = government_is_feudal
+		OR = {
+			culture ?= { has_cultural_pillar = heritage_frankish }
+			culture ?= { has_cultural_pillar = heritage_north_germanic }
+			culture ?= { has_cultural_pillar = heritage_west_germanic }
 		}
-		NOT = {  # Can only do it once.
+		# The ruler asking it must be a King or Emperor in some way related to Britain.
+		OR = {
+			has_title = title:k_france
+			has_title = title:k_england
+			has_title = title:k_scotland
+			has_title = title:e_france
+			has_title = title:e_britannia
+			has_title = title:k_brittany
+			has_title = title:k_wales
+		}
+		any_county_in_region = {
+			OR = {
+				NOT = { faith = faith:catholic }
+				holder ?= {
+					NOT = { faith = faith:catholic }
+				}
+			}
+			region = custom_roman_hibernia
+		}
+		NOR = {
+			# The ruler picking the decision should not already control Ireland.
+			completely_controls_region = custom_roman_hibernia
+			# Can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:flag_england_requested_laudabiliter
 			}
 		}
-		OR = {
-			culture = { has_cultural_pillar = heritage_frankish }
-			culture = { has_cultural_pillar = heritage_west_germanic }
-			culture = { has_cultural_pillar = heritage_north_germanic }
+		faith:catholic.religious_head ?= {
+			has_title = title:k_papal_state
 		}
-		# The ruler picking the decision should not already control Ireland.
-		NOT = {
-			completely_controls_region = custom_roman_hibernia
-		}
-		# The ruler asking it must be a King or Emperor in some way related to Britain.
-		OR = {
-			has_title = title:k_england
-			has_title = title:k_scotland
-			has_title = title:k_wales
-			has_title = title:k_brittany
-			has_title = title:k_france
-			has_title = title:e_britannia
-			has_title = title:e_france
-		}
-		any_county_in_region = {
-			region = custom_roman_hibernia
-			OR = {
-				NOT = { faith = faith:catholic }
-				holder = {
-					NOT = { faith = faith:catholic }
-				}
-			}
-		}
+		root.faith ?= faith:catholic
+		is_landed_or_landless_administrative = yes
 	}
-	
+
 	is_valid = {
 		piety_level >= 3
 		root.faith.religious_head = {
@@ -422,7 +421,7 @@ england_request_laudabiliter_decision = {
 			}
 		}
 	}
-	
+
 	ai_potential = {
 		always = yes
 	}
@@ -467,20 +466,8 @@ negotiate_the_danelaw_decision = {
 	desc = negotiate_the_danelaw_decision_desc
 
 	is_shown = {
-		# Standard filter checks.
-		negotiate_the_danelaw_basic_filter_trigger = yes
-		is_landed_or_landless_administrative = yes
-		# Must be in the vague region.
-		any_held_title = {
-			title_tier = county
-			title_province = { geographical_region = world_europe_west_britannia }
-		}
 		# Cannot have an existing k_england.
 		title:k_england = { is_title_created = no }
-		# Can only be fired by someone in the Tribal Era (though their rival need not be).
-		culture = {
-			NOT = { has_cultural_era_or_later = culture_era_early_medieval }
-		}
 		# Not repeatable.
 		NOT = {
 			is_target_in_global_variable_list = {
@@ -488,6 +475,18 @@ negotiate_the_danelaw_decision = {
 				target = flag:negotiate_the_danelaw_decision
 			}
 		}
+		# Can only be fired by someone in the Tribal Era (though their rival need not be).
+		culture ?= {
+			NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+		}
+		# Must be in the vague region.
+		any_held_title = {
+			title_tier = county
+			title_province ?= { geographical_region = world_europe_west_britannia }
+		}
+		is_landed_or_landless_administrative = yes
+		# Standard filter checks.
+		negotiate_the_danelaw_basic_filter_trigger = yes
 	}
 
 	is_valid = {
@@ -540,7 +539,7 @@ negotiate_the_danelaw_decision = {
 			}
 		}
 	}
-	
+
 	ai_potential = {
 		always = yes
 	}
@@ -735,7 +734,7 @@ negotiate_the_danelaw_integrate_duchies_decision = {
 					holder = {
 						hidden_effect = {
 							send_interface_toast = {
-								type = event_toast_effect_neutral	
+								type = event_toast_effect_neutral
 								title = negotiate_the_danelaw_integrate_duchies_decision.inform_minor_players.t
 								left_icon = title:k_england.holder
 								right_icon = title:k_danelaw.holder
@@ -747,7 +746,7 @@ negotiate_the_danelaw_integrate_duchies_decision = {
 			}
 		}
 	}
-	
+
 	ai_potential = {
 		primary_title.tier >= tier_kingdom
 		# First off, k_england must currently be partitioned.
@@ -843,7 +842,7 @@ formalise_the_daneland_decision = {
 			target = flag:formalise_the_daneland_decision
 		}
 	}
-	
+
 	ai_potential = {
 		always = yes
 	}
@@ -877,21 +876,28 @@ restore_dumnonia_decision = {
 	selection_tooltip = restore_dumnonia_decision_tooltip
 
 	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
 		exists = dynasty # Everyone should have a dynasty, but in case they don't...
-		OR = {
-			OR = {
-				has_title = title:d_cornwall
-				has_title = title:c_cornwall
-				has_title = title:c_devon
-			}
-			dynasty = dynasty:1029001	#The Cornish royal house is always able to get away with these shenanigans.
-			culture = culture:cornish	#Cornish characters are always able to dream.
-		}
 		OR = {	#Must be a culture at least traditionally interlinked with Cornwall.
-			dynasty = dynasty:1029001	#The Cornish royal house is at it again.
-			culture = { has_cultural_pillar = heritage_brythonic }
+			culture ?= { has_cultural_pillar = heritage_brythonic }
+			dynasty ?= dynasty:1029001	#The Cornish royal house is at it again.
+		}
+		OR = {
+			dynasty ?= dynasty:1029001	#The Cornish royal house is always able to get away with these shenanigans.
+			culture ?= culture:cornish	#Cornish characters are always able to dream.
+			OR = {
+				has_title = title:c_devon
+				has_title = title:c_cornwall
+				has_title = title:d_cornwall
+			}
+		}
+		is_playable_character = yes
+		highest_held_title_tier <= tier_duchy
+		OR = {
+			government_has_flag = government_is_republic
+			government_has_mechanic = administrative
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_clan
+			government_has_flag = government_is_landless_adventurer
 		}
 		NOT = {	#You can only do it once.
 			is_target_in_global_variable_list = {
@@ -899,14 +905,7 @@ restore_dumnonia_decision = {
 				target = flag:flag_restored_dumnonia
 			}
 		}
-		OR = {
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_republic
-			government_has_flag = government_is_clan
-			government_allows = administrative
-			government_has_flag = government_is_landless_adventurer
-		}
-		highest_held_title_tier <= tier_duchy
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -1001,16 +1000,16 @@ form_cumbria_decision = {
 	}
 
 	is_shown = {
-		exists = title:d_cumbria
-		exists = title:k_cumbria
-		culture = culture:cumbrian
 		highest_held_title_tier = tier_duchy
+		culture ?= culture:cumbrian
 		NOT = {	#You can only do it once.
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:flag_formed_cumbria
 			}
 		}
+		exists = title:k_cumbria
+		exists = title:d_cumbria
 	}
 
 	is_valid = {

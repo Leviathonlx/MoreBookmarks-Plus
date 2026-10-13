@@ -1,0 +1,177 @@
+﻿make_accolade_into_mercenary_decision = {
+	category = interaction_category_vassal
+	icon = request_alliance
+	desc = make_accolade_into_mercenary_decision_desc
+	interface_priority = 180
+
+	auto_accept = yes
+
+	filter_tags = { accolade }
+
+	cooldown = { months = 1 }
+	cooldown_against_recipient = { years = 5 }
+
+	is_available = {
+		any_accolade = {
+			exists = acclaimed_knight
+		}
+		trigger_if = {
+			limit = { is_ai = yes }
+			highest_held_title_tier >= tier_duchy
+			is_at_war = no
+			is_imprisoned = no
+		}
+	}
+
+	is_shown = {
+		has_dlc_feature = landless_playable
+		scope:recipient = {
+			is_ai = yes
+			is_acclaimed = yes
+			accolade.accolade_owner ?= {
+				this = scope:actor
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		trigger_if = {
+			limit = {
+				#Nomads can always revoke
+				scope:actor = {
+					NOT = { government_has_flag = government_is_nomadic }
+				}
+			}
+			custom_tooltip = {
+				text = accolade_revoke_tt
+				scope:recipient = {
+					OR = {
+						is_landed = no
+						scope:actor = {
+							has_realm_law_flag = title_revocation_allowed
+						}
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = accolade_rank_4_req_tt
+			scope:recipient.accolade = {
+				accolade_rank >= 4
+			}
+		}
+		scope:actor = {
+			is_imprisoned = no
+			is_at_war = no
+			custom_tooltip = {
+				text = half_of_possible_maa_tt
+				maa_regiments_count >= half_maa_regiments_max_count
+			}
+		}
+		scope:recipient = {
+			is_imprisoned = no
+			is_incapable = no
+			NOR = {
+				has_trait = infirm
+			}
+		}
+	}
+	cost = {
+		prestige = major_prestige_value
+	}
+
+	on_accept = {
+		scope:recipient.accolade = {
+			save_scope_as = accolade
+			#Save rank for use in rewards
+			save_scope_value_as = {
+				name = accolade_rank_value
+				value = accolade_rank
+			}
+			#Saves all the types for later reference
+			list_all_accolade_types_effect = yes
+		}
+		scope:actor = {
+			save_scope_as = accolade_owner
+		}
+		scope:recipient = {
+			save_scope_as = acclaimed_knight
+			show_as_tooltip = {
+				accolade_to_mercenary_effect = yes
+				custom_tooltip = accolade_mercenary_gold_tt
+			}
+		}
+
+		scope:actor = {	trigger_event = accolade.0100 }
+	}
+
+	on_decline = {
+	}
+
+	# AI
+	## Standard Acceptance stuff
+	ai_accept = {
+		base = 100
+	}
+	ai_target_quick_trigger = { adult = yes }
+	ai_targets = {
+		ai_recipients = peer_vassals
+		max = 10
+	}
+	ai_targets = {
+		ai_recipients = courtiers
+		max = 10
+	}
+	## Frequency
+	ai_frequency_by_tier = {
+		barony = 0
+		county = 144
+		duchy = 96
+		kingdom = 24
+		empire = 24
+		hegemony = 24
+	}
+	ai_will_do = {
+		base = 4
+		#Culture is focused on knights
+		modifier = {
+			add = -2
+			culture = {
+				OR = {
+					has_cultural_parameter = wanderers_gain_extra_combat_skills
+					has_cultural_parameter = high_prowess_ignores_knight_restrictions
+					has_cultural_parameter = prowess_from_martial_education
+					has_cultural_parameter = martial_education_more_valued
+					has_cultural_parameter = strong_traits_more_valued
+				}
+			}
+		}
+		#Max level accolade
+		modifier = {
+			add = 2
+			scope:recipient.accolade ?= {
+				accolade_rank >= 6
+			}
+		}
+		#AI should destroy irrelevant accolades they made
+		#Or just ones with inferior types
+		modifier = {
+			scope:recipient.accolade ?= {
+				OR = {
+					NOR = {
+						has_accolade_category = men_at_arms
+						has_accolade_category = skill
+					}
+					#Doesn't employ maa of accolade type
+					trigger_if = {
+						limit = {
+							has_accolade_category = men_at_arms
+						}
+						accolade_has_unsuitable_maa_attribute_trigger = yes
+					}
+				}
+			}
+			factor = 5
+		}
+	}
+}

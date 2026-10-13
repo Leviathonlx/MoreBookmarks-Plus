@@ -1,0 +1,49 @@
+﻿# On actions for when the player character changes, triggered automatically by the game
+
+# For mods that want to intercept all cases where a player changes character from one to another
+# Root is the new player character
+# scope:previous_player_character is the old player character
+on_player_character_change = {
+	effect = {
+		if = {
+			limit = { exists = puppeteer }
+			clear_puppet_status = yes
+			remove_puppet_modifiers_effect = yes
+		}
+		# CE3 achievement: The Father, the Son, and the Holy Grandson — chain of same-dynasty theocrat player characters
+		if = {
+			limit = {
+				government_has_flag = government_is_theocracy
+				any_held_title = { has_clerical_region = yes }
+			}
+			if = {
+				limit = {
+					exists = dynasty
+					scope:previous_player_character ?= {
+						is_alive = no
+						has_variable = ce3_theocrat_dynasty_chain
+						dynasty ?= root.dynasty
+					}
+				}
+				set_variable = {
+					name = ce3_theocrat_dynasty_chain
+					value = {
+						add = scope:previous_player_character.var:ce3_theocrat_dynasty_chain
+						add = 1
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_variable = ce3_theocrat_dynasty_chain
+					var:ce3_theocrat_dynasty_chain >= 3
+				}
+				add_achievement_global_variable_effect = {
+					VARIABLE = ce3_07_the_father_the_son_and_the_holy_grandson_achievement_unlocked
+					VALUE = yes
+				}
+			}
+		}
+		pam_offer_great_schism_stance_to_new_player_effect = yes
+	}
+}

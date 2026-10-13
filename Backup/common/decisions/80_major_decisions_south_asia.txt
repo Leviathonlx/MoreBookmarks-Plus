@@ -29,16 +29,16 @@ become_chakravarti_decision = {
 	}
 
 	is_shown = {
-		OR = {
-			religion = religion:hinduism_religion
-			religion = religion:buddhism_religion
-			religion = religion:jainism_religion
-		}
 		highest_held_title_tier >= tier_kingdom
-		capital_province = {
+		OR = {
+			religion ?= religion:buddhism_religion
+			religion ?= religion:hinduism_religion
+			religion ?= religion:jainism_religion
+		}
+		capital_province ?= {
 			geographical_region = world_india
 		}
-		
+
 		NOT = {
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
@@ -117,9 +117,9 @@ become_chakravarti_decision = {
 			if = {
 				limit = {
 					OR = {
-						faith.religion = faith:vaishnavism.religion
-						faith.religion = faith:theravada.religion
-						faith.religion = faith:digambara.religion		
+						faith.religion = faith:vaishnava_faith.religion
+						faith.religion = faith:theravada_faith.religion
+						faith.religion = faith:jain_faith.religion
 					}
 				}
 				trigger_event = south_asia.0002 #My ruler became the Chakravarti
@@ -167,14 +167,14 @@ take_stewardship_of_the_sacred_river_decision = {
 	desc = take_stewardship_of_the_sacred_river_decision_desc
 
 	is_shown = {
-		religion = religion:hinduism_religion
 		highest_held_title_tier >= tier_duchy
-		NOT = { has_character_modifier = ruler_of_the_ganges_modifier }
+		religion ?= religion:hinduism_religion
 		#Only if the Hindu Mandala already has their capital in the area
 		trigger_if = {
 			limit = { government_has_flag = government_is_mandala }
 			capital_province = { geographical_region = custom_ganges_plain }
 		}
+		NOT = { has_character_modifier = ruler_of_the_ganges_modifier }
 	}
 
 	is_valid = {
@@ -309,18 +309,18 @@ form_bene_israel_decision = {
 	}
 
 	is_shown = {
-		is_ruler = yes
-		is_playable_character = yes
-		faith = faith:malabarism
 		highest_held_title_tier = tier_duchy
-		capital_province = { geographical_region = world_india }
-		
+		faith ?= faith:malabarism
+		is_playable_character = yes
+		capital_province ?= { geographical_region = world_india }
 		NOT = {
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:form_bene_israel_decision
 			}
 		}
+
+		is_ruler = yes
 	}
 
 	is_valid = {
@@ -381,7 +381,7 @@ form_bene_israel_decision = {
 		}
 
 		trigger_event = south_asia.0021 #I formed Bene Israel
-		
+
 		every_player = {
 			limit = {
 				this != scope:founder
@@ -431,28 +431,28 @@ spread_theravada_faith_decision = {
 
 	is_shown = {
 		highest_held_title_tier >= tier_kingdom
-		faith = faith:theravada
-
-		OR = {
-			culture = culture:burmese
-			culture = culture:mon
+		any_vassal = { #so that potential later events don't break
+			has_faith = faith:theravada_faith
+			is_powerful_vassal = yes
 		}
+
+		exists = cp:councillor_court_chaplain
 		NOT = {
 			is_target_in_global_variable_list = {
 				name = unavailable_unique_decisions
 				target = flag:spread_theravada_faith_flag
 			}
 		}
-		any_vassal = { #so that potential later events don't break
-			has_faith = faith:ari
-			is_powerful_vassal = yes
+		OR = {
+			culture ?= culture:mon
+			culture ?= culture:burmese
 		}
-		exists = cp:councillor_court_chaplain
+		faith ?= faith:theravada_faith
 	}
 
 	is_valid = {
 		highest_held_title_tier >= tier_kingdom
-		faith = faith:theravada
+		faith = faith:theravada_faith
 
 		OR = {
 			culture = culture:burmese
@@ -461,7 +461,7 @@ spread_theravada_faith_decision = {
 		prestige_level >= 3
 		piety_level >= 2
 	}
-	
+
 	is_valid_showing_failures_only = {
 		is_landed = yes
 	}
@@ -532,42 +532,42 @@ found_the_empire_of_hindustan_decision = {
 	}
 
 	is_shown = {
-		is_landed_or_landless_administrative = yes
-		exists = dynasty # Everyone should have a dynasty, but in case they don't...
-		NOT = {	#Title existance conditions.
-			exists = title:e_hindustan.holder #Empire of Hindustan
-		}
-		capital_province = {
-			OR = {
-				geographical_region = world_khorasan
-				geographical_region = world_transoxiana
-				geographical_region = world_makran
-				geographical_region = world_kabulistan
-				geographical_region = world_india
-				geographical_region = world_burma
-			}
-		}
-		NOT = {	#You can only do it once.
-			is_target_in_global_variable_list = {
-				name = unavailable_unique_decisions
-				target = flag:flag_founded_hindustan
-			}
-		}
-		faith = {
+		faith ?= {
 			religion_tag = islam_religion
 		}
 		OR = {	#Government conditions.
+			government_has_mechanic = administrative
 			government_has_flag = government_is_feudal
 			government_has_flag = government_is_clan
-			government_allows = administrative
 			government_has_flag = government_is_landless_adventurer
+		}
+		capital_province ?= {
+			OR = {
+				geographical_region = world_india
+				geographical_region = world_transoxiana
+				geographical_region = world_khorasan
+				geographical_region = world_burma
+				geographical_region = world_makran
+				geographical_region = world_kabulistan
+			}
 		}
 		OR = {
 			highest_held_title_tier <= tier_kingdom
 			has_title = title:e_bengal
 			has_title = title:e_deccan
-			has_title = title:e_rajastan 
+			has_title = title:e_rajastan
 		}
+		NOR = {
+			#You can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_hindustan
+			}
+			#Title existance conditions.
+			exists = title:e_hindustan.holder #Empire of Hindustan
+		}
+		is_landed_or_landless_administrative = yes
+		exists = dynasty # Everyone should have a dynasty, but in case they don't...
 	}
 
 	is_valid = {
@@ -622,6 +622,7 @@ found_the_empire_of_hindustan_decision = {
 				root = { has_weak_hook = faith.religious_head }	#Or a regular hook, to be fair, provided you meet the other criteria.
 			}
 		}
+		rule_title_creation_imperial_power_projection_title_creation_trigger = yes
 	}
 
 	is_valid_showing_failures_only = {

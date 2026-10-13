@@ -1,0 +1,572 @@
+﻿#declare_antipope_decision - For Spiritual HoF faiths
+#declare_yourself_antipope_decision - For Temporal HoF faiths + Theocratic rulers
+
+declare_antipope_decision = {
+	picture = {
+		trigger = {
+			religion = religion:christianity_religion
+		}
+		reference = "gfx/interface/illustrations/decisions/pam_decision_create_hof.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	}
+	decision_group_type = major
+
+	desc = declare_antipope_decision_desc
+	selection_tooltip = declare_antipope_decision_tooltip
+	confirm_text = declare_antipope_decision_confirm
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 36
+		empire = 24
+		hegemony = 24
+	}
+
+	is_shown = {
+		is_landed = yes
+		faith ?= { has_doctrine_parameter = spiritual_head_of_faith }
+		NOT = { government_has_flag = government_is_theocracy } # They use declare_yourself_antipope_decision
+		exists = faith.religious_head
+		this != faith.religious_head
+		pam_is_antipope_sponsor_trigger = no
+		pam_is_antipope_trigger = no
+		NOT = {
+			rite = { rite_has_parameter = no_head_of_faith }
+		}
+	}
+
+	is_valid = {
+		highest_held_title_tier >= tier_kingdom
+		trigger_if = {
+			limit = {
+				has_variable = antipope_squabble_unlock
+			}
+			custom_tooltip = {
+				text = antipope_title_threatened_tt
+				has_variable = antipope_squabble_unlock
+			}
+		}
+		trigger_else = { 
+			antipope_requirements_trigger = { AMOUNT = 2 }
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		trigger_if = {
+			limit = { has_pam_dlc_trigger = yes }
+			custom_tooltip = {
+				text = declare_antipope_decision_select_clergy_tt
+				OR = {
+					any_vassal_or_below = {
+						pam_valid_antipope_clergy_vassal_trigger = { LIEGE = scope:actor }
+					}
+					exists = cp:councillor_court_chaplain
+					puppet:external_theological_agent_puppet ?= {
+						NOT = { any_held_title = { is_head_of_faith = yes } }
+					}
+				}
+			}
+		}
+		trigger_else = {
+			custom_tooltip = {
+				text = declare_antipope_decision_select_clergy_no_puppet_tt
+				OR = {
+					any_vassal_or_below = {
+						pam_valid_antipope_clergy_vassal_trigger = { LIEGE = scope:actor }
+					}
+					exists = cp:councillor_court_chaplain
+				}
+			}
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 500
+				if = {
+					limit = { has_character_modifier = pam_denied_new_pope_modifier }
+					multiply = 0.75
+				}
+				if = {
+					limit = { pam_antipope_declaration_discounted_trigger = yes }
+					multiply = 0.67
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 500
+				if = {
+					limit = { has_character_modifier = pam_denied_new_pope_modifier }
+					multiply = 0.75
+				}
+				if = {
+					limit = { pam_antipope_declaration_discounted_trigger = yes }
+					multiply = 0.67
+				}
+			}
+		}
+		piety = {
+			value = 1000
+			if = {
+				limit = { has_character_modifier = pam_denied_new_pope_modifier }
+				multiply = 0.75
+			}
+			if = {
+				limit = { pam_antipope_declaration_discounted_trigger = yes }
+				multiply = 0.67
+			}
+			if = {
+				limit = {
+					has_variable = antipope_squabble_unlock
+				}
+				multiply = 0.1
+			}
+		}
+	}
+
+	effect = {
+		faith.religious_head = {
+			save_scope_as = pope
+			capital_province = { save_scope_as = pope_capital }
+		}
+		scope:selected_item = {
+			save_scope_as = antipope
+		}
+		if = {
+			limit = { has_pam_dlc_trigger = yes }
+			custom_tooltip = declare_antipope_decision_effect_tt
+		}
+		else = {
+			custom_tooltip = declare_antipope_decision_effect_no_puppet_tt
+		}
+		if = {
+			limit = {
+				exists = scope:antipope
+				scope:antipope = { exists = clerical_elector_title }
+			}
+			custom_tooltip = declare_antipope_decision_vacate_cardinalate_tt
+		}
+		trigger_event = pam_antipope_events.0001
+	}
+
+	widget = {
+		gui = "decision_view_widget_select_character"
+		controller = select_scope_object
+		show_from_start = yes
+		decision_to_second_step_button = "SELECT"
+
+		setup_items = {
+			scope:actor = {
+				cp:councillor_court_chaplain ?= { add_to_list = item_list }
+				puppet:external_theological_agent_puppet ?= {
+					if = {
+						limit = { NOT = { any_held_title = { is_head_of_faith = yes } } }
+						add_to_list = item_list
+					}
+				}
+				every_vassal_or_below = {
+					limit = {
+						pam_valid_antipope_clergy_vassal_trigger = { LIEGE = scope:actor }
+					}
+					add_to_list = item_list
+				}
+			}
+		}
+
+		default_item = {
+			scope:actor = {
+				ordered_vassal_or_below = {
+					limit = {
+						pam_valid_antipope_clergy_vassal_trigger = { LIEGE = scope:actor }
+					}
+					order_by = {
+						value = highest_held_title_tier
+						add = piety_level
+					}
+					save_scope_as = selected_item
+				}
+			}
+		}
+
+		is_item_valid = {
+			pam_valid_antipope_clergy_vassal_trigger = { LIEGE = scope:actor }
+		}
+
+		ai_select_item = {
+			scope:actor = {
+				ordered_vassal_or_below = {
+					limit = {
+						pam_valid_antipope_clergy_vassal_trigger = { LIEGE = scope:actor }
+					}
+					order_by = {
+						value = highest_held_title_tier
+						add = piety_level
+					}
+					save_scope_as = selected_item
+				}
+			}
+		}
+	}
+
+	ai_potential = {
+		is_adult = yes
+		ai_zeal >= 0
+		any_vassal_or_below = {
+			pam_valid_antipope_clergy_vassal_trigger = { LIEGE = root }
+		}
+	}
+
+	ai_will_do = {
+		base = 25
+		modifier = {
+			add = 15
+			has_trait = zealous
+		}
+		modifier = {
+			add = 25
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -50
+			has_trait = content
+		}
+		# prevent dukes steal the right
+		modifier = {
+			add = {
+				value = highest_held_title_tier
+				subtract = 4
+				multiply = 10
+			}
+		}
+		opinion_modifier = {
+ 			opinion_target = faith.religious_head
+ 			multiplier = -0.5
+ 			step = 5
+ 			max = 25
+ 		}
+		modifier = {
+			factor = 2
+			OR = {
+				has_relation_rival = faith.religious_head
+				has_relation_nemesis = faith.religious_head
+			}
+		}
+		modifier = { # AI shouldn't usually do this if they're main rite
+			factor = 0.15
+			rite = faith.main_rite
+		}
+		modifier = {
+			factor = 0
+			OR = {
+				has_relation_friend = faith.religious_head
+				has_relation_best_friend = faith.religious_head
+			}
+		}
+	}
+}
+
+declare_yourself_antipope_decision = {
+	picture = {
+		trigger = {
+			religion = religion:christianity_religion
+		}
+		reference = "gfx/interface/illustrations/decisions/pam_decision_create_hof.dds"
+	}
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	}
+	decision_group_type = major
+
+	confirm_text = declare_antipope_decision_confirm
+	
+	title = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { rite = rite:maliki }
+				desc = appoint_a_righteous_caliph_decision_maliki_variant
+			}
+			triggered_desc = {
+				trigger = {
+					culture = { has_cultural_pillar = heritage_iranian }
+					religion = religion:islam_religion
+				}
+				desc = appoint_a_righteous_caliph_decision_general_iranian_variant
+			}
+			triggered_desc = {
+				trigger = { religion = religion:islam_religion }
+				desc = declare_yourself_antipope_decision_caliph
+			}
+			desc = declare_yourself_antipope_decision
+		}
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { rite = rite:maliki }
+				desc = appoint_a_righteous_caliph_decision_maliki_variant_desc
+			}
+			triggered_desc = {
+				trigger = {
+					culture = { has_cultural_pillar = heritage_iranian }
+					religion = religion:islam_religion
+				}
+				desc = appoint_a_righteous_caliph_decision_general_iranian_variant_desc
+			}
+			desc = declare_yourself_antipope_decision_desc
+		}
+	}
+
+	selection_tooltip = appoint_a_righteous_caliph_decision_tooltip
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 48
+		kingdom = 24
+		empire = 24
+		hegemony = 24
+	}
+
+	is_shown = {
+		is_landed = yes
+		exists = faith.religious_head
+		OR = {
+			AND = {
+				faith ?= { has_doctrine_parameter = temporal_head_of_faith }
+				exists = dynasty
+				OR = {
+					government_has_mechanic = administrative
+					government_has_flag = government_is_feudal
+					government_has_flag = government_is_tribal
+					government_has_flag = government_is_clan
+				}
+				NOT = { government_has_flag = government_is_theocracy }
+			}
+			AND = {
+				government_has_flag = government_is_ecclesiastical
+				any_held_title = {
+					has_clerical_region = yes
+				}
+			}
+		}
+		this != faith.religious_head
+		NOT = {
+			rite = { rite_has_parameter = no_head_of_faith }
+		}
+		pam_is_antipope_trigger = no
+		pam_is_antipope_sponsor_trigger = no
+	}
+
+	is_valid = {
+		trigger_if = {
+			limit = {
+				has_variable = antipope_squabble_unlock
+			}
+			custom_tooltip = {
+				text = antipope_title_threatened_tt
+				has_variable = antipope_squabble_unlock
+			}
+		}
+		trigger_else = {
+			trigger_if = { # Requirements from the previous 	appoint_a_righteous_caliph_decision
+				limit = { NOT = { government_has_flag = government_is_theocracy } }
+				top_liege = this
+				# Must have a decent proportion of sub-realm counties of the faith.
+				custom_description = {
+					text = appoint_a_righteous_caliph_decision.need_at_least_ten_same_faith_counties
+					any_sub_realm_county = {
+						count >= appoint_a_righteous_caliph_decision_same_faith_county_count
+						rite = root.rite
+					}
+				}
+				# Can't be the current caliphal controller
+				custom_description = {
+					text = 	appoint_a_righteous_caliph_decision.cant_be_caliphal_controller
+					NOT = {
+						faith.religious_head = {
+							any_liege_or_above = { this = root }
+						}
+					}
+				}
+				# Plus, you shouldn't be _too_ sinful, even with your piety level.
+				custom_description = {
+					text = 	appoint_a_righteous_caliph_decision.no_more_than_x_sinful_traits
+					num_sinful_traits <= 2
+				}
+			}
+			antipope_requirements_trigger = { AMOUNT = 4 }
+			trigger_if = { # Done this way to hide it for Spanish muslims and the like
+				limit = {
+					any_character_struggle = {
+						involvement = involved
+						is_struggle_type = persian_struggle
+					}
+				}
+				custom_tooltip = {
+					text = must_not_be_persia_involved_tt
+					NOT = {
+						any_character_struggle = {
+							involvement = involved
+							is_struggle_type = persian_struggle
+						}
+					}
+				}
+			}
+		}
+		
+	}
+
+	is_valid_showing_failures_only = {
+		is_available_adult = yes
+		# Has to be a valid priestly gender for their own rite
+		custom_tooltip = {
+			text = pam_antipope_clerical_gender_tt
+			rite = { rite_has_allowed_gender_for_clergy = root }
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 500
+				if = {
+					limit = { has_character_modifier = pam_denied_new_pope_modifier }
+					multiply = 0.5
+				}
+				if = {
+					limit = { pam_antipope_declaration_discounted_trigger = yes }
+					multiply = 0.67
+				}
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 500
+				if = {
+					limit = { has_character_modifier = pam_denied_new_pope_modifier }
+					multiply = 0.5
+				}
+				if = {
+					limit = { pam_antipope_declaration_discounted_trigger = yes }
+					multiply = 0.67
+				}
+			}
+		}
+		piety = {
+			value = 2500
+			if = {
+				limit = { has_character_modifier = pam_denied_new_pope_modifier }
+				multiply = 0.5
+			}
+			if = {
+				limit = { pam_antipope_declaration_discounted_trigger = yes }
+				multiply = 0.67
+			}
+			if = {
+				limit = {
+					has_variable = antipope_squabble_unlock
+				}
+				multiply = 0.1
+			}
+		}
+	}
+
+	effect = {
+		faith.religious_head = {
+			save_scope_as = pope
+			capital_province = { save_scope_as = pope_capital }
+		}
+		custom_tooltip = declare_antipope_decision_effect_theocracy_tt
+		if = {
+			limit = { exists = clerical_elector_title }
+			custom_tooltip = declare_yourself_antipope_decision_vacate_cardinalate_tt
+		}
+		if = {
+			limit = {
+				has_trait = excommunicated
+			}
+			remove_trait = excommunicated
+		}
+		trigger_event = pam_antipope_events.0001
+	}
+	
+	ai_potential = {
+		is_adult = yes
+		top_liege = this
+		piety_level >= high_piety_level
+		OR = {
+			has_trait = zealous
+			has_trait = cynical
+			faith = faith:sunni # We guide Muwalladi towards this at the first opportunity
+			government_has_flag = government_is_theocracy
+		}
+	}
+
+	ai_will_do = {
+		base = 25
+		modifier = {
+			add = 15
+			has_trait = zealous
+		}
+		modifier = {
+			add = 25
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -50
+			has_trait = content
+		}
+		# prevent dukes steal the right
+		modifier = {
+			add = {
+				value = highest_held_title_tier
+				subtract = 4
+				multiply = 10
+			}
+		}
+		opinion_modifier = {
+ 			opinion_target = faith.religious_head
+ 			multiplier = -0.5
+ 			step = 5
+ 			max = 25
+ 		}
+		modifier = {
+			factor = 2
+			OR = {
+				has_relation_rival = faith.religious_head
+				has_relation_nemesis = faith.religious_head
+			}
+		}
+		modifier = {
+			factor = 0
+			OR = {
+				has_relation_friend = faith.religious_head
+				has_relation_best_friend = faith.religious_head
+			}
+		}
+	}
+}

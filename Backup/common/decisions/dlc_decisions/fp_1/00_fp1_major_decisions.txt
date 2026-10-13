@@ -34,24 +34,41 @@ secure_high_kingdom_north_sea_decision = {
 	selection_tooltip = secure_high_kingdom_north_sea_decision_tooltip
 
 	is_shown = {
+		#Can't already be an empire.
+		highest_held_title_tier = tier_kingdom
 		is_independent_ruler = yes
+		#Must be within the North/West Germanic cultural sphere.
+		OR = {
+			culture ?= { has_cultural_pillar = heritage_north_germanic }
+			culture ?= { has_cultural_pillar = heritage_west_germanic }
+		}
+		OR = { # Must hold one of the related king titles, and have part of your realm in the other region
+			AND = {
+				OR = {
+					has_title = title:k_norway
+					has_title = title:k_denmark
+				}
+				any_sub_realm_county = {
+					title_province = { geographical_region = world_europe_west_britannia }
+				}
+			}
+			AND = {
+				has_title = title:k_england
+				any_sub_realm_county = {
+					title_province = { geographical_region = world_europe_north }
+				}
+			}
+		}
 		#DLC check.
 		has_fp1_dlc_trigger = yes
 		#Standard filter checks.
 		is_playable_character = yes
 		exists = dynasty
 		OR = {
-			government_has_flag = government_is_tribal
 			government_has_flag = government_is_feudal
+			government_has_flag = government_is_tribal
 			government_has_flag = government_is_clan
 		}
-		#Must be within the North/West Germanic cultural sphere.
-		OR = {
-			culture = { has_cultural_pillar = heritage_north_germanic }
-			culture = { has_cultural_pillar = heritage_west_germanic }
-		}
-		#Can't already be an empire.
-		highest_held_title_tier = tier_kingdom
 		#Not repeatable.
 		NOT = {
 			is_target_in_global_variable_list = {
@@ -61,7 +78,7 @@ secure_high_kingdom_north_sea_decision = {
 		}
 		# One of the original kingdoms is not titular
 		OR = {
-			title:k_england = { 
+			title:k_norway = {
 				is_titular = no 
 				holder ?= root
 			}
@@ -69,26 +86,9 @@ secure_high_kingdom_north_sea_decision = {
 				is_titular = no 
 				holder ?= root
 			}
-			title:k_norway = {
+			title:k_england = { 
 				is_titular = no 
 				holder ?= root
-			}
-		}
-		OR = { # Must hold one of the related king titles, and have part of your realm in the other region
-			AND = {
-				has_title = title:k_england
-				any_sub_realm_county = {
-					title_province = { geographical_region = world_europe_north }
-				}
-			}
-			AND = {
-				OR = {
-					has_title = title:k_norway
-					has_title = title:k_denmark
-				}
-				any_sub_realm_county = {
-					title_province = { geographical_region = world_europe_west_britannia }
-				}
 			}
 		}
 	}
@@ -168,6 +168,12 @@ secure_high_kingdom_north_sea_decision = {
 				text = secure_high_kingdom_north_sea_decision_solve_danelaw
 				always = no
 			}
+		}
+		trigger_if = {
+			limit = {
+				NOT = { faith = { has_doctrine_parameter = unreformed } }
+			}
+			rule_title_creation_imperial_power_projection_title_creation_trigger = yes
 		}
 	}
 
@@ -270,29 +276,8 @@ found_capital_of_the_rus_decision = {
 	selection_tooltip = found_capital_of_the_rus_decision_tooltip
 
 	is_shown = {
-		#DLC check.
-		has_fp1_dlc_trigger = yes
-		#Standard filter checks.
-		is_playable_character = yes
-		exists = dynasty
-		#Must be within the North Germanic cultural sphere.
-		OR = {
-			culture = { has_cultural_pillar = heritage_north_germanic }
-			has_culture = culture:norman
-			has_character_modifier = embraced_local_traditions_modifier
-			dynasty ?= {
-				has_dynasty_modifier = settled_norse_dynasty_modifier
-			}
-		}
-		#Must be in the current de jure title:e_russia: since this decision involves title:e_russia very intimately, we don't want a custom region.
-		any_held_title = {
-			title_tier = county
-			empire = title:e_russia
-		}
 		#Aaaaaaand it's already happened in 1066, albeit with less gameplay benefits.
 		NOT = { game_start_date >= 1066.09.15 }
-		#Year is before 1100, just to keep this from getting weird if no one manages it early.
-		current_date < 1100.1.1
 		#Not repeatable.
 		NOT = {
 			is_target_in_global_variable_list = {
@@ -300,6 +285,27 @@ found_capital_of_the_rus_decision = {
 				target = flag:flag_founded_capital_of_rus
 			}
 		}
+		#Year is before 1100, just to keep this from getting weird if no one manages it early.
+		current_date < 1100.1.1
+		#Must be in the current de jure title:e_russia: since this decision involves title:e_russia very intimately, we don't want a custom region.
+		any_held_title = {
+			empire ?= title:e_russia
+			title_tier = county
+		}
+		#Must be within the North Germanic cultural sphere.
+		OR = {
+			culture ?= { has_cultural_pillar = heritage_north_germanic }
+			has_culture = culture:norman
+			has_character_modifier = embraced_local_traditions_modifier
+			dynasty ?= {
+				has_dynasty_modifier = settled_norse_dynasty_modifier
+			}
+		}
+		exists = dynasty
+		#Standard filter checks.
+		is_playable_character = yes
+		#DLC check.
+		has_fp1_dlc_trigger = yes
 	}
 
 	is_valid = {
@@ -432,25 +438,23 @@ elevate_mann_and_the_isles_decision = {
 	selection_tooltip = elevate_mann_and_the_isles_decision_tooltip
 
 	is_shown = {
-		#DLC check.
-		has_fp1_dlc_trigger = yes
-		#Standard filter checks.
-		is_playable_character = yes
-		exists = dynasty
-		OR = {
-			government_has_flag = government_is_tribal
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_clan
-		}
-		#Must be within the North Germanic cultural sphere.
-		OR = {
-			culture = { has_cultural_pillar = heritage_north_germanic }
-			has_culture = culture:norman
-		}
 		#Must be in the vague region.
 		any_held_title = {
 			title_tier = county
-			title_province = { geographical_region = world_europe_west_britannia }
+			title_province ?= { geographical_region = world_europe_west_britannia }
+		}
+		#Must be within the North Germanic cultural sphere.
+		OR = {
+			culture ?= { has_cultural_pillar = heritage_north_germanic }
+			has_culture = culture:norman
+		}
+		#DLC check.
+		has_fp1_dlc_trigger = yes
+		exists = dynasty
+		OR = {
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_tribal
+			government_has_flag = government_is_clan
 		}
 		#Can't already be a kingdom.
 		highest_held_title_tier <= tier_duchy
@@ -461,6 +465,8 @@ elevate_mann_and_the_isles_decision = {
 				target = flag:flag_elevated_mann_and_the_isles
 			}
 		}
+		#Standard filter checks.
+		is_playable_character = yes
 	}
 
 	is_valid = {
@@ -559,20 +565,20 @@ forge_the_jomsvikings_decision = {
 	selection_tooltip = forge_the_jomsvikings_decision_tooltip
 
 	is_shown = {
-		# DLC check.
-		has_fp1_dlc_trigger = yes
-		# Standard filter checks.
-		is_playable_character = yes
-		exists = dynasty
-		OR = {
-			government_has_flag = government_is_tribal
-			government_has_flag = government_is_feudal
-			government_has_flag = government_is_clan
-		}
-		# Must follow an unreformed Germanic faith.
-		faith = { fp1_valid_norse_faith_for_jomsvikings_trigger = yes }
 		# Jomsvikings cannot have existed already.
 		fp1_jomsvikings_have_not_existed_trigger = yes
+		# Must follow an unreformed Germanic faith.
+		faith ?= { fp1_valid_norse_faith_for_jomsvikings_trigger = yes }
+		OR = {
+			government_has_flag = government_is_feudal
+			government_has_flag = government_is_tribal
+			government_has_flag = government_is_clan
+		}
+		exists = dynasty
+		# Standard filter checks.
+		is_playable_character = yes
+		# DLC check.
+		has_fp1_dlc_trigger = yes
 	}
 
 	is_valid = {
