@@ -1,0 +1,80 @@
+﻿# Empire Faith Gate — scripted effects (scope = character to strip modifiers from)
+efg_remove_contested_empire_modifiers_effect = {
+	remove_character_modifier = multi_empire_same_faith_penalty_1
+	remove_character_modifier = multi_empire_same_faith_penalty_2
+	remove_character_modifier = multi_empire_same_faith_penalty_3
+	remove_variable = efg_grace_period_end_year
+	remove_variable = efg_modifier_pending_end_year
+}
+
+# Scope = reference character whose faith group should be recalculated
+efg_recalculate_contested_empire_for_faith_effect = {
+	if = {
+		limit = { empire_faith_gate_enabled_trigger = yes }
+		every_in_global_list = {
+			variable = efg_empire_holders
+			limit = {
+				is_alive = yes
+				is_landed = yes
+				highest_held_title_tier >= tier_empire
+				faith = root.faith
+			}
+			save_temporary_scope_as = efg_ruler
+			if = {
+				limit = {
+					faith_has_existing_empire_holder_trigger = yes
+					has_contested_empire_trigger = yes
+					# Skip characters still in pending; empire_faith_gate.0002 applies them.
+					NOT = { exists = var:efg_modifier_pending_end_year }
+					any_in_global_list = {
+						variable = efg_empire_holders
+						efg_same_faith_empire_holder_trigger = yes
+						count >= 2
+					}
+				}
+				if = {
+					limit = {
+						any_in_global_list = {
+							variable = efg_empire_holders
+							efg_same_faith_empire_holder_trigger = yes
+							count >= 4
+						}
+					}
+					add_character_modifier = { modifier = multi_empire_same_faith_penalty_3 }
+				}
+				else_if = {
+					limit = {
+						any_in_global_list = {
+							variable = efg_empire_holders
+							efg_same_faith_empire_holder_trigger = yes
+							count >= 3
+						}
+					}
+					add_character_modifier = { modifier = multi_empire_same_faith_penalty_2 }
+				}
+				else = {
+					add_character_modifier = { modifier = multi_empire_same_faith_penalty_1 }
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_contested_empire_trigger = yes
+						has_variable = efg_modifier_pending_end_year
+					}
+					OR = {
+						NOT = { faith_has_existing_empire_holder_trigger = yes }
+						NOT = {
+							any_in_global_list = {
+								variable = efg_empire_holders
+								efg_same_faith_empire_holder_trigger = yes
+								count >= 2
+							}
+						}
+					}
+				}
+				efg_remove_contested_empire_modifiers_effect = yes
+			}
+		}
+	}
+}

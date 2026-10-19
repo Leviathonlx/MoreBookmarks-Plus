@@ -1,0 +1,278 @@
+﻿namespace = empire_faith_gate
+
+# Fired from on_title_gain; applies contested-imperium legitimacy to root and
+# every other same-faith independent empire holder.
+# root = the new holder, scope:title = the title gained.
+empire_faith_gate.0001 = {
+	hidden = yes
+
+	trigger = {
+		empire_faith_gate_enabled_trigger = yes
+		scope:title = { tier >= tier_empire }
+		faith_has_existing_empire_holder_trigger = yes
+	}
+
+	immediate = {
+		root = { save_scope_as = efg_new_holder }
+		scope:efg_new_holder = { save_temporary_scope_as = efg_ruler }
+		# Count same-faith others (no local list — validator rejects list only set in this event).
+		scope:efg_new_holder = { set_variable = { name = efg_other_count value = 0 } }
+		every_in_global_list = {
+			variable = efg_empire_holders
+			limit = {
+				NOT = { this = root }
+				efg_same_faith_empire_holder_trigger = yes
+			}
+			scope:efg_new_holder = { change_variable = { name = efg_other_count add = 1 } }
+		}
+		# Penalty tier: root + others => 4+ = tier 3, 3 = tier 2, else 1.
+		scope:efg_new_holder = {
+			set_variable = { name = efg_penalty_tier value = 1 }
+			if = {
+				limit = { var:efg_other_count >= 3 }
+				set_variable = { name = efg_penalty_tier value = 3 }
+			}
+			else_if = {
+				limit = { var:efg_other_count >= 2 }
+				set_variable = { name = efg_penalty_tier value = 2 }
+			}
+		}
+		# Grab one same-faith rival for the new holder's contested empire toast.
+		random_in_global_list = {
+			variable = efg_empire_holders
+			limit = {
+				NOT = { this = root }
+				faith = root.faith
+			}
+			save_temporary_scope_as = efg_toast_other_emperor
+		}
+		# Apply penalty to new holder (scope:efg_new_holder).
+		scope:efg_new_holder = {
+			# Keep existing contested rulers as-is; only newly contested rulers start pending.
+			if = {
+				limit = {
+					faith_has_existing_empire_holder_trigger = yes
+					NOT = { efg_holds_multiple_empires_trigger = yes }
+					NOT = { has_variable = efg_modifier_pending_end_year }
+				}
+				# Ensure the new contender stays pending until empire_faith_gate.0002 fires.
+				remove_character_modifier = multi_empire_same_faith_penalty_1
+				remove_character_modifier = multi_empire_same_faith_penalty_2
+				remove_character_modifier = multi_empire_same_faith_penalty_3
+				# 3-year grace period: only the player gets it; AI can excommunicate/use dissolve CB after grace ends.
+				if = {
+					limit = { is_ai = no }
+					set_variable = {
+						name = efg_grace_period_end_year
+						value = {
+							value = current_year
+							add = 3
+						}
+					}
+				}
+				scope:efg_toast_other_emperor = { save_temporary_scope_as = efg_other_emperor }
+				
+				# Modifier is applied 3 years later via empire_faith_gate.0002.
+				set_variable = {
+					name = efg_modifier_pending_end_year
+					value = {
+						value = current_year
+						add = 3
+					}
+				}
+				trigger_event = { id = empire_faith_gate.0002 days = 1095 }
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = empire_faith_gate_contested_legitimacy_applied
+					left_icon = scope:efg_other_emperor
+					right_icon = scope:title
+					custom_tooltip = empire_faith_gate_contested_legitimacy_applied_desc
+				}
+			}
+		}
+		# Apply the same tier to all other same-faith empire holders (iterate global list with limit).
+		every_in_global_list = {
+			variable = efg_empire_holders
+			limit = {
+				NOT = { this = root }
+				efg_same_faith_empire_holder_trigger = yes
+			}
+			if = {
+				# Keep existing contested rulers as-is; only newly contested rulers start pending.
+				limit = {
+					faith_has_existing_empire_holder_trigger = yes
+					has_contested_empire_trigger = no
+					NOT = { has_variable = efg_modifier_pending_end_year }
+				}
+				# Modifier is applied 3 years later via empire_faith_gate.0002.
+				set_variable = {
+					name = efg_modifier_pending_end_year
+					value = {
+						value = current_year
+						add = 3
+					}
+				}
+				scope:efg_new_holder = { save_temporary_scope_as = efg_other_emperor }
+				trigger_event = { id = empire_faith_gate.0002 days = 1095 }
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = empire_faith_gate_contested_legitimacy_applied
+					left_icon = scope:efg_other_emperor
+					right_icon = scope:title
+					custom_tooltip = empire_faith_gate_contested_legitimacy_applied_desc
+				}
+			}
+		}
+		# Immediate rivalry setup for same-faith empire contenders.
+		if = {
+			limit = {
+				scope:efg_new_holder = { faith_has_existing_empire_holder_trigger = yes }
+			}
+			every_in_global_list = {
+				variable = efg_empire_holders
+				limit = {
+					NOT = { this = root }
+					efg_same_faith_empire_holder_trigger = yes
+					scope:efg_new_holder = {
+						NOR = {
+							has_relation_rival = prev
+							has_relation_nemesis = prev
+						}
+					}
+				}
+				scope:efg_new_holder = {
+					set_relation_rival = {
+						target = prev
+						reason = efg_contested_empire_rivalry
+					}
+				}
+			}
+		}
+		every_in_global_list = {
+			variable = efg_empire_holders
+			limit = {
+				NOT = { this = root }
+				efg_same_faith_empire_holder_trigger = yes
+				NOR = {
+					has_relation_rival = scope:efg_new_holder
+					has_relation_nemesis = scope:efg_new_holder
+				}
+			}
+			set_relation_rival = {
+				target = scope:efg_new_holder
+				reason = efg_contested_empire_rivalry
+			}
+		}
+		scope:efg_new_holder = {
+			remove_variable = efg_penalty_tier
+			remove_variable = efg_other_count
+		}
+	}
+}
+
+# Fires 3 years after empire creation; applies the contested-legitimacy modifier and presents paths to respond.
+# Root = the penalised empire holder (new holder or existing holder at creation time).
+empire_faith_gate.0002 = {
+	title = empire_faith_gate.0002.t
+	desc = empire_faith_gate.0002.desc
+	theme = crown
+
+	left_portrait = {
+		character = root
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:efg_primary_rival
+		animation = personality_bold
+	}
+
+	trigger = {
+		empire_faith_gate_enabled_trigger = yes
+		faith_has_existing_empire_holder_trigger = yes
+	}
+
+	immediate = {
+		remove_variable = efg_modifier_pending_end_year
+		save_scope_as = efg_ruler
+		# Identify the most prominent rival to feature in the event.
+		random_in_global_list = {
+			variable = efg_empire_holders
+			limit = {
+				NOT = { this = root }
+				faith = root.faith
+				highest_held_title_tier >= tier_empire
+			}
+			save_scope_as = efg_primary_rival
+		}
+		# Apply the correct tier modifier now that the grace period has elapsed.
+		if = {
+			limit = {
+				any_in_global_list = {
+					variable = efg_empire_holders
+					efg_same_faith_empire_holder_trigger = yes
+					count >= 4
+				}
+			}
+			add_character_modifier = { modifier = multi_empire_same_faith_penalty_3 }
+		}
+		else_if = {
+			limit = {
+				any_in_global_list = {
+					variable = efg_empire_holders
+					efg_same_faith_empire_holder_trigger = yes
+					count >= 3
+				}
+			}
+			add_character_modifier = { modifier = multi_empire_same_faith_penalty_2 }
+		}
+		else = {
+			add_character_modifier = { modifier = multi_empire_same_faith_penalty_1 }
+		}
+	}
+
+	# Option A: Use knights for propaganda.
+	option = {
+		name = empire_faith_gate.0002.a
+		every_in_global_list = {
+			variable = efg_empire_holders
+			limit = {
+				NOT = { this = root }
+				faith = root.faith
+				highest_held_title_tier >= tier_empire
+				root = {
+					NOR = {
+						has_relation_rival = prev
+						has_relation_nemesis = prev
+					}
+				}
+			}
+		}
+		add_character_modifier = { modifier = efg_contested_wrath days = 1825 }
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 ai_boldness >= 50 }
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Option B: Proclaim you are the real emperor by faith alone.
+	option = {
+		name = empire_faith_gate.0002.b
+		add_character_modifier = { modifier = efg_divine_mandate days = 1825 }
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = zealous }
+			modifier = { add = 10 ai_zeal >= 50 }
+		}
+	}
+
+	# Option C: Opt out-ish.
+	option = {
+		name = empire_faith_gate.0002.c
+		add_character_modifier = { modifier = efg_contested_patience days = 1825 }
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 ai_rationality >= 60 }
+		}
+	}
+}

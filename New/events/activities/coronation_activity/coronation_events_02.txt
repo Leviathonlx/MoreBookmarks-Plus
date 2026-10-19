@@ -1,0 +1,205 @@
+﻿namespace = coronation_events
+
+scripted_trigger coronation_events_3001_angry_vassal_trigger = {
+	is_available_healthy_ai_adult = yes
+	opinion = {
+		target = scope:host
+		value < 25
+	}
+	highest_held_title_tier > tier_barony
+	NOT = {
+		is_participant_in_activity = scope:activity
+	}
+}
+
+coronation_events.3001 = {
+	type = letter_event
+	opening = coronation_events.3001.opening
+	desc = coronation_events.3001.desc
+	sender = scope:main_vassal
+
+	trigger = {
+		any_vassal = {
+			coronation_events_3001_angry_vassal_trigger = yes
+			count > 1
+		}
+	}
+	
+	immediate = {
+		ordered_vassal = {
+			limit = {
+				coronation_events_3001_angry_vassal_trigger = yes
+			}
+			order_by = primary_title.tier
+			save_scope_as = main_vassal
+		}
+		every_vassal = {
+			limit = {
+				coronation_events_3001_angry_vassal_trigger = yes
+				NOT = { this = scope:main_vassal }
+			}
+			add_to_list = angry_vassals
+			#Save list size
+			if = {
+				limit = {
+					NOT = {
+						root = { has_variable = coronation_angry_vassals }
+					}
+				}
+				root = {
+					set_variable = {
+						name = coronation_angry_vassals
+						value = prev.highest_held_title_tier
+						
+						days = 30
+					}
+				}
+			}
+			else = {
+				root = {
+					change_variable = {
+						name = coronation_angry_vassals
+						add = prev.highest_held_title_tier
+						
+					}
+					
+				}
+			}
+		}
+		#Save total vassal count value - for use in scaling legitimacy punishment
+		every_vassal = {
+			limit = {
+				highest_held_title_tier > tier_barony
+			}
+			if = {
+				limit = {
+					NOT = {
+						root = { has_variable = coronation_vassal_count }
+					}
+				}
+				root = {
+					set_variable = {
+						name = coronation_vassal_count
+						value = prev.highest_held_title_tier
+						days = 30
+					}
+				}
+			}
+			else = {
+				root = {
+					change_variable = {
+						name = coronation_vassal_count
+						add = prev.highest_held_title_tier
+					}
+					
+				}
+			}
+		}
+		#Save three-quarters of vassal count
+		save_scope_value_as = {
+			name = coronation_vassal_count_3_4
+			value = {
+				add = var:coronation_vassal_count
+				multiply = 0.75
+			}
+		}
+		#save half
+		save_scope_value_as = {
+			name = coronation_vassal_count_half
+			value = {
+				add = var:coronation_vassal_count
+				multiply = 0.5
+			}
+		}
+		#Save quarter
+		save_scope_value_as = {
+			name = coronation_vassal_count_quarter
+			value = {
+				add = var:coronation_vassal_count
+				multiply = 0.25
+			}
+		}
+		#save tenth
+		save_scope_value_as = {
+			name = coronation_vassal_count_tenth
+			value = {
+				add = var:coronation_vassal_count
+				multiply = 0.1
+			}
+		}
+	}
+	
+	option = { # Invite them
+		name = coronation_events.3001.a
+		show_as_tooltip = {
+			every_in_list = {
+				list = angry_vassals
+				limit = { can_join_activity = root.involved_activity }
+				add_to_activity = root.involved_activity
+			}
+		}
+		hidden_effect = {
+			every_in_list = {
+				list = angry_vassals
+				limit = { can_join_activity = root.involved_activity }
+				set_location = root.location
+				add_to_activity_without_travel = root.involved_activity
+			}
+		}
+	}
+	
+	option = { # Nah
+		name = coronation_events.3001.b
+		#Legitimacy loss scaling by percentage of total vassals that aren't invited
+		if = {
+			limit = {
+				var:coronation_angry_vassals > scope:coronation_vassal_count_3_4
+			}
+			add_legitimacy = monumental_legitimacy_loss
+		}
+		else_if = {
+			limit = {
+				var:coronation_angry_vassals > scope:coronation_vassal_count_half
+			}
+			add_legitimacy = massive_legitimacy_loss
+		}
+		else_if = {
+			limit = {
+				var:coronation_angry_vassals > scope:coronation_vassal_count_quarter
+			}
+			add_legitimacy = major_legitimacy_loss
+		}
+		else_if = {
+			limit = {
+				var:coronation_angry_vassals > scope:coronation_vassal_count_tenth
+			}
+			add_legitimacy = medium_legitimacy_loss
+		}
+		else = {
+			add_legitimacy = minor_legitimacy_loss
+		}
+		
+		every_in_list = {
+			list = angry_vassals
+			add_opinion = {
+				target = root
+				modifier = not_invited_coronation_opinion
+				opinion = -25
+			}
+		}
+	}
+	after = {
+		if = {
+			limit = {
+				has_variable = coronation_vassal_count
+			}
+			remove_variable = coronation_vassal_count
+		}
+		if = {
+			limit = {
+				has_variable = coronation_angry_vassals
+			}
+			remove_variable = coronation_angry_vassals
+		}
+	}
+}

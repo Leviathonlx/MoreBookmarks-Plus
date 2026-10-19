@@ -1,0 +1,844 @@
+﻿namespace = pam_spread_tenet_events
+
+##################################################
+# Spread the Word activity intent events
+#
+# 0001	Table Talk - preach your personal tenet over the feast board.
+# 0101	Around the Fire - preach your personal tenet at the hunt camp.
+# 0201	Between the Bouts - preach your personal tenet to idle tournament spectators.
+# 0301	A Toast to Conviction - preach your personal tenet among the wedding guests.
+# 0401	Words at the Wake - preach your personal tenet to the mourners.
+##################################################
+
+# Scope:spread_tenet is prohibited in the preacher's own rite. Root = the preacher.
+scripted_trigger pam_spread_tenet_forbidden_selected_trigger = {
+	faith.main_rite = {
+		has_tenet_status = {
+			tenet = scope:spread_tenet
+			status = prohibited
+		}
+	}
+}
+
+# Pick the tenet to spread and gather up to three listeners among the guests. Root = the preacher.
+scripted_effect pam_spread_tenet_setup_effect = {
+	save_scope_as = pam_spread_preacher
+	random_personal_tenet = {
+		limit = {
+			save_temporary_scope_as = pam_spread_tenet_candidate
+			scope:pam_spread_preacher.involved_activity = {
+				any_attending_character = {
+					pam_spread_tenet_listener_trigger = {
+						PREACHER = scope:pam_spread_preacher
+						TENET = scope:pam_spread_tenet_candidate
+					}
+				}
+			}
+		}
+		save_scope_as = spread_tenet
+	}
+	involved_activity = {
+		random_attending_character = {
+			limit = {
+				pam_spread_tenet_listener_trigger = {
+					PREACHER = scope:pam_spread_preacher
+					TENET = scope:spread_tenet
+				}
+			}
+			save_scope_as = pam_spread_listener_1
+		}
+		random_attending_character = {
+			limit = {
+				this != scope:pam_spread_listener_1
+				pam_spread_tenet_listener_trigger = {
+					PREACHER = scope:pam_spread_preacher
+					TENET = scope:spread_tenet
+				}
+			}
+			save_scope_as = pam_spread_listener_2
+		}
+		random_attending_character = {
+			limit = {
+				this != scope:pam_spread_listener_1
+				NOT = { scope:pam_spread_listener_2 ?= this } # A second listener isn't always found
+				pam_spread_tenet_listener_trigger = {
+					PREACHER = scope:pam_spread_preacher
+					TENET = scope:spread_tenet
+				}
+			}
+			save_scope_as = pam_spread_listener_3
+		}
+	}
+}
+
+# The preacher is root, and scope:spread_tenet is the tenet
+# Popularity is credited once per activity, and the rest arrives via on_personal_tenet_gain
+scripted_effect pam_spread_tenet_convert_listeners_effect = {
+	scope:pam_spread_listener_1 = {
+		pam_replace_personal_tenet_effect = { TENET = scope:spread_tenet }
+	}
+	pam_spread_tenet_flat_popularity_once_effect = { TENET = scope:spread_tenet }
+	if = {
+		limit = { exists = scope:pam_spread_listener_2 }
+		scope:pam_spread_listener_2 = {
+			pam_replace_personal_tenet_effect = { TENET = scope:spread_tenet }
+		}
+		pam_spread_tenet_flat_popularity_once_effect = { TENET = scope:spread_tenet }
+	}
+	if = {
+		limit = { exists = scope:pam_spread_listener_3 }
+		scope:pam_spread_listener_3 = {
+			pam_replace_personal_tenet_effect = { TENET = scope:spread_tenet }
+		}
+		pam_spread_tenet_flat_popularity_once_effect = { TENET = scope:spread_tenet }
+	}
+}
+
+# Public piety for open preaching; a convert of the preacher's own rank or above adds more. Root = the preacher.
+scripted_effect pam_spread_tenet_piety_reward_effect = {
+	add_piety = {
+		value = $PIETY$
+		if = {
+			limit = {
+				exists = scope:pam_spread_listener_1
+			}
+			add = {
+				value = miniscule_piety_gain
+				multiply = scope:pam_spread_listener_1.highest_held_title_tier
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:pam_spread_listener_2
+			}
+			add = {
+				value = miniscule_piety_gain
+				multiply = scope:pam_spread_listener_2.highest_held_title_tier
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:pam_spread_listener_3
+			}
+			add = {
+				value = miniscule_piety_gain
+				multiply = scope:pam_spread_listener_3.highest_held_title_tier
+			}
+		}
+	}
+}
+
+# The scriptural grounding leaves a lasting bond with the converts. Root = the preacher.
+scripted_effect pam_spread_tenet_conviction_bond_effect = {
+	scope:pam_spread_listener_1 = {
+		add_opinion = {
+			target = root
+			modifier = pam_sf_shared_conviction_opinion # Shared Conviction
+		}
+	}
+	if = {
+		limit = { exists = scope:pam_spread_listener_2 }
+		scope:pam_spread_listener_2 = {
+			add_opinion = {
+				target = root
+				modifier = pam_sf_shared_conviction_opinion # Shared Conviction
+			}
+		}
+	}
+	if = {
+		limit = { exists = scope:pam_spread_listener_3 }
+		scope:pam_spread_listener_3 = {
+			add_opinion = {
+				target = root
+				modifier = pam_sf_shared_conviction_opinion # Shared Conviction
+			}
+		}
+	}
+}
+
+# The new converts learn of the preacher's forbidden belief; someone else may overhear. Root = the preacher.
+scripted_effect pam_spread_tenet_forbidden_aftermath_effect = {
+	every_secret = {
+		type = secret_forbidden_personal_tenet
+		limit = { NOT = { is_known_by = scope:pam_spread_listener_1 } }
+		reveal_to = scope:pam_spread_listener_1
+	}
+	if = {
+		limit = { exists = scope:pam_spread_listener_2 }
+		every_secret = {
+			type = secret_forbidden_personal_tenet
+			limit = { NOT = { is_known_by = scope:pam_spread_listener_2 } }
+			reveal_to = scope:pam_spread_listener_2
+		}
+	}
+	if = {
+		limit = { exists = scope:pam_spread_listener_3 }
+		every_secret = {
+			type = secret_forbidden_personal_tenet
+			limit = { NOT = { is_known_by = scope:pam_spread_listener_3 } }
+			reveal_to = scope:pam_spread_listener_3
+		}
+	}
+	hidden_effect = {
+		random = {
+			chance = 25
+			involved_activity = {
+				random_attending_character = {
+					limit = {
+						this != scope:pam_spread_preacher
+						NOR = {
+							scope:pam_spread_listener_1 ?= this
+							scope:pam_spread_listener_2 ?= this
+							scope:pam_spread_listener_3 ?= this
+						}
+						is_ai = yes
+						is_adult = yes
+					}
+					save_scope_as = pam_spread_eavesdropper
+				}
+			}
+			if = {
+				limit = { exists = scope:pam_spread_eavesdropper }
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = pam_spread_tenet_overheard_toast
+					left_icon = scope:pam_spread_eavesdropper
+					every_secret = {
+						type = secret_forbidden_personal_tenet
+						limit = { NOT = { is_known_by = scope:pam_spread_eavesdropper } }
+						reveal_to = scope:pam_spread_eavesdropper
+					}
+					reverse_add_opinion = {
+						target = scope:pam_spread_eavesdropper
+						modifier = suspicion_opinion
+						opinion = -20
+					}
+				}
+			}
+		}
+	}
+}
+
+# Mark the Spread the Word intent achieved. Root = the preacher.
+scripted_effect pam_spread_tenet_complete_intent_effect = {
+	save_scope_as = intent_completer
+	send_interface_toast = {
+		type = event_toast_effect_good
+		title = activity_intent_complete_toast
+		left_icon = scope:pam_spread_listener_1
+		complete_activity_intent = yes
+	}
+}
+
+##################################################
+# Table Talk
+# 0001
+##################################################
+
+# Preach your personal tenet over the feast board.
+pam_spread_tenet_events.0001 = {
+	type = activity_event
+	title = pam_spread_tenet_events.0001.t
+	desc = {
+		desc = pam_spread_tenet_events.0001.desc
+		triggered_desc = {
+			trigger = { pam_spread_tenet_forbidden_selected_trigger = yes }
+			desc = pam_spread_tenet_events.forbidden.desc
+		}
+	}
+	theme = feast_activity
+	left_portrait = {
+		character = root
+		animation = preaching_no_book
+	}
+	center_portrait = {
+		character = scope:pam_spread_listener_1
+		animation = interested
+		camera = camera_event_very_right_activity
+	}
+	right_portrait = {
+		character = scope:pam_spread_listener_2
+		animation = thinking_all
+	}
+	
+	lower_right_portrait = scope:pam_spread_listener_3
+
+	cooldown = { years = 1 }
+
+	trigger = {
+		has_activity_intent = spread_personal_tenet_intent
+		involved_activity ?= { has_activity_type = activity_feast }
+		pam_spread_tenet_event_valid_trigger = yes
+	}
+
+	immediate = {
+		pam_spread_tenet_setup_effect = yes
+	}
+
+	# The lifestyle_scholar grounds the word in scripture, binding the converts closer.
+	option = {
+		name = pam_spread_tenet_option_scripture
+		trigger = {
+			has_trait = lifestyle_scholar
+			pam_spread_tenet_forbidden_selected_trigger = no
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_conviction_bond_effect = yes
+		add_scholar_trait_or_xp_effect = { VALUE = 15 }
+		pam_spread_tenet_piety_reward_effect = { PIETY = medium_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 1000
+		}
+	}
+
+	# Preach openly.
+	option = {
+		name = pam_spread_tenet_option_preach
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = no
+			NOT = { has_trait = lifestyle_scholar }
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		
+		pam_spread_tenet_piety_reward_effect = { PIETY = minor_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Whisper the forbidden truth to a trusted few.
+	option = {
+		name = pam_spread_tenet_option_forbidden
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = yes
+		}
+		add_internal_flag = dangerous
+		flavor = pam_spread_tenet_forbidden_flavor
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_forbidden_aftermath_effect = yes
+		
+		pam_spread_tenet_complete_intent_effect = yes
+		stress_impact = {
+			craven = minor_stress_impact_gain
+			paranoid = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 75
+				pam_ai_can_consider_forbidden_personal_tenet_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = craven
+					has_trait = paranoid
+				}
+			}
+		}
+	}
+
+	# Keep your own counsel.
+	option = {
+		name = pam_spread_tenet_option_decline
+		change_spiritual_fulfillment = miniscule_spiritual_fulfillment_value
+		stress_impact = {
+			zealous = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+##################################################
+# Around the Fire
+# 0101
+##################################################
+
+# Preach your personal tenet at the hunt camp.
+pam_spread_tenet_events.0101 = {
+	type = activity_event
+	title = pam_spread_tenet_events.0101.t
+	desc = {
+		desc = pam_spread_tenet_events.0101.desc
+		triggered_desc = {
+			trigger = { pam_spread_tenet_forbidden_selected_trigger = yes }
+			desc = pam_spread_tenet_events.forbidden.desc
+		}
+	}
+	theme = hunt_activity
+	left_portrait = {
+		character = root
+		animation = preaching_no_book
+	}
+	center_portrait = {
+		character = scope:pam_spread_listener_1
+		animation = interested
+		camera = camera_event_very_right_activity
+	}
+	right_portrait = {
+		character = scope:pam_spread_listener_2
+		animation = thinking_all
+	}
+	
+	lower_right_portrait = scope:pam_spread_listener_3
+
+	cooldown = { years = 1 }
+
+	trigger = {
+		has_activity_intent = spread_personal_tenet_intent
+		involved_activity ?= { has_activity_type = activity_hunt }
+		pam_spread_tenet_event_valid_trigger = yes
+	}
+
+	immediate = {
+		pam_spread_tenet_setup_effect = yes
+	}
+
+	# The lifestyle_scholar grounds the word in scripture, binding the converts closer.
+	option = {
+		name = pam_spread_tenet_option_scripture
+		trigger = {
+			has_trait = lifestyle_scholar
+			pam_spread_tenet_forbidden_selected_trigger = no
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_conviction_bond_effect = yes
+		add_scholar_trait_or_xp_effect = { VALUE = 15 }
+		pam_spread_tenet_piety_reward_effect = { PIETY = medium_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 1000
+		}
+	}
+
+	# Preach openly.
+	option = {
+		name = pam_spread_tenet_option_preach
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = no
+			NOT = { has_trait = lifestyle_scholar }
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		
+		pam_spread_tenet_piety_reward_effect = { PIETY = minor_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Whisper the forbidden truth to a trusted few.
+	option = {
+		name = pam_spread_tenet_option_forbidden
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = yes
+		}
+		add_internal_flag = dangerous
+		flavor = pam_spread_tenet_forbidden_flavor
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_forbidden_aftermath_effect = yes
+		
+		pam_spread_tenet_complete_intent_effect = yes
+		stress_impact = {
+			craven = minor_stress_impact_gain
+			paranoid = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 75
+				pam_ai_can_consider_forbidden_personal_tenet_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = craven
+					has_trait = paranoid
+				}
+			}
+		}
+	}
+
+	# Keep your own counsel.
+	option = {
+		name = pam_spread_tenet_option_decline
+		change_spiritual_fulfillment = miniscule_spiritual_fulfillment_value
+		stress_impact = {
+			zealous = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+##################################################
+# Between the Bouts
+# 0201
+##################################################
+
+# Preach your personal tenet to idle tournament spectators.
+pam_spread_tenet_events.0201 = {
+	type = activity_event
+	title = pam_spread_tenet_events.0201.t
+	desc = {
+		desc = pam_spread_tenet_events.0201.desc
+		triggered_desc = {
+			trigger = { pam_spread_tenet_forbidden_selected_trigger = yes }
+			desc = pam_spread_tenet_events.forbidden.desc
+		}
+	}
+	theme = tournament_grounds
+	left_portrait = {
+		character = root
+		animation = preaching_no_book
+	}
+	center_portrait = {
+		character = scope:pam_spread_listener_1
+		animation = interested
+		camera = camera_event_very_right_activity
+	}
+	right_portrait = {
+		character = scope:pam_spread_listener_2
+		animation = thinking_all
+	}
+	
+	lower_right_portrait = scope:pam_spread_listener_3
+
+	cooldown = { years = 1 }
+
+	trigger = {
+		has_activity_intent = spread_personal_tenet_intent
+		involved_activity ?= { has_activity_type = activity_tournament }
+		pam_spread_tenet_event_valid_trigger = yes
+	}
+
+	immediate = {
+		pam_spread_tenet_setup_effect = yes
+	}
+
+	# The lifestyle_scholar grounds the word in scripture, binding the converts closer.
+	option = {
+		name = pam_spread_tenet_option_scripture
+		trigger = {
+			has_trait = lifestyle_scholar
+			pam_spread_tenet_forbidden_selected_trigger = no
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_conviction_bond_effect = yes
+		add_scholar_trait_or_xp_effect = { VALUE = 15 }
+		pam_spread_tenet_piety_reward_effect = { PIETY = medium_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 1000
+		}
+	}
+
+	# Preach openly.
+	option = {
+		name = pam_spread_tenet_option_preach
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = no
+			NOT = { has_trait = lifestyle_scholar }
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		
+		pam_spread_tenet_piety_reward_effect = { PIETY = minor_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Whisper the forbidden truth to a trusted few.
+	option = {
+		name = pam_spread_tenet_option_forbidden
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = yes
+		}
+		add_internal_flag = dangerous
+		flavor = pam_spread_tenet_forbidden_flavor
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_forbidden_aftermath_effect = yes
+		
+		pam_spread_tenet_complete_intent_effect = yes
+		stress_impact = {
+			craven = minor_stress_impact_gain
+			paranoid = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 75
+				pam_ai_can_consider_forbidden_personal_tenet_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = craven
+					has_trait = paranoid
+				}
+			}
+		}
+	}
+
+	# Keep your own counsel.
+	option = {
+		name = pam_spread_tenet_option_decline
+		change_spiritual_fulfillment = miniscule_spiritual_fulfillment_value
+		stress_impact = {
+			zealous = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+##################################################
+# A Toast to Conviction
+# 0301
+##################################################
+
+# Preach your personal tenet among the wedding guests.
+pam_spread_tenet_events.0301 = {
+	type = activity_event
+	title = pam_spread_tenet_events.0301.t
+	desc = {
+		desc = pam_spread_tenet_events.0301.desc
+		triggered_desc = {
+			trigger = { pam_spread_tenet_forbidden_selected_trigger = yes }
+			desc = pam_spread_tenet_events.forbidden.desc
+		}
+	}
+	theme = marriage
+	left_portrait = {
+		character = root
+		animation = preaching_no_book
+	}
+	center_portrait = {
+		character = scope:pam_spread_listener_1
+		animation = interested
+		camera = camera_event_very_right_activity
+	}
+	right_portrait = {
+		character = scope:pam_spread_listener_2
+		animation = thinking_all
+	}
+	
+	lower_right_portrait = scope:pam_spread_listener_3
+
+	cooldown = { years = 1 }
+
+	trigger = {
+		has_activity_intent = spread_personal_tenet_intent
+		involved_activity ?= { has_activity_type = activity_wedding }
+		pam_spread_tenet_event_valid_trigger = yes
+	}
+
+	immediate = {
+		pam_spread_tenet_setup_effect = yes
+	}
+
+	# The lifestyle_scholar grounds the word in scripture, binding the converts closer.
+	option = {
+		name = pam_spread_tenet_option_scripture
+		trigger = {
+			has_trait = lifestyle_scholar
+			pam_spread_tenet_forbidden_selected_trigger = no
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_conviction_bond_effect = yes
+		add_scholar_trait_or_xp_effect = { VALUE = 15 }
+		pam_spread_tenet_piety_reward_effect = { PIETY = medium_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 1000
+		}
+	}
+
+	# Preach openly.
+	option = {
+		name = pam_spread_tenet_option_preach
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = no
+			NOT = { has_trait = lifestyle_scholar }
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		
+		pam_spread_tenet_piety_reward_effect = { PIETY = minor_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Whisper the forbidden truth to a trusted few.
+	option = {
+		name = pam_spread_tenet_option_forbidden
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = yes
+		}
+		add_internal_flag = dangerous
+		flavor = pam_spread_tenet_forbidden_flavor
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_forbidden_aftermath_effect = yes
+		
+		pam_spread_tenet_complete_intent_effect = yes
+		stress_impact = {
+			craven = minor_stress_impact_gain
+			paranoid = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 75
+				pam_ai_can_consider_forbidden_personal_tenet_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = craven
+					has_trait = paranoid
+				}
+			}
+		}
+	}
+
+	# Keep your own counsel.
+	option = {
+		name = pam_spread_tenet_option_decline
+		change_spiritual_fulfillment = miniscule_spiritual_fulfillment_value
+		stress_impact = {
+			zealous = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+##################################################
+# Words at the Wake
+# 0401
+##################################################
+
+# Preach your personal tenet to the mourners.
+pam_spread_tenet_events.0401 = {
+	type = activity_event
+	title = pam_spread_tenet_events.0401.t
+	desc = {
+		desc = pam_spread_tenet_events.0401.desc
+		triggered_desc = {
+			trigger = { pam_spread_tenet_forbidden_selected_trigger = yes }
+			desc = pam_spread_tenet_events.forbidden.desc
+		}
+	}
+	theme = funeral_activity
+	left_portrait = {
+		character = root
+		animation = preaching_no_book
+	}
+	center_portrait = {
+		character = scope:pam_spread_listener_1
+		animation = interested
+		camera = camera_event_very_right_activity
+	}
+	right_portrait = {
+		character = scope:pam_spread_listener_2
+		animation = thinking_all
+	}
+	
+	lower_right_portrait = scope:pam_spread_listener_3
+
+	cooldown = { years = 1 }
+
+	trigger = {
+		has_activity_intent = spread_personal_tenet_intent
+		involved_activity ?= { has_activity_type = activity_funeral }
+		pam_spread_tenet_event_valid_trigger = yes
+	}
+
+	immediate = {
+		pam_spread_tenet_setup_effect = yes
+	}
+
+	# The lifestyle_scholar grounds the word in scripture, binding the converts closer.
+	option = {
+		name = pam_spread_tenet_option_scripture
+		trigger = {
+			has_trait = lifestyle_scholar
+			pam_spread_tenet_forbidden_selected_trigger = no
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_conviction_bond_effect = yes
+		add_scholar_trait_or_xp_effect = { VALUE = 15 }
+		pam_spread_tenet_piety_reward_effect = { PIETY = medium_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 1000
+		}
+	}
+
+	# Preach openly.
+	option = {
+		name = pam_spread_tenet_option_preach
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = no
+			NOT = { has_trait = lifestyle_scholar }
+		}
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_piety_reward_effect = { PIETY = minor_piety_gain }
+		pam_spread_tenet_complete_intent_effect = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Whisper the forbidden truth to a trusted few.
+	option = {
+		name = pam_spread_tenet_option_forbidden
+		trigger = {
+			pam_spread_tenet_forbidden_selected_trigger = yes
+		}
+		add_internal_flag = dangerous
+		flavor = pam_spread_tenet_forbidden_flavor
+		pam_spread_tenet_convert_listeners_effect = yes
+		pam_spread_tenet_forbidden_aftermath_effect = yes
+		pam_spread_tenet_complete_intent_effect = yes
+		stress_impact = {
+			craven = minor_stress_impact_gain
+			paranoid = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 75
+				pam_ai_can_consider_forbidden_personal_tenet_trigger = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = craven
+					has_trait = paranoid
+				}
+			}
+		}
+	}
+
+	# Keep your own counsel.
+	option = {
+		name = pam_spread_tenet_option_decline
+		change_spiritual_fulfillment = miniscule_spiritual_fulfillment_value
+		stress_impact = {
+			zealous = miniscule_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}

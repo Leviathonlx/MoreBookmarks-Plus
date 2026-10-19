@@ -1,0 +1,80 @@
+﻿namespace = great_schism
+
+### EVENT LIST ####################################################################
+## 0001			The Great Schism divides Chalcedonianism (hidden)
+## 0002			The Great Schism happens (player notification)
+###################################################################################
+
+# Without PAM, 867 misses the 1054 history split, because faith history applies only at start
+# Fired from yearly_global_pulse to land on 1054.7.16
+great_schism.0001 = {
+	scope = none
+	hidden = yes
+
+	# The PAM path can still have split the Church between the yearly pulse and this event landing
+	trigger = {
+		NOT = { has_global_variable = pam_great_schism_decision_taken }
+	}
+
+	immediate = {
+		faith:christian_faith = { save_scope_as = chalcedonian_faith }
+		# Shared with the PAM path so both routes leave the same faiths, rites and religious heads behind
+		pam_apply_great_schism_creation_effect = yes
+		set_global_variable = pam_great_schism_decision_taken
+
+		faith:catholic = { save_scope_as = schism_western_faith }
+		faith:orthodox = { save_scope_as = schism_eastern_faith }
+		faith:catholic.religious_head ?= { save_scope_as = schism_western_head }
+		faith:orthodox.religious_head ?= { save_scope_as = schism_eastern_head }
+
+		every_player = {
+			limit = { faith.religion = religion:christianity_religion }
+			trigger_event = great_schism.0002
+		}
+	}
+}
+
+great_schism.0002 = {
+	type = character_event
+	window = big_event_window
+	title = pam_the_christian_church.0061.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { pam_schism_is_chalcedonian_trigger = no }
+				desc = pam_the_christian_church.0061.desc.bystander
+			}
+			desc = pam_the_christian_church.0061.desc
+		}
+	}
+	theme = christian
+	override_background = { reference = temple_scope }
+
+	left_portrait = {
+		trigger = { exists = scope:schism_western_head }
+		character = scope:schism_western_head
+		animation = condemnation
+		camera = camera_event_scheme_left
+	}
+	right_portrait = {
+		trigger = { exists = scope:schism_eastern_head }
+		character = scope:schism_eastern_head
+		animation = preaching
+		camera = camera_event_scheme_far_right
+	}
+
+	immediate = {
+		save_scope_as = background_temple_scope
+	}
+
+	option = {
+		name = {
+			trigger = { pam_schism_is_chalcedonian_trigger = no }
+			text = pam_the_christian_church.0061.a.bystander
+		}
+		name = {
+			trigger = { pam_schism_is_chalcedonian_trigger = yes }
+			text = pam_the_christian_church.0061.a
+		}
+	}
+}

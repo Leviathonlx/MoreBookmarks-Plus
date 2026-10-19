@@ -1,0 +1,1332 @@
+﻿namespace = pam_the_christian_church
+
+### EVENT LIST ####################################################################
+## 0001 - 0020	Internal Management Events
+## 0051 - 0057	Christian Church phase start (Fragile Unity, Saeculum Obscurum, Conversion, Reform, Investiture Crisis, Crusade, Concord)
+## 0060			Great Schism starts
+## 0061			Great Schism happens
+## 0062			Great Schism averted
+## 0063			Ruler crosses the schism divide
+## 0064			Great Schism progress threshold reached
+## 9980 - 9999	Integrity Validation Tools
+###################################################################################
+
+#######################################
+# Christian Church Maintenance Events #
+# By Laurence Kennedy                 #
+#######################################
+
+scripted_trigger pam_the_christian_church_0001_valid_ai_situation_char_trigger = {
+	# Basic checks.
+	is_ai = yes
+}
+
+pam_the_christian_church.0001 = {
+	hidden = yes
+	scope = situation
+
+	# If the situation ends, break the loop.
+	trigger = { exists = situation:the_christian_church }
+
+	immediate = {
+		# Cue this event up again for the next time around.
+		trigger_event = {
+			id = pam_the_christian_church.0001
+			years = { 3 5 }
+		}
+	}
+}
+
+########################################
+# Christian Church Phase Start Events  #
+# By Laurence Kennedy & Veronica Pazos #
+########################################
+scripted_effect save_christian_church_scopes_effect = {
+	character:145292 ?= { save_scope_as = st_peter } #St. Peter
+	character:saint_0002 ?= { save_scope_as = st_paul } #St. Paul
+	if = {
+		limit = {
+			situation:the_christian_church.var:tcc_main_power_faith ?= faith:christian_faith
+		}
+		faith:christian_faith = { save_scope_as = christianity }
+	}
+	else = {
+		situation:the_christian_church.var:tcc_main_power_faith ?= { save_scope_as = christianity }
+	}
+}
+ 
+pam_the_christian_church.0051 = { # Fragile Unity
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Instability" }
+	title = pam_the_christian_church.0051.t
+	desc = {
+		#body text
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_heretic_rulers
+							participant_group_type = christian_regular_heretic_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0051.desc.heretic_rulers 
+			}
+			desc = pam_the_christian_church.0051.desc.intro
+		}
+		#End text 
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_main_power_rulers
+							participant_group_type = christian_regular_main_power_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0051.desc.western 
+			}
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_secondary_powers_rulers
+							participant_group_type = christian_regular_secondary_powers_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0051.desc.eastern 
+			}
+		}
+		# Appended only when Fragile Unity follows a Temporal (crown) ruling at the Investiture Council.
+		triggered_desc = {
+			trigger = { situation:the_christian_church ?= { var:pam_investiture_last_outcome ?= flag:temporal } }
+			desc = pam_the_christian_church.0051.desc.investiture_temporal
+		}
+	}
+	theme = christian
+	cooldown = { days = 1 }
+	trigger = { # we need to prevent this from firing for all players when a new player joins in MP
+		is_ai = no
+		is_player_tutorial_character = no
+ 	}
+ 	
+	override_background = {
+		reference = pam_the_christian_church_instability 
+	}
+
+	widgets = {
+		widget = {
+ 			gui = "event_window_widget_situation_info_christian_church"
+ 			container = "dynamic_content_widget"
+ 			controller = situation_info
+ 			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock #AUDIO cue track
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}	
+		save_christian_church_scopes_effect = yes
+	}
+	option = {
+		name = {
+			trigger = {
+				has_religion = religion:christianity_religion
+			}
+			text = pam_the_christian_church.0051.a
+		}
+		name = {
+			trigger = {
+				NOT = {
+					has_religion = religion:christianity_religion
+				}
+			}
+			text = pam_the_christian_church.0051.b
+		}				
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+pam_the_christian_church.0052 = { # Saeculum Obscurum 
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Crisis" }
+	title = pam_the_christian_church.0052.t
+	desc = {
+		#body text
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_heretic_rulers
+							participant_group_type = christian_regular_heretic_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0052.desc.heretic_rulers 
+			}
+			desc = pam_the_christian_church.0052.desc.intro
+		}
+		#End text 
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_main_power_rulers
+							participant_group_type = christian_regular_main_power_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0052.desc.western 
+			}
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_secondary_powers_rulers
+							participant_group_type = christian_regular_secondary_powers_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0052.desc.eastern 
+			}
+		}
+	}
+	theme = christian
+	cooldown = { days = 1 }
+	trigger = { # we need to prevent this from firing for all players when a new player joins in MP
+		is_ai = no
+		is_player_tutorial_character = no
+ 	}
+ 	
+	override_background = {
+		reference = pam_the_christian_church_crisis 
+	}
+
+	widgets = {
+		widget = {
+ 			gui = "event_window_widget_situation_info_christian_church"
+ 			container = "dynamic_content_widget"
+ 			controller = situation_info
+ 			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock #AUDIO cue track
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}
+		save_christian_church_scopes_effect = yes
+	}
+	option = {
+		name = {
+			trigger = {
+				has_religion = religion:christianity_religion
+			}
+			text = pam_the_christian_church.0052.a
+		}
+		name = {
+			trigger = {
+				NOT = {
+					has_religion = religion:christianity_religion
+				}
+			}
+			text = pam_the_christian_church.0052.b
+		}				
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+pam_the_christian_church.0053 = { # Conversion Phase 
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_GoldenEra" }
+	title = pam_the_christian_church.0053.t
+	desc = {
+		#body text
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_heretic_rulers
+							participant_group_type = christian_regular_heretic_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0053.desc.heretic_rulers 
+			}
+			desc = pam_the_christian_church.0053.desc.intro
+		}
+		#End text 
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_main_power_rulers
+							participant_group_type = christian_regular_main_power_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0053.desc.western 
+			}
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_secondary_powers_rulers
+							participant_group_type = christian_regular_secondary_powers_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0053.desc.eastern 
+			}
+		}
+	}
+	theme = christian
+	cooldown = { days = 1 }
+	trigger = { # we need to prevent this from firing for all players when a new player joins in MP
+		is_ai = no
+		is_player_tutorial_character = no
+ 	}
+ 	
+	override_background = {
+		reference = pam_the_christian_church_zeal
+	}
+
+	widgets = {
+		widget = {
+ 			gui = "event_window_widget_situation_info_christian_church"
+ 			container = "dynamic_content_widget"
+ 			controller = situation_info
+ 			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock #AUDIO cue track
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}
+		save_christian_church_scopes_effect = yes
+	}
+	option = {
+		name = {
+			trigger = {
+				has_religion = religion:christianity_religion
+			}
+			text = pam_the_christian_church.0053.a
+		}
+		name = {
+			trigger = {
+				NOT = {
+					has_religion = religion:christianity_religion
+				}
+			}
+			text = pam_the_christian_church.0053.b
+		}				
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+pam_the_christian_church.0054 = { # Reform Phase 
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Instability" }
+	title = pam_the_christian_church.0054.t
+	desc = {
+		#body text
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_heretic_rulers
+							participant_group_type = christian_regular_heretic_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0054.desc.heretic_rulers 
+			}
+			triggered_desc = {
+				trigger = {
+					exists = scope:christianity.religious_head 
+				}
+				desc = pam_the_christian_church.0054.desc.intro.head
+			}
+			desc = pam_the_christian_church.0054.desc.intro.no_head
+		}
+		#End text 
+		first_valid = {	
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_main_power_rulers
+							participant_group_type = christian_regular_main_power_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0054.desc.western 
+			}
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_secondary_powers_rulers
+							participant_group_type = christian_regular_secondary_powers_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0054.desc.eastern 
+			}
+		}
+		# Appended only when Reform follows a Spiritual (Church) ruling at the Investiture Council.
+		triggered_desc = {
+			trigger = { situation:the_christian_church ?= { var:pam_investiture_last_outcome ?= flag:spiritual } }
+			desc = pam_the_christian_church.0054.desc.investiture_spiritual
+		}
+	}
+	theme = christian
+	cooldown = { days = 1 }
+	trigger = { # we need to prevent this from firing for all players when a new player joins in MP
+		is_ai = no
+		is_player_tutorial_character = no
+ 	}
+ 	
+	override_background = {
+		reference = pam_the_christian_church_instability 
+	}
+
+	widgets = {
+		widget = {
+ 			gui = "event_window_widget_situation_info_christian_church"
+ 			container = "dynamic_content_widget"
+ 			controller = situation_info
+ 			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock #AUDIO cue track
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}
+		save_christian_church_scopes_effect = yes
+	}
+	option = {
+		name = {
+			trigger = {
+				has_religion = religion:christianity_religion
+			}
+			text = pam_the_christian_church.0054.a
+		}
+		name = {
+			trigger = {
+				NOT = {
+					has_religion = religion:christianity_religion
+				}
+			}
+			text = pam_the_christian_church.0054.b
+		}				
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+pam_the_christian_church.0055 = { # Investiture Crisis
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Crisis" }
+	title = pam_the_christian_church.0055.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_heretic_rulers
+							participant_group_type = christian_regular_heretic_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0055.desc.heretic_rulers
+			}
+			triggered_desc = {
+				trigger = {
+					exists = scope:christianity.religious_head
+				}
+				desc = pam_the_christian_church.0055.desc.intro.head
+			}
+			desc = pam_the_christian_church.0055.desc.intro.no_head
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_main_power_rulers
+							participant_group_type = christian_regular_main_power_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0055.desc.western
+			}
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_secondary_powers_rulers
+							participant_group_type = christian_regular_secondary_powers_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0055.desc.eastern
+			}
+		}
+	}
+	theme = christian
+	cooldown = { days = 1 }
+	trigger = {
+		is_ai = no
+		is_player_tutorial_character = no
+	}
+
+	override_background = {
+		reference = pam_the_christian_church_crisis
+	}
+
+	widgets = {
+		widget = {
+			gui = "event_window_widget_situation_info_christian_church"
+			container = "dynamic_content_widget"
+			controller = situation_info
+			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock #AUDIO cue track
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}
+		save_christian_church_scopes_effect = yes
+	}
+	option = {
+		name = {
+			trigger = {
+				has_religion = religion:christianity_religion
+			}
+			text = pam_the_christian_church.0055.a
+		}
+		name = {
+			trigger = {
+				NOT = {
+					has_religion = religion:christianity_religion
+				}
+			}
+			text = pam_the_christian_church.0055.b
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+pam_the_christian_church.0056 = { # Crusade Phase
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_GoldenEra" }
+	title = pam_the_christian_church.0056.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_heretic_rulers
+							participant_group_type = christian_regular_heretic_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0056.desc.heretic_rulers
+			}
+			desc = pam_the_christian_church.0056.desc.intro
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_main_power_rulers
+							participant_group_type = christian_regular_main_power_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0056.desc.western
+			}
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_secondary_powers_rulers
+							participant_group_type = christian_regular_secondary_powers_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0056.desc.eastern
+			}
+		}
+	}
+	theme = christian
+	cooldown = { days = 1 }
+	trigger = {
+		is_ai = no
+		is_player_tutorial_character = no
+	}
+
+	override_background = {
+		reference = pam_the_christian_church_crusade
+	}
+
+	widgets = {
+		widget = {
+			gui = "event_window_widget_situation_info_christian_church"
+			container = "dynamic_content_widget"
+			controller = situation_info
+			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock #AUDIO cue track
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}
+		save_christian_church_scopes_effect = yes
+	}
+	option = {
+		name = {
+			trigger = {
+				has_religion = religion:christianity_religion
+			}
+			text = pam_the_christian_church.0056.a
+		}
+		name = {
+			trigger = {
+				NOT = {
+					has_religion = religion:christianity_religion
+				}
+			}
+			text = pam_the_christian_church.0056.b
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+pam_the_christian_church.0057 = { # Concord
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Stability" }
+	title = pam_the_christian_church.0057.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_heretic_rulers
+							participant_group_type = christian_regular_heretic_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0057.desc.heretic_rulers
+			}
+			triggered_desc = {
+				trigger = {
+					exists = scope:christianity.religious_head
+				}
+				desc = pam_the_christian_church.0057.desc.intro.head
+			}
+			desc = pam_the_christian_church.0057.desc.intro.no_head
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_main_power_rulers
+							participant_group_type = christian_regular_main_power_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0057.desc.western
+			}
+			triggered_desc = {
+				trigger = {
+					top_participant_group:the_christian_church = {
+						OR = {
+							participant_group_type = christian_clerical_secondary_powers_rulers
+							participant_group_type = christian_regular_secondary_powers_rulers
+						}
+					}
+				}
+				desc = pam_the_christian_church.0057.desc.eastern
+			}
+		}
+	}
+	theme = christian
+	cooldown = { days = 1 }
+	trigger = {
+		is_ai = no
+		is_player_tutorial_character = no
+	}
+
+	override_background = {
+		reference = pam_the_christian_church_stability
+	}
+
+	widgets = {
+		widget = {
+			gui = "event_window_widget_situation_info_christian_church"
+			container = "dynamic_content_widget"
+			controller = situation_info
+			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock #AUDIO cue track
+		save_scope_value_as = {
+			name = start
+			value = yes
+		}
+		save_christian_church_scopes_effect = yes
+	}
+	option = {
+		name = {
+			trigger = {
+				has_religion = religion:christianity_religion
+			}
+			text = pam_the_christian_church.0057.a
+		}
+		name = {
+			trigger = {
+				NOT = {
+					has_religion = religion:christianity_religion
+				}
+			}
+			text = pam_the_christian_church.0057.b
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+# Fired from situation on_monthly at timer expiry
+# We exclude the player Head of Faith, who gets 0050 here and 0059 when it convenes
+pam_the_christian_church.0058 = { # Investiture Council is at hand
+	type = character_event
+	title = pam_the_christian_church.0058.t
+	desc = pam_the_christian_church.0058.desc
+	theme = christian
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	cooldown = { days = 1 }
+
+	trigger = {
+		# Wrapped so the trigger breakdown has a loc key (the bare comparison has no third-person loc).
+		custom_tooltip = {
+			text = pam_the_christian_church_not_hof_trigger_tt
+			NOT = { faith.religious_head = this }
+		}
+	}
+
+	option = {
+		name = pam_the_christian_church.0058.a
+		custom_tooltip = pam_investiture_upcoming_council_tt
+	}
+}
+
+# Convening notice from activity on_start, including the player Head of Faith
+# 0058 and 0050 are the nomination events
+pam_the_christian_church.0059 = { # Investiture Council convenes
+	type = character_event
+	title = pam_the_christian_church.0059.t
+	desc = {
+		first_valid = {
+			# Name the host and venue when the on_start scopes made it through; generic wording otherwise.
+			triggered_desc = {
+				trigger = {
+					exists = scope:investiture_convene_host
+					exists = scope:investiture_convene_location
+				}
+				desc = pam_the_christian_church.0059.desc.located
+			}
+			desc = pam_the_christian_church.0059.desc
+		}
+	}
+	theme = christian
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		trigger = { exists = scope:investiture_convene_host }
+		character = scope:investiture_convene_host
+		animation = personality_zealous
+	}
+	cooldown = { days = 1 }
+
+	option = {
+		name = pam_the_christian_church.0059.a
+	}
+}
+
+########################################
+# The Great Schism Starts              #
+########################################
+
+pam_the_christian_church.0060 = {
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Crisis" }
+	title = pam_the_christian_church.0060.t
+	desc = pam_the_christian_church.0060.desc
+	theme = christian
+
+	override_background = {
+		reference = pam_the_christian_church_crisis
+	}
+
+	widgets = {
+		widget = {
+			gui = "event_window_widget_situation_info_christian_church"
+			container = "dynamic_content_widget"
+			controller = situation_info
+			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock
+		save_christian_church_scopes_effect = yes
+	}
+
+	# Support the mainline rite
+	option = {
+		name = pam_the_christian_church.0060.a
+		trigger = {
+			NOT = { scope:schism_competitor_rite.head_of_rite ?= root }
+		}
+		custom_tooltip = pam_the_christian_church.0060.a.tt
+		set_variable = {
+			name = pam_schism_stance
+			value = flag:mainline
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 100
+				OR = {
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_western_christian_faith }
+						scope:schism_mainline_rite = rite:roman_rite
+					}
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_eastern_christian_faith }
+						scope:schism_mainline_rite = rite:byzantine_rite
+					}
+					AND = {
+						NOR = {
+							rite = { rite_has_doctrine = special_doctrine_is_western_christian_faith }
+							rite = { rite_has_doctrine = special_doctrine_is_eastern_christian_faith }
+						}
+						top_participant_group:the_christian_church ?= {
+							OR = {
+								participant_group_type = christian_clerical_main_power_rulers
+								participant_group_type = christian_regular_main_power_rulers
+							}
+						}
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_western_christian_faith }
+						scope:schism_mainline_rite = rite:byzantine_rite
+					}
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_eastern_christian_faith }
+						scope:schism_mainline_rite = rite:roman_rite
+					}
+				}
+			}
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+
+	# Support the competitor rite
+	option = {
+		name = pam_the_christian_church.0060.b
+		trigger = {
+			NOT = { scope:schism_mainline_rite.head_of_rite ?= root }
+		}
+		custom_tooltip = pam_the_christian_church.0060.b.tt
+		set_variable = {
+			name = pam_schism_stance
+			value = flag:competitor
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 100
+				OR = {
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_western_christian_faith }
+						scope:schism_competitor_rite = rite:roman_rite
+					}
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_eastern_christian_faith }
+						scope:schism_competitor_rite = rite:byzantine_rite
+					}
+					AND = {
+						NOR = {
+							rite = { rite_has_doctrine = special_doctrine_is_western_christian_faith }
+							rite = { rite_has_doctrine = special_doctrine_is_eastern_christian_faith }
+						}
+						top_participant_group:the_christian_church ?= {
+							OR = {
+								participant_group_type = christian_clerical_secondary_powers_rulers
+								participant_group_type = christian_regular_secondary_powers_rulers
+							}
+						}
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_western_christian_faith }
+						scope:schism_competitor_rite = rite:byzantine_rite
+					}
+					AND = {
+						rite = { rite_has_doctrine = special_doctrine_is_eastern_christian_faith }
+						scope:schism_competitor_rite = rite:roman_rite
+					}
+				}
+			}
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+
+	# Support no schism
+	option = {
+		name = pam_the_christian_church.0060.c
+		custom_tooltip = pam_the_christian_church.0060.c.tt
+		set_variable = {
+			name = pam_schism_stance
+			value = flag:no_schism
+		}
+		ai_chance = { base = 0 }
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+########################################
+# The Great Schism Happens             #
+########################################
+
+pam_the_christian_church.0061 = {
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Crisis" }
+	title = pam_the_christian_church.0061.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { pam_schism_is_chalcedonian_trigger = no }
+				desc = pam_the_christian_church.0061.desc.bystander
+			}
+			desc = pam_the_christian_church.0061.desc
+		}
+	}
+	theme = christian
+
+	override_background = {
+		reference = pam_the_christian_church_crisis
+	}
+
+	widgets = {
+		widget = {
+			gui = "event_window_widget_situation_info_christian_church"
+			container = "dynamic_content_widget"
+			controller = situation_info
+			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock
+		if = {
+			limit = {
+				NOR = {
+					exists = scope:schism_western_faith
+					exists = scope:schism_eastern_faith
+				}
+			}
+			faith:catholic = { save_scope_as = schism_western_faith }
+			faith:orthodox = { save_scope_as = schism_eastern_faith }
+		}
+		save_christian_church_scopes_effect = yes
+	}
+
+	option = {
+		name = {
+			trigger = { pam_schism_is_chalcedonian_trigger = no }
+			text = pam_the_christian_church.0061.a.bystander
+		}
+		name = {
+			trigger = {
+				pam_schism_is_chalcedonian_trigger = yes
+				var:pam_schism_stance ?= flag:no_schism
+			}
+			text = pam_the_christian_church.0061.a.shame
+		}
+		name = {
+			trigger = {
+				pam_schism_is_chalcedonian_trigger = yes
+				NOT = { var:pam_schism_stance ?= flag:no_schism }
+			}
+			text = pam_the_christian_church.0061.a
+		}
+		show_as_tooltip = {
+			pam_apply_great_schism_creation_effect = yes
+		}
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+########################################
+# The Great Schism Averted             #
+########################################
+
+pam_the_christian_church.0062 = {
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Stability" }
+	title = pam_the_christian_church.0062.t
+	desc = pam_the_christian_church.0062.desc
+	theme = christian
+
+	override_background = {
+		reference = pam_the_christian_church_stability
+	}
+
+	widgets = {
+		widget = {
+			gui = "event_window_widget_situation_info_christian_church"
+			container = "dynamic_content_widget"
+			controller = situation_info
+			setup_scope = { situation:the_christian_church = { save_scope_as = situation } }
+		}
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock
+		save_christian_church_scopes_effect = yes
+	}
+
+	option = {
+		name = {
+			trigger = { pam_schism_can_seat_head_of_faith_trigger = yes }
+			text = pam_the_christian_church.0062.a.peacemaker
+		}
+		name = {
+			trigger = { pam_schism_can_seat_head_of_faith_trigger = no }
+			text = pam_the_christian_church.0062.a
+		}
+		add_internal_flag = dangerous
+		show_as_tooltip = { pam_prevent_great_schism_effect = yes }
+		if = {
+			limit = { pam_schism_can_seat_head_of_faith_trigger = yes }
+			pam_schism_leave_faith_headless_effect = yes
+		}
+		ai_chance = { base = 0 }
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+	
+	option = {
+		name = {
+			trigger = { scope:new_head_of_faith ?= this }
+			text = pam_the_christian_church.0062.b.self
+		}
+		name = {
+			trigger = { NOT = { scope:new_head_of_faith ?= this } }
+			text = pam_the_christian_church.0062.b
+		}
+		show_as_tooltip = { pam_prevent_great_schism_effect = yes }
+		if = {
+			limit = { pam_schism_can_seat_head_of_faith_trigger = yes }
+			pam_schism_seat_head_of_faith_effect = yes
+		}
+		ai_chance = { base = 50 }
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+
+########################################
+# Crossing the Schism Divide           #
+########################################
+
+# Ruler crossed between schism-pair rites; someone nearby kept the old rite.
+# From pam_schism_rite_conversion_dissent_effect; scope:pam_dissent_rite is the rite left.
+pam_the_christian_church.0063 = {
+	type = character_event
+	title = pam_the_christian_church.0063.t
+	desc = pam_the_christian_church.0063.desc
+	theme = faith
+
+	left_portrait = {
+		character = root
+		animation = contemplating
+	}
+	right_portrait = {
+		character = scope:schism_dissenter
+		animation = disapproval
+	}
+
+	trigger = {
+		exists = scope:pam_dissent_rite
+		is_landed = yes
+		rite != scope:pam_dissent_rite
+		pam_schism_rite_in_pair_trigger = { RITE = root.rite }
+		pam_great_schism_progress_can_change_trigger = yes
+	}
+
+	immediate = {
+		pam_change_great_schism_progress_effect = {
+			VALUE = pam_great_schism_progress_rite_conversion_value
+			TT = pam_great_schism_progress_rite_conversion_tt
+		}
+		pam_save_schism_rite_dissenter_effect = { RITE = scope:pam_dissent_rite }
+	}
+
+	# Mend it - reassure them their rite still has a place
+	option = {
+		name = pam_the_christian_church.0063.a
+		scope:schism_dissenter = {
+			add_opinion = {
+				modifier = fp2_reassured_faith_opinion
+				target = root
+			}
+		}
+		add_piety = medium_piety_gain
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				OR = {
+					has_trait = compassionate
+					has_trait = forgiving
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_trait = callous
+					has_trait = sadistic
+				}
+			}
+		}
+	}
+
+	# Bring them over - argue them into the new rite
+	option = {
+		name = pam_the_christian_church.0063.b
+		duel = {
+			skill = learning
+			value = high_skill_rating
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				desc = pam_the_christian_church.0063.b.success
+				send_interface_toast = {
+					title = pam_the_christian_church.0063.b.success
+					left_icon = scope:schism_dissenter
+					scope:schism_dissenter = {
+						# Stop their on_rite_change from chaining another confrontation
+						add_character_flag = {
+							flag = pam_schism_rite_conversion_dissent_recently
+							years = 10
+						}
+						set_character_rite = root.rite
+					}
+					change_spiritual_fulfillment = medium_spiritual_fulfillment_value
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				desc = pam_the_christian_church.0063.b.failure
+				send_interface_toast = {
+					title = pam_the_christian_church.0063.b.failure
+					left_icon = scope:schism_dissenter
+					scope:schism_dissenter = {
+						add_opinion = {
+							modifier = unwanted_religious_conversion_opinion
+							target = root
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 50
+				OR = {
+					has_trait = zealous
+					has_trait = theologian
+				}
+			}
+			modifier = {
+				factor = 0
+				learning < average_skill_rating
+			}
+		}
+	}
+
+	# Dismiss their concerns
+	option = {
+		name = pam_the_christian_church.0063.c
+		change_spiritual_fulfillment = minor_spiritual_fulfillment_value
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 50
+				OR = {
+					has_trait = callous
+					has_trait = cynical
+				}
+			}
+			modifier = {
+				factor = 0
+				has_trait = compassionate
+			}
+		}
+	}
+
+	after = {
+		scope:schism_dissenter = {
+			silent_disappearance_ai_if_created_effect = yes
+		}
+	}
+}
+
+########################################
+# Great Schism Progress Threshold      #
+########################################
+
+# This fires once at the grievance threshold, and the next Crisis end or entry lands the Schism
+# schism_mainline_head / schism_competitor_head = Pope / Patriarch (follows mainline)
+pam_the_christian_church.0064 = {
+	type = character_event
+	queue_icon = "gfx/interface/icons/situation_types/christian_church.dds"
+	queue_name = the_christian_church
+	override_sound = { reference = "event:/DLC/CE3/SFX/Stingers/ce3_mx_sting_ChristianSituation_Crisis" }
+	title = pam_the_christian_church.0064.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:schism_mainline_head ?= this
+				}
+				desc = pam_the_christian_church.0064.desc.opening.self_mainline
+			}
+			triggered_desc = {
+				trigger = {
+					scope:schism_competitor_head ?= this
+				}
+				desc = pam_the_christian_church.0064.desc.opening.self_competitor
+			}
+			desc = pam_the_christian_church.0064.desc.opening
+		}
+		desc = pam_the_christian_church.0064.desc
+	}
+	theme = christian
+
+	left_portrait = {
+		trigger = { exists = scope:schism_mainline_head }
+		character = scope:schism_mainline_head
+		animation = personality_zealous
+	}
+	right_portrait = {
+		trigger = { exists = scope:schism_competitor_head }
+		character = scope:schism_competitor_head
+		animation = disapproval
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_the_shepherds_flock
+		save_christian_church_scopes_effect = yes
+		situation:the_christian_church = {
+			save_scope_as = situation
+			if = {
+				limit = { situation_top_has_catalyst = catalyst_the_christian_church_great_schism }
+				trigger_situation_catalyst = catalyst_the_christian_church_great_schism
+			}
+		}
+	}
+
+	option = {
+		name = pam_the_christian_church.0064.a
+		custom_tooltip = pam_the_christian_church.0064.a.tt
+		custom_tooltip = GREAT_SCHISM_PROGRESS_EFFECT_TT
+		clicksound = "event:/DLC/FP2/SFX/UI/fp2_struggle_start_select"
+	}
+}
+

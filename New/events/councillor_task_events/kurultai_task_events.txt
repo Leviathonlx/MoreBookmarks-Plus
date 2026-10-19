@@ -1,0 +1,1600 @@
+﻿#Events related to the Kurultai tasks
+### Due to how randomness works, and the re-use of scripted effects, all of these will be split into two events per side-effect. One for checking triggers and setting up randomness, and one for actually informing the player. If you run the randomness and the notification in the same immediate block, the player will basically be lied to, as the effect will never truly line up with the message given
+
+namespace = kurultai_task
+
+# Scripted Effects used throughout the doc
+scripted_effect kurultai_task_effect = {
+	### For testing purposes
+	random_councillor = {
+		limit = {
+			kurultai_task_$ID$_character_trigger = yes
+		}
+		save_scope_as = councillor
+	}
+
+	set_variable = {
+		name = had_kurultai_task_side_effect
+		value = yes
+		days = kurultai_task_side_effect_cooldown
+	}
+
+	kurultai_task_$ID$_effect = yes
+}
+
+scripted_effect kurultai_positive_message = {
+	send_interface_message = {
+		type = msg_kurultai_task_good
+		title = kurultai_task.$ID$.notification
+		desc = kurultai_task.$ID$.desc
+
+		left_icon = scope:councillor
+
+		kurultai_task_$ID$_effect = yes
+	}
+}
+
+scripted_effect kurultai_positive_message_with_county = {
+	send_interface_message = {
+		type = msg_kurultai_task_good
+		title = kurultai_task.$ID$.notification
+		desc = kurultai_task.$ID$.desc
+
+		left_icon = scope:councillor
+		right_icon = scope:county
+
+		kurultai_task_$ID$_effect = yes
+	}
+}
+
+scripted_effect kurultai_negative_message = {
+	send_interface_message = {
+		type = msg_kurultai_task_bad
+		title = kurultai_task.$ID$.notification
+		desc = kurultai_task.$ID$.desc
+
+		left_icon = scope:councillor
+
+		kurultai_task_$ID$_effect = yes
+	}
+}
+
+scripted_effect kurultai_negative_message_with_county = {
+	send_interface_message = {
+		type = msg_kurultai_task_bad
+		title = kurultai_task.$ID$.notification
+		desc = kurultai_task.$ID$.desc
+
+		left_icon = scope:councillor
+		right_icon = scope:county
+
+		kurultai_task_$ID$_effect = yes
+	}
+}
+
+### Kurultai Helping Herd Side Effects
+scripted_trigger kurultai_character_trigger_help_herder = {
+	is_kurultai_trigger = yes
+	OR = {
+		is_performing_council_task = task_kurultai_default_1
+		is_performing_council_task = task_kurultai_default_2
+		is_performing_council_task = task_kurultai_default_3
+		is_performing_council_task = task_kurultai_default_4
+	}
+}
+
+## Positive
+# Gain Herd
+scripted_effect kurultai_task_1000_effect = {
+	save_scope_value_as = {
+		name = change_herd_value
+		value = {
+			integer_range = {
+				min = 1000
+				max = 2000
+			}
+		}
+	}
+	
+	trigger_event = kurultai_task.1001
+}
+
+scripted_trigger kurultai_task_1000_character_trigger = {
+	kurultai_character_trigger_help_herder = yes
+	diplomacy >= low_skill_rating
+}
+
+kurultai_task.1000 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1000_character_trigger = yes }
+		domicile = { herd < max_herd }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = diplomacy
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1000 }
+	}
+}
+
+scripted_effect kurultai_task_1001_effect = {
+	domicile = { change_herd = scope:change_herd_value }
+}
+
+kurultai_task.1001 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1001 }
+	}
+}
+
+# Gain a small bonus army of horde riders
+scripted_effect kurultai_task_1005_effect = {
+	trigger_event = kurultai_task.1006
+}
+
+scripted_trigger kurultai_task_1005_character_trigger = {
+	kurultai_character_trigger_help_herder = yes
+	diplomacy >= high_skill_rating
+}
+
+kurultai_task.1005 = {
+	hidden = yes
+
+	trigger = {
+		exists = root.capital_province
+		scope:councillor = { kurultai_task_1005_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = diplomacy
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1005 }
+	}
+}
+
+scripted_effect kurultai_task_1006_effect = {
+	spawn_army = {
+		name = kurultai_herder_army
+		men_at_arms = {
+			type = nomadic_riders
+			men = 100
+		}
+		men_at_arms = {
+			type = nomadic_riders
+			men = 100
+		}
+		men_at_arms = {
+			type = nomadic_riders
+			men = 100
+		}
+		men_at_arms = {
+			type = nomadic_riders
+			men = 100
+		}
+		men_at_arms = {
+			type = nomadic_riders
+			men = 100
+		}
+		location = root.capital_province
+		inheritable = no
+		war_keep_on_attacker_victory = yes
+	}
+}
+
+kurultai_task.1006 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1006 }
+	}
+}
+
+## Negative
+# Lose Herd
+scripted_effect kurultai_task_1050_effect = {
+	save_scope_value_as = {
+		name = change_herd_value
+		value = {
+			integer_range = {
+				min = -2000
+				max = -1000
+			}
+		}
+	}
+	
+	trigger_event = kurultai_task.1051
+}
+
+scripted_trigger kurultai_task_1050_character_trigger = {
+	kurultai_character_trigger_help_herder = yes
+	diplomacy <= very_high_skill_rating
+}
+
+kurultai_task.1050 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1050_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = diplomacy
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1050 }
+	}
+}
+
+scripted_effect kurultai_task_1051_effect = {
+	domicile = { change_herd = scope:change_herd_value }
+}
+
+kurultai_task.1051 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message = { ID = 1051 }
+	}
+}
+
+# Lose Control
+scripted_effect kurultai_task_1055_effect = {
+	random_held_county = {
+		limit = {
+			county_control >= 15
+		}
+		save_scope_as = control_loss
+	}
+	save_scope_value_as = {
+		name = control_loss_value
+		value = {
+			integer_range = {
+				min = -30
+				max = -10
+			}
+			divide = 5
+			ceiling = yes
+			multiply = 5
+		}
+	}
+	
+	trigger_event = kurultai_task.1056
+}
+
+scripted_trigger kurultai_task_1055_character_trigger = {
+	kurultai_character_trigger_help_herder = yes
+	diplomacy <= decent_skill_rating
+}
+
+kurultai_task.1055 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1055_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = diplomacy
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1055 }
+	}
+}
+
+scripted_effect kurultai_task_1056_effect = {
+	scope:control_loss = { change_county_control = scope:control_loss_value }
+}
+
+kurultai_task.1056 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message_with_county = { ID = 1056 }
+	}
+}
+
+### Kurultai Manage Fertility Side Effects
+scripted_trigger kurultai_character_trigger_manage_fertility = {
+	is_kurultai_trigger = yes
+	OR = {
+		is_performing_council_task = task_kurultai_fertility_1
+		is_performing_council_task = task_kurultai_fertility_2
+		is_performing_council_task = task_kurultai_fertility_3
+		is_performing_council_task = task_kurultai_fertility_4
+	}
+}
+
+## Positive
+# Increase Fertility
+scripted_effect kurultai_task_1100_effect = {
+	save_scope_value_as = {
+		name = change_fertility_value
+		value = {
+			integer_range = {
+				min = 2
+				max = 8
+			}
+		}
+	}
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	
+	trigger_event = kurultai_task.1101
+}
+
+scripted_trigger kurultai_task_1100_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	stewardship >= low_skill_rating
+}
+
+kurultai_task.1100 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1100_character_trigger = yes 
+			councillor_task_target.county = { county_fertility < 95 }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1100 }
+	}
+}
+
+scripted_effect kurultai_task_1101_effect = {
+	scope:county = { change_county_fertility = scope:change_fertility_value }
+}
+
+kurultai_task.1101 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message_with_county = { ID = 1101 }
+	}
+}
+
+# County Opinion
+scripted_effect kurultai_task_1105_effect = {
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	trigger_event = kurultai_task.1106
+}
+
+scripted_trigger kurultai_task_1105_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	stewardship >= high_skill_rating
+}
+
+kurultai_task.1105 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1105_character_trigger = yes 
+			councillor_task_target.county = {
+				NOR = {
+					has_county_modifier = kurultai_task_increase_county_opinion_modifier
+					has_county_modifier = kurultai_task_decrease_county_opinion_modifier
+				}
+			}	
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1105 }
+	}
+}
+
+scripted_effect kurultai_task_1106_effect = {
+	scope:county = {
+		add_county_modifier = {
+			modifier = kurultai_task_increase_county_opinion_modifier
+			years = 5
+		}
+	}
+}
+
+kurultai_task.1106 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message_with_county = { ID = 1106 }
+	}
+}
+
+## Negative
+# Reduce Fertility
+scripted_effect kurultai_task_1150_effect = {
+	save_scope_value_as = {
+		name = change_fertility_value
+		value = {
+			integer_range = {
+				min = -5
+				max = -1
+			}
+		}
+	}
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	
+	trigger_event = kurultai_task.1151
+}
+
+scripted_trigger kurultai_task_1150_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	stewardship <= very_high_skill_rating
+}
+
+kurultai_task.1150 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1150_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1150 }
+	}
+}
+
+scripted_effect kurultai_task_1151_effect = {
+	scope:county = { change_county_fertility = scope:change_fertility_value }
+}
+
+kurultai_task.1151 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message_with_county = { ID = 1151 }
+	}
+}
+
+# Lose Prestige
+scripted_effect kurultai_task_1155_effect = {
+	save_scope_value_as = {
+		name = change_prestige_value
+		value = {
+			integer_range = {
+				min = -250
+				max = -50
+			}
+			divide = 50
+			ceiling = yes
+			multiply = 50
+		}
+	}
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	
+	trigger_event = kurultai_task.1156
+}
+
+scripted_trigger kurultai_task_1155_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	stewardship <= decent_skill_rating
+}
+
+kurultai_task.1155 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1155_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1155 }
+	}
+}
+
+scripted_effect kurultai_task_1156_effect = {
+	add_prestige = scope:change_prestige_value
+}
+
+kurultai_task.1156 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message = { ID = 1156 }
+	}
+}
+
+### Kurultai Aid Court Astrologer Side Effects
+scripted_trigger kurultai_character_trigger_aid_court_astrologer = {
+	is_kurultai_trigger = yes
+	OR = {
+		is_performing_council_task = task_kurultai_court_astrologer_1
+		is_performing_council_task = task_kurultai_court_astrologer_2
+		is_performing_council_task = task_kurultai_court_astrologer_3
+		is_performing_council_task = task_kurultai_court_astrologer_4
+	}
+	liege_or_court_owner ?= {
+		employs_court_position = court_astrologer_court_position
+	}
+}
+
+## Positive
+# Gain Piety
+scripted_effect kurultai_task_1200_effect = {
+	save_scope_value_as = {
+		name = change_piety_value
+		value = {
+			integer_range = {
+				min = 50
+				max = 250
+			}
+			divide = 50
+			ceiling = yes
+			multiply = 50
+		}
+	}
+
+	court_position:court_astrologer_court_position = {
+		save_scope_as = astrologer
+	}
+	
+	trigger_event = kurultai_task.1201
+}
+
+scripted_trigger kurultai_task_1200_character_trigger = {
+	kurultai_character_trigger_aid_court_astrologer = yes
+	learning >= low_skill_rating
+}
+
+kurultai_task.1200 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1200_character_trigger = yes 
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1200 }
+	}
+}
+
+scripted_effect kurultai_task_1201_effect = {
+	add_piety = scope:change_piety_value
+}
+
+kurultai_task.1201 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1201 }
+	}
+}
+
+# Gain Opinion with Court Astrologer
+scripted_effect kurultai_task_1205_effect = {
+	save_scope_value_as = {
+		name = change_opinion_value
+		value = {
+			integer_range = {
+				min = 10
+				max = 25
+			}
+			divide = 5
+			ceiling = top
+			multiply = 5
+		}
+	}
+
+	court_position:court_astrologer_court_position = {
+		save_scope_as = astrologer
+	}
+	
+	trigger_event = kurultai_task.1206
+}
+
+scripted_trigger kurultai_task_1205_character_trigger = {
+	kurultai_character_trigger_aid_court_astrologer = yes
+	learning >= high_skill_rating
+}
+
+kurultai_task.1205 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1205_character_trigger = yes 
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1205 }
+	}
+}
+
+scripted_effect kurultai_task_1206_effect = {
+	scope:astrologer = {
+		add_opinion = {
+			modifier = friendliness_opinion
+			target = root
+			opinion = scope:change_opinion_value
+		}
+	}
+}
+
+kurultai_task.1206 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1206 }
+	}
+}
+
+## Negative
+# Lose Piety
+scripted_effect kurultai_task_1250_effect = {
+	save_scope_value_as = {
+		name = change_piety_value
+		value = {
+			integer_range = {
+				min = -250
+				max = -50
+			}
+			divide = 50
+			ceiling = yes
+			multiply = 50
+		}
+	}
+
+	court_position:court_astrologer_court_position = {
+		save_scope_as = astrologer
+	}
+	
+	trigger_event = kurultai_task.1251
+}
+
+scripted_trigger kurultai_task_1250_character_trigger = {
+	kurultai_character_trigger_aid_court_astrologer = yes
+	learning <= very_high_skill_rating
+}
+
+kurultai_task.1250 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1250_character_trigger = yes 
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1250 }
+	}
+}
+
+scripted_effect kurultai_task_1251_effect = {
+	add_piety = scope:change_piety_value
+}
+
+kurultai_task.1251 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1251 }
+	}
+}
+
+# Lose Opinion with Court Astrologer
+scripted_effect kurultai_task_1255_effect = {
+	save_scope_value_as = {
+		name = change_opinion_value
+		value = {
+			integer_range = {
+				min = -25
+				max = -10
+			}
+			divide = 5
+			ceiling = top
+			multiply = 5
+		}
+	}
+
+	court_position:court_astrologer_court_position = {
+		save_scope_as = astrologer
+	}
+	
+	trigger_event = kurultai_task.1256
+}
+
+scripted_trigger kurultai_task_1255_character_trigger = {
+	kurultai_character_trigger_aid_court_astrologer = yes
+	learning <= decent_skill_rating
+}
+
+kurultai_task.1255 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1255_character_trigger = yes 
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1255 }
+	}
+}
+
+scripted_effect kurultai_task_1256_effect = {
+	scope:astrologer = {
+		add_opinion = {
+			modifier = angry_opinion
+			target = root
+			opinion = scope:change_opinion_value
+		}
+	}
+}
+
+kurultai_task.1256 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1256 }
+	}
+}
+
+### Kurultai Exploit Area Side Effects
+scripted_trigger kurultai_character_trigger_exploit_area = {
+	is_kurultai_trigger = yes
+	OR = {
+		is_performing_council_task = task_kurultai_exploit_area_1
+		is_performing_council_task = task_kurultai_exploit_area_2
+		is_performing_council_task = task_kurultai_exploit_area_3
+		is_performing_council_task = task_kurultai_exploit_area_4
+	}
+}
+
+## Positive
+# Gain Gold
+scripted_effect kurultai_task_1300_effect = {
+	save_scope_value_as = {
+		name = change_gold_value
+		value = {
+			value = monthly_character_income
+			multiply = {
+				integer_range = {
+					min = 2
+					max = 4
+				}
+			}
+		}
+	}
+
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	
+	trigger_event = kurultai_task.1301
+}
+
+scripted_trigger kurultai_task_1300_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	stewardship >= low_skill_rating
+}
+
+kurultai_task.1300 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1300_character_trigger = yes 
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1300 }
+	}
+}
+
+scripted_effect kurultai_task_1301_effect = {
+	add_short_term_gold = scope:change_gold_value
+}
+
+kurultai_task.1301 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message_with_county = { ID = 1301 }
+	}
+}
+
+# Gain Dread
+scripted_effect kurultai_task_1305_effect = {
+	save_scope_value_as = {
+		name = change_dread_value
+		value = {
+			integer_range = {
+				min = 5
+				max = 15
+			}
+		}
+	}
+
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	
+	trigger_event = kurultai_task.1306
+}
+
+scripted_trigger kurultai_task_1305_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	stewardship >= high_skill_rating
+}
+
+kurultai_task.1305 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1305_character_trigger = yes 
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1305 }
+	}
+}
+
+scripted_effect kurultai_task_1306_effect = {
+	add_dread = scope:change_dread_value
+}
+
+kurultai_task.1306 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message_with_county = { ID = 1306 }
+	}
+}
+
+## Negative
+# Lose Fertility
+scripted_effect kurultai_task_1350_effect = {
+	save_scope_value_as = {
+		name = change_fertility_value
+		value = {
+			integer_range = {
+				min = -5
+				max = -1
+			}
+		}
+	}
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	
+	trigger_event = kurultai_task.1351
+}
+
+scripted_trigger kurultai_task_1350_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	diplomacy <= very_high_skill_rating
+}
+
+kurultai_task.1350 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1150_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1350 }
+	}
+}
+
+scripted_effect kurultai_task_1351_effect = {
+	scope:county = { change_county_fertility = scope:change_fertility_value }
+}
+
+kurultai_task.1351 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message_with_county = { ID = 1351 }
+	}
+}
+
+# County Opinion Loss
+scripted_effect kurultai_task_1355_effect = {
+	scope:councillor.councillor_task_target.county = { save_scope_as = county }
+	trigger_event = kurultai_task.1356
+}
+
+scripted_trigger kurultai_task_1355_character_trigger = {
+	kurultai_character_trigger_manage_fertility = yes
+	stewardship <= decent_skill_rating
+}
+
+kurultai_task.1355 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1355_character_trigger = yes 
+			councillor_task_target.county = {
+				NOR = {
+					has_county_modifier = kurultai_task_increase_county_opinion_modifier
+					has_county_modifier = kurultai_task_decrease_county_opinion_modifier
+				}
+			}	
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = stewardship
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1355 }
+	}
+}
+
+scripted_effect kurultai_task_1356_effect = {
+	scope:county = {
+		add_county_modifier = {
+			modifier = kurultai_task_decrease_county_opinion_modifier
+			years = 5
+		}
+	}
+}
+
+kurultai_task.1356 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message_with_county = { ID = 1356 }
+	}
+}
+
+### Kurultai Organize Raiders Side Effects
+scripted_trigger kurultai_character_trigger_organize_raiders = {
+	is_kurultai_trigger = yes
+	OR = {
+		is_performing_council_task = task_kurultai_raider_1
+		is_performing_council_task = task_kurultai_raider_2
+		is_performing_council_task = task_kurultai_raider_3
+		is_performing_council_task = task_kurultai_raider_4
+	}
+}
+
+## Positive
+# Gain Prestige
+scripted_effect kurultai_task_1400_effect = {
+	save_scope_value_as = {
+		name = change_prestige_value
+		value = {
+			integer_range = {
+				min = 50
+				max = 250
+			}
+			divide = 50
+			ceiling = yes
+			multiply = 50
+		}
+	}
+	
+	trigger_event = kurultai_task.1401
+}
+
+scripted_trigger kurultai_task_1400_character_trigger = {
+	kurultai_character_trigger_organize_raiders = yes
+	martial >= low_skill_rating
+}
+
+kurultai_task.1400 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1400_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = martial
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1400 }
+	}
+}
+
+scripted_effect kurultai_task_1401_effect = {
+	add_prestige = scope:change_prestige_value
+}
+
+kurultai_task.1401 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1401 }
+	}
+}
+
+# Gain Dread
+scripted_effect kurultai_task_1405_effect = {
+	save_scope_value_as = {
+		name = change_dread_value
+		value = {
+			integer_range = {
+				min = 5
+				max = 15
+			}
+		}
+	}
+	
+	trigger_event = kurultai_task.1406
+}
+
+scripted_trigger kurultai_task_1405_character_trigger = {
+	kurultai_character_trigger_organize_raiders = yes
+	martial >= high_skill_rating
+}
+
+kurultai_task.1405 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { 
+			kurultai_task_1405_character_trigger = yes 
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = martial
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1405 }
+	}
+}
+
+scripted_effect kurultai_task_1406_effect = {
+	add_dread = scope:change_dread_value
+}
+
+kurultai_task.1406 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1406 }
+	}
+}
+
+## Negative
+# Lose Prestige
+scripted_effect kurultai_task_1450_effect = {
+	save_scope_value_as = {
+		name = change_prestige_value
+		value = {
+			integer_range = {
+				min = -250
+				max = -50
+			}
+			divide = 50
+			ceiling = yes
+			multiply = 50
+		}
+	}
+	
+	trigger_event = kurultai_task.1451
+}
+
+scripted_trigger kurultai_task_1450_character_trigger = {
+	kurultai_character_trigger_organize_raiders = yes
+	martial <= very_high_skill_rating
+}
+
+kurultai_task.1450 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1450_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = martial
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1450 }
+	}
+}
+
+scripted_effect kurultai_task_1451_effect = {
+	add_prestige = scope:change_prestige_value
+}
+
+kurultai_task.1451 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message = { ID = 1451 }
+	}
+}
+
+# Lose Dread
+scripted_effect kurultai_task_1455_effect = {
+	save_scope_value_as = {
+		name = change_dread_value
+		value = {
+			integer_range = {
+				min = -15
+				max = -5
+			}
+		}
+	}
+	
+	trigger_event = kurultai_task.1456
+}
+
+scripted_trigger kurultai_task_1455_character_trigger = {
+	kurultai_character_trigger_organize_raiders = yes
+	martial <= decent_skill_rating
+}
+
+kurultai_task.1455 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1455_character_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = martial
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1455 }
+	}
+}
+
+scripted_effect kurultai_task_1456_effect = {
+	add_dread = scope:change_dread_value
+}
+
+kurultai_task.1456 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message = { ID = 1456 }
+	}
+}
+
+### Kurultai Explore Cultures Side Effects
+scripted_trigger kurultai_character_trigger_explore_cultures = {
+	is_kurultai_trigger = yes
+	OR = {
+		is_performing_council_task = task_kurultai_culture_1
+		is_performing_council_task = task_kurultai_culture_2
+		is_performing_council_task = task_kurultai_culture_3
+		is_performing_council_task = task_kurultai_culture_4
+	}
+}
+
+## Positive
+# Gain Cultural Acceptance
+scripted_effect kurultai_task_1500_effect = {
+	save_scope_value_as = {
+		name = change_acceptance_value
+		value = {
+			integer_range = {
+				min = 3
+				max = 5
+			}
+		}
+	}
+
+	random_sub_realm_county = {
+		limit = {
+			NOT = { culture = root.culture }
+		}
+		save_scope_as = county
+	}
+	
+	trigger_event = kurultai_task.1501
+}
+
+scripted_trigger kurultai_task_1500_character_trigger = {
+	kurultai_character_trigger_explore_cultures = yes
+	learning >= low_skill_rating
+}
+
+kurultai_task.1500 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1500_character_trigger = yes }
+		any_sub_realm_county = {
+			NOT = { culture = root.culture }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1500 }
+	}
+}
+
+scripted_effect kurultai_task_1501_effect = {
+	culture = {
+		change_cultural_acceptance = {
+			target = scope:county.culture
+			value = scope:change_acceptance_value
+			desc = task_accept_culture_acceptance_gain
+		}
+	}
+}
+
+kurultai_task.1501 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message_with_county = { ID = 1501 }
+	}
+}
+
+# Gain Different Culture Opinion
+scripted_effect kurultai_task_1505_effect = {
+	trigger_event = kurultai_task.1506
+}
+
+scripted_trigger kurultai_task_1505_character_trigger = {
+	kurultai_character_trigger_explore_cultures = yes
+	learning >= high_skill_rating
+}
+
+kurultai_task.1505 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1505_character_trigger = yes }
+		NOR = { 
+			has_character_modifier = kurultai_task_increase_culture_opinion_modifier
+			has_character_modifier = kurultai_task_decrease_culture_opinion_modifier
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = 0.2
+			offset = inverted_mediocre_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1505 }
+	}
+}
+
+scripted_effect kurultai_task_1506_effect = {
+	add_character_modifier = {
+		modifier = kurultai_task_increase_culture_opinion_modifier
+		years = 5
+	}
+}
+
+kurultai_task.1506 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1506 }
+	}
+}
+
+## Negative
+# Lose Cultural Acceptance
+scripted_effect kurultai_task_1550_effect = {
+	save_scope_value_as = {
+		name = change_acceptance_value
+		value = {
+			integer_range = {
+				min = -3
+				max = -2
+			}
+		}
+	}
+
+	random_sub_realm_county = {
+		limit = {
+			NOT = { culture = root.culture }
+			culture = {
+				cultural_acceptance = {
+					target = root.culture
+					value > 5
+				}
+			}
+		}
+		save_scope_as = county
+	}
+	
+	trigger_event = kurultai_task.1551
+}
+
+scripted_trigger kurultai_task_1550_character_trigger = {
+	kurultai_character_trigger_explore_cultures = yes
+	learning <= very_high_skill_rating
+}
+
+kurultai_task.1550 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1550_character_trigger = yes }
+		any_sub_realm_county = {
+			NOT = { culture = root.culture }
+			culture = {
+				cultural_acceptance = {
+					target = root.culture
+					value > 5
+				}
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1550 }
+	}
+}
+
+scripted_effect kurultai_task_1551_effect = {
+	culture = {
+		change_cultural_acceptance = {
+			target = scope:county.culture
+			value = scope:change_acceptance_value
+			desc = kurultai_task.1551.desc
+		}
+	}
+}
+
+kurultai_task.1551 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_negative_message_with_county = { ID = 1551 }
+	}
+}
+
+# Lose Different Culture Opinion
+scripted_effect kurultai_task_1555_effect = {
+	trigger_event = kurultai_task.1556
+}
+
+scripted_trigger kurultai_task_1555_character_trigger = {
+	kurultai_character_trigger_explore_cultures = yes
+	learning <= decent_skill_rating
+}
+
+kurultai_task.1555 = {
+	hidden = yes
+
+	trigger = {
+		scope:councillor = { kurultai_task_1555_character_trigger = yes }
+		NOR = { 
+			has_character_modifier = kurultai_task_increase_culture_opinion_modifier
+			has_character_modifier = kurultai_task_decrease_culture_opinion_modifier
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		compare_modifier = {
+			target = scope:councillor
+			value = learning
+			multiplier = -0.2
+			offset = inverted_high_skill_rating
+		}
+	}
+
+	immediate = {
+		kurultai_task_effect = { ID = 1555 }
+	}
+}
+
+scripted_effect kurultai_task_1556_effect = {
+	add_character_modifier = {
+		modifier = kurultai_task_decrease_culture_opinion_modifier
+		years = 5
+	}
+}
+
+kurultai_task.1556 = {
+	hidden = yes
+
+	immediate = {
+		kurultai_positive_message = { ID = 1556 }
+	}
+}
+
