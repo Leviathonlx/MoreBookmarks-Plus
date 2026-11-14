@@ -1,0 +1,143 @@
+﻿
+appointment_score_regent = {
+	# SAME CULTURE AS REGION
+	if = {
+		limit = {
+			tgp_is_in_ceremonial_house_trigger = no
+			exists = scope:title
+			NOR = {
+				culture = scope:title.holder.capital_county.culture
+				AND = {
+					# The ceremonial-liege variable is only set once the realm's special title is registered;
+					# reading it unguarded logs on every candidate scored before that happens.
+					exists = top_liege.primary_title.var:administrative_ui_special_title
+					top_liege.primary_title.var:administrative_ui_special_title.holder.culture = culture
+				}
+			}
+		}
+		add = {
+			value = -50
+			desc = not_of_local_culture_succession_desc
+		}
+	}
+	# Emperor's opinion
+	if = {
+		limit = {
+			exists = top_liege.primary_title.var:administrative_ui_special_title.holder
+			this != top_liege.primary_title.var:administrative_ui_special_title.holder
+		}
+		add = {
+			value = "top_liege.primary_title.var:administrative_ui_special_title.holder.opinion(root)"
+			divide = 2
+			desc = ceremonial_liege_opinion_desc
+		}
+	}
+	# BONUSES FOR IMPERIAL FAMILY
+	if = {
+		limit = {
+			tgp_realm_has_ceremonial_liege_trigger = yes
+			tgp_is_in_ceremonial_house_trigger = yes
+		}
+		if = { # Emperor
+			limit = { this = top_liege.primary_title.var:administrative_ui_special_title.holder }
+			add = {
+				value = 100
+				desc = ceremonial_liege_desc
+			}
+		}
+		else_if = {
+			limit = { this = top_liege.primary_title.var:administrative_ui_special_title.holder.player_heir }
+			add = {
+				value = 50
+				desc = ceremonial_house_heir_desc
+			}
+		}
+		else = {
+			add = {
+				value = -150
+				desc = ceremonial_house_non_heir_desc
+			}
+		}
+	}
+	# BONUSES FOR NON-IMPERIAL FAMILY
+	else_if = {
+		limit = { tgp_realm_has_ceremonial_liege_trigger = yes }
+		# PAST REGENT OF YOUR DYNASTY
+		add = {
+			value = japanese_kampaku_house_past_kampaku_value
+			desc = japanese_kampaku_house_past_kampaku_desc
+		}
+		# Number of House children with Imperial dynasty parents (e.g. Fujiwara born to a Yamato mother)
+		add = {
+			value = japanese_kampaku_house_imperial_parent_value_actual
+			desc = japanese_kampaku_house_imperial_parent_desc
+		}
+		# Number of Imperial dynasty members with House parents (e.g. Yamato born to a Fujiwara mother)
+		add = {
+			value = japanese_kampaku_house_imperial_child_score_value
+			desc = japanese_kampaku_house_imperial_child_desc
+		}
+		# Number of Imperial spouse House members (e.g. Emperor married to a Fujiwara)
+		add = {
+			value = japanese_kampaku_imperial_spouse_score_value
+			desc = japanese_kampaku_imperial_spouse_desc
+		}
+		# Number of Imperial dynasty members married to House members (e.g. Yamato married to a Fujiwara)
+		add = {
+			value = japanese_kampaku_house_imperial_spouse_score_value
+			desc = japanese_kampaku_house_imperial_spouse_desc
+		}
+	}
+	# Age
+	else_if = {
+		limit = { age < 50 }
+		add = {
+			value = 50
+			subtract = age
+			multiply = -2
+			desc = japanese_kampaku_age_desc
+		}
+	}
+	else = {
+		add = {
+			value = age
+			subtract = 50
+			multiply = 2
+			desc = japanese_kampaku_age_desc
+		}
+	}
+	# Number of Governorships held by House
+	add = {
+		value = japanese_kampaku_house_governorship_score_value
+		desc = japanese_kampaku_house_governorship_desc
+	}
+	# Number of Devoted House members (monks/nuns)
+	add = {
+		value = japanese_kampaku_house_devoted_score_value
+		desc = japanese_kampaku_house_devoted_desc
+	}
+	# Domicile is in the capital
+	if = {
+		limit = {
+			# A landless top liege has no capital county to match against
+			exists = root.top_liege.capital_county
+			house ?= {
+				any_house_member = {
+					any_held_title = { is_noble_family_title = yes }
+					domicile ?= {
+						domicile_is_estate_trigger = yes
+						domicile_location.county ?= root.top_liege.capital_county
+					}
+				}
+			}
+		}
+		add = 25
+	}
+	# Block non-admin
+	if = {
+		limit = {
+			NOT = { government_has_mechanic = administrative }
+		}
+		add = -2500
+	}
+}
