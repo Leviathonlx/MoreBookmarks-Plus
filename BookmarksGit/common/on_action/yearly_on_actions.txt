@@ -1,4 +1,4 @@
-﻿#MODIFIED VANILLA FILE
+﻿﻿#MODIFIED VANILLA FILE
 #DUE TO MODIFIED VANILLA ACTIONS THIS FILE MUST BE NAMED LIKE VANILLA
 yearly_global_pulse = {
 	effect = {
@@ -549,7 +549,7 @@ yearly_global_pulse = {
 				}
 			}
 		}
-		
+
 		# The Great Schism, for games without PAM
 		if = {
 			limit = {
@@ -940,14 +940,6 @@ yearly_global_pulse = {
 				}
 			}
 		}
-		#Yearly Imperial Grace Reduction for Hegemonic Tributaries
-		if = {
-			limit = {
-				exists = suzerain
-				suzerain = { highest_held_title_tier = tier_hegemony }
-				NOT = { exists = suzerain.top_participant_group:dynastic_cycle }
-			}
-		}
 		# Empire Faith Gate: multi-empire-same-faith legitimacy (iterate list, not every_independent_ruler).
 		if = {
 			limit = { empire_faith_gate_enabled_trigger = yes }
@@ -1018,16 +1010,15 @@ yearly_global_pulse = {
 								NOT = { this = scope:efg_ruler }
 								efg_same_faith_empire_holder_trigger = yes
 								scope:efg_ruler = {
-									NOR = {
+									NOT = {
 										has_relation_rival = prev
-										has_relation_nemesis = prev
 									}
 								}
 							}
 							scope:efg_ruler = {
-								set_relation_rival = {
-									target = prev
-									reason = efg_contested_empire_rivalry
+								set_relation_rival_effect = {
+									TARGET = prev
+									REASON = efg_contested_empire_rivalry
 								}
 							}
 						}
@@ -1085,13 +1076,14 @@ yearly_global_pulse = {
 				}
 				complete_great_project = this
 			}
-   
+
 		}
 	}
 
 	on_actions = {
 		inspiration_maintenance_global_pulse
 		natural_disaster_maintenance_global_pulse
+		gdp_merchant_population_global_pulse
 	}
 }
 
@@ -1217,6 +1209,8 @@ yearly_playable_pulse = {
 			if = {
 				limit = {
 					has_treasury = yes
+					# We exclude republics here - they are a bit different and require separate handling (see republic_event.0020)
+					NOT = { government_has_flag = government_is_republic }
 				}
 				trigger_event = tgp_china_ministry.0100
 			}
@@ -1264,23 +1258,35 @@ yearly_playable_pulse = {
 		# Yearly house head opinion update: to change into only one log maybe?
 		if = {
 			limit = {
-				government_has_flag = government_is_clan
+				OR = {
+					government_has_flag = government_uses_house_unity
+					government_has_flag = government_uses_company_sentiment
+				}
 				exists = house
 				is_house_head = yes
 			}
 			save_scope_as = unity_target
 			if = {
 				limit = {
-					has_variable = {
-						name = steer_unity_towards_harmonious_passive_gain
-						name = steer_unity_towards_antagonistic_passive_loss
+					OR = {
+						has_character_flag = steer_unity_towards_harmonious_passive_gain
+						has_character_flag = steer_unity_towards_ennobled_passive_gain
+						has_character_flag = steer_unity_towards_antagonistic_passive_loss
+						has_character_flag = steer_unity_towards_rapacious_passive_loss
 					}
 				}
 				house = {
 					add_unity_value = {
 						value = {
 							if = {
-								limit = { root = { has_character_flag = steer_unity_towards_harmonious_passive_gain } }
+								limit = {
+									root = {
+										OR = {
+											has_character_flag = steer_unity_towards_harmonious_passive_gain
+											has_character_flag = steer_unity_towards_ennobled_passive_gain
+										}
+									}
+								}
 								add = medium_unity_gain
 							}
 							else = {
@@ -1486,6 +1492,7 @@ yearly_playable_pulse = {
 
 		if = {
 			limit = {
+				NOT = { government_has_flag = government_has_merchant_company }
 				OR = {
 					NOT = { government_allows = noble_families }
 					AND = {
@@ -1517,7 +1524,7 @@ yearly_playable_pulse = {
 				}
 				admin_change_government_effect = yes
 			}
-			# Failsafe to ensure we don't have a noble family holding land without other titles - Give any held land to liege
+			# Failsafe so a noble family is not left holding only barony or lower landed titles. Any land they hold goes to the liege
 			else_if = {
 				limit = {
 					# They are a Vassal
@@ -1528,23 +1535,11 @@ yearly_playable_pulse = {
 						save_temporary_scope_as = nf_title_temp
 					}
 					# And no other high tier Titles
-					trigger_if = {
-						limit = { government_has_flag = government_has_county_tier_noble_families }
-						NOT = {
-							any_held_title = {
-								tier >= tier_county
-								is_noble_family_title = no
-								is_landless_type_title = no
-							}
-						}
-					}
-					trigger_else = {
-						NOT = {
-							any_held_title = {
-								tier >= tier_duchy
-								is_noble_family_title = no
-								is_landless_type_title = no
-							}
+					NOT = {
+						any_held_title = {
+							tier >= tier_county
+							is_noble_family_title = no
+							is_landless_type_title = no
 						}
 					}
 				}
@@ -1557,6 +1552,7 @@ yearly_playable_pulse = {
 					limit = {
 						is_landless_type_title = no
 						is_noble_family_title = no
+						is_capital_barony = no
 					}
 					add_to_list = revoked_titles
 				}
@@ -1588,6 +1584,127 @@ yearly_playable_pulse = {
 				has_character_flag = examinations_ai_override
 			}
 			ai_attempt_to_host_activity = activity_imperial_examination
+		}
+
+		# MERCHANTS
+		if = {
+			limit = { government_has_flag = government_is_merchant }
+			# AI Associate handling
+			if = {
+				limit = {
+					is_available_quick = {
+						ai = yes
+						adult = yes
+						imprisoned = no
+						alive = yes
+					}
+					is_house_head = yes
+					exists = location.county
+					NOT = { has_character_flag = gdp_merchant_ai_market_recruit_cooldown }
+					short_term_gold >= gdp_merchant_ai_market_recruit_gold_value
+					any_courtier = {
+						gdp_can_be_trader_trigger = yes
+						count < root.num_trade_routes
+					}
+				}
+				gdp_merchant_ai_market_recruit_effect = yes
+			}
+			# Contracts
+			if = {
+				limit = {
+					house ?= { # Trade opportunities only spawn yearly with high unity
+						OR = {
+							has_house_unity_stage = grasping_cs
+							has_house_unity_stage = ennobled_cs
+						}
+					}
+					trigger_if = {
+						limit = { is_ai = yes }
+						is_available = yes
+					}
+				}
+				# Trade opportunities
+				random = {
+					chance = {
+						value = 50
+						if = {
+							limit = { has_character_flag = trade_opportunity_frequency_cooldown }
+							subtract = 35
+						}
+						else_if = {
+							limit = {
+								house ?= { has_house_unity_stage = ennobled_cs }
+							}
+							add = 25
+						}
+					}
+					trigger_event = {
+						on_action = spawn_trade_opportunity_contract_on_action
+					}
+				}
+				# Luxury contracts
+				random = {
+					chance = {
+						value = 70
+						if = {
+							limit = { has_character_flag = luxury_contract_frequency_cooldown }
+							subtract = 50
+						}
+						if = {
+							limit = {
+								NOT = { has_realm_law = company_purpose_caravaneer }
+							}
+							subtract = 50
+						}
+					}
+					trigger_event = {
+						on_action = spawn_luxury_contract_on_action
+					}
+				}
+				# Unity contracts
+				if = {
+					limit = {
+						house ?= { # Unity contracts do not spawn yearly with high unity
+							OR = {
+								has_house_unity_stage = rapacious_cs
+								has_house_unity_stage = opportunistic_cs
+							}
+						}
+					}
+					random = {
+						chance = {
+							value = 25
+							if = {
+								limit = {
+									house ?= { has_house_unity_stage = opportunistic_cs }
+								}
+								add = 25
+							}
+							if = {
+								limit = { has_character_flag = unity_contract_frequency_cooldown }
+								multiply = 0
+							}
+						}
+						trigger_event = { on_action = spawn_unity_contract_on_action }
+					}
+				}
+			}
+			# Passive XP
+			if = {
+				limit = {
+					is_adult = yes # children never learn anything
+					any_trade_route = { gdp_merchant_trade_route_grants_caravaneer_xp_trigger = yes }
+				}
+				send_interface_message = {
+					type = event_trade_good
+					title = caravaneer_passive_xp_title
+					add_trait_xp = {
+						trait = lifestyle_merchant
+						track = caravaneer
+						value = gdp_merchant_yearly_caravaneer_xp_value
+					}
+				}
+			}
 		}
 
 		# Scalable Modifiers which needs to be reapplied
@@ -1664,14 +1781,8 @@ yearly_playable_pulse = {
 				has_government = landless_adventurer_government
 
 				location != domicile.domicile_location
-
-				is_imprisoned = no
-				is_travelling = no
-				NOT = {
-					exists = involved_activity
-				}
+				should_in_default_location_trigger = yes
 				num_taken_task_contracts <= 0
-				is_commanding_army = no
 			}
 			set_location_to_default = yes
 		}
@@ -1679,6 +1790,7 @@ yearly_playable_pulse = {
 			limit = {
 				government_allows = merit
 			}
+			military_service_yearly_merit_effect = yes
 			if = {
 				limit = {
 					is_landed = yes
@@ -1690,13 +1802,7 @@ yearly_playable_pulse = {
 							location != root.capital_province
 						}
 						trigger_else = { always = yes }
-						is_imprisoned = no
-						is_travelling = no
-						is_commanding_army = no
-						NOR = {
-							exists = involved_activity
-							exists = knight_army
-						}
+						should_in_default_location_trigger = yes
 					}
 					set_location_to_default = yes
 				}
@@ -1712,13 +1818,7 @@ yearly_playable_pulse = {
 							location != root.domicile.domicile_location
 						}
 						trigger_else = { always = yes }
-						is_imprisoned = no
-						is_travelling = no
-						is_commanding_army = no
-						NOR = {
-							exists = involved_activity
-							exists = knight_army
-						}
+						should_in_default_location_trigger = yes
 					}
 					set_location_to_default = yes
 				}
@@ -1735,11 +1835,14 @@ yearly_playable_pulse = {
 			}
 			remove_character_modifier = mpo_confederation_member_modifier
 		}
-		# Stray player Herders get turned into Nomads
+		# Stray player Herders get turned into Nomads, as do Herders that have grown past a single county
 		if = {
 			limit = {
-				is_ai = no
 				government_has_flag = government_is_herder
+				OR = {
+					is_ai = no
+					highest_held_title_tier > tier_county
+				}
 			}
 			every_held_title = {
 				limit = {
@@ -1753,6 +1856,11 @@ yearly_playable_pulse = {
 				}
 			}
 			change_government = nomad_government
+		}
+		#Estate office governor efficiency for house members
+		if = {
+			limit = { is_house_head = yes }
+			house = { refresh_estate_household_clerks_house_modifier_effect = yes }
 		}
 
 		######################
@@ -2371,7 +2479,7 @@ yearly_playable_pulse = {
 				rite = { rite_has_parameter = tenet_love_thy_neighbour_county_bonus }
 				any_held_county = {
 					faith = prev.faith
-					county_opinion >= 60
+					popular_opinion >= 60
 					NOT = {
 						has_county_modifier = tenet_love_thy_neighbour_modifier
 					}
@@ -2380,7 +2488,7 @@ yearly_playable_pulse = {
 			random_held_county = {
 				limit = {
 					faith = prev.faith
-					county_opinion >= 60
+					popular_opinion >= 60
 					NOT = {
 						has_county_modifier = tenet_love_thy_neighbour_modifier
 					}
@@ -2531,7 +2639,7 @@ yearly_playable_pulse = {
 				military_order_lifestyle_xp_yearly_gain_effect = yes
 			}
 		}
-		
+
 		# Passive Rite Learning
 		random = {
 			chance = passive_rite_learning_yearly_chance
@@ -2552,6 +2660,27 @@ yearly_playable_pulse = {
 			save_scope_as = accolade_merc
 			var:acc_merc_patron = {
 				trigger_event = accolade.0110
+			}
+		}
+
+		# GDP Trade Opportunities
+		if = {
+			limit = {
+				is_landless_merchant = yes
+				trigger_if = {
+					limit = { is_ai = yes }
+					is_available = yes
+				}
+			}
+			random = {
+				chance = {
+					value = 70
+					if = {
+						limit = { has_character_flag = trade_opportunity_frequency_cooldown }
+						subtract = 50
+					}
+				}
+				trigger_event = { on_action = spawn_trade_opportunity_contract_on_action }
 			}
 		}
 		if = {
@@ -2583,12 +2712,22 @@ yearly_playable_pulse = {
 		court_maintenance.0013 # Remove duplicate dynasty banners
 
 		coa.1 # Switch to another coat of arms if appropriate
+		gdp_purpose_events.0001 # You're in debt, a merchant offers a way out
+		gdp_merchant.9020 # Commission trade route
+		gdp_merchant.1200 # Merchant associate promise
+		vassal.2205 # Loan reminder
 	}
 	on_actions = {
 		ai_character_pulse
 		delay = { days = 75 }
 
 		pagan_conversion_pulse
+
+		# GDP
+		gdp_republic_popular_opinion_pulse
+		gdp_merchant_ai_trade_monopoly_pulse
+		gdp_republic_ai_trade_monopoly_pulse
+		gdp_trade_league_ai_trade_monopoly_pulse
 	}
 }
 
@@ -3146,12 +3285,7 @@ quarterly_playable_pulse = {
 		realm_maintenance_quarterly_pulse
 
 		# Event pools
-		stewardship_lifestyle_progress_pulse
-		intrigue_lifestyle_progress_pulse
-		diplomacy_lifestyle_progress_pulse
-		martial_lifestyle_progress_pulse
-		learning_lifestyle_progress_pulse
-		wanderer_lifestyle_progress_pulse
+		lifestyle_progress_pulse
 
 		# Relation pulses are spread out across the four quarterly pulses a year
 		lover_quarterly_pulse
@@ -3163,8 +3297,14 @@ quarterly_playable_pulse = {
 		inspiration_maintenance_quarterly_pulse
 
 		# MPO
-
 		mpo_tributary_check_pulse
+
+		# GDP
+		gdp_merchant_company_debt_pulse
+		gdp_trade_route_maturity_pulse
+		gdp_trade_envoys_resume_pulse
+		ep5_09_wearer_of_many_hats_achievement_pulse
+
 	}
 	random_on_action = {
 		chance_to_happen = 50
@@ -3207,24 +3347,23 @@ random_yearly_playable_pulse = {
 			else_if = {
 				limit = {
 					is_ai = yes
-
 				}
 				add = 95 # AI counts aren't particularly important
 			}
 		}
 		6 = on_yearly_events
-		1 = pam_christian_yearly_events						 
+		1 = pam_christian_yearly_events
 		5 = fp1_yearly_events
 		4 = fp2_yearly_events
 		4 = fp3_yearly_events
 		#2 = bp1_yearly_events # Retired on purpose; contents are all in on_yearly_events
-								 
 		6 = ep3_yearly_events_admin
 		6 = tgp_japan_yearly_events
 		6 = tgp_china_yearly_events
 		3 = tgp_mandala_yearly_events
 		6 = ongoing_house_feud_events
 		10 = mpo_yearly_events_nomads
+		6 = gdp_merchant_yearly_events
 	}
 	effect = {
 		# Special Holy Seeds drops
@@ -3322,8 +3461,6 @@ random_yearly_playable_pulse = {
 		delay = { days = { 181 240 } }
 		bp2_child_pulse
 		delay = { days = { 181 240 } }
-										 
-								
 		bp2_adult_followups
 		delay = { days = { 291 310 } }
 		court_scholar_ongoing
@@ -3347,24 +3484,16 @@ random_yearly_playable_pulse = {
 random_yearly_everyone_pulse = {
 	on_actions = {
 		yearly_health_pulse
-		stress_pulse
 		prison_maintenance_pulse
 		house_feud_ai_scheme_pulse
 	}
-					 
-						
-			 
-   
-						 
-  
 	events = {
-		holy_order.0206 #To increment the years passed since loan
 		marriage_interaction.0007 #One of the betrothed became part of clergy that doesn't allow marriage
 		tgp_silk_road_events.0100 #Culture adopts controlled Silk Road market innovation
 	}
 	random_events = {
 		500 = 0
-		100 = holy_order.0202 #Holy order demands payment
+		100 = holy_order.0202 #Military Order demands payment
 	}
 }
 
@@ -3386,11 +3515,8 @@ five_year_everyone_pulse = {
 				}
 			}
 
-
-
 			if = { # Non-lowborn Barons should marry and produce a family
 				limit = {
-
 					primary_title.tier ?= tier_barony
 					is_adult = yes
 					is_married = no
@@ -3399,9 +3525,7 @@ five_year_everyone_pulse = {
 						government_has_flag = government_is_republic
 					}
 					can_marry_trigger = yes
-
 				}
-
 				if = {
 					limit = {
 						exists = location
@@ -3461,17 +3585,17 @@ five_year_everyone_pulse = {
 				highest_held_title_tier = tier_barony
 				gold > 0
 				long_term_gold > 0
-
-
 			}
 			move_budget_gold = { gold = long_term_gold from = budget_long_term to = budget_short_term }
 		}
+
+		purge_excess_baron_gold_effect = yes # keep barons from hoarding gold they won't spend in their lifetime
 
 		# FP2 - Checks to start El Cid's Travels
 		if = {
 			limit = { # Am I El Cid?
 				has_fp2_dlc_trigger = yes
-				has_ep3_dlc_trigger = no
+				has_playable_adventurer_dlc_trigger = no
 				this = character:107590
 				NOT = { has_character_flag = has_already_begun_travelling } # Separate first check, for performance
 
@@ -3480,9 +3604,7 @@ five_year_everyone_pulse = {
 						top_liege = character:107500
 						liege = character:107500
 						employer = character:107500
-
 					}
-
 				}
 				is_available_healthy_ai_adult = yes # Am I ready to go on an adventure?
 			}
@@ -3492,8 +3614,6 @@ five_year_everyone_pulse = {
 		if = {
 			limit = {
 				ep3_ai_castration_target_trigger = yes
-
-
 			}
 			trigger_event = ep3_yearly.3000
 		}
@@ -3551,6 +3671,10 @@ three_year_pool_pulse = {
 			}
 		}
 		100 = courtier_guest_management.4001 # Wanderer becomes an adventurer
+	}
+	on_actions = {
+		gdp_merchant_pool_pulse
+		gdp_minority_merchant_pool_pulse
 	}
 }
 
@@ -3859,7 +3983,6 @@ on_yearly_events = {
 		100 = vassal.2001 # Vassal wants liege to educate their child
 		100 = vassal.2101 # No feast in a while, vassal requests it
 		200 = vassal.2201 # You lend money from a vassal
-		400 = vassal.2205 # Vassal reminds you of the money you owe them
 		100 = vassal.2301 # Highly skilled vassal progresses development in province
 		100 = vassal.2401 # Vassal wants gold, offers territory/better Vassal Contract
 		100 = vassal.2451 # Vassal wants better contract, offers territory/gold
@@ -4548,6 +4671,41 @@ on_yearly_events = {
 		1200 = elder_events.1500 # Faltering heart - Chance to kill your spouse if you're young and they are old
 		1600 = elder_events.1600 # Faltering heart/Fragile bones/Infirm - Lose athletic
 
+		# GDP - Merchant Events
+		300 = gdp_merchant.0010 #Associate asks to be adopted
+		300 = gdp_merchant.0020 #Associates struggle for empty/ineffectual Partner position
+		300 = gdp_merchant.1100 # Merchant overcrowded
+		300 = gdp_merchant.0025 # Artisan Purpose Recruitment Opportunity
+		300 = gdp_merchant.0030 # Creditor Purpose Recruitment Opportunity
+		300 = gdp_merchant.0035 # Caravaneer Purpose Recruitment Opportunity
+		300 = gdp_merchant.3000 # Translator court position boon
+		300 = gdp_merchant.3010 # Fixer court position boon
+		300 = gdp_merchant.3020 # Bailiff court position boon
+		300 = gdp_merchant.3030 # Market Agent court position boon
+		300 = gdp_merchant.3040 # Antiquarian court position boon
+		300 = gdp_merchant.4000 # You are a Silk Road Merchant in China/Korea who isn't Confucian
+		300 = gdp_merchant.4010 # You're a Merchant in China/Korea who hasn't taken the exam
+		300 = gdp_merchant.4030 # You're a Merchant outside of the Silk Road hearing about it
+
+		# GDP - Republic Events
+		300 = yearly_republic.1001 #Spouse ask you to stop working late and come to bed.
+		300 = yearly_republic.1002 #Spouse's bad opinion of you cause friction with her house.
+		300 = yearly_republic.1003 #Young relative has been in a fight that might cause friction with another house.
+		300 = yearly_republic.1005 #The masses have grown tired of the feud between two houses and demand change.
+		300 = yearly_republic.1008 # A patrician has hired a bandit for ill-deeds.
+		300 = yearly_republic.1009 # A spouse has set up a salon to spy on her peers.
+		300 = yearly_republic.1010 # An ambassador will report secrets in the palace and you can spy on them from the roof.
+		300 = yearly_republic.1011 # A summons from the council gives opportunity to shirk your duties.
+		10000 = yearly_republic.1012 #Doge's procession (Once Per life. Blocked by Character Flag)
+		1000 = yearly_republic.1013 #Marriage to the sea (Once Per life. Blocked by Character Flag)
+		300 = yearly_republic.1014 #Patrician with the same house ambition meet to align their interests.
+		300 = yearly_republic.1015 #A patrician offers to sell you their vote at the next assembly
+		300 = yearly_republic.1016 #You get the chance to threaten a patrician to have them give you their next vote.
+		300 = yearly_republic.1017 #Three wise patricians have gathered for a debate. Influence them for the next vote using logic and reason!
+		400 = yearly_republic.1018 #Get an artifact from a friend.
+		300 = yearly_republic.1019 #Get some trade category experience.
+		300 = yearly_republic.1020 #Get a modifier from a friendly house.
+
 		# BFJ
 		300 = blotsven.0001 # Blot-Sven starter event, gives you a chance at getting a claim for the kingdom of Sweden.
 
@@ -4565,8 +4723,12 @@ on_yearly_events = {
 		100 = pam_theocratic_ruler_events.0010 # Theocratic ruler: proven warrior and pilgrim; marshal and chaplain counsel sword or crozier
 		100 = pam_theocratic_ruler_events.0011 # Theocratic ruler: landed subject seeks church burial for fallen crusader kinsman
 		100 = pam_theocratic_ruler_events.0013 # Theocratic ruler: angelic voice at mass; recruit for choir, seduce, or reject worldly song
-		50 = pam_theocratic_ruler_events.0014 # Theocratic ruler: neighbouring convert urges adopting foreign core tenets at sermon
+		50 = pam_theocratic_ruler_events.0014 # Theocratic ruler: neighboring convert urges adopting foreign core tenets at sermon
 		50 = pam_theocratic_ruler_events.0015 # Theocratic ruler: prayer hearing with top two succession candidates
+		50 = pam_theocratic_ruler_events.0016 # Theocratic ruler: two religious subordinates discuss faith over bread
+		50 = pam_theocratic_ruler_events.0017 # Theocratic ruler: head of faith or rite notices ambitious church guidance
+		50 = pam_theocratic_ruler_events.0018 # Theocratic ruler: bishop spends more time with mayors and merchants than at Mass
+		50 = pam_theocratic_ruler_events.0019 # Theocratic ruler: liege and religious superior despise each other
 
 		# PAM Flavor Events
 		50 = pam_generic_events.0001 # Gain Religious Scholar
@@ -4646,5 +4808,40 @@ on_yearly_tutorial_events = {
 	random_events = {
 		chance_to_happen = 100
 		1 = tutorial.1001
+	}
+}
+
+lifestyle_progress_pulse = {
+	first_valid_on_action = {
+		stewardship_lifestyle_progress_pulse
+		intrigue_lifestyle_progress_pulse
+		diplomacy_lifestyle_progress_pulse
+		martial_lifestyle_progress_pulse
+		learning_lifestyle_progress_pulse
+		wanderer_lifestyle_progress_pulse
+	}
+}
+
+gdp_merchant_pool_pulse = {
+	trigger = {
+		is_pool_character = yes
+		gdp_should_spawn_new_merchant_company_trigger = yes
+	}
+	random_events = {
+		chance_to_happen = 25
+		100 = gdp_merchant.4001 # Pool character becomes a merchant company
+	}
+}
+
+gdp_minority_merchant_pool_pulse = {
+	trigger = {
+		exists = global_var:gdp_minority_merchant_spawn_quota
+		global_var:gdp_minority_merchant_spawn_quota > 0
+		is_pool_character = yes
+		is_ai = yes
+		gdp_minority_merchant_candidate_trigger = yes
+	}
+	events = {
+		gdp_merchant.4002
 	}
 }

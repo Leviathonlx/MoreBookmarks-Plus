@@ -19,6 +19,9 @@ silk_road_situation = {
 	map_mode = silk_road
 	window = silk_road
 	gui_window_name = "window_silk_road"
+
+	allow_negative_progress = yes
+
 	##################################################
 	# Regions
 	##################################################
@@ -44,38 +47,38 @@ silk_road_situation = {
 		region_silk_road_proper_central_asia = {
 			geographical_regions = { tgp_silk_road_central_asia_region }
 			capital_province = 1448 # Dunhuang
-			
+
 			map_color = { 57 105 168 }
 		}
 		region_silk_road_proper_transcaspia = {
 			geographical_regions = { tgp_silk_road_transcaspia_region }
-			capital_province = 4452 # Khiva
-			
+			capital_province = 4456 # Gurganj
+
 			map_color = { 95 161 51 }
 		}
 		region_silk_road_proper_occident = {
 			geographical_regions = { tgp_silk_road_occident_region }
 			capital_province = 9830 # Constantinople -- I actually have an extra barony here that I can use. Technically 'Hagia Sophia' but it's still not Dvin
-			
+
 			map_color = { 164 72 138 }
 		}
-		
+
 		#MB
-		
+
 		region_silk_road_proper_middle_east = {
 			geographical_regions = { tgp_silk_road_mideast_region }
 			capital_province = 4795 # Ukbara (Baghdad)
-			
+
 			map_color = { 30 240 230 }
 		}
-		
+
 		region_silk_road_proper_sea = { # SEA was mostly maritime trade but there were land routes. Any needed changes can be done if/when Paradox adds the maritime routes
 			geographical_regions = { tgp_silk_road_sea_region }
 			capital_province = 11451 # Nokor Pheas (Angkor)
-			
+
 			map_color = { 175 20 60 }
 		}
-		
+
 	}
 
 	##################################################
@@ -88,6 +91,21 @@ silk_road_situation = {
 		}
 		trigger_event = neutral_situation.0001 # War/peace pseudo catalyst setup
 		trigger_event = neutral_situation.0007 # Starting innovation spread setup
+		# Market tracking
+		title:b_ziwuguan_china.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Chang'an
+		title:b_potala.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Lhasa
+		title:b_lahur.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Lahur
+		title:b_dunhuang.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Dunhuang
+		title:b_gurganj.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Gurganj
+		title:b_tabriz.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Tabriz
+		title:b_hamadan.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Hamadan
+		title:b_kashgar.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Kashgar
+		title:b_herat.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Herat
+		# MB Added
+		title:b_hagiasophia.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Constantinople
+		title:b_ukbara.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Baghdad
+		title:b_nokor_pheas.title_province = { add_to_global_variable_list = { name = silk_road_markets target = barony.trade_market } } #Angkor
+		# MB Added End
 	}
 
 	on_yearly = {
@@ -131,6 +149,12 @@ silk_road_situation = {
 				add = define:NSilkRoad|INNOVATION_TRAVEL_DURATION
 			}
 		}
+
+		# PERSIA
+		tgp_silk_road_iranian_intermezzo_yearly_effect = yes
+
+		# CHINA
+		tgp_silk_road_china_stability_effect = yes
 	}
 
 	##################################################
@@ -221,6 +245,27 @@ silk_road_situation = {
 			}
 			map_color = hsv{ 0.55 0.22 1 }
 		}
+		silk_road_merchant = { # Any Merchants
+			icon = "gfx/interface/icons/government_types/merchant_government.dds"
+			require_realm_in_sub_region = yes
+
+			is_character_valid = {
+				is_landless_merchant = yes
+			}
+			on_join = {
+				if = {
+					limit = {
+						is_ai = no
+						primary_title ?= {
+							NOT = { has_variable = had_event_gdp_merchant_4020 }
+						}
+					}
+					scope:situation_sub_region = { save_scope_as = silk_road_sub_region }
+					trigger_event = gdp_merchant.4020
+				}
+			}
+			map_color = hsv{ 0.55 0.22 1 }
+		}
 	}
 
 	##################################################
@@ -250,15 +295,50 @@ silk_road_situation = {
 						catalyst_silk_road_distant_upstream_region_war = silk_road_downstream_tertiary_value
 						# Byzantium
 						catalyst_silk_road_byzantium_blew_up = silk_road_byzantium_destroyed_value
-						catalyst_silk_road_mpo_region_to_steppe = silk_road_expand_steppe_value
-						# Dynastic Cycle
-						catalyst_silk_road_china_consolidation = silk_road_steppe_china_consolidation_value
-						# Persia
-						catalyst_silk_road_iranian_intermezzo_in_unrest = silk_road_steppe_iranian_intermezzo_unrest_value
-						# Siege
+						# Temujin
 						catalyst_silk_road_mongol_devastation = silk_road_mongol_devastation_value
 						# Raid
 						catalyst_silk_road_raided = silk_road_raid_value
+					}
+
+					dlc_catalysts = { # TGP
+						dlc_feature = all_under_heaven
+
+						dlc_enabled_catalysts = {
+							# Dynastic Cycle
+							catalyst_silk_road_china_consolidation = silk_road_steppe_china_consolidation_value
+						}
+
+						fallback_catalysts = {
+							# China
+							catalyst_silk_road_china_civil_war = silk_road_china_civil_war_value
+							catalyst_silk_road_china_blew_up = silk_road_china_destroyed_value
+						}
+					}
+
+					dlc_catalysts = { # MPO
+						dlc_feature = khans_of_the_steppe
+
+						dlc_enabled_catalysts = {
+							# Great Steppe
+							catalyst_silk_road_mpo_region_to_steppe = silk_road_expand_steppe_value
+						}
+
+						fallback_catalysts = {}
+					}
+
+					dlc_catalysts = { # SOT
+						dlc_feature = legacy_of_persia
+
+						dlc_enabled_catalysts = {
+							# Persian Struggle
+							catalyst_silk_road_iranian_intermezzo_in_unrest = silk_road_steppe_iranian_intermezzo_unrest_value
+						}
+
+						fallback_catalysts = {
+							# Persia
+							catalyst_silk_road_persia_civil_war = silk_road_persia_civil_war_value
+						}
 					}
 				}
 			}
@@ -272,35 +352,35 @@ silk_road_situation = {
 							cultural_head_fascination_mult = 0.05 #Exchange of ideas in entire subregion
 						}
 						county_modifier = { # Very small boost to entire subregion - Main county effects are in on_start
-							development_growth_factor = 0.02
+							prosperity_growth_factor = 0.02
 							epidemic_resistance = -10 # lots of movement is a great way to get lots of plague
 						}
 					}
 
 					china_realm = {
 						character_modifier = {
-							domain_tax_mult = 0.02
+							commerce_tax_mult = 0.02
 						}
 					}
 
 					silk_road_domain = {
 						character_modifier = {
-							domain_tax_mult = 0.02
+							commerce_tax_mult = 0.02
 						}
 						county_modifier = {
-							development_growth = 0.01
+							prosperity_growth = 0.01
 						}
 					}
 
 					silk_road_realm = {
 						character_modifier = {
-							domain_tax_mult = 0.02
+							commerce_tax_mult = 0.02
 						}
 					}
 
 					silk_road_periphery = {
 						character_modifier = {
-							domain_tax_mult = 0.01
+							commerce_tax_mult = 0.01
 						}
 					}
 
@@ -311,6 +391,14 @@ silk_road_situation = {
 						}
 						county_modifier = { #Land use is higher, less grazing
 							county_fertility_growth_mult = -0.02
+						}
+					}
+
+					silk_road_merchant = {
+						character_modifier = {
+							trade_route_length_add = 8
+							trade_capacity_mult = 0.1
+							trade_expertise_decline_mult = -0.3
 						}
 					}
 				}
@@ -357,18 +445,48 @@ silk_road_situation = {
 						catalyst_silk_road_region_peace = silk_road_downstream_primary_value
 						catalyst_silk_road_adjacent_upstream_region_peace = silk_road_downstream_secondary_value
 						catalyst_silk_road_distant_upstream_region_peace = silk_road_downstream_tertiary_value
-						# Persia
-						catalyst_silk_road_iranian_intermezzo_ending_reached = silk_road_steppe_iranian_intermezzo_ending_value
-						# Dynastic Cycle
-						catalyst_silk_road_china_stability = silk_road_steppe_china_stability_value
-						# Grand Canal
-						catalyst_silk_road_china_grand_canal_expanded = silk_road_steppe_canal_built_primary_value
-						catalyst_silk_road_china_grand_canal_expanded_secondary = silk_road_steppe_canal_built_secondary_value
-						catalyst_silk_road_china_grand_canal_expanded_tertiary = silk_road_steppe_canal_built_tertiary_value
-						# Resettlement
-						catalyst_silk_road_mpo_region_resettled = silk_road_steppe_resettlement_value
 						# Market
 						catalyst_silk_road_famous_market_built = silk_road_steppe_market_built_value
+					}
+
+					dlc_catalysts = { # TGP
+						dlc_feature = all_under_heaven
+
+						dlc_enabled_catalysts = {
+							# Dynastic Cycle
+							catalyst_silk_road_china_stability = silk_road_china_stability_value
+							# Grand Canal
+							catalyst_silk_road_china_grand_canal_expanded = silk_road_steppe_canal_built_primary_value
+							catalyst_silk_road_china_grand_canal_expanded_secondary = silk_road_steppe_canal_built_secondary_value
+							catalyst_silk_road_china_grand_canal_expanded_tertiary = silk_road_steppe_canal_built_tertiary_value
+						}
+
+						fallback_catalysts = {
+							# China
+							catalyst_silk_road_china_no_war = silk_road_china_no_war_value
+						}
+					}
+
+					dlc_catalysts = { # MPO
+						dlc_feature = khans_of_the_steppe
+
+						dlc_enabled_catalysts = {
+							# Great Steppe
+							catalyst_silk_road_mpo_region_resettled = silk_road_steppe_resettlement_value
+						}
+
+						fallback_catalysts = {}
+					}
+
+					dlc_catalysts = { # SOT
+						dlc_feature = legacy_of_persia
+
+						dlc_enabled_catalysts = {
+							# Persian Struggle
+							catalyst_silk_road_iranian_intermezzo_ending_reached = silk_road_steppe_iranian_intermezzo_ending_value
+						}
+
+						fallback_catalysts = {}
 					}
 				}
 				phase_hardship = {
@@ -382,15 +500,50 @@ silk_road_situation = {
 						catalyst_silk_road_distant_upstream_region_war = silk_road_downstream_tertiary_negative_value
 						# Byzantium
 						catalyst_silk_road_byzantium_blew_up = silk_road_byzantium_destroyed_negative_value
-						catalyst_silk_road_mpo_region_to_steppe = silk_road_expand_steppe_negative_value
-						# Dynastic Cycle
-						catalyst_silk_road_china_consolidation = silk_road_steppe_china_consolidation_negative_value
-						# Persia
-						catalyst_silk_road_iranian_intermezzo_in_unrest = silk_road_steppe_iranian_intermezzo_unrest_negative_value
-						# Siege
+						# Temujin
 						catalyst_silk_road_mongol_devastation = silk_road_mongol_devastation_negative_value
 						# Raid
 						catalyst_silk_road_raided = silk_road_raid_negative_value
+					}
+
+					dlc_catalysts = { # TGP
+						dlc_feature = all_under_heaven
+
+						dlc_enabled_catalysts = {
+							# Dynastic Cycle
+							catalyst_silk_road_china_consolidation = silk_road_steppe_china_consolidation_negative_value
+						}
+
+						fallback_catalysts = {
+							# China
+							catalyst_silk_road_china_civil_war = silk_road_china_civil_war_negative_value
+							catalyst_silk_road_china_blew_up = silk_road_china_destroyed_negative_value
+						}
+					}
+
+					dlc_catalysts = { # MPO
+						dlc_feature = khans_of_the_steppe
+
+						dlc_enabled_catalysts = {
+							# Great Steppe
+							catalyst_silk_road_mpo_region_to_steppe = silk_road_expand_steppe_negative_value
+						}
+
+						fallback_catalysts = {}
+					}
+
+					dlc_catalysts = { # SOT
+						dlc_feature = legacy_of_persia
+
+						dlc_enabled_catalysts = {
+							# Persian Struggle
+							catalyst_silk_road_iranian_intermezzo_in_unrest = silk_road_steppe_iranian_intermezzo_unrest_negative_value
+						}
+
+						fallback_catalysts = {
+							# Persia
+							catalyst_silk_road_persia_civil_war = silk_road_persia_civil_war_negative_value
+						}
 					}
 				}
 			}
@@ -404,20 +557,20 @@ silk_road_situation = {
 							cultural_head_fascination_mult = 0.02
 						}
 						county_modifier = { # Very small boost to entire subregion - Main county effects are in on_start
-							development_growth = 0.01
+							prosperity_growth = 0.01
 							epidemic_resistance = -5 # lots of movement is a great way to get lots of plague
 						}
 					}
 
 					china_realm = {
 						character_modifier = {
-							domain_tax_mult = 0.01
+							commerce_tax_mult = 0.01
 						}
 					}
 
 					silk_road_domain = {
 						character_modifier = {
-							domain_tax_mult = 0.01
+							commerce_tax_mult = 0.01
 						}
 					}
 
@@ -435,6 +588,13 @@ silk_road_situation = {
 						}
 						county_modifier = {
 
+						}
+					}
+
+					silk_road_merchant = {
+						character_modifier = {
+							trade_route_length_add = 4
+							trade_expertise_decline_mult = -0.15
 						}
 					}
 				}
@@ -482,18 +642,48 @@ silk_road_situation = {
 						catalyst_silk_road_region_peace = silk_road_downstream_primary_value
 						catalyst_silk_road_adjacent_upstream_region_peace = silk_road_downstream_secondary_value
 						catalyst_silk_road_distant_upstream_region_peace = silk_road_downstream_tertiary_value
-						# Persia
-						catalyst_silk_road_iranian_intermezzo_ending_reached = silk_road_steppe_iranian_intermezzo_ending_value
-						# Dynastic Cycle
-						catalyst_silk_road_china_stability = silk_road_steppe_china_stability_value
-						# Grand Canal
-						catalyst_silk_road_china_grand_canal_expanded = silk_road_steppe_canal_built_primary_value
-						catalyst_silk_road_china_grand_canal_expanded_secondary = silk_road_steppe_canal_built_secondary_value
-						catalyst_silk_road_china_grand_canal_expanded_tertiary = silk_road_steppe_canal_built_tertiary_value
-						# Resettlement
-						catalyst_silk_road_mpo_region_resettled = silk_road_steppe_resettlement_value
 						# Market
 						catalyst_silk_road_famous_market_built = silk_road_steppe_market_built_value
+					}
+
+					dlc_catalysts = { # TGP
+						dlc_feature = all_under_heaven
+
+						dlc_enabled_catalysts = {
+							# Dynastic Cycle
+							catalyst_silk_road_china_stability = silk_road_china_stability_value
+							# Grand Canal
+							catalyst_silk_road_china_grand_canal_expanded = silk_road_steppe_canal_built_primary_value
+							catalyst_silk_road_china_grand_canal_expanded_secondary = silk_road_steppe_canal_built_secondary_value
+							catalyst_silk_road_china_grand_canal_expanded_tertiary = silk_road_steppe_canal_built_tertiary_value
+						}
+
+						fallback_catalysts = {
+							# China
+							catalyst_silk_road_china_no_war = silk_road_china_no_war_value
+						}
+					}
+
+					dlc_catalysts = { # MPO
+						dlc_feature = khans_of_the_steppe
+
+						dlc_enabled_catalysts = {
+							# Resettlement
+							catalyst_silk_road_mpo_region_resettled = silk_road_steppe_resettlement_value
+						}
+
+						fallback_catalysts = {}
+					}
+
+					dlc_catalysts = { # SOT
+						dlc_feature = legacy_of_persia
+
+						dlc_enabled_catalysts = {
+							# Persia
+							catalyst_silk_road_iranian_intermezzo_ending_reached = silk_road_steppe_iranian_intermezzo_ending_value
+						}
+
+						fallback_catalysts = {}
 					}
 				}
 			}
@@ -505,7 +695,7 @@ silk_road_situation = {
 					# trade collapsing means there's less propensity for plague, at least
 					all = {
 						county_modifier = { # Applied to all counties in all Silk Road regions
-							development_growth_factor = -0.02
+							prosperity_growth_factor = -0.02
 						}
 					}
 
@@ -514,10 +704,10 @@ silk_road_situation = {
 							legitimacy_loss_mult = 0.1
 						}
 					}
-					
+
 					silk_road_domain = { # Trade that you used to depend on is now gone
 						character_modifier = {
-							domain_tax_mult = -0.02
+							commerce_tax_mult = -0.02
 						}
 						county_modifier = {
 
@@ -526,7 +716,7 @@ silk_road_situation = {
 
 					silk_road_realm = {
 						character_modifier = {
-							domain_tax_mult = -0.01
+							commerce_tax_mult = -0.01
 
 						}
 						county_modifier = {
@@ -536,7 +726,7 @@ silk_road_situation = {
 
 					silk_road_periphery = { # Knock-on effects of economic downturns still hurt the periphery
 						character_modifier = {
-							domain_tax_mult = -0.01
+							commerce_tax_mult = -0.01
 
 						}
 						county_modifier = {
@@ -550,6 +740,12 @@ silk_road_situation = {
 						}
 						county_modifier = { #Less land-use, more grazing
 							county_fertility_growth_mult = 0.02
+						}
+					}
+
+					silk_road_merchant = {
+						character_modifier = {
+							trade_capacity_mult = -0.1
 						}
 					}
 				}

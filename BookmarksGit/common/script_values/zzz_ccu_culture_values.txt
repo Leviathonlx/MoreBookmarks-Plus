@@ -132,7 +132,7 @@ court_language_ai_score = {
 		if = { # Only care about checking rulers who speak the language that their court speaks
 
 
-																		  
+
 			limit = {
 				scope:target = {
 					NOT = {
@@ -284,10 +284,10 @@ court_language_ai_score = {
 						NOT = { scope:target.capital_province = { geographical_region = world_tibet } }
 					}
 					AND = {
-						capital_province = { geographical_region = world_asia_china }										 
+						capital_province = { geographical_region = world_asia_china }
 						NOT = { scope:target.capital_province = { geographical_region = world_asia_china } }
 					}
-	 
+
 					#Added Transoxiana
 					AND = {
 						capital_province = { geographical_region = world_transoxiana }
@@ -298,7 +298,7 @@ court_language_ai_score = {
 						capital_province = { geographical_region = world_steppe_tarim }
 						NOT = { scope:target.capital_province = { geographical_region = world_steppe_tarim } }
 					}
-					
+
 					#Yamato
 					AND = {
 						capital_province = { geographical_region = world_asia_japan }
@@ -328,7 +328,7 @@ court_language_ai_score = {
 						capital_province = { geographical_region = world_asia_southeast }
 						NOT = { scope:target.capital_province = { geographical_region = world_asia_southeast } }
 					}
-					
+
 				}
 			}
 			add = 1
@@ -351,7 +351,7 @@ court_language_ai_score = {
 		}
 		multiply = 2.0
 	}
-	
+
 	# CCU: Prefer not to switch from native language to very different languages
 	if = {
 		limit = {
@@ -485,7 +485,7 @@ culture_acceptance_baseline = {
 				desc = ACCEPTANCE_BASELINE_HERITAGE_FAMILY
 			}
 		}
-		
+
 		# Increase base acceptance for sharing same language
 		if = {
 			limit = {
@@ -520,18 +520,18 @@ culture_acceptance_baseline = {
 		else_if = {
 			limit = { has_same_language_family_as_trigger = { TARGET = scope:culture } }
 			add = {
-				value = same_language_family_cultural_acceptance 
+				value = same_language_family_cultural_acceptance
 				desc = ACCEPTANCE_BASELINE_LANGUAGE_FAMILY
 			}
 		}
 		else_if = {
 			limit = { is_in_language_union_with_trigger = { TARGET = scope:culture } }
 			add = {
-				value = same_language_union_cultural_acceptance 
+				value = same_language_union_cultural_acceptance
 				desc = ACCEPTANCE_BASELINE_LANGUAGE_UNION
 			}
 		}
-		
+
 		# Decrease base acceptance for differing martial custom
 		if = {
 			limit = { NOT = { has_same_culture_martial_tradition = scope:culture } }
@@ -540,11 +540,13 @@ culture_acceptance_baseline = {
 				desc = ACCEPTANCE_BASELINE_MARTIAL_TRADITION
 			}
 		}
-		
+
 		# Increase base acceptance for sharing the same ethos if cultures are present within the same geographical area
 		if = {
 			limit = {
 				has_same_culture_ethos = scope:culture
+				# The pluralistic check below reuses this proximity result
+				save_temporary_scope_as = proximity_checked
 				OR = {
 					cultures_share_relevant_region_trigger = yes
 					#In case cultures are bordering each other in two different regions
@@ -554,6 +556,7 @@ culture_acceptance_baseline = {
 						}
 					}
 				}
+				save_temporary_scope_as = proximity_shared
 			}
 			add = {
 				value = 10
@@ -608,11 +611,11 @@ culture_acceptance_baseline = {
 			}
 		}
 		else_if = {
-			limit = { 
+			limit = {
 				AND = {
 					exists = scope:our_faith
 					exists = scope:their_faith
-					scope:our_faith = { faith_hostility_level = { target = scope:their_faith value = 0 } } 
+					scope:our_faith = { faith_hostility_level = { target = scope:their_faith value = 0 } }
 					scope:their_faith = { faith_hostility_level = { target = scope:our_faith value = 0 } }
 				}
 			}
@@ -622,11 +625,11 @@ culture_acceptance_baseline = {
 			}
 		}
 		else_if = {
-			limit = { 
+			limit = {
 				exists = scope:our_faith
 				exists = scope:their_faith
 				OR = {
-					scope:our_faith = { faith_hostility_level = { target = scope:their_faith value = 3 } } 
+					scope:our_faith = { faith_hostility_level = { target = scope:their_faith value = 3 } }
 					scope:their_faith = { faith_hostility_level = { target = scope:our_faith value = 3 } }
 				}
 			}
@@ -636,11 +639,11 @@ culture_acceptance_baseline = {
 			}
 		}
 		else_if = {
-			limit = { 
+			limit = {
 				exists = scope:our_faith
 				exists = scope:their_faith
 				OR = {
-					scope:our_faith = { faith_hostility_level = { target = scope:their_faith value = 2 } } 
+					scope:our_faith = { faith_hostility_level = { target = scope:their_faith value = 2 } }
 					scope:their_faith = { faith_hostility_level = { target = scope:our_faith value = 2 } }
 				}
 			}
@@ -649,8 +652,8 @@ culture_acceptance_baseline = {
 				desc = ACCEPTANCE_BASELINE_FAITH_HOSTILE
 			}
 		}
-		
-		
+
+
 		if = { # Eastern faiths
 			limit = {
 				scope:our_religion ?= {
@@ -710,12 +713,18 @@ culture_acceptance_baseline = {
 						}
 					}
 				}
-				OR = {
-					cultures_share_relevant_region_trigger = yes
-					#In case cultures are bordering each other in two different regions
-					any_culture_county = {
-						any_neighboring_county = {
-							culture = scope:culture
+				trigger_if = {
+					limit = { exists = scope:proximity_checked }
+					exists = scope:proximity_shared
+				}
+				trigger_else = {
+					OR = {
+						cultures_share_relevant_region_trigger = yes
+						#In case cultures are bordering each other in two different regions
+						any_culture_county = {
+							any_neighboring_county = {
+								culture = scope:culture
+							}
 						}
 					}
 				}

@@ -136,35 +136,53 @@ bubonic_plague = {
 	infection_levels = {
 		10 = {
 			province_modifier = {
-				monthly_county_control_decline_add = -0.6
-				development_decline = -3
+				all_tax_mult = -0.1
+				province_size_baseline_add = -50
+				monthly_province_size_change_when_above_baseline_add = -4
+				monthly_control_change_when_above_baseline_add = -0.6
+				prosperity_decline = -3
 				levy_reinforcement_rate = -0.3
 				levy_size = -0.25
 				supply_limit_mult = -0.2
-				county_opinion_add = -10
+				popular_opinion_add = -10
 				epidemic_travel_danger = 25
-			}	
+			}
+			county_modifier = {
+				control_baseline_add = -10
+			}
 		}
 		50 = {
 			province_modifier = {
-				monthly_county_control_decline_add = -0.8
-				development_decline = -6
+				all_tax_mult = -0.25
+				province_size_baseline_add = -100
+				monthly_province_size_change_when_above_baseline_add = -8
+				monthly_control_change_when_above_baseline_add = -0.8
+				prosperity_decline = -6
 				levy_reinforcement_rate = -0.5
 				levy_size = -0.4
 				supply_limit_mult = -0.5
-				county_opinion_add = -25
+				popular_opinion_add = -25
 				epidemic_travel_danger = 40
-			}	
+			}
+			county_modifier = {
+				control_baseline_add = -20
+			}
 		}
 		80 = {
 			province_modifier = {
-				monthly_county_control_decline_add = -0.8
-				development_decline = -8
+				all_tax_mult = -0.5
+				province_size_baseline_add = -150
+				monthly_province_size_change_when_above_baseline_add = -12.5
+				monthly_control_change_when_above_baseline_add = -0.8
+				prosperity_decline = -8
 				levy_reinforcement_rate = -1
 				levy_size = -0.5
 				supply_limit_mult = -1
-				county_opinion_add = -25
+				popular_opinion_add = -25
 				epidemic_travel_danger = 60
+			}
+			county_modifier = {
+				control_baseline_add = -25
 			}
 		}
 	}
@@ -245,56 +263,46 @@ bubonic_plague = {
 			}
 			
 			outbreak_chance = {
-				value = {
-					value = outbreak_chance_black_plague_default_value
-					multiply = outbreak_chance_black_plague_mult_value
-					multiply = recent_epidemics_outbreak_mult_value
-				}
 				if = {
 					limit = {
-						current_date >= 1346.1.1
-						has_game_rule = bd_occurrence_historical
-						NOT = {
-							has_global_variable = black_death_happened
-						}
-						geographical_region = world_central_asia
-					}
-					add = 100
-				}
-
-				if = {
-					limit = {
-						# Currently happening
-						has_global_variable = black_death
-					}
-					value = 0
-				}
-				if = {
-					limit = { #it can only happen once per game
-						has_global_variable = black_death_happened
-						has_game_rule = bd_frequency_once
-					}
-					value = 0
-				}
-				if = {
-					limit = { #it can never happen
-						has_game_rule = bd_frequency_never
-					}
-					value = 0
-				}
-
-				#Historical exemption
-				if = {
-					limit = {
-						has_game_rule = bd_occurrence_historical
-						OR = {
-							current_date < 1346.1.1
-							NOT = {
-								geographical_region = world_central_asia
+						NOR = {
+							#Historical exemption
+							AND = {
+								has_game_rule = bd_occurrence_historical
+								OR = {
+									current_date < 1346.1.1
+									NOT = {
+										geographical_region = world_central_asia
+									}
+								}
 							}
+							# Currently happening
+							has_global_variable = black_death
+							#it can only happen once per game
+							AND = {
+								has_global_variable = black_death_happened
+								has_game_rule = bd_frequency_once
+							}
+							#it can never happen
+							has_game_rule = bd_frequency_never
 						}
 					}
-					value = 0
+					value = {
+						value = outbreak_chance_black_plague_default_value
+						multiply = outbreak_chance_black_plague_mult_value
+						multiply = recent_epidemics_outbreak_mult_value
+					}
+					if = {
+						limit = {
+							current_date >= 1346.1.1
+							has_game_rule = bd_occurrence_historical
+							NOT = {
+								has_global_variable = black_death_happened
+							}
+							geographical_region = world_central_asia
+						}
+						add = 100
+					}
 				}
 				multiply = 0.1
 
@@ -345,8 +353,9 @@ bubonic_plague = {
 	
 	on_province_infected = {
 		county = {
-			apply_infection_development_loss = { BASE = 10 }
+			apply_infection_prosperity_loss = { BASE = 10 }
 		}
+		apply_infection_trade_disruption = yes
 		every_player = {
 			if = {
 				limit = {
