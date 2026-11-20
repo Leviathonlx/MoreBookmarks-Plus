@@ -1,0 +1,290 @@
+﻿namespace = court
+
+# Events from vanilla events/court_events/court_events_general.txt adjusted for this mod. Each overrides the vanilla event of the same id (id_override_priority).
+
+# MB Added
+
+scripted_trigger court_6050_valid_courtier_trigger = {
+	is_available_ai_adult = yes
+	has_court_event_flag = no
+	NOR = {
+		has_trait = chaste
+		is_councillor_of = root
+	}
+	NOT = {
+		rite = { trait_is_virtue_rite = lustful }
+	}
+	might_cheat_on_every_partner_trigger = yes
+}
+
+# MB - South Arabian heritage treated as Arabic
+court.6050 = {
+	id_override_priority = 1
+	type = court_event
+	title = court.6050.t
+	desc = {
+		desc = court.6050.desc_opening
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					OR = {
+						root.culture = { has_cultural_pillar = language_greek }
+						root.culture = { has_cultural_pillar = heritage_byzantine }
+					}
+				}
+				desc = court.6050.desc_byz
+			}
+			triggered_desc = {
+				trigger = {
+					OR = {
+						root.culture = { has_cultural_pillar = language_arabic }
+						root.culture = { has_cultural_pillar = language_iranian }
+						root.culture = { has_cultural_pillar = heritage_iranian }
+						root.culture = { has_cultural_pillar = heritage_arabic }
+						root.culture = { has_cultural_pillar = heritage_south_arabian }
+					}
+				}
+				desc = court.6050.desc_islam
+			}
+			triggered_desc = {
+				trigger = {
+					OR = {
+						root.culture = { has_cultural_pillar = language_french }
+						root.culture = { has_cultural_pillar = language_occitano_romance }
+						root.culture = { has_cultural_pillar = heritage_latin }
+					}
+
+				}
+				desc = court.6050.desc_sonetti
+			}
+			triggered_desc = {
+				trigger = {
+					OR = {
+						root.culture = { has_cultural_pillar = language_anglic }
+						root.culture = { has_cultural_pillar = language_saxon }
+					}
+				}
+				desc = court.6050.desc_chaucer
+			}
+			triggered_desc = {
+				trigger = { always = yes }
+				desc = court.6050.desc_generic		#fallback option (mostly for other christians)
+			}
+		}
+		desc = court.6050.desc_ending
+	}
+	theme = court
+
+	court_scene = {
+		button_position_character = scope:courtier
+		roles = {
+			scope:courtier = {
+				group = event_group
+				animation = throne_room_writer
+			}
+			root = {
+				group = event_group
+				animation = shock
+			}
+			scope:court_chaplain = {
+				group = event_group
+				animation = disapproval
+			}
+		}
+	}
+
+	trigger = {
+		has_court_event_flag = no
+		exists = cp:councillor_court_chaplain
+		cp:councillor_court_chaplain = {
+			is_available_ai_adult = yes
+			has_court_event_flag = no
+		}
+		is_adult = yes
+		NOT = {
+			rite = { trait_is_virtue_rite = lustful }
+		}
+		any_courtier = { court_6050_valid_courtier_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			has_lifestyle = intrigue_lifestyle
+			add = 0.5
+		}
+		modifier = {
+			has_lifestyle = learning_lifestyle
+			add = 0.5
+		}
+
+		# Court weightings.
+		ep1_weight_up_for_court_type_modifier = { COURT_TYPE = court_scholarly }
+	}
+
+	immediate = {
+		court_event_character_flag_effect = yes
+		cp:councillor_court_chaplain = {
+			save_scope_as = court_chaplain
+			court_event_character_flag_effect = yes
+		}
+		random_courtier = {
+			limit = {
+				has_trait = lustful
+				court_6050_valid_courtier_trigger = yes
+			}
+			alternative_limit = { court_6050_valid_courtier_trigger = yes }
+			save_scope_as = courtier
+			court_event_character_flag_effect = yes
+		}
+	}
+
+	# Option B: purify them all with fire!
+	option = {
+		name = court.6050.b
+		flavor = court.6050.b.tt
+		add_dread = major_dread_gain
+		add_piety = major_piety_gain
+		custom_tooltip = court.6050.b.tt.2
+		add_character_flag = {
+			flag = burned_indecent_books
+			years = 20
+		}
+		scope:court_chaplain = {
+			add_opinion = {
+				target = root
+				modifier = pleased_opinion
+				opinion = 30
+			}
+		}
+
+		stress_and_fulfillment_impact = {
+			compassionate = medium_stress_impact_gain
+			patient = medium_stress_impact_gain
+			erudite = major_stress_impact_gain
+			cynical = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 200
+			modifier = {
+				has_trait = compassionate
+				add = -25
+			}
+			modifier = {
+				has_trait = patient
+				add = -25
+			}
+			modifier = {
+				has_trait = erudite
+				add = -50
+			}
+			modifier = {
+				has_trait = cynical
+				add = -50
+			}
+		}
+	}
+
+	# Option C: culture is culture - let them read
+	option = {
+		name = court.6050.c
+		add_learning_lifestyle_xp = major_lifestyle_xp
+		if = {
+			limit = {
+				has_court_type = court_scholarly
+			}
+			change_current_court_grandeur = major_court_grandeur_gain
+		}
+		else = {
+			change_current_court_grandeur = minor_court_grandeur_gain
+		}
+		custom_tooltip = court.6050.c.tt
+		add_character_flag = {
+			flag = supported_indecent_books
+			years = 20
+		}
+
+		stress_and_fulfillment_impact = {
+			zealous = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_zeal = -1
+			}
+		}
+	}
+
+	# Option D: you really get into it
+	option = {
+		name = court.6050.d
+		add_intrigue_lifestyle_xp = major_lifestyle_xp
+		add_character_modifier = {
+			modifier = confident_lover
+			years = 15
+		}
+		scope:court_chaplain = {
+			add_opinion = {
+				target = root
+				modifier = disappointed_opinion
+				opinion = -20
+			}
+		}
+		stress_and_fulfillment_impact = {
+			chaste = major_stress_impact_gain
+			zealous = major_stress_impact_gain
+			celibate = massive_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_zeal = -0.5
+			}
+			modifier = {
+				has_trait = chaste
+				add = -100
+			}
+			modifier = {
+				has_trait = celibate
+				add = -200
+			}
+		}
+	}
+
+	#Option F: opt out - move on
+	option = {
+		name = court.6050.f
+		add_piety = minor_piety_gain
+		stress_and_fulfillment_impact = {
+			zealous = medium_stress_impact_gain
+			chaste = medium_stress_impact_gain
+			fickle = medium_stress_impact_loss
+			lazy = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 75
+			modifier = {
+				has_trait = zealous
+				add = -25
+			}
+			modifier = {
+				has_trait = chaste
+				add = -25
+			}
+			modifier = {
+				has_trait = lazy
+				add = 25
+			}
+		}
+	}
+	after = {
+		clear_court_event_participation = yes
+		scope:courtier = {
+			clear_court_event_participation = yes
+		}
+		scope:court_chaplain = {
+			clear_court_event_participation = yes
+		}
+	}
+}
+# MB Added End

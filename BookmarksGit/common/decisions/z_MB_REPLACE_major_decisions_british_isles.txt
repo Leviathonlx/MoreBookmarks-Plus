@@ -497,3 +497,191 @@ england_request_laudabiliter_decision = {
 		}
 	}
 }
+
+# MB Added
+# establish_norse_gael_culture_decision — replaces the vanilla decision in 80_major_decisions_british_isles.txt
+# MB - any North Germanic founder; the founder's own culture merges with Gaelic
+establish_norse_gael_culture_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+	decision_group_type = major
+	sort_order = 100
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	desc = establish_norse_gael_culture_decision_desc
+	selection_tooltip = establish_norse_gael_culture_decision_tooltip
+
+	is_shown = {
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_norse_gael_decision
+			}
+		}
+		any_sub_realm_county = {
+			OR = {
+				target_is_de_jure_liege_or_above = title:d_the_isles
+				target_is_de_jure_liege_or_above = title:d_western_isles
+			}
+			culture ?= culture:gaelic
+		}
+		culture ?= { has_cultural_pillar = heritage_north_germanic }
+	}
+
+	is_valid = {
+		culture = { has_cultural_pillar = heritage_north_germanic }
+		completely_controls = title:d_the_isles
+		completely_controls = title:d_western_isles
+	}
+
+	is_valid_showing_failures_only = {
+		is_at_war = no
+		is_imprisoned = no
+	}
+
+	effect = {
+		culture = { save_scope_as = old_culture_1 } # MB - the founder's own North Germanic culture
+		hidden_effect = {
+			title:d_the_isles = {
+				every_in_de_jure_hierarchy = {
+					limit = { tier = tier_county }
+					add_to_list = norse_gael_counties
+				}
+			}
+			title:d_western_isles = {
+				every_in_de_jure_hierarchy = {
+					limit = { tier = tier_county }
+					add_to_list = norse_gael_counties
+				}
+			}
+			every_sub_realm_title = {
+				limit = {
+					tier = tier_county
+				}
+				if = {
+					limit = {
+						title_province = { geographical_region = custom_the_isles_and_adjacent }
+						OR = {
+							culture = scope:old_culture_1
+							culture = culture:gaelic
+						}
+					}
+					add_to_list = norse_gael_counties
+				}
+			}
+
+			every_in_list = {
+				list = norse_gael_counties
+				merge_cultures_in_region_effect = {
+					OLD_CULTURE_1 = scope:old_culture_1
+					OLD_CULTURE_2 = culture:gaelic
+					NEW_CULTURE = culture:norse_gael
+					REGION = custom_the_isles_and_adjacent
+				}
+			}
+
+			# Notify players the same way a dynamic hybrid culture does (see on_culture_created)
+			save_scope_as = founder
+			scope:old_culture_1 = { save_scope_as = parent_1 }
+			culture:gaelic = { save_scope_as = old_culture_2 save_scope_as = parent_2 }
+			culture:norse_gael = {
+				reset_culture_creation_date = yes
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+				save_scope_as = new_culture
+			}
+			every_player = {
+				if = {
+					limit = {
+						OR = {
+							culture = scope:new_culture
+							culture = scope:parent_1
+							culture = scope:parent_2
+						}
+					}
+					trigger_event = {
+						id = culture_notification.1011
+						days = 0
+					}
+				}
+				else_if = {
+					limit = {
+						in_diplomatic_range = scope:founder
+					}
+					trigger_event = {
+						id = culture_notification.1001
+						days = 0
+					}
+				}
+			}
+		}
+
+		set_culture = culture:norse_gael
+		add_character_flag = converted_culture_this_lifetime
+		hidden_effect = {
+			every_in_list = {
+				list = norse_gael_counties
+				limit = {
+					holder.capital_county = { is_in_list = norse_gael_counties }
+				}
+				holder = {
+					add_to_list = mass_melting_pot_list
+					every_courtier = { add_to_list = mass_melting_pot_list }
+					every_courtier_away = { add_to_list = mass_melting_pot_list }
+				}
+				every_in_list = {
+					list = mass_melting_pot_list
+					limit = {
+						OR = {
+							culture = scope:old_culture_1
+							culture = culture:gaelic
+						}
+					}
+					set_culture = culture:norse_gael
+				}
+			}
+		}
+
+		show_as_tooltip = {
+			custom_tooltip = establish_norse_gael_culture_decision_effect.tt
+			culture:norse_gael = {
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+			}
+		}
+
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:flag_formed_norse_gael_decision
+		}
+	}
+
+	cost = {
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 0
+
+		modifier = {
+			add = 100
+			any_sub_realm_county = {
+				percent >= 0.5
+				culture = culture:gaelic
+			}
+		}
+	}
+}
+# MB Added End

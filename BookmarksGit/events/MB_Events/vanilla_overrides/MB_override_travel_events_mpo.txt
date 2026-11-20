@@ -1,0 +1,249 @@
+﻿namespace = travel_events_mpo
+
+# Events from vanilla events/travel_events/travel_events_mpo.txt adjusted for this mod. Each overrides the vanilla event of the same id (id_override_priority).
+
+# MB Added
+
+# MB - South Arabian heritage treated as Arabic
+travel_events_mpo.0010 = { # By Ariana 
+	id_override_priority = 1
+    type = character_event
+    title = travel_events_mpo.0010.t
+    desc = travel_events_mpo.0010.desc
+    theme = migration
+
+    left_portrait = {
+        character = root
+        animation = personality_rational
+    }
+
+    right_portrait = {
+        character = scope:camel_rider
+        animation = storyteller
+    }
+
+    cooldown = { years = 15 }
+
+    trigger = {
+        static_group_filter = {
+			group = travel_events_mpo.0010
+			match = 0.5
+		}
+        is_ai = no # For performance because of distance checks
+        is_available_travelling_adult = yes
+        is_location_valid_for_travel_event_on_land = yes
+        location = {    
+            geographical_region = world_steppe
+        }
+        government_has_flag = government_is_nomadic
+        religion:islam_religion = { any_faith = { num_county_followers >= 10 } }
+        any_culture_global = {
+            exists = culture_head
+            OR = {
+                has_cultural_pillar = heritage_arabic 
+                has_cultural_pillar = heritage_south_arabian 
+                has_cultural_pillar = heritage_iranian 
+                has_cultural_pillar = heritage_turkic 
+                has_cultural_pillar = heritage_berber 
+            }
+        }
+    }
+
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            add = 5
+            has_trait = cynical
+        }
+    }
+
+    immediate = {
+        religion:islam_religion = {
+            random_faith = {
+                limit = { 
+                    num_county_followers >= 10
+                }
+                save_scope_as = trader_faith
+            }
+        }
+        random_culture_global = {
+            limit = {
+                exists = culture_head
+                OR = {
+                    has_cultural_pillar = heritage_arabic 
+                    has_cultural_pillar = heritage_south_arabian 
+                    has_cultural_pillar = heritage_iranian 
+                    has_cultural_pillar = heritage_turkic 
+                    has_cultural_pillar = heritage_berber 
+                }
+            }
+            save_scope_as = trader_culture
+        }
+        create_character = {
+            template = merchant_template
+            location = root.location
+            faith = scope:trader_faith
+            culture = scope:trader_culture
+            prowess = {
+                min_template_decent_skill
+                max_template_decent_skill
+            }
+            save_scope_as = camel_rider
+        }
+    }
+
+    # Get some herd
+    option = {
+        name = travel_events_mpo.0010.a
+        trigger = {
+            domicile ?= { herd <= max_herd }
+        }
+        flavor = travel_events_mpo.0010.a_flavor
+        domicile ?= {
+            change_herd = minor_herd_gain
+        }
+        pay_short_term_gold = {
+            target = scope:camel_rider
+            gold = medium_gold_value  
+        }
+        stress_and_fulfillment_impact = {
+            greedy = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 100
+            ai_value_modifier = {
+                ai_greed = -0.5
+                ai_rationality = 1
+            }
+            modifier = {
+                gold <= major_gold_value
+                factor = 0
+            }
+        }
+    }
+
+    # conversion cheaper or gain piety
+    option = {
+        name = {
+            trigger = {
+                NOT = { faith = { religion_tag = islam_religion } }
+            }
+            text = travel_events_mpo.0010.b
+        }
+        name = {
+            trigger = {
+                faith = { religion_tag = islam_religion }
+            }
+            text = travel_events_mpo.0010.b_islamic
+        }
+        flavor = travel_events_mpo.0010.b_flavor
+        if = {
+            limit = {
+                faith = { religion_tag = islam_religion }
+            }
+            add_piety = medium_piety_gain
+            stress_and_fulfillment_impact = {
+                zealous = minor_stress_impact_loss
+                cynical = minor_stress_impact_gain
+            }
+        }
+        else = {
+            add_character_modifier = {
+                modifier = mpo_islam_conversion_modifier
+                years = 5
+            }
+            stress_and_fulfillment_impact = {
+                zealous = minor_stress_impact_gain
+                cynical = minor_stress_impact_gain
+                fickle = minor_stress_impact_loss
+            }
+        }
+        
+        ai_chance = {
+            base = 75
+            modifier = {
+                factor = 1.2
+                AND = {
+                    faith = { religion_tag = islam_religion }
+                    has_trait = zealous
+                }
+            }
+            modifier = {
+                factor = 0
+                has_trait = cynical
+            }
+        }
+    }
+
+    # rob him
+    option = {
+        name = travel_events_mpo.0010.c
+        duel = {
+            skill = prowess
+            target = scope:camel_rider
+            desc = travel_events_mpo.0010.c_tt
+            40 = {
+                desc = travel_events_mpo.0010_win
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -39
+                }
+                send_interface_toast = {
+                    type = event_toast_effect_good
+                    title = travel_events_mpo.0010_win
+                    left_icon = root
+                    right_icon = scope:camel_rider
+                    domicile ?= { change_herd = medium_herd_gain }
+                    add_short_term_gold = medium_gold_value
+                    scope:camel_rider = {
+                        random = {
+                            chance = 25
+                            increase_wounds_effect = {
+                                REASON = fight
+                            }
+                        }
+                    }
+                }
+            }
+            60 = {
+                desc = travel_events_mpo.0010_lose
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -59
+                }
+                send_interface_toast = {
+                    type = event_toast_effect_bad
+                    title = travel_events_mpo.0010_lose
+                    left_icon = root
+                    right_icon = scope:camel_rider
+                    add_prestige = minor_prestige_loss
+                    random = {
+                        chance = 25
+                        increase_wounds_effect = {
+                            REASON = fight
+                        }
+                    }
+                }
+            }
+        }
+        stress_and_fulfillment_impact = {
+            callous = major_stress_impact_loss
+            just = minor_stress_impact_gain
+            compassionate = major_stress_impact_gain
+            temperate = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 60
+            ai_value_modifier = {
+                ai_compassion = -1.5
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = greedy
+            }
+        }
+    }
+}
+# MB Added End

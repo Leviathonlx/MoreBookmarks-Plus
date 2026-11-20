@@ -1,0 +1,531 @@
+﻿namespace = tour_grounds_events
+
+# Events from vanilla events/activities/tour_activity/tour_phase_tour_grounds.txt adjusted for this mod. Each overrides the vanilla event of the same id (id_override_priority).
+
+# MB Added
+
+scripted_effect 1008_liege_likes_effect = {
+	scope:stop_host_scope = {
+		add_prestige = minor_prestige_gain
+	}
+	scope:visiting_liege = {
+		progress_towards_friend_effect = {
+			CHARACTER = scope:stop_host_scope
+			OPINION = default_friend_opinion
+			REASON = friend_told_me_scary_stories
+		}
+	}
+}
+
+scripted_effect 1008_liege_scared_effect = {
+	scope:visiting_liege = {
+		add_opinion = {
+			target = scope:stop_host_scope
+			modifier = scared_opinion
+			opinion = -15
+		}
+	}
+}
+
+scripted_effect 1008_liege_annoyed_effect = {
+	scope:visiting_liege = {
+		add_opinion = {
+			target = scope:stop_host_scope
+			modifier = annoyed_opinion
+			opinion = -15
+		}
+	}
+}
+
+# MB - South Arabian heritage treated as Arabic
+tour_grounds_events.1008 = {
+	id_override_priority = 1
+	type = activity_event
+	title = tour_grounds_events.1008.title
+	desc = {
+		desc = tour_grounds_events.1008.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = { has_cultural_pillar = heritage_goidelic }
+				}
+				desc = tour_grounds_events.1008.desc.mid.banshee
+			}
+			triggered_desc = {
+				trigger = {
+					OR = { scope:storyteller_scope.culture = { has_cultural_pillar = heritage_arabic } scope:storyteller_scope.culture = { has_cultural_pillar = heritage_south_arabian } }
+				}
+				desc = tour_grounds_events.1008.desc.mid.ghul
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = { has_cultural_pillar = heritage_iranian }
+				}
+				desc = tour_grounds_events.1008.desc.mid.azdaha
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = { has_cultural_pillar = heritage_akan }
+				}
+				desc = tour_grounds_events.1008.desc.mid.sasabonsam
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = {
+						OR = {
+							has_cultural_pillar = heritage_brythonic
+							this = culture:norman
+							any_parent_culture = { this = culture:norman }
+						}
+					}
+				}
+				desc = tour_grounds_events.1008.desc.mid.ankou
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = {
+						OR = {
+							this = culture:dutch
+							any_parent_culture = { this = culture:dutch }
+							this = culture:frisian
+							any_parent_culture = { this = culture:frisian }
+							this = culture:saxon
+							any_parent_culture = { this = culture:saxon }
+						}
+					}
+				}
+				desc = tour_grounds_events.1008.desc.mid.witt_wieven
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope = {
+						OR = {
+							culture = { has_cultural_pillar = heritage_east_slavic }
+							culture = { has_cultural_pillar = heritage_west_slavic }
+							culture = { has_cultural_pillar = heritage_south_slavic }
+							faith = { religion = religion:slavic_religion }
+						}
+					}
+				}
+				desc = tour_grounds_events.1008.desc.mid.baba_yaga
+			}
+			desc = tour_grounds_events.1008.desc.mid
+		}
+		desc = tour_grounds_events.1008.desc.outro
+	}
+
+	theme = tour_grounds
+	left_portrait = {
+		character = scope:storyteller_scope
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:visiting_liege
+		animation = fear
+	}
+
+	trigger = {
+		
+		scope:visiting_liege = {
+			is_adult = no
+		}
+		NOT = { exists = local_var:had_1008 }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				is_ruler = no
+				is_available_ai_adult = yes
+			}
+			weight = {
+				#Try to make it someone relevant
+				modifier = {
+					add = 5
+					is_councillor = yes
+				}
+				modifier = {
+					add = 5
+					OR = {
+						is_close_family_of = root
+						is_consort_of = root
+					}
+				}
+				#Try to make it someone who would be good at telling a story
+				modifier = {
+					add = 5
+					OR = {
+						has_trait = journaller
+						has_trait = lifestyle_poet
+					}
+				}
+				modifier = {
+					add = 5
+					learning >= high_skill_rating
+				}
+			}
+			save_scope_as = storyteller_scope
+		}
+		set_local_variable = {
+			name = had_1008
+			value = yes
+		}
+	}
+
+	option = { # Join in on the spooky story
+		name = tour_grounds_events.1008.a
+		progress_towards_friend_effect = {
+			CHARACTER = scope:storyteller_scope
+			OPINION = default_friend_opinion
+			REASON = friend_bonded_on_tour
+		}
+		show_as_tooltip = {
+			random_list = {
+				100 = {
+					show_chance = no
+					desc = tour_grounds_if_liege_enjoys_tt
+					1008_liege_likes_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = tour_grounds_if_liege_is_scared_tt
+					1008_liege_scared_effect = yes
+				}
+			}
+		}
+		hidden_effect = {
+			set_variable = {
+				name = 1008_told_the_story
+				days = 7
+			}
+			scope:visiting_liege = {
+				trigger_event = tour_grounds_events.1009
+			}
+		}
+		stress_and_fulfillment_impact = {
+			paranoid = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+			wrathful = minor_stress_impact_loss
+			craven = medium_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -5
+				OR = {
+					has_trait = paranoid
+					has_trait = cynical
+					has_trait = calm
+				}
+			}
+			modifier = {
+				add = -10
+				OR = {
+					has_trait = craven
+					has_trait = compassionate
+				}
+			}
+		}
+	}
+
+	option = { # There's no such thing as ghosts
+		name = tour_grounds_events.1008.b
+		reverse_add_opinion = {
+			target = scope:storyteller_scope
+			modifier = annoyed_opinion
+			opinion = -15
+		}
+		show_as_tooltip = {
+			random_list = {
+				100 = {
+					show_chance = no
+					desc = tour_grounds_if_liege_is_scared_tt
+					1008_liege_likes_effect = yes
+				}
+				100 = {
+					show_chance = no
+					desc = tour_grounds_if_liege_enjoys_tt
+					1008_liege_annoyed_effect = yes
+				}
+			}
+		}
+		hidden_effect = {
+			set_variable = {
+				name = 1008_interrupted_the_story
+				days = 7
+			}
+			scope:visiting_liege = {
+				trigger_event = tour_grounds_events.1009
+			}
+		}
+		stress_and_fulfillment_impact = {
+			callous = medium_stress_impact_gain
+			sadistic = medium_stress_impact_gain
+			arrogant = medium_stress_impact_gain
+			deceitful = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -10
+				OR = {
+					has_trait = callous
+					has_trait = sadistic
+					has_trait = arrogant
+					has_trait = deceitful
+				}
+			}
+		}
+	}
+}
+
+# MB - South Arabian heritage treated as Arabic
+tour_grounds_events.1009 = {
+	id_override_priority = 1
+	type = activity_event
+	title = tour_grounds_events.1009.title
+	desc = {
+		desc = tour_grounds_events.1009.desc.intro
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = { has_cultural_pillar = heritage_goidelic }
+				}
+				desc = tour_grounds_events.1008.desc.mid.banshee
+			}
+			triggered_desc = {
+				trigger = {
+					OR = { scope:storyteller_scope.culture = { has_cultural_pillar = heritage_arabic } scope:storyteller_scope.culture = { has_cultural_pillar = heritage_south_arabian } }
+				}
+				desc = tour_grounds_events.1008.desc.mid.ghul
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = { has_cultural_pillar = heritage_iranian }
+				}
+				desc = tour_grounds_events.1008.desc.mid.azdaha
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = { has_cultural_pillar = heritage_akan }
+				}
+				desc = tour_grounds_events.1008.desc.mid.sasabonsam
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = {
+						OR = {
+							has_cultural_pillar = heritage_brythonic
+							this = culture:norman
+							any_parent_culture = { this = culture:norman }
+						}
+					}
+				}
+				desc = tour_grounds_events.1008.desc.mid.ankou
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope.culture = {
+						OR = {
+							this = culture:dutch
+							any_parent_culture = { this = culture:dutch }
+							this = culture:frisian
+							any_parent_culture = { this = culture:frisian }
+							this = culture:saxon
+							any_parent_culture = { this = culture:saxon }
+						}
+					}
+				}
+				desc = tour_grounds_events.1008.desc.mid.witt_wieven
+			}
+			triggered_desc = {
+				trigger = {
+					scope:storyteller_scope = {
+						OR = {
+							culture = { has_cultural_pillar = heritage_east_slavic }
+							culture = { has_cultural_pillar = heritage_west_slavic }
+							culture = { has_cultural_pillar = heritage_south_slavic }
+							faith = { religion = religion:slavic_religion }
+						}
+					}
+				}
+				desc = tour_grounds_events.1008.desc.mid.baba_yaga
+			}
+			desc = tour_grounds_events.1008.desc.mid
+		}
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					scope:stop_host_scope = {
+						exists = var:1008_told_the_story
+					}
+				}
+				desc = tour_grounds_events.1009.desc.mid.finished
+			}
+			desc = tour_grounds_events.1009.desc.outro.interrupted
+		}
+	}
+
+	theme = tour_grounds
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+	right_portrait = {
+		character = scope:stop_host_scope
+		animation = personality_rational
+	}
+
+	option = { # What a fun story!
+		name = tour_grounds_events.1009.a
+		trigger = {
+			scope:stop_host_scope = {
+				exists = var:1008_told_the_story
+			}
+		}
+		1008_liege_likes_effect = yes
+		if = {
+			limit = {
+				scope:activity = {
+					has_activity_option = {
+						category = special_type
+						option = tour_type_intimidation
+					}
+				}
+			}
+			increase_tour_success_effect = { POINTS = 1 }
+		}
+		stress_and_fulfillment_impact = {
+			paranoid = minor_stress_impact_gain
+			pensive = minor_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			craven = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -10
+				OR = {
+					has_trait = paranoid
+					has_trait = pensive
+					has_trait = compassionate
+					has_trait = craven
+				}
+			}
+		}
+	}
+
+	option = { # I am traumatised
+		name = tour_grounds_events.1009.b
+		trigger = {
+			scope:stop_host_scope = {
+				exists = var:1008_told_the_story
+			}
+		}
+		1008_liege_scared_effect = yes
+		stress_and_fulfillment_impact = {
+			craven = minor_stress_impact_loss
+			rowdy = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			compassionate = minor_stress_impact_loss
+			arrogant = minor_stress_impact_gain
+			curious = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -10
+				OR = {
+					has_trait = brave
+					has_trait = rowdy
+					has_trait = callous
+					has_trait = sadistic
+					has_trait = arrogant
+					has_trait = curious
+					has_trait = cynical
+				}
+			}
+		}
+	}
+
+	option = { # You stopped it at the good part!
+		name = tour_grounds_events.1009.c
+		trigger = {
+			scope:stop_host_scope = {
+				exists = var:1008_interrupted_the_story
+			}
+		}
+		1008_liege_scared_effect = yes
+		if = {
+			limit = {
+				scope:activity = {
+					has_activity_option = {
+						category = special_type
+						option = tour_type_intimidation
+					}
+				}
+			}
+			increase_tour_success_effect = { POINTS = 1 }
+		}
+		stress_and_fulfillment_impact = {
+			paranoid = minor_stress_impact_gain
+			craven = medium_stress_impact_gain
+			compassionate = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -5
+				OR = {
+					has_trait = paranoid
+					has_trait = cynical
+					has_trait = calm
+				}
+			}
+			modifier = {
+				add = -10
+				OR = {
+					has_trait = craven
+					has_trait = compassionate
+				}
+			}
+		}
+	}
+
+	option = { # Thank goodness you stopped it
+		name = tour_grounds_events.1009.d
+		trigger = {
+			scope:stop_host_scope = {
+				exists = var:1008_interrupted_the_story
+			}
+		}
+		1008_liege_likes_effect = yes
+		stress_and_fulfillment_impact = {
+			craven = minor_stress_impact_loss
+			rowdy = minor_stress_impact_gain
+			callous = minor_stress_impact_gain
+			compassionate = minor_stress_impact_loss
+			arrogant = minor_stress_impact_gain
+			curious = minor_stress_impact_gain
+			cynical = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = -10
+				OR = {
+					has_trait = brave
+					has_trait = rowdy
+					has_trait = callous
+					has_trait = sadistic
+					has_trait = arrogant
+					has_trait = curious
+					has_trait = cynical
+				}
+			}
+		}
+	}
+}
+# MB Added End

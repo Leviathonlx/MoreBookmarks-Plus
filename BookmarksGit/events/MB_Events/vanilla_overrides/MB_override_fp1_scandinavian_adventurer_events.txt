@@ -1,0 +1,156 @@
+﻿namespace = fp1_scandinavian_adventurers
+
+# Events from vanilla events/dlc/fp1/fp1_scandinavian_adventurer_events.txt adjusted for this mod. Each overrides the vanilla event of the same id (id_override_priority).
+
+# MB Added
+
+scripted_trigger valid_scandinavian_adventurer = {
+	is_available_ai_adult = yes
+	is_alive = yes
+	is_ruler = no
+	any_heir_title = { count = 0 }
+}
+
+scripted_trigger valid_scandinavian_county_trigger = {
+	#Should be simple enough, but might want to make it more complex in future.
+	culture = { has_cultural_pillar = heritage_north_germanic }
+}
+
+# MB - Scandinavian adventurers while any North Germanic culture is still tribal (dane, svear ...)
+fp1_scandinavian_adventurers.0001 = {
+	id_override_priority = 1
+	scope = none
+	hidden = yes
+
+	trigger = {
+		#DLC check.
+		has_fp1_dlc_trigger = yes
+		NOT = { has_game_rule = fp1_scandi_adventurers_off }
+		OR = {
+			culture:norse = {
+				NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+			}
+			culture:norwegian = {
+				NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+			}
+			culture:danish = {
+				NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+			}
+			culture:swedish = {
+				NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+			}
+			any_culture_global = { # MB - any North Germanic culture still holding land
+				has_cultural_pillar = heritage_north_germanic
+				culture_number_of_counties >= 1
+				NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+			}
+		}
+	}
+
+	immediate = {
+		#We prefer to use actual characters, but if there aren't any, we try to generate a fallback.
+		##Populate Western list backup.
+		if = {
+			limit = {
+				NOT = {
+					any_in_global_list = {
+						variable = western_scandinavian_adventurer_list
+						count >= 1
+						valid_scandinavian_adventurer = yes
+					}
+				}
+				any_county_in_region = {
+					region = dlc_fp1_region_western_scandinavia_pool
+					valid_scandinavian_county_trigger = yes
+				}
+			}
+			random_county_in_region = {
+				region = dlc_fp1_region_western_scandinavia_pool
+				limit = { valid_scandinavian_county_trigger = yes }
+				save_scope_as = scandinavian_county
+			}
+			create_character = {
+				location = scope:scandinavian_county.title_province
+				template = fp1_western_warrior_character
+				save_scope_as = backup_adventurer
+			}
+			scope:backup_adventurer = {
+				add_to_global_variable_list = {
+					name = western_scandinavian_adventurer_list
+					target = this
+				}
+			}
+		}
+		##Populate Eastern list backup.
+		if = {
+			limit = {
+				NOT = {
+					any_in_global_list = {
+						variable = eastern_scandinavian_adventurer_list
+						count >= 1
+						valid_scandinavian_adventurer = yes
+					}
+				}
+				any_county_in_region = {
+					region = dlc_fp1_region_eastern_scandinavia_pool
+					valid_scandinavian_county_trigger = yes
+				}
+			}
+			random_county_in_region = {
+				region = dlc_fp1_region_eastern_scandinavia_pool
+				limit = { valid_scandinavian_county_trigger = yes }
+				save_scope_as = scandinavian_county
+			}
+			create_character = {
+				location = scope:scandinavian_county.title_province
+				template = fp1_eastern_warrior_character
+				save_scope_as = backup_adventurer
+			}
+			scope:backup_adventurer = {
+				add_to_global_variable_list = {
+					name = eastern_scandinavian_adventurer_list
+					target = this
+				}
+			}
+		}
+		#Launch the adventurer spawning events.
+		trigger_event = {
+			id = fp1_scandinavian_adventurers.0002
+			days = { 0 365 }
+		}
+		trigger_event = {
+			id = fp1_scandinavian_adventurers.0003
+			days = { 0 365 }
+		}
+		#Trigger the next wave of events.
+		if = {
+			limit = { has_game_rule = fp1_scandi_adventurers_apocalyptic }
+			trigger_event = {
+				id = fp1_scandinavian_adventurers.0001
+				days = { 300 420 }
+			}
+		}
+		if = {
+			limit = { has_game_rule = fp1_scandi_adventurers_frequent }
+			trigger_event = {
+				id = fp1_scandinavian_adventurers.0001
+				days = { 1725 1910 }
+			}
+		}
+		if = {
+			limit = { has_game_rule = fp1_scandi_adventurers_occasional }
+			trigger_event = {
+				id = fp1_scandinavian_adventurers.0001
+				days = { 3540 3725 }
+			}
+		}
+		if = {
+			limit = { has_game_rule = fp1_scandi_adventurers_rare }
+			trigger_event = {
+				id = fp1_scandinavian_adventurers.0001
+				days = { 5350 5600 }
+			}
+		}
+	}
+}
+# MB Added End

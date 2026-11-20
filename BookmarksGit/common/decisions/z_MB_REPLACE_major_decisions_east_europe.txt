@@ -239,3 +239,249 @@ found_kingdom_of_bosnia_decision = {
 		base = 100
 	}
 }
+
+# MB Added
+# found_kingdom_of_livonia_decision — replaces the vanilla decision in 00_major_decisions_east_europe.txt
+# MB - Zemgale is d_zemigalia on this map (vanilla d_semigallia)
+found_kingdom_of_livonia_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+	sort_order = 110
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = found_kingdom_of_livonia_decision_desc
+	selection_tooltip = found_kingdom_of_livonia_decision_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		exists = dynasty
+		highest_held_title_tier <= tier_duchy
+		is_playable_character = yes
+		OR = {
+			#Or just be Latvian.
+			culture ?= culture:latgalian
+			#Must be a Latvian or Christian in Livonia
+			AND = {
+				OR = {
+					#Is a Crusader founding the Kingdom
+					root.faith ?= {
+						NOT = { has_doctrine_parameter = unreformed }
+						NOT = { religion_tag = baltic_religion }
+					}
+					#Considers themselves to be a "Balt"
+					root.culture ?= { has_cultural_pillar = heritage_baltic }
+					root.faith ?= {
+						religion_tag = baltic_religion
+					}
+				}
+				capital_province ?= {
+					geographical_region = ghw_region_baltic
+				}
+				NOT = {
+					culture = culture:estonian #Estonians already have their Kingdom.
+				}
+			}
+		}
+		NOT = {	#You can only do it once.
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_livonia
+			}
+		}
+	}
+
+	is_valid = {
+		OR = { #Independent or vassal of an Emperor
+			top_liege = this
+			top_liege.primary_title.tier >= tier_empire
+		}
+		prestige_level >= medium_prestige_level
+
+		#You must control the kingdom's heartlands.
+		has_title = title:d_latgalians
+		has_title = title:d_courland
+		has_title = title:d_zemigalia
+		has_title = title:d_livonia
+		completely_controls_region = custom_latvia
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_available_adult = yes
+	}
+
+	effect = {
+		save_scope_as = founder
+		show_as_tooltip = { found_kingdom_of_livonia_decision_scripted_effect = yes }
+		gain_heroic_legend_seed_tooltip_effect = yes
+		trigger_event = { id = east_europe.0200 }
+		#Notify other players.
+		every_player = {
+			limit = {
+				this != scope:founder
+				top_liege = {
+					OR = {
+						this = scope:founder
+						any_neighboring_and_across_water_top_liege_realm_owner = { this = scope:founder }
+					}
+				}
+			}
+			trigger_event = east_europe.0201
+		}
+		hidden_effect = {
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_livonia
+			}
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = major_gold_value
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = major_gold_value
+			}
+		}
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+# MB Added End
+
+# MB Added
+# found_kingdom_of_albania_decision — replaces the vanilla decision in 00_major_decisions_east_europe.txt
+# MB - capital culture check widened to the Albanian heritage (arberian, albanian, illyrian)
+found_kingdom_of_albania_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	decision_group_type = major
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 0
+		empire = 0
+		hegemony = 0
+	}
+
+	desc = found_kingdom_of_albania_decision_desc
+	selection_tooltip = found_kingdom_of_albania_decision_tooltip
+
+	is_shown = {
+		culture ?= { has_cultural_pillar = heritage_albanian }
+		NOR = {
+			government_has_flag = government_is_mercenary
+			government_has_flag = government_is_holy_order
+		}
+		is_playable_character = yes
+		faith ?= { religion_tag = christianity_religion }
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_albania
+			}
+		}
+		highest_held_title_tier <= tier_duchy
+		is_ruler = yes
+	}
+
+	is_valid = {
+		top_liege = this
+
+		OR = {
+			capital_county = title:c_arbanon
+			capital_county = title:c_dyrrachion
+			capital_county = title:c_antipatreia
+		}
+		capital_county = {
+			culture = { has_cultural_pillar = heritage_albanian }
+		}
+
+		has_title = title:d_dyrrachion
+		completely_controls = title:d_dyrrachion
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		is_available_adult = yes
+	}
+
+	effect = {
+		save_scope_as = founder
+		found_kingdom_of_albania_decision_scripted_effect = yes
+		gain_heroic_legend_seed_tooltip_effect = yes
+		hidden_effect = {
+			if = {
+				limit = { has_dlc_feature = legends }
+				send_interface_toast = {
+					type = msg_legend_seed_created
+					title = heroic_legend_seed_drop.t
+					left_icon = root
+					create_legend_seed = {
+						type = heroic
+						quality = famed
+						chronicle = new_title
+						properties = {
+							title = root.primary_title
+							founder = root
+						}
+					}
+				}
+			}
+			add_to_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_founded_kingdom_of_albania
+			}
+		}
+	}
+
+	cost = {
+		treasury_or_gold = {
+			value = 300
+		}
+		prestige = 200
+	}
+
+	ai_potential = {
+		is_independent_ruler = yes
+		treasury_or_gold = {
+			value = 300
+		}
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+# MB Added End

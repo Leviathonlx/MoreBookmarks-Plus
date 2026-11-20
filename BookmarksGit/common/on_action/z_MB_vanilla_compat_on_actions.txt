@@ -1,0 +1,88 @@
+﻿# Additions to vanilla on_actions for this mod's cultures. Chained through on_actions = { } so the vanilla files stay untouched.
+
+# MB Added
+
+# Tribal-era Danes, Svear, Geats and Gotlanders who lose their last county join the Scandinavian adventurer pools, as vanilla does for norse, norwegian, danish and swedish (title_on_actions.txt, on_title_lost)
+on_title_lost = {
+	on_actions = { mb_on_title_lost_scandinavian_adventurers }
+}
+
+mb_on_title_lost_scandinavian_adventurers = {
+	effect = {
+		if = {
+			limit = {
+				culture = {
+					NOT = { has_cultural_era_or_later = culture_era_early_medieval }
+				}
+				is_playable_character = no
+				scope:title = {
+					tier = tier_county
+					exists = title_province
+					title_province = {
+						OR = {
+							geographical_region = world_europe
+							geographical_region = world_asia_minor
+						}
+					}
+				}
+			}
+			# Danes go into the western adventurer list
+			if = {
+				limit = {
+					OR = {
+						has_culture = culture:dane
+						has_culture = culture:scanian
+					}
+				}
+				add_to_global_variable_list = {
+					name = western_scandinavian_adventurer_list
+					target = this
+				}
+			}
+			# Svear, Geats and Gotlanders go into the eastern adventurer list
+			if = {
+				limit = {
+					OR = {
+						has_culture = culture:svear
+						has_culture = culture:geatish
+						has_culture = culture:got
+					}
+				}
+				add_to_global_variable_list = {
+					name = eastern_scandinavian_adventurer_list
+					target = this
+				}
+			}
+		}
+	}
+}
+
+# Games started before 1198 move from the stem-duchy princes to the seven prince-electors, as the double election of 1198 began the college
+# (only while the HRE still uses that list; a list built by founding the HRE through the decision is left alone)
+yearly_global_pulse = {
+	on_actions = { mb_yearly_hre_seven_electors }
+}
+
+mb_yearly_hre_seven_electors = {
+	effect = {
+		if = {
+			limit = {
+				current_date >= 1198.1.1
+				has_global_variable = mb_hre_stem_prince_electors
+			}
+			remove_global_variable = mb_hre_stem_prince_electors
+			if = {
+				limit = {
+					exists = title:e_hre.holder
+					is_target_in_global_variable_list = { name = hre_elector_list target = title:d_swabia }
+					is_target_in_global_variable_list = { name = hre_elector_list target = title:d_brabant }
+				}
+				mb_hre_electors_clear_effect = yes
+				mb_hre_electors_seven_effect = yes
+				hre_elector_list_save_effect = yes
+			}
+		}
+	}
+}
+
+# MB Added End

@@ -1,0 +1,251 @@
+﻿
+# MB Added
+# council_of_toledo_decision — replaces the vanilla decision in dlc_decisions/03_fp2_decisions.txt
+# MB - the Hispanic (Visigothic) rite of the northern kingdoms qualifies beside the Mozarabic church
+council_of_toledo_decision = {
+	title = council_of_toledo_decision_title
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	}
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { exists = global_var:council_of_toledo_counter }
+				desc = council_of_toledo_decision_desc_count
+			}
+			desc = council_of_toledo_decision_desc
+		}
+	}
+	selection_tooltip = council_of_toledo_decision_tooltip
+	cooldown = { years = council_of_toledo_decision_decision_cooldown_value }
+	decision_group_type = major
+
+	sort_order = 80
+
+	is_shown = {
+		any_vassal = { }
+		# Is Mozarabic (or reformed Mozarabic)
+		OR = { rite ?= rite:mozarabic_church rite ?= rite:hispanic_rite }
+		# DLC check
+		has_fp2_dlc_trigger = yes
+	}
+
+	is_valid = {
+		# Owns Toledo
+		custom_tooltip = {
+			text = council_of_toledo_decision_toledo_holder_trigger
+			is_toledo_ownership_valid_trigger = yes
+		}
+		any_vassal = {
+			count >= 3
+			is_powerful_vassal = yes
+			custom_tooltip = {
+				text = council_of_toledo_decision_toledo_faith_trigger
+				faith = root.faith
+			}
+		}
+
+		realm_size >= council_of_toledo_realm_size_value
+		# update fp2_struggle_council_toledo_decision_trigger if changing this
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+		# Not at war
+		is_at_war = no
+	}
+
+	effect = {
+		# Council counter
+		if = {
+			limit = { exists = global_var:council_of_toledo_counter }
+			change_global_variable = {
+				name = council_of_toledo_counter
+				add = 1
+			}
+		}
+		else = {
+			set_global_variable = {
+				name = council_of_toledo_counter
+				value = 19
+			}
+		}
+		if = {
+			limit = {
+				any_character_struggle = { is_struggle_type = iberian_struggle }
+			}
+			custom_tooltip = council_of_toledo_decision_catalyst_tt
+		}
+		trigger_event = {
+			on_action = fp2_struggle_council_toledo_organize
+			days = 1
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = council_of_toledo_gold_cost_value
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = council_of_toledo_gold_cost_value
+			}
+		}
+		piety = council_of_toledo_piety_cost_value
+	}
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 0
+		kingdom = 60
+		empire = 60
+		hegemony = 60
+	}
+
+	ai_potential = {
+		is_ruler = yes
+		short_term_gold >= council_of_toledo_gold_cost_value
+	}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+# MB Added End
+
+# MB Added
+# found_kingdom_toledo_decision — replaces the vanilla decision in dlc_decisions/03_fp2_decisions.txt
+# MB - the Hispanic (Visigothic) rite of the northern kingdoms qualifies beside the Mozarabic church
+found_kingdom_toledo_decision = {
+	title = found_kingdom_toledo_decision_title
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
+	}
+	desc = found_kingdom_toledo_decision_desc
+	selection_tooltip = found_kingdom_toledo_decision_tooltip
+	sort_order = 80
+
+	decision_group_type = major
+
+	is_shown = {
+  		culture ?= { has_cultural_pillar = heritage_iberian }
+		OR = { rite ?= rite:mozarabic_church rite ?= rite:hispanic_rite }
+		title:e_spain = {
+			any_in_de_jure_hierarchy = {
+				any_title_to_title_neighboring_and_across_water_duchy = { this = title:d_toledo }
+				de_jure_liege = {
+					any_in_de_jure_hierarchy = {
+						count > 2
+						tier = tier_duchy
+					}
+				}
+			}
+		}
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:form_toledo_decision
+			}
+		}
+		# DLC check
+		has_fp2_dlc_trigger = yes
+	}
+
+	is_valid = {
+		top_liege = this
+		custom_tooltip = {
+			text = found_kingdom_toledo_capital_tt
+			capital_county = title:c_toledo
+		}
+		custom_tooltip = {
+			text = found_kingdom_toledo_culture_tt
+			culture = { has_cultural_pillar = heritage_iberian }
+		}
+		custom_tooltip = {
+			text = found_kingdom_toledo_faith_tt
+			OR = { rite = rite:mozarabic_church rite = rite:hispanic_rite }
+		}
+		completely_controls = title:d_toledo
+		custom_tooltip = {
+			text = found_kingdom_toledo_duchy_tt
+			any_held_title = {
+				title_tier = duchy
+				is_titular = no
+				NOT = { this = title:d_toledo }
+				root = { completely_controls = prev }
+				any_title_to_title_neighboring_and_across_water_duchy = { this = title:d_toledo }
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_landed = yes
+	}
+
+	cost = {
+		gold = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = no
+				}
+				add = 250
+			}
+		}
+		treasury = {
+			value = 0
+			if = {
+				limit = {
+					has_treasury = yes
+				}
+				add = 250
+			}
+		}
+	}
+
+	effect = {
+		save_scope_as = toledo_former
+		gain_heroic_legend_seed_tooltip_effect = yes
+		fp2_struggle_found_kingdom_toledo_empire_effect = yes
+		save_scope_value_as = {
+			name = has_kingdom_toledo_absorb_list_been_created
+			value = yes
+		}
+		trigger_event = fp2_other_decisions.1100
+		#Can only happen once
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:form_toledo_decision
+		}
+		set_global_variable = {
+			name = form_toledo_decision
+			value = scope:toledo_former
+		}
+	}
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	ai_potential = {}
+
+	ai_will_do = {
+		base = 100
+	}
+}
+# MB Added End

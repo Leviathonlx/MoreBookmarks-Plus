@@ -1,0 +1,188 @@
+﻿
+# MB Added
+# establish_norman_culture_decision — replaces the vanilla decision in 80_major_decisions_middle_europe.txt
+# MB - any North Germanic founder; the founder's own culture merges with French
+establish_norman_culture_decision = {
+	picture = {
+		reference = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	}
+	decision_group_type = major
+	sort_order = 100
+
+	ai_check_interval_by_tier = {
+		barony = 0
+		county = 0
+		duchy = 120
+		kingdom = 120
+		empire = 120
+		hegemony = 120
+	}
+
+	desc = establish_norman_culture_decision_desc
+	selection_tooltip = establish_norman_culture_decision_tooltip
+
+	is_shown = {
+		NOT = {
+			is_target_in_global_variable_list = {
+				name = unavailable_unique_decisions
+				target = flag:flag_formed_normandy_decision
+			}
+		}
+		any_sub_realm_county = {
+			target_is_de_jure_liege_or_above = title:d_normandy
+			culture ?= culture:french
+		}
+		culture ?= { has_cultural_pillar = heritage_north_germanic }
+	}
+
+	is_valid = {
+		culture = { has_cultural_pillar = heritage_north_germanic }
+		completely_controls = title:d_normandy
+	}
+
+	is_valid_showing_failures_only = {
+		is_at_war = no
+		is_imprisoned = no
+	}
+
+	effect = {
+		culture = { save_scope_as = old_culture_1 } # MB - the founder's own North Germanic culture
+		hidden_effect = {
+			# Generate a list of counties we want to flip to the new culture.
+			title:d_normandy = {
+				every_in_de_jure_hierarchy = {
+					limit = { tier = tier_county}
+					add_to_list = norman_counties
+				}
+			}
+			every_sub_realm_title = {
+				limit = {
+					tier = tier_county
+				}
+				if = {
+					limit = {
+						title_province = { geographical_region = custom_normandy_and_adjacent }
+						OR = {
+							culture = culture:french
+							culture = scope:old_culture_1
+						}
+					}
+					add_to_list = norman_counties
+				}
+			}
+
+			# Perform the culture flip.
+			every_in_list = {
+				list = norman_counties
+				merge_cultures_in_region_effect = {
+					OLD_CULTURE_1 = scope:old_culture_1
+					OLD_CULTURE_2 = culture:french
+					NEW_CULTURE = culture:norman
+					REGION = custom_normandy_and_adjacent
+				}
+			}
+
+			# Send all players in the game a notification event about the flip.
+			save_scope_as = norman_founder
+			culture:french = {save_scope_as = old_culture_2}
+			culture:norman = {
+				reset_culture_creation_date = yes
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+				save_scope_as = new_culture
+			}
+			every_player = {
+				if = {
+					limit = {
+						this != root
+						OR = {
+							culture = culture:french
+							culture = scope:old_culture_1
+						}
+						capital_province ?= { geographical_region = custom_normandy_and_adjacent }
+					}
+					trigger_event = global_culture.3002
+				}
+				else_if = {
+					limit = { this = root }
+					trigger_event = global_culture.3003
+				}
+				else_if = {
+					limit = {
+						capital_province ?= { geographical_region = world_europe }
+					}
+					trigger_event = global_culture.3005
+				}
+			}
+		}
+
+		# Player changes culture
+		set_culture = culture:norman
+		add_character_flag = converted_culture_this_lifetime
+		hidden_effect = {
+			every_in_list = {
+				list = norman_counties
+				limit = {
+					holder.capital_county = { is_in_list = norman_counties }
+				}
+				holder = {
+					add_to_list = mass_melting_pot_list
+					every_courtier = { add_to_list = mass_melting_pot_list }
+					every_courtier_away = { add_to_list = mass_melting_pot_list }
+				}
+				every_in_list = {
+					list = mass_melting_pot_list
+					limit = {
+						OR = {
+							culture = culture:french
+							culture = scope:old_culture_1
+						}
+					}
+					set_culture = culture:norman
+				}
+			}
+		}
+
+		# Summary of above hidden effects to inform players of the decision's impact.
+		show_as_tooltip = {
+			custom_tooltip = establish_norman_culture_decision_effect.tt
+			culture:norman = {
+				get_all_innovations_from = scope:old_culture_1
+				get_all_innovations_from = scope:old_culture_2
+			}
+		}
+
+		# Rename the duchy to Normandy
+		title:d_normandy = {
+			save_scope_as = normandy_title
+			hidden_effect = {
+				set_title_name = d_normandy
+			}
+			custom_tooltip = establish_norman_culture_decision_effect.tt.2
+		}
+		add_to_global_variable_list = {
+			name = unavailable_unique_decisions
+			target = flag:flag_formed_normandy_decision
+		}
+	}
+
+	cost = {
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 0
+
+		modifier = {
+			add = 100
+			any_sub_realm_county = {
+				percent >= 0.5
+				culture = culture:french
+			}
+		}
+	}
+}
+# MB Added End
