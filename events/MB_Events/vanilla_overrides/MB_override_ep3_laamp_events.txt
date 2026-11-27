@@ -1,0 +1,485 @@
+﻿namespace = ep3_laamps
+
+# Events from vanilla events/dlc/ep3/ep3_laamp_events.txt adjusted for this mod. Each overrides the vanilla event of the same id (id_override_priority).
+
+# MB Added
+
+# MB - English side of the Harrying = every Anglic-speaking culture not descended from Norman
+ep3_laamps.6005 = {
+	id_override_priority = 1
+	type = character_event
+	title = ep3_laamps.6005.t
+	desc = ep3_laamps.6005.desc
+	theme = realm
+	override_background = { reference = wilderness_wetlands }
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = {
+		has_ep3_dlc_trigger = yes
+	}
+
+	immediate = {
+		#Save William
+		character:140 = {
+			save_scope_as = william
+		}
+
+		#Save our location; should be Ely
+		location = { save_scope_as = location }
+
+		#Set up The Fens
+		ep3_the_fens_list_effect = yes
+
+		every_in_list = {
+			list = the_fens
+			custom = every_fenland_holding
+			add_province_modifier = {
+				modifier = ep3_dangerous_fenland_modifier
+				years = 15
+			}
+		}
+
+		#Create the character here
+		create_character = {
+			location = root.capital_province
+			template = wetlands_commander_character
+			culture = root.culture
+			faith = root.faith
+			rite = root.rite
+			save_scope_as = wetlands_commander
+		}
+
+		## Used in the after:
+		# Make a list of every Anglo-Saxon lord
+		scope:william = {
+			every_vassal = {
+				limit = {
+					character_is_valid_anglo_saxon_for_harrying_of_the_north_trigger = yes
+				}
+				add_to_list = aethelings
+			}
+		}
+
+		# Pick the most powerful Anglo-Saxon lord
+		# Most likely Eadwin Aelfgarson
+		ordered_in_list = {
+			list = aethelings
+			order_by = max_military_strength
+			save_scope_as = powerful_vassal
+		}
+
+		domicile = {
+			change_provisions = minor_provisions_gain
+		}
+	}
+
+	option = { #Raid to acquire wealth
+		name = ep3_laamps.6005.a
+
+		flavor = ep3_laamps.6005.a.tt
+
+		add_gold = medium_gold_value
+
+		scope:ely = {
+			add_province_modifier = {
+				modifier = ep3_plundered_modifier
+				years = 5
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = -1
+				ai_energy = -1
+			}
+		}
+	}
+
+	option = { #Recruit a local knight
+		name = ep3_laamps.6005.b
+
+		flavor = ep3_laamps.6005.b.tt
+
+		add_courtier = scope:wetlands_commander
+
+		ai_chance = {
+			base = 25
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_energy = 1
+			}
+		}
+	}
+
+	after = {
+		if = {
+			limit = {
+				exists = scope:powerful_vassal
+			}
+			trigger_event = {
+				id = ep3_laamps.6010
+				days = { 60 120 }
+			}
+		}
+	}
+}
+
+# MB - English side of the Harrying = every Anglic-speaking culture not descended from Norman
+ep3_laamps.6010 = {
+	id_override_priority = 1
+	type = letter_event
+	opening = ep3_laamps.6010.t
+	desc = ep3_laamps.6010.desc
+	sender = scope:powerful_vassal
+
+	trigger = {
+		has_ep3_dlc_trigger = yes
+	}
+
+	immediate = {
+		# Make a list of every Anglo-Saxon lord
+		scope:william = {
+			every_vassal = {
+				limit = {
+					character_is_valid_anglo_saxon_for_harrying_of_the_north_trigger = yes
+				}
+				add_to_list = aethelings
+			}
+		}
+
+		# Pick the most powerful Anglo-Saxon lord
+		# Most likely Eadwin Aelfgarson
+		ordered_in_list = {
+			list = aethelings
+			order_by = max_military_strength
+			save_scope_as = powerful_vassal
+		}
+
+		scope:powerful_vassal.capital_province = {
+			save_scope_as = powerful_vassal_capital
+		}
+	}
+
+	option = { #Yes!
+		name = ep3_laamps.6010.a
+
+		flavor = ep3_laamps.6010.a.flavor
+
+		custom_tooltip = ep3_laamps.6010.a.tt
+
+		every_character_active_contract = { invalidate_contract = yes }
+
+		start_travel_plan = {
+			destination = scope:powerful_vassal_capital
+			players_use_planner = no
+			on_arrival_event = ep3_laamps.6015
+			on_arrival_destinations = last
+			return_trip = no
+		}
+
+		#Just to ensure we get the right one
+		scope:powerful_vassal = {
+			add_character_flag = temp_powerful_vassal_flag
+		}
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = { #...no.
+		name = ep3_laamps.6010.b
+
+		custom_tooltip = ep3_laamps.6000.b.tt
+
+		reverse_add_opinion = {
+			target = scope:powerful_vassal
+			modifier = annoyed_opinion
+			opinion = -35
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# MB - English side of the Harrying = every Anglic-speaking culture not descended from Norman
+ep3_laamps.6015 = {
+	id_override_priority = 1
+	type = character_event
+	title = ep3_laamps.6015.t
+	desc = ep3_laamps.6015.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:powerful_vassal
+		animation = worry
+	}
+
+	trigger = {
+		has_ep3_dlc_trigger = yes
+	}
+
+	immediate = {
+		character:140 = {
+			save_scope_as = william
+		}
+
+		scope:william = {
+			random_vassal = {
+				limit = {
+					has_character_flag = temp_powerful_vassal_flag
+				}
+				save_scope_as = powerful_vassal
+			}
+		}
+	}
+
+	option = { #You have my support
+		name = ep3_laamps.6015.a
+
+		scope:william = {
+			every_vassal = {
+				limit = {
+					culture = culture:norman
+				}
+				custom = every_direct_vassal_william
+				add_opinion = {
+					target = root
+					modifier = revanchist_opinion
+					opinion = -35
+				}
+			}
+			every_vassal_or_below = {
+				limit = {
+					character_is_valid_anglo_saxon_for_harrying_of_the_north_trigger = yes
+				}
+				custom = every_anglo_noble
+				add_opinion = {
+					target = root
+					modifier = revanchist_opinion
+					opinion = 35
+				}
+			}
+		}
+
+		scope:powerful_vassal = {
+			add_character_flag = happy_flag
+		}
+
+		add_diplomacy_skill = 1
+
+		reverse_add_opinion = {
+			target = scope:powerful_vassal
+			modifier = pleased_opinion
+			opinion = 50
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_energy = 1
+			}
+		}
+	}
+
+	option = { #I need time to decide
+		name = ep3_laamps.6015.b
+
+		scope:powerful_vassal = {
+			add_character_flag = annoyed_flag
+		}
+
+		add_character_modifier = {
+			modifier = ep3_hereward_caution_modifier
+			years = 5
+		}
+
+		reverse_add_opinion = {
+			target = scope:powerful_vassal
+			modifier = annoyed_opinion
+			opinion = -5
+		}
+
+		ai_chance = {
+			base = 50
+			ai_value_modifier = {
+				ai_boldness = -1
+				ai_rationality = 0.5
+			}
+		}
+	}
+
+	after = {
+		trigger_event = {
+			id = ep3_laamps.6016
+			days = 1
+		}
+	}
+}
+
+# MB - English side of the Harrying = every Anglic-speaking culture not descended from Norman
+ep3_laamps.6020 = {
+	id_override_priority = 1
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/splash_icons/splash_laamp.dds"
+	title = ep3_laamps.6020.t
+	desc = ep3_laamps.6020.desc
+	theme = realm
+	override_background = { reference = ep3_fullscreen_harrying_of_the_north }
+
+	trigger = {
+		has_ep3_dlc_trigger = yes
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_war_declared
+
+		character:140 = {
+			save_scope_as = william
+		}
+
+		# Make a list of every Anglo-Saxon lord
+		scope:william = {
+			every_vassal = {
+				limit = {
+					character_is_valid_anglo_saxon_for_harrying_of_the_north_trigger = yes
+				}
+				add_to_list = aethelings
+			}
+		}
+	}
+
+	option = { #Oh lort here we go
+		name = ep3_laamps.6020.a
+
+		every_in_list = {
+			list = aethelings
+			custom = every_aetheling
+			every_sub_realm_county = {
+				custom = every_county
+				change_county_control = 25
+				add_county_modifier = {
+					modifier = ep3_harried_modifier
+					years = 15
+				}
+			}
+
+			hidden_effect = {
+				send_interface_message = {
+					title = harrying_of_the_north_tt
+					left_icon = scope:william
+
+					custom_tooltip = harrying_of_the_north_started
+					show_as_tooltip = {
+						every_sub_realm_county = {
+							custom = every_county
+							change_county_control = 25
+							add_county_modifier = {
+								modifier = ep3_harried_modifier
+								years = 15
+							}
+						}
+					}
+				}
+			}
+		}
+
+		scope:william = {
+			add_character_modifier = {
+				modifier = ep3_the_conqueror_modifier
+				years = 15
+			}
+			create_story = story_cycle_harrying_of_the_north
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_energy = 1
+			}
+		}
+	}
+}
+
+# MB - English side of the Harrying = every Anglic-speaking culture not descended from Norman
+ep3_laamps.6021 = {
+	id_override_priority = 1
+	type = character_event
+	window = fullscreen_event
+	queue_icon = "gfx/interface/icons/splash_icons/splash_laamp.dds"
+	title = ep3_laamps.6020.t
+	desc = ep3_laamps.6021.desc
+	theme = realm
+	override_background = { reference = ep3_fullscreen_harrying_of_the_north }
+
+	trigger = {
+		has_ep3_dlc_trigger = yes
+	}
+
+	immediate = {
+		play_music_cue = mx_cue_war_declared
+
+		character:140 = {
+			save_scope_as = william
+		}
+
+		# Make a list of every Anglo-Saxon lord
+		scope:william = {
+			every_vassal = {
+				limit = {
+					character_is_valid_anglo_saxon_for_harrying_of_the_north_trigger = yes
+				}
+				add_to_list = aethelings
+			}
+		}
+	}
+
+	option = { #Oh lort here we go
+		name = ep3_laamps.6020.a
+
+		show_as_tooltip = {
+			every_in_list = {
+				list = aethelings
+				custom = every_aetheling
+				every_realm_county = {
+					custom = every_county
+					change_county_control = 25
+					add_county_modifier = {
+						modifier = ep3_harried_modifier
+						years = 15
+					}
+				}
+			}
+		}
+
+		show_as_tooltip = {
+			scope:william = {
+				add_character_modifier = {
+					modifier = ep3_the_conqueror_modifier
+					years = 15
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 100
+			ai_value_modifier = {
+				ai_boldness = 1
+				ai_energy = 1
+			}
+		}
+	}
+}
+# MB Added End

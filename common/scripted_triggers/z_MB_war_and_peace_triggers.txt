@@ -1,0 +1,105 @@
+﻿can_be_knight_trigger = {
+	is_available_quick = {
+		ai = yes
+		hostage = no
+	}
+	NOT = { has_trait = pregnant }
+	NOT = { has_trait = infirm } #Kinda odd/silly vanilla lets infirm people be knights and lead armies
+	can_be_warrior_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	trigger_if = { # Admin governors cannot be knights
+		limit = {
+			$ARMY_OWNER$ = { government_has_mechanic = administrative }
+			is_courtier = no
+			exists = primary_title
+		}
+		primary_title = {
+			tier < tier_duchy
+			trigger_if = {
+				limit = { is_noble_family_title = yes }
+				always = no
+			}
+		}
+	}
+	trigger_if = {
+		limit = {
+			$ARMY_OWNER$.culture = {
+				has_cultural_parameter = minimum_prowess_for_knights
+			}
+		}
+		prowess >= 12
+	}
+	trigger_if = {
+		limit = {
+			is_clergy = yes
+		}
+		OR = {
+			rite = { rite_has_parameter = clergy_can_fight }
+			AND = {
+				has_personal_tenet_flag = clergy_can_fight_personal
+				NOT = {
+					rite = { rite_has_parameter = pacifist }
+				}
+			}
+			culture = { has_cultural_parameter = culture_clergy_can_fight }
+			AND = {
+				$ARMY_OWNER$.culture = {
+					has_cultural_parameter = high_prowess_ignores_knight_restrictions
+				}
+				prowess >= 10
+			}
+		}
+	}
+	OR = {
+		AND = {
+			$ARMY_OWNER$.culture = {
+				has_cultural_parameter = high_prowess_ignores_knight_restrictions
+			}
+			prowess >= 10
+		}
+		has_trait = order_member # Order Members will fight for their faith even if their faith says no
+		NOR = {
+			has_trait = blind
+			has_court_position = master_assassin_court_position #FP3 addition
+		}
+	}
+	trigger_if = {
+		limit = {
+			exists = liege.diarch
+		}
+		this != liege.diarch
+	}
+	is_trader = no # Traders are away running a trade route
+	# knight permissions for players
+	trigger_if = {
+		limit = {
+			$ARMY_OWNER$ = {
+				is_ai = no
+			}
+		}
+		is_knight_permitted = $ARMY_OWNER$
+	}
+}
+
+can_be_commander_basic_trigger = {
+	is_available_quick = {
+		alive = yes
+		adult = yes
+		incapable = no
+		hostage = no
+	}
+
+	NOT = { has_trait = pregnant }
+	NOT = { has_trait = infirm }
+	age >= 18 #Fine with not making knights be older as there are historical examples of people being knighted at 16 (though very rare) but less so for the person actually leading the army
+
+	OR = { # You can always lead your own armies
+		this = $ARMY_OWNER$
+		can_be_combatant_based_on_gender_trigger = { ARMY_OWNER = $ARMY_OWNER$ }
+	}
+
+	trigger_if = {
+		limit = { $ARMY_OWNER$ = { is_ai = yes } }
+		is_ai = yes
+		highest_held_title_tier < tier_hegemony
+	}
+}
