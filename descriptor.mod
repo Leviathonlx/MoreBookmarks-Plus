@@ -9,5 +9,5 @@ tags={
 }
 name="MBPlus-BetaCerrada"
 picture="thumbnail.png"
-supported_version="1.20.1.2"
+supported_version="1.21.*"
 remote_file_id="2216670956"
